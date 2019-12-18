@@ -1,8 +1,14 @@
 # ggpsychro {{{
 #' @import ggplot2
 #' @importFrom checkmate assert_numeric
+#' @importFrom psychrolib GetStandardAtmPressure
 #' @export
-ggpsychro <- function (data = NULL, mapping = aes(), tdb_lim = c(0, 50), hum_lim = c(0, 0.05), pres = waiver(), unit = "SI") {
+ggpsychro <- function (data = NULL, mapping = aes(),
+                       tdb_lim = c(0, 50), tdb_step = waiver(),
+                       hum_lim = c(0, 0.05), hum_step = waiver(),
+                       pres = waiver(), units = "SI") {
+    init_units(units)
+
     assert_numeric(tdb_lim, any.missing = FALSE, all.missing = FALSE, len = 2,
         unique = TRUE, sorted = TRUE, lower = -50.0, upper = 100.0
     )
@@ -10,8 +16,25 @@ ggpsychro <- function (data = NULL, mapping = aes(), tdb_lim = c(0, 50), hum_lim
         unique = TRUE, sorted = TRUE, lower = 0.0, upper = 0.05
     )
 
+    # calculate breaks
+    if (is.waive(tdb_step)) {
+        xb <- scales::pretty_breaks()(tdb_lim)
+        tdb_step <- diff(xb)[[1L]]
+    } else {
+        assert_number(tdb_step, lower = 0.0, upper = diff(tdb_lim))
+        xb <- seq(tdb_lim[[1L]], tdb_lim[[2L]], tdb_step)
+    }
+
+    if (is.waive(hum_step)) {
+        yb <- scales::pretty_breaks()(hum_lim)
+        hum_step <- diff(yb)[[1L]]
+    } else {
+        assert_number(hum_step, lower = 0.0, upper = diff(hum_lim))
+        yb <- seq(hum_lim[[1L]], hum_lim[[2L]], hum_step)
+    }
+
     # calculate pressure
-    if (is.waive(pres)) pres <- with_units(unit, GetStandardAtmPressure(0))
+    if (is.waive(pres)) pres <- with_units(GetStandardAtmPressure(0))
     assert_number(pres, lower = 0.0)
 
     # add axis labels
@@ -28,28 +51,59 @@ ggpsychro <- function (data = NULL, mapping = aes(), tdb_lim = c(0, 50), hum_lim
     })
 
     # add dry-bulb and humdity ratio range and pressure as aes
-    more_aes <- list(xmin = tdb_lim[[1]], xmax = tdb_lim[2], ymin = hum_lim[1], ymax = hum_lim[2], pres = pres)
+    more_aes <- list(tdb_min = tdb_lim[[1L]], tdb_max = tdb_lim[[2L]], tdb_step = tdb_step,
+                     hum_min = hum_lim[[1L]], hum_max = hum_lim[[2L]], hum_step = hum_step,
+                     pres = pres)
+
+    if ("relhum" %in% names(mapping)) {
+        stop("Aesthetics 'relhum' can only be specified using 'geom_relhum()' or 'stat_relhum()'.")
+    }
+
     mapping <- do.call(aes, c(mapping, more_aes))
 
-    ggplot(data = data, mapping = mapping, environment = parent.frame()) +
-        lbs +
+    ggplot(data = data, mapping = mapping, environment = parent.frame()) + lbs +
+        # apply theme
+        theme_psychro() +
+
+        # set plot axes limit
         coord_cartesian(
             xlim = c(tdb_lim[[1L]] * (1 - 0.005), tdb_lim[[2L]] * (1 + 0.005)),
             ylim = c(hum_lim[[1L]] * (1 - 0.005), hum_lim[[2L]] * (1 + 0.005)),
             expand = FALSE, default = TRUE
         ) +
+
+        # move y label to the right
         scale_y_continuous(position = "right") +
-        theme(axis.title.y.right = element_text(angle = 90))
+
+        # saturation line
+        stat_relhum(relhum = 1, size = theme_get()$line$size * 3)
+}
+# }}}
+
+# package option
+GGPSYCHRO_OPT <- new.env(parent = emptyenv())
+GGPSYCHRO_OPT$units <- getOption("ggpsychro.units", NA_character_)
+
+# init_units {{{
+#' @importFrom psychrolib SetUnitSystem
+init_units <- function (units) {
+    # for validation
+    GGPSYCHRO_OPT$units <- psychrolib::SetUnitSystem(units)
+
+    # reset
+    psy_op <- psychrolib:::PSYCHRO_OPT
+    psy_op$UNITS <- NA_character_
+
+    GGPSYCHRO_OPT$units
 }
 # }}}
 
 # with_units {{{
-#' @importFrom psychrolib GetUnitSystem SetUnitSystem
-with_units <- function (units, expr) {
-    u <- psychrolib::GetUnitSystem()
-    psychrolib::SetUnitSystem(units)
+#' @importFrom psychrolib SetUnitSystem
+with_units <- function (expr) {
+    psychrolib::SetUnitSystem(GGPSYCHRO_OPT$units)
     psy_op <- psychrolib:::PSYCHRO_OPT
-    on.exit(psy_op$UNITS <- u, add = TRUE)
+    on.exit(psy_op$UNITS <- NA_character_, add = TRUE)
 
     force(expr)
 }
