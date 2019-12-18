@@ -38,7 +38,7 @@ ggpsychro <- function (data = NULL, mapping = aes(),
     assert_number(pres, lower = 0.0)
 
     # add axis labels
-    lbs <- with_units(unit, {
+    lbs <- with_units({
         if (psychrolib::isIP()) {
             list(xlab(expression("Dry-bulb temperature ("*degree*F*")")),
                  ylab(expression("Humidity ratio ("*lb[m]*"/"*lb[da]*")"))
@@ -87,14 +87,13 @@ GGPSYCHRO_OPT$units <- getOption("ggpsychro.units", NA_character_)
 # init_units {{{
 #' @importFrom psychrolib SetUnitSystem
 init_units <- function (units) {
-    # for validation
-    GGPSYCHRO_OPT$units <- psychrolib::SetUnitSystem(units)
-
-    # reset
     psy_op <- psychrolib:::PSYCHRO_OPT
-    psy_op$UNITS <- NA_character_
+    # for validation
+    psychrolib::SetUnitSystem(units)
+    # reset
+    psy_op$units <- NA_character_
 
-    GGPSYCHRO_OPT$units
+    GGPSYCHRO_OPT$units <- psychrolib::GetUnitSystem()
 }
 # }}}
 
