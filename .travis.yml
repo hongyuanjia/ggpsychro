@@ -1,0 +1,35 @@
+# R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
+
+language: R
+cache: packages
+
+matrix:
+  include:
+    - os: linux
+      r: devel
+      env:
+        - NOT_CRAN: true
+
+    - os: linux
+      r: release
+      env:
+        - NOT_CRAN: false
+      after_success:
+        - Rscript -e 'covr::codecov()'
+
+    - os: osx
+      r: release
+      env:
+        - NOT_CRAN: false
+
+before_cache: Rscript -e 'remotes::install_cran("pkgdown")'
+before_deploy: Rscript -e 'pkgdown::build_site()'
+deploy:
+  github_token: $GITHUB_PAT
+  provider: pages
+  local-dir: docs
+  target-branch: gh-pages
+  skip_cleanup: true
+  on:
+    branch: master
+    condition: "$TRAVIS_OS_NAME = linux && $TRAVIS_R_VERSION_STRING = release"
