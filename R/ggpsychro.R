@@ -1,109 +1,158 @@
 # ggpsychro {{{
-#' @import ggplot2
-#' @importFrom checkmate assert_numeric
+#' Create a ggpsychro plot
+#'
+#' This function is the equivalent of [ggplot2::ggplot()] in ggplot2.
+#' It takes care of setting up the plot object along with creating the layout
+#' for the plot based on the graph and the specification passed in.
+#' Alternatively a layout can be prepared in advance using
+#' `create_layout` and passed as the data argument. See *Details* for
+#' a description of all available layouts.
+#'
+#' @param tdb_lim A numeric vector of length-2 indicating the dry-bulb
+#'        temperature limits. Should be in range
+#'        `[\Sexpr[results=text]{get_tdb_limits("SI")[1]},
+#'          \Sexpr[results=text]{get_tdb_limits("SI")[2]},]` °C \\[SI\\] or
+#'        `[\Sexpr[results=text]{get_tdb_limits("IP")[1]},
+#'          \Sexpr[results=text]{get_tdb_limits("IP")[2]},]` °F \\[IP\\].
+#'        If `waiver()`, default values will be
+#'        `\\[0, 50\\]` °C \\[SI\\] or
+#'        `\\[30, 120\\]` °F \\[IP\\]. Default: `waiver()`.
+#'
+#' @param hum_lim A numeric vector of length-2 indicating the humidity ratio
+#'        limits. Should be in range
+#'        `[\Sexpr[results=text]{get_hum_limits("SI")[1]},
+#'          \Sexpr[results=text]{get_hum_limits("SI")[2]},]` °C \\[SI\\] or
+#'        `[\Sexpr[results=text]{get_hum_limits("IP")[1]},
+#'          \Sexpr[results=text]{get_hum_limits("IP")[2]},]` °F \\[IP\\].
+#'        If `waiver()`, default values will be `[0, 30]` °C \\[SI\\]
+#'        or `\\[0, 210\\]` °F \\[IP\\]. Default: `waiver()`.
+#'
+#' @param altitude A single number of altitude in ft \\[IP\\] or m \\[SI\\].
+#'
+#' @param mask_style A list containg settings to format mask area. Will be
+#'        directly passed to [ggplot2::geom_polygon()]. If `waiver()`, defaults
+#'        below will be used:
+#'
+#' * `alpha`: `NA`
+#' * `color`: `NA`
+#' * `fill`: `white`
+#' * `linetype`: `1`
+#' * `size`: `0.5`
+#'
+#' Learn more about setting these aesthetics in `vignette("ggplot2-specs")`.
+#'
+#' @param units A string indicating the system of units chosen. Should be either
+#'        `"SI"` or `"IP"`.
+#'
+#' @return An object of class `gg` onto which layers, scales, etc. can be added.
+#'
+#' @keywords psychrometric
+#'
+#' @examples
+#' ggpsychro()
+#'
+#' @inheritParams ggplot2::ggplot
+#' @importFrom checkmate assert_number assert_numeric
 #' @importFrom psychrolib GetStandardAtmPressure
 #' @export
 ggpsychro <- function (data = NULL, mapping = aes(),
-                       tdb_lim = c(0, 50), tdb_step = waiver(),
-                       hum_lim = c(0, 0.05), hum_step = waiver(),
-                       pres = waiver(), units = "SI") {
-    init_units(units)
+                       tdb_lim = c(0, 50), hum_lim = c(0, 50), altitude = 0L,
+                       mask_style = waiver(), units = "SI") {
+    units <- match.arg(units, c("SI", "IP"))
 
     assert_numeric(tdb_lim, any.missing = FALSE, all.missing = FALSE, len = 2,
-        unique = TRUE, sorted = TRUE, lower = -50.0, upper = 100.0
+        unique = TRUE, sorted = TRUE,
+        lower = get_tdb_limits(units)[1], upper = get_tdb_limits(units)[2]
     )
     assert_numeric(hum_lim, any.missing = FALSE, all.missing = FALSE, len = 2,
-        unique = TRUE, sorted = TRUE, lower = 0.0, upper = 0.05
+        unique = TRUE, sorted = TRUE,
+        lower = get_hum_limits(units)[1], upper = get_hum_limits(units)[2]
     )
+    assert_number(altitude)
+    pres <- with_units(units, psychrolib::GetStandardAtmPressure(altitude))
 
-    # calculate breaks
-    if (is.waive(tdb_step)) {
-        xb <- scales::pretty_breaks()(tdb_lim)
-        tdb_step <- diff(xb)[[1L]]
-    } else {
-        assert_number(tdb_step, lower = 0.0, upper = diff(tdb_lim))
-        xb <- seq(tdb_lim[[1L]], tdb_lim[[2L]], tdb_step)
-    }
+    # add pressure and units as aes
+    more_aes <- list(pres = pres, units = units)
+    mapping <- do.call(aes, c(mapping, more_aes))
 
-    if (is.waive(hum_step)) {
-        yb <- scales::pretty_breaks()(hum_lim)
-        hum_step <- diff(yb)[[1L]]
-    } else {
-        assert_number(hum_step, lower = 0.0, upper = diff(hum_lim))
-        yb <- seq(hum_lim[[1L]], hum_lim[[2L]], hum_step)
-    }
+    # base
+    base <- ggplot(data = data, mapping = mapping, environment = parent.frame())
 
-    # calculate pressure
-    if (is.waive(pres)) pres <- with_units(GetStandardAtmPressure(0))
-    assert_number(pres, lower = 0.0)
+    # set plot axes limit
+    coord <- coord_cartesian(xlim = tdb_lim, ylim = hum_lim, expand = FALSE, default = TRUE)
 
-    # add axis labels
-    lbs <- with_units({
+    # set default axis label
+    lab <- with_units(units, {
         if (psychrolib::isIP()) {
             list(xlab(expression("Dry-bulb temperature ("*degree*F*")")),
-                 ylab(expression("Humidity ratio ("*lb[m]*"/"*lb[da]*")"))
+                 ylab(expression("Humidity ratio ("*gr[m]*"/"*lb[da]*")"))
             )
         } else {
             list(xlab(expression("Dry-bulb temperature ("*degree*C*")")),
-                 ylab(expression("Humidity ratio ("*kg[m]*"/"*kg[da]*")"))
+                 ylab(expression("Humidity ratio ("*g[m]*"/"*kg[da]*")"))
             )
         }
     })
 
-    # add dry-bulb and humdity ratio range and pressure as aes
-    more_aes <- list(tdb_min = tdb_lim[[1L]], tdb_max = tdb_lim[[2L]], tdb_step = tdb_step,
-                     hum_min = hum_lim[[1L]], hum_max = hum_lim[[2L]], hum_step = hum_step,
-                     pres = pres)
+    # combine
+    p <- base + coord + lab + scale_y_continuous(position = "right")
 
-    if ("relhum" %in% names(mapping)) {
-        stop("Aesthetics 'relhum' can only be specified using 'geom_relhum()' or 'stat_relhum()'.")
+    # add mask
+    mask <- do.call(geom_maskarea, mask_style)
+
+    structure(p + mask, class = c("ggpsychro", "gg", "ggplot"))
+}
+# }}}
+
+# package options {{{
+GGPSYCHRO_OPT <- new.env(parent = emptyenv())
+# dry-bulb temp limit in Celsius [SI]
+GGPSYCHRO_OPT$tdb_min <- -50.0
+GGPSYCHRO_OPT$tdb_max <- 100.0
+# humidity ratio limit in g_H2O kg_Air-1 [SI]
+GGPSYCHRO_OPT$hum_min <- 0.0
+GGPSYCHRO_OPT$hum_max <- 60.0
+# }}}
+
+# get_tdb_limits {{{
+get_tdb_limits <- function (units) {
+    if (units == "SI") {
+        c(GGPSYCHRO_OPT$tdb_min, GGPSYCHRO_OPT$tdb_max)
+    } else if (units == "IP") {
+        bid_conv(c(GGPSYCHRO_OPT$tdb_min, GGPSYCHRO_OPT$tdb_max), "F")
+    }
+}
+# }}}
+# get_hum_limits {{{
+get_hum_limits <- function (units) {
+    if (units == "SI") {
+        c(GGPSYCHRO_OPT$hum_min, GGPSYCHRO_OPT$hum_max)
+    } else if (units == "IP") {
+        bid_conv(c(GGPSYCHRO_OPT$hum_min, GGPSYCHRO_OPT$hum_max), "Gr")
+    }
+}
+# }}}
+# get_units {{{
+get_units <- function (data) {
+    u <- unique(data$units)
+
+    if (length(u) > 1L || (!u %in% c("SI", "IP"))) {
+        stop("The system of units has to be either SI or IP.")
     }
 
-    mapping <- do.call(aes, c(mapping, more_aes))
-
-    ggplot(data = data, mapping = mapping, environment = parent.frame()) + lbs +
-        # apply theme
-        theme_psychro() +
-
-        # set plot axes limit
-        coord_cartesian(
-            xlim = c(tdb_lim[[1L]] * (1 - 0.005), tdb_lim[[2L]] * (1 + 0.005)),
-            ylim = c(hum_lim[[1L]] * (1 - 0.005), hum_lim[[2L]] * (1 + 0.005)),
-            expand = FALSE, default = TRUE
-        ) +
-
-        # move y label to the right
-        scale_y_continuous(position = "right") +
-
-        # saturation line
-        stat_relhum(relhum = 1, size = theme_get()$line$size * 3)
+    u
 }
 # }}}
+# get_pres {{{
+get_pres <- function (data) {
+    # check pressure
+    pres <- unique(data$pres)
 
-# package option
-GGPSYCHRO_OPT <- new.env(parent = emptyenv())
-GGPSYCHRO_OPT$units <- getOption("ggpsychro.units", NA_character_)
+    if (length(pres) > 1L) {
+        warning(sprintf("Multiple atmosphere pressure value found. Only the first one will be used (%.f).", pres))
+        pres <- pres[[1L]]
+    }
 
-# init_units {{{
-#' @importFrom psychrolib SetUnitSystem
-init_units <- function (units) {
-    psy_op <- psychrolib:::PSYCHRO_OPT
-    # for validation
-    psychrolib::SetUnitSystem(units)
-    # reset
-    psy_op$units <- NA_character_
-
-    GGPSYCHRO_OPT$units <- psychrolib::GetUnitSystem()
-}
-# }}}
-
-# with_units {{{
-#' @importFrom psychrolib SetUnitSystem
-with_units <- function (expr) {
-    psychrolib::SetUnitSystem(GGPSYCHRO_OPT$units)
-    psy_op <- psychrolib:::PSYCHRO_OPT
-    on.exit(psy_op$UNITS <- NA_character_, add = TRUE)
-
-    force(expr)
+    pres
 }
 # }}}

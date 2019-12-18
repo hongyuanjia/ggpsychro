@@ -1,3 +1,4 @@
+# theme_psychro {{{
 #' Custom theme for psychrometric chart.
 #'
 #' @param asp Aspect ratio of plot. Defaults to NULL.
@@ -24,6 +25,10 @@ theme_psychro <- function(background = "white", base_size = 11, base_family = ""
     # remove all grids
     th <- th + theme(panel.grid = element_blank())
 
+    # remove panel border
+    th <- th + theme(panel.border = element_blank())
+
     # plot margins
     th + theme(plot.margin = unit(c(0.35, 0.2, 0.3, 0.35), "cm"))
 }
+# }}}
