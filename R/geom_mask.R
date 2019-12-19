@@ -4,7 +4,15 @@
 #' @inheritParams ggplot2::layer
 #' @inheritParams ggplot2::geom_polygon
 #'
-#' @keywords internal
+#' @section Aesthetics:
+#' `geom_maskarea` understands the following aesthetics (required aesthetics are
+#' in bold).
+#'
+#' - **`n`**
+#' - `color`
+#' - `size`
+#' - `linetype`
+#' - `alpha`
 #'
 #' @export
 geom_maskarea <- function (mapping = NULL, data = NULL, n = 201, ..., na.rm = FALSE, inherit.aes = TRUE) {
