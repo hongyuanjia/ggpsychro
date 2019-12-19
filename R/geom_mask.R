@@ -53,7 +53,7 @@ GeomMaskArea <- ggproto("GeomMaskArea", GeomPolygon,
         GeomPolygon$draw_panel(data, panel_params, coord)
     },
 
-    required_aes = c("pres", "n"),
+    required_aes = c("pres", "n", "units"),
 
     default_aes = aes(colour = "NA", fill = "white", size = 0.5, linetype = 1,
         alpha = NA

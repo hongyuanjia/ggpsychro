@@ -1,50 +1,63 @@
-# stat_relhum {{{
+#' Compute relative humidity
+#'
+#' @inheritParams ggplot2::layer
+#' @inheritParams ggplot2::geom_point
+#'
+#' @examples
+#' ggpsychro(data.frame(xmin = 20, xmax = 40, relhum = 0.6)) +
+#'     stat_relhum(aes(xmin = xmin, xmax = xmax, relhum = relhum),
+#'                 geom = "point", n = 20)
+#'
+#' ggpsychro(data.frame(index = 1:11, xmin = 20, xmax = 40, relhum = (0:10)/10)) +
+#'     stat_relhum(aes(xmin = xmin, xmax = xmax, relhum = relhum, group = index),
+#'                 color = "red")
+#'
 #' @export
-stat_relhum <- function (mapping = NULL, data = NULL, relhum, n = 101, geom = "line",
+# stat_relhum {{{
+stat_relhum <- function (mapping = NULL, data = NULL, n = 201, geom = "line",
                          position = "identity", na.rm = FALSE, show.legend = NA,
                          inherit.aes = TRUE, ...) {
     layer(
         stat = StatRelHum, data = data, mapping = mapping, geom = geom,
         position = position, show.legend = show.legend, inherit.aes = inherit.aes,
-        params = list(relhum = relhum, n = n, na.rm = na.rm, ...)
+        params = list(n = n, na.rm = na.rm, ...)
     )
 }
 # }}}
 
 # StatRelHum {{{
-#' @importFrom psychrolib GetRelHumFromHumRatio
-#' @importFrom checkmate assert_count assert_number
+#' @rdname ggpsychro-extensions
+#' @format NULL
+#' @usage NULL
+#' @importFrom psychrolib GetHumRatioFromRelHum
+#' @export
 StatRelHum <- ggproto(
     "StatRelHum", Stat,
 
-    extra_params = c("relhum", "n", "na.rm"),
+    extra_params = c("n", "na.rm"),
 
-    required_aes = c("tdb_min", "tdb_max", "tdb_step", "pres"),
+    required_aes = c("xmin", "xmax", "relhum", "pres", "units"),
 
-    setup_data = function (data, params) {
-        assert_number(params$relhum, lower = 0.0, upper = 1.0, .var.name = "relhum")
-        assert_count(params$n, positive = TRUE)
+    compute_group = function(data, scales, n) {
+        # get units
+        units <- get_units(data)
+
+        # check pressure
+        pres <- get_pres(data)
+
+        # check n
+        assert_count(n, positive = TRUE)
 
         # keep unique
-        du <- unique(data[c("tdb_min", "tdb_max", "tdb_step", "pres", "PANEL", "group")])
+        d <- unique(data[c("xmin", "xmax", "relhum")])
 
         # tdb is the same accoss all relhum
-        tdb <- seq(du$tdb_min[[1L]], du$tdb_max[[1L]], length.out = params$n)
-
-        # merge
-        data <- lapply(seq_len(nrow(du)), function (i) new_data_frame(c(du[i, ], list(tdb = tdb))))
-        data <- do.call(rbind, data)
+        tdb <- seq(d$xmin[[1L]], d$xmax[[1L]], length.out = n)
 
         # calcualte hum ratio
-        data$hum <- with_units(GetHumRatioFromRelHum(data$tdb, params$relhum, data$pres))
+        hum <- with_units(units, GetHumRatioFromRelHum(tdb, d$relhum, pres))
 
-        data
-    },
-
-    compute_group = function(self, data, scales) {
-        data <- data[c("tdb", "hum")]
-        colnames(data) <- c("x", "y")
-        data
+        new_data_frame(list(x = tdb, y = amplify_hum(hum, units)))
     }
 )
 # }}}

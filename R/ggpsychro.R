@@ -72,7 +72,7 @@ ggpsychro <- function (data = NULL, mapping = aes(),
     pres <- with_units(units, psychrolib::GetStandardAtmPressure(altitude))
 
     # add pressure and units as aes
-    more_aes <- list(pres = pres, units = units)
+    more_aes <- list(pres = pres, units = encode_units(units))
     mapping <- do.call(aes, c(mapping, more_aes))
 
     # base
@@ -135,6 +135,8 @@ get_hum_limits <- function (units) {
 # get_units {{{
 get_units <- function (data) {
     u <- unique(data$units)
+
+    if (is.integer(u)) u <- decode_units(u)
 
     if (length(u) > 1L || (!u %in% c("SI", "IP"))) {
         stop("The system of units has to be either SI or IP.")

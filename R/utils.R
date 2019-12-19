@@ -36,6 +36,16 @@ with_units <- function (units, expr) {
 
     force(expr)
 }
+# encode_units {{{
+encode_units <- function (units) {
+    switch(units, "SI" = 1L, "IP" = 2L, stop())
+}
+# }}}
+# decode_units {{{
+decode_units <- function (code) {
+    c("SI", "IP")[code]
+}
+# }}}
 # }}}
 
 # The units of humidity ratio is lb_H2O lb_Air-1 [IP] or kg_H2O kg_Air-1 [SI],
