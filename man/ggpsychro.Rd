@@ -12,43 +12,54 @@ ggpsychro(
   altitude = 0L,
   mask_style = waiver(),
   sat_style = waiver(),
-  aspect_ratio = 9/16,
-  units = "SI"
+  units = "SI",
+  mollier = FALSE
 )
 }
 \arguments{
 \item{tdb_lim}{A numeric vector of length-2 indicating the dry-bulb
 temperature limits. Should be in range
-\verb{[\\Sexpr[results=text]\{get_tdb_limits("SI")[1]\}, \\Sexpr[results=text]\{get_tdb_limits("SI")[2]\},]} °C \[SI\] or
-\verb{[\\Sexpr[results=text]\{get_tdb_limits("IP")[1]\}, \\Sexpr[results=text]\{get_tdb_limits("IP")[2]\},]} °F \[IP\].
+\verb{\\\[-50, 100\\\]} °C \[SI\] or
+\verb{\\\[-58, 212\\\]} °F \[IP\].
 If \code{waiver()}, default values will be
 \verb{\\\[0, 50\\\]} °C \[SI\] or
 \verb{\\\[30, 120\\\]} °F \[IP\]. Default: \code{waiver()}.}
 
 \item{hum_lim}{A numeric vector of length-2 indicating the humidity ratio
 limits. Should be in range
-\verb{[\\Sexpr[results=text]\{get_hum_limits("SI")[1]\}, \\Sexpr[results=text]\{get_hum_limits("SI")[2]\},]} °C \[SI\] or
-\verb{[\\Sexpr[results=text]\{get_hum_limits("IP")[1]\}, \\Sexpr[results=text]\{get_hum_limits("IP")[2]\},]} °F \[IP\].
-If \code{waiver()}, default values will be \verb{[0, 30]} °C \[SI\]
-or \verb{\\\[0, 210\\\]} °F \[IP\]. Default: \code{waiver()}.}
+\verb{\\\[0, 60\\\]} g_H20 kg_Air-1 \[SI\] or
+\verb{\\\[0, 350\\\]} gr_H20 lb_Air-1 \[IP\].
+If \code{waiver()}, default values will be
+\verb{\\\[0, 30\\\]} g_H20 kg_Air-1 \[SI\] or
+\verb{\\\[0, 210\\\]} gr_H20 lb_Air-1 \[IP\]. Default: \code{waiver()}.}
 
-\item{altitude}{A single number of altitude in ft \[IP\] or m \[SI\].}
+\item{altitude}{A single number of altitude in m \[SI\] or ft \[IP\].}
 
 \item{mask_style}{A list containg settings to format mask area. Will be
 directly passed to \code{\link[ggplot2:geom_polygon]{ggplot2::geom_polygon()}}. If \code{waiver()}, defaults
 below will be used:
 \itemize{
-\item \code{alpha}: \code{NA}
-\item \code{color}: \code{NA}
 \item \code{fill}: \code{white}
 \item \code{linetype}: \code{1}
 \item \code{size}: \code{0.5}
+}}
+
+\item{sat_style}{A list containg settings to format saturation line. Will be
+directly passed to \code{\link[ggplot2:geom_line]{ggplot2::geom_line()}}. If \code{waiver()}, defaults
+below will be used:
+\itemize{
+\item \code{color}: \verb{#DA251D}
+\item \code{linetype}: \code{1}
+\item \code{size}: \code{1}
 }
 
 Learn more about setting these aesthetics in \code{vignette("ggplot2-specs")}.}
 
 \item{units}{A string indicating the system of units chosen. Should be either
 \code{"SI"} or \code{"IP"}.}
+
+\item{mollier}{If \code{TRUE}, a Mollier chart will be created instead of a
+psychrometric chart. Default: \code{FALSE}.}
 }
 \value{
 An object of class \code{gg} onto which layers, scales, etc. can be added.

@@ -10,39 +10,45 @@
 #'
 #' @param tdb_lim A numeric vector of length-2 indicating the dry-bulb
 #'        temperature limits. Should be in range
-#'        `[\Sexpr[results=text]{get_tdb_limits("SI")[1]},
-#'          \Sexpr[results=text]{get_tdb_limits("SI")[2]},]` °C \\[SI\\] or
-#'        `[\Sexpr[results=text]{get_tdb_limits("IP")[1]},
-#'          \Sexpr[results=text]{get_tdb_limits("IP")[2]},]` °F \\[IP\\].
+#'        `\\[-50, 100\\]` °C \\[SI\\] or
+#'        `\\[-58, 212\\]` °F \\[IP\\].
 #'        If `waiver()`, default values will be
 #'        `\\[0, 50\\]` °C \\[SI\\] or
 #'        `\\[30, 120\\]` °F \\[IP\\]. Default: `waiver()`.
 #'
 #' @param hum_lim A numeric vector of length-2 indicating the humidity ratio
 #'        limits. Should be in range
-#'        `[\Sexpr[results=text]{get_hum_limits("SI")[1]},
-#'          \Sexpr[results=text]{get_hum_limits("SI")[2]},]` °C \\[SI\\] or
-#'        `[\Sexpr[results=text]{get_hum_limits("IP")[1]},
-#'          \Sexpr[results=text]{get_hum_limits("IP")[2]},]` °F \\[IP\\].
-#'        If `waiver()`, default values will be `[0, 30]` °C \\[SI\\]
-#'        or `\\[0, 210\\]` °F \\[IP\\]. Default: `waiver()`.
+#'        `\\[0, 60\\]` g_H20 kg_Air-1 \\[SI\\] or
+#'        `\\[0, 350\\]` gr_H20 lb_Air-1 \\[IP\\].
+#'        If `waiver()`, default values will be
+#'        `\\[0, 30\\]` g_H20 kg_Air-1 \\[SI\\] or
+#'        `\\[0, 210\\]` gr_H20 lb_Air-1 \\[IP\\]. Default: `waiver()`.
 #'
-#' @param altitude A single number of altitude in ft \\[IP\\] or m \\[SI\\].
+#' @param altitude A single number of altitude in m \\[SI\\] or ft \\[IP\\].
 #'
 #' @param mask_style A list containg settings to format mask area. Will be
 #'        directly passed to [ggplot2::geom_polygon()]. If `waiver()`, defaults
 #'        below will be used:
 #'
-#' * `alpha`: `NA`
-#' * `color`: `NA`
 #' * `fill`: `white`
 #' * `linetype`: `1`
 #' * `size`: `0.5`
+#'
+#' @param sat_style A list containg settings to format saturation line. Will be
+#'        directly passed to [ggplot2::geom_line()]. If `waiver()`, defaults
+#'        below will be used:
+#'
+#' * `color`: `#DA251D`
+#' * `linetype`: `1`
+#' * `size`: `1`
 #'
 #' Learn more about setting these aesthetics in `vignette("ggplot2-specs")`.
 #'
 #' @param units A string indicating the system of units chosen. Should be either
 #'        `"SI"` or `"IP"`.
+#'
+#' @param mollier If `TRUE`, a Mollier chart will be created instead of a
+#'        psychrometric chart. Default: `FALSE`.
 #'
 #' @return An object of class `gg` onto which layers, scales, etc. can be added.
 #'
@@ -51,13 +57,14 @@
 #' @examples
 #' ggpsychro()
 #'
-#' @importFrom checkmate assert_number assert_numeric
+#' @importFrom checkmate assert_number assert_numeric assert_flag
 #' @importFrom psychrolib GetStandardAtmPressure
-#' @importFrom ggplot2 ggplot aes coord_cartesian xlab ylab scale_y_continuous waiver
+#' @importFrom ggplot2 ggplot aes coord_cartesian coord_flip xlab ylab scale_y_continuous waiver
 #' @export
 ggpsychro <- function (data = NULL, mapping = aes(),
                        tdb_lim = c(0, 50), hum_lim = c(0, 50), altitude = 0L,
-                       mask_style = waiver(), sat_style = waiver(), aspect_ratio = 9/16, units = "SI") {
+                       mask_style = waiver(), sat_style = waiver(), units = "SI",
+                       mollier = FALSE) {
     units <- match.arg(units, c("SI", "IP"))
 
     assert_numeric(tdb_lim, any.missing = FALSE, all.missing = FALSE, len = 2,
@@ -68,6 +75,7 @@ ggpsychro <- function (data = NULL, mapping = aes(),
         unique = TRUE, sorted = TRUE,
         lower = get_hum_limits(units)[1], upper = get_hum_limits(units)[2]
     )
+    assert_flag(mollier)
     assert_number(altitude)
     pres <- with_units(units, GetStandardAtmPressure(altitude))
 
@@ -79,7 +87,11 @@ ggpsychro <- function (data = NULL, mapping = aes(),
     base <- ggplot(data = data, mapping = mapping, environment = parent.frame())
 
     # set plot axes limit
-    coord <- coord_cartesian(xlim = tdb_lim, ylim = hum_lim, expand = FALSE, default = TRUE)
+    if (mollier) {
+        coord <- coord_flip(xlim = tdb_lim, ylim = hum_lim, expand = FALSE)
+    } else {
+        coord <- coord_cartesian(xlim = tdb_lim, ylim = hum_lim, expand = FALSE, default = TRUE)
+    }
 
     # set default axis label
     lab <- with_units(units, {
