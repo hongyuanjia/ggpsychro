@@ -1,3 +1,9 @@
+# is.ggpsychro {{{
+is.ggpsychro <- function (x) {
+    inherits(x, "ggpsychro")
+}
+# }}}
+
 # print.ggpsychro {{{
 #' @export
 print.ggpsychro <- function (x, ...) {
@@ -23,13 +29,16 @@ cover_mask <- function (gg) {
     nm <- layer_names(gg)
 
     # get the last mask layer
-    pos <- which(nm == "GeomMaskArea")
+    pos_m <- which(nm == "GeomMaskArea")
+    # get the last sat layer
+    pos_s <- which(nm == "GeomSatLine")
 
-    if (!length(pos)) return(gg)
+    if (!length(pos_m) || !length(pos_s)) return(gg)
 
     # remove the last mask layer to the end
-    if (length(pos) > 1L) pos <- max(pos)
-    gg$layers <- c(gg$layers[-pos], gg$layers[pos])
+    if (length(pos_m) > 1L) pos_m <- max(pos_m)
+    if (length(pos_s) > 1L) pos_s <- max(pos_s)
+    gg$layers <- c(gg$layers[-c(pos_m, pos_s)], gg$layers[c(pos_m, pos_s)])
 
     gg
 }

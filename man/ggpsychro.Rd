@@ -11,17 +11,12 @@ ggpsychro(
   hum_lim = c(0, 50),
   altitude = 0L,
   mask_style = waiver(),
+  sat_style = waiver(),
+  aspect_ratio = 9/16,
   units = "SI"
 )
 }
 \arguments{
-\item{data}{Default dataset to use for plot. If not already a data.frame,
-will be converted to one by \code{\link[ggplot2:fortify]{fortify()}}. If not specified,
-must be supplied in each layer added to the plot.}
-
-\item{mapping}{Default list of aesthetic mappings to use for plot.
-If not specified, must be supplied in each layer added to the plot.}
-
 \item{tdb_lim}{A numeric vector of length-2 indicating the dry-bulb
 temperature limits. Should be in range
 \verb{[\\Sexpr[results=text]\{get_tdb_limits("SI")[1]\}, \\Sexpr[results=text]\{get_tdb_limits("SI")[2]\},]} °C \[SI\] or

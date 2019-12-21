@@ -51,13 +51,13 @@
 #' @examples
 #' ggpsychro()
 #'
-#' @inheritParams ggplot2::ggplot
 #' @importFrom checkmate assert_number assert_numeric
 #' @importFrom psychrolib GetStandardAtmPressure
+#' @importFrom ggplot2 ggplot aes coord_cartesian xlab ylab scale_y_continuous waiver
 #' @export
 ggpsychro <- function (data = NULL, mapping = aes(),
                        tdb_lim = c(0, 50), hum_lim = c(0, 50), altitude = 0L,
-                       mask_style = waiver(), units = "SI") {
+                       mask_style = waiver(), sat_style = waiver(), aspect_ratio = 9/16, units = "SI") {
     units <- match.arg(units, c("SI", "IP"))
 
     assert_numeric(tdb_lim, any.missing = FALSE, all.missing = FALSE, len = 2,
@@ -69,7 +69,7 @@ ggpsychro <- function (data = NULL, mapping = aes(),
         lower = get_hum_limits(units)[1], upper = get_hum_limits(units)[2]
     )
     assert_number(altitude)
-    pres <- with_units(units, psychrolib::GetStandardAtmPressure(altitude))
+    pres <- with_units(units, GetStandardAtmPressure(altitude))
 
     # add pressure and units as aes
     more_aes <- list(pres = pres, units = encode_units(units))
@@ -95,40 +95,49 @@ ggpsychro <- function (data = NULL, mapping = aes(),
     })
 
     # combine
-    p <- base + coord + lab + scale_y_continuous(position = "right")
+    p <- base + coord + lab + scale_y_continuous(position = "right") + theme_psychro()
 
     # add mask
     mask <- do.call(geom_maskarea, mask_style)
 
-    structure(p + mask, class = c("ggpsychro", "gg", "ggplot"))
+    # add saturation line
+    sat <- do.call(geom_satline, sat_style)
+
+    structure(p + mask + sat, class = c("ggpsychro", "gg", "ggplot"))
 }
 # }}}
 
 # package options {{{
-GGPSYCHRO_OPT <- new.env(parent = emptyenv())
+GGPSY_OPT <- new.env(parent = emptyenv())
 # dry-bulb temp limit in Celsius [SI]
-GGPSYCHRO_OPT$tdb_min <- -50.0
-GGPSYCHRO_OPT$tdb_max <- 100.0
+GGPSY_OPT$tdb_min <- -50.0
+GGPSY_OPT$tdb_max <- 100.0
 # humidity ratio limit in g_H2O kg_Air-1 [SI]
-GGPSYCHRO_OPT$hum_min <- 0.0
-GGPSYCHRO_OPT$hum_max <- 60.0
+GGPSY_OPT$hum_min <- 0.0
+GGPSY_OPT$hum_max <- 60.0
+# all known ggplot x aes
+GGPSY_OPT$x_aes <- c("x", "xmin", "xmax", "xend", "xintercept", "xmin_final",
+    "xmax_final", "xlower", "xmiddle", "xupper", "x0")
+# all known ggplot y aes
+GGPSY_OPT$y_aes <- c("y", "ymin", "ymax", "yend", "yintercept", "ymin_final",
+    "ymax_final", "lower", "middle", "upper", "y0")
 # }}}
 
 # get_tdb_limits {{{
 get_tdb_limits <- function (units) {
     if (units == "SI") {
-        c(GGPSYCHRO_OPT$tdb_min, GGPSYCHRO_OPT$tdb_max)
+        c(GGPSY_OPT$tdb_min, GGPSY_OPT$tdb_max)
     } else if (units == "IP") {
-        bid_conv(c(GGPSYCHRO_OPT$tdb_min, GGPSYCHRO_OPT$tdb_max), "F")
+        bid_conv(c(GGPSY_OPT$tdb_min, GGPSY_OPT$tdb_max), "F")
     }
 }
 # }}}
 # get_hum_limits {{{
 get_hum_limits <- function (units) {
     if (units == "SI") {
-        c(GGPSYCHRO_OPT$hum_min, GGPSYCHRO_OPT$hum_max)
+        c(GGPSY_OPT$hum_min, GGPSY_OPT$hum_max)
     } else if (units == "IP") {
-        bid_conv(c(GGPSYCHRO_OPT$hum_min, GGPSYCHRO_OPT$hum_max), "Gr")
+        bid_conv(c(GGPSY_OPT$hum_min, GGPSY_OPT$hum_max), "Gr")
     }
 }
 # }}}

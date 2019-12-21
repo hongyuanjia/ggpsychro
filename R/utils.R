@@ -48,6 +48,22 @@ decode_units <- function (code) {
 # }}}
 # }}}
 
+# bid_conv {{{
+# bidirectional conversion
+bid_conv <- function (x, to) {
+    switch(to,
+        "F" = get_f_from_c(x),
+        "C" = get_c_from_f(x),
+        "Gr" = get_gr_from_g(x),
+        "G" = get_g_from_gr(x)
+    )
+}
+get_f_from_c <- function (x) x * 9. / 5. + 32.
+get_c_from_f <- function (x) (x - 32) * 5. / 9.
+get_g_from_gr <- function (x) x / 7.
+get_gr_from_g <- function (x) x * 7.
+# }}}
+
 # The units of humidity ratio is lb_H2O lb_Air-1 [IP] or kg_H2O kg_Air-1 [SI],
 # but for Psychrometric Chart, we use gr_H2O lb_Air-1 [IP] or g_H2O kg_Air-1
 # [SI]. Should amplify before plotting or do reversely during calculation
@@ -69,18 +85,24 @@ narrow_hum <- function (hum, units) {
     }
 }
 # }}}
-# bid_conv {{{
-# bidirectional conversion
-bid_conv <- function (x, to) {
-    switch(to,
-        "F" = get_f_from_c(x),
-        "C" = get_c_from_f(x),
-        "Gr" = get_gr_from_g(x),
-        "G" = get_g_from_gr(x)
-    )
+
+# The units of enthalpy is J kg-1 [SI], but for Psychrometric Chart, we use kJ
+# kg-1 [SI]. Should amplify before plotting or do reversely during calculation
+# amplify_enth {{{
+amplify_enth <- function (enth, units) {
+    if (units == "SI") {
+        enth * 1000.0
+    } else {
+        enth
+    }
 }
-get_f_from_c <- function (x) x * 9. / 5. + 32.
-get_c_from_f <- function (x) (x - 32) * 5. / 9.
-get_g_from_gr <- function (x) x / 7.
-get_gr_from_g <- function (x) x * 7.
+# }}}
+# narrow_enth {{{
+narrow_enth <- function(enth, units) {
+    if (units == "SI") {
+         enth / 1000.0
+    } else {
+         enth
+    }
+}
 # }}}
