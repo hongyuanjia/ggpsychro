@@ -19,7 +19,7 @@ Suggests:
     covr
 Remotes:
     hongyuanjia/psychrolib/src/r@r_package
-License: GPL-3
+License: MIT + file LICENSE
 URL: https://github.com/hongyuanjia/ggpsychro
 BugReports: https://github.com/hongyuanjia/ggpsychro/issues
 Encoding: UTF-8

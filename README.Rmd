@@ -141,7 +141,9 @@ Hongyuan Jia
 
 ## License
 
-The project is released under the terms of GPL3 License.
+The project is released under the terms of MIT License.
+
+Copyright © 2019 Hongyuan Jia
 
 ## Contribute
 
