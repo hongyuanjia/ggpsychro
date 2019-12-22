@@ -10,9 +10,9 @@ Authors@R:
 Description:
     'ggplot2' extension for making pyschrometric charts
 Depends:
-    R (>= 3.2)
+    R (>= 3.2),
+    ggplot2 (>= 3.0.0)
 Imports:
-    ggplot2,
     psychrolib
 Suggests:
     testthat,
