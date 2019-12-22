@@ -4,16 +4,25 @@ is.ggpsychro <- function (x) {
 }
 # }}}
 
-# print.ggpsychro {{{
+#' @importFrom ggplot2 ggplot_build
 #' @export
-print.ggpsychro <- function (x, ...) {
-    x <- cover_mask(x)
+# ggplot_build.ggpsychro {{{
+ggplot_build.ggpsychro <- function (plot) {
+    plot <- cover_mask(plot)
     NextMethod()
 }
-
-#' @export
-plot.ggpsychro <- print.ggpsychro
 # }}}
+
+## print.ggpsychro {{{
+##' @export
+#print.ggpsychro <- function (x, ...) {
+#    x <- cover_mask(x)
+#    NextMethod()
+#}
+
+##' @export
+#plot.ggpsychro <- print.ggpsychro
+## }}}
 
 # layer_names {{{
 # get all layer names
@@ -31,9 +40,9 @@ cover_mask <- function (gg) {
     # get the last mask layer
     pos_m <- which(nm == "GeomMaskArea")
     # get the last sat layer
-    pos_s <- which(nm == "GeomSatLine")
+    pos_s <- which(nm == "GeomLineSat")
 
-    if (!length(pos_m) || !length(pos_s)) return(gg)
+    if (!length(pos_m) && !length(pos_s)) return(gg)
 
     # remove the last mask layer to the end
     if (length(pos_m) > 1L) pos_m <- max(pos_m)

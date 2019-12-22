@@ -113,7 +113,7 @@ ggpsychro <- function (data = NULL, mapping = aes(),
     mask <- do.call(geom_maskarea, mask_style)
 
     # add saturation line
-    sat <- do.call(geom_satline, sat_style)
+    sat <- do.call(geom_line_sat, sat_style)
 
     structure(p + mask + sat, class = c("ggpsychro", "gg", "ggplot"))
 }

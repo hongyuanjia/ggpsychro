@@ -106,3 +106,21 @@ narrow_enth <- function(enth, units) {
     }
 }
 # }}}
+
+# slope {{{
+slope <- function (x, y, xend, yend) {
+    (yend - y) / (xend - x)
+}
+# }}}
+# adopted from thomasp85/ggraph/R/utils.R
+# line_angle {{{
+line_angle <- function(x, y, xend, yend, degrees = TRUE) {
+    angles <- atan(slope(x, y, xend, yend))
+    angles[angles < 0] <- angles[angles < 0] + 2 * pi
+    if (degrees) {
+        angles * 360 / (2 * pi)
+    } else {
+        angles
+    }
+}
+# }}}
