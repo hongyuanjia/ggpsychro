@@ -88,16 +88,14 @@ between each value.
 
 ``` r
 ggpsychro() +
-    geom_grid_relhum(step = 20) +
-    geom_grid_wetbulb(step = 15) +
-    geom_grid_vappres(step = 1000) +
-    geom_grid_specvol(step = 0.05) +
-    geom_grid_enthalpy(step = 50)
+    geom_grid_relhum(step = 20, label_loc = 0.8) +
+    geom_grid_wetbulb(step = 15, label_loc = 0.1) +
+    geom_grid_vappres(step = 1000, label = c(1000, 3000, 5000), label_loc = 0.95) +
+    geom_grid_specvol(step = 0.05, label_loc = 0.9) +
+    geom_grid_enthalpy(step = 50, label_loc = 0.9)
 ```
 
 <img src="man/figures/README-grid-1.png" width="60%" style="display: block; margin: auto;" />
-
-Every geom comes together with an
 
 ### Stat
 
@@ -121,10 +119,9 @@ Working together with ggplot2 orignal geoms is as simple as change
 library(ggplot2)
 library(eplusr) # for reading EPW data
 epw <- read_epw(file.path(eplus_config(8.8)$dir, "WeatherData/USA_CO_Golden-NREL.724666_TMY3.epw"))
-data <- epw$data()
 
-ggpsychro(epw$data()) +
-    geom_grid_relhum(step = 10) +
+ggpsychro(epw$data()[month %in% 5:8]) +
+    geom_grid_relhum(step = 10, label_loc = 0.9) +
     geom_point(aes(dry_bulb_temperature, relative_humidity), stat = "rel_hum", alpha = 0.1) +
     facet_wrap(~month, labeller = as_labeller(function (x) paste0("Month: ", x)))
 ```
@@ -133,6 +130,8 @@ ggpsychro(epw$data()) +
 
 ``` r
 ggpsychro(tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
+    geom_grid_relhum(step = 10, label_loc = 0.9) +
+    geom_grid_wetbulb(step = 10, label_loc = 0.1) +
     # 18 wet-bulb line with dry-bulb from 20 - 30
     geom_line(aes(x = 20:30, y = 18), stat = "wet_bulb") +
     # temperature range 24-28 with relative humidity from 40%-60%
