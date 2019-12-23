@@ -1,3 +1,6 @@
+#' @include scale.R
+NULL
+
 #' @rdname ggpsychro-extensions
 #' @format NULL
 #' @usage NULL
@@ -16,6 +19,18 @@ GeomLineSat <- ggproto("GeomLineSat", GeomLine,
 
         data <- compute_gridline_panel_data(data, panel_params, coord,
             vlim = c(1.0, 1.0), step = 1L)
+
+        # calculate hum ratio at each relative humidity
+        data$y <- with_units(units, GetHumRatioFromRelHum(data$x, data$var, data$pres))
+
+        data <- clean_grid_panel_data(data)
+
+        GeomLine$draw_panel(data, panel_params, coord)
+    },
+
+    default_aes = aes(colour = "#DA251D", size = 1, linetype = 1, alpha = NA)
+)
+# }}}
 
         # calculate hum ratio at each relative humidity
         data$y <- amplify_hum(with_units(units, GetHumRatioFromRelHum(data$x, data$var, data$pres)), units)

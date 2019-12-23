@@ -13,17 +13,6 @@ ggplot_build.ggpsychro <- function (plot) {
 }
 # }}}
 
-## print.ggpsychro {{{
-##' @export
-#print.ggpsychro <- function (x, ...) {
-#    x <- cover_mask(x)
-#    NextMethod()
-#}
-
-##' @export
-#plot.ggpsychro <- print.ggpsychro
-## }}}
-
 # layer_names {{{
 # get all layer names
 layer_names <- function (gg) {

@@ -1,3 +1,6 @@
+#' @include scale.R
+NULL
+
 #' @rdname ggpsychro-extensions
 #' @format NULL
 #' @usage NULL

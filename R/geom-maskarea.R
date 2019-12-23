@@ -50,7 +50,7 @@ GeomMaskArea <- ggproto("GeomMaskArea", GeomPolygon,
         # create tdb seqs
         tdb <- seq(ranges$x[[1L]], ranges$x[[2L]], length.out = data$n[[1L]])
         # calculate hum ratio at saturation
-        hum <- amplify_hum(with_units(units, GetHumRatioFromRelHum(tdb, 1.0, pres)), units)
+        hum <- with_units(units, GetHumRatioFromRelHum(tdb, 1.0, pres))
         # include the first and the last
         tdb <- c(ranges$x[[1L]], tdb, ranges$x[[2L]])
         hum <- c(ranges$y[[2L]], hum, ranges$y[[2L]])

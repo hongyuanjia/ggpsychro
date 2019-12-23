@@ -106,8 +106,12 @@ ggpsychro <- function (data = NULL, mapping = aes(),
         }
     })
 
+    # scales
+    xs <- scale_drybulb_continuous(units = units)
+    ys <- scale_humratio_continuous(units = units)
+
     # combine
-    p <- base + coord + lab + scale_y_continuous(position = "right") + theme_psychro()
+    p <- base + coord + lab + xs + ys + theme_psychro()
 
     # add mask
     mask <- do.call(geom_maskarea, mask_style)
