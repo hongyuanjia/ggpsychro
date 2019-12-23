@@ -275,7 +275,7 @@ init_grid_data <- function (data) {
 # compute_gridline_panel_data {{{
 compute_gridline_panel_data <- function (data, panel_params, coord,
                                          xlim = NULL, vlim = NULL, step = NULL) {
-    if (is.null(xlim)) xlim <- coord$limits$x
+    if (is.null(xlim)) xlim <- coord$backtransform_range(panel_params)$x
     if (is.null(vlim)) vlim <- xlim
     if (is.null(step)) step <- data$step
 
