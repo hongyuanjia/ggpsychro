@@ -34,6 +34,8 @@ the plot data. The return value must be a \code{data.frame}, and
 will be used as the layer data. A \code{function} can be created
 from a \code{formula} (e.g. \code{~ head(.x, 10)}).}
 
+\item{n}{Number of points to interpolate along}
+
 \item{...}{Other arguments passed on to \code{\link[ggplot2:layer]{layer()}}. These are
 often aesthetics, used to set an aesthetic to a fixed value, like
 \code{colour = "red"} or \code{size = 3}. They may also be parameters
@@ -48,12 +50,23 @@ that define both data and aesthetics and shouldn't inherit behaviour from
 the default plot specification, e.g. \code{\link[ggplot2:borders]{borders()}}.}
 }
 \description{
-Mask all area outside of saturation line
+\code{geom_maskarea()} draws a polygon to mask all area outside of the saturation
+line. The vertices of polygon are based on current psychrometric chart's
+dry-bulb temperature (x axis) range and humidity ratio (y axis) range.
+}
+\details{
+\code{geom_maskarea()} is based on \code{\link[ggplot2:geom_polygon]{ggplot2::geom_polygon()}}, so you can further
+customize the area style in the same way.
+
+Normally there is no need to add another mask since \code{\link[=ggpsychro]{ggpsychro()}}
+calls \code{geom_maskarea()} internally and makes sure that it is always rendered
+after other layers.
 }
 \section{Aesthetics}{
 
-\code{geom_maskarea} understands the following aesthetics (required aesthetics are
-in bold).
+
+\code{geom_maskarea()} understands the following aesthetics (required aesthetics
+are in bold).
 \itemize{
 \item \strong{\code{n}}
 \item \code{color}
@@ -62,3 +75,16 @@ in bold).
 }
 }
 
+\examples{
+# by default, a mask is automatically added when calling 'ggpsychro()' function
+ggpsychro()
+
+# it can also be used in a normal ggplot2 object once the coordinate is set
+ggplot(mapping = aes(x = c(0, 30), y = c(0.0, 0.05))) +
+    geom_maskarea(aes(units = "SI", pres = 101325))
+
+# the line style can be further customized like 'ggplot2::geom_line()'
+ggplot(mapping = aes(x = c(0, 30), y = c(0.0, 0.05))) +
+    geom_maskarea(aes(units = "SI", pres = 101325), color = "blue", fill = "green")
+
+}

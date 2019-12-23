@@ -1,19 +1,45 @@
-# geom_maskarea {{{
 #' Mask all area outside of saturation line
+#'
+#' `geom_maskarea()` draws a polygon to mask all area outside of the saturation
+#' line. The vertices of polygon are based on current psychrometric chart's
+#' dry-bulb temperature (x axis) range and humidity ratio (y axis) range.
+#'
+#' `geom_maskarea()` is based on [ggplot2::geom_polygon()], so you can further
+#' customize the area style in the same way.
+#'
+#' Normally there is no need to add another mask since [ggpsychro()]
+#' calls `geom_maskarea()` internally and makes sure that it is always rendered
+#' after other layers.
 #'
 #' @inheritParams ggplot2::layer
 #' @inheritParams ggplot2::geom_polygon
 #'
+#' @param n Number of points to interpolate along
+#'
 #' @section Aesthetics:
-#' `geom_maskarea` understands the following aesthetics (required aesthetics are
-#' in bold).
+#'
+#' `geom_maskarea()` understands the following aesthetics (required aesthetics
+#' are in bold).
 #'
 #' - **`n`**
 #' - `color`
 #' - `size`
 #' - `linetype`
 #'
+#' @examples
+#' # by default, a mask is automatically added when calling 'ggpsychro()' function
+#' ggpsychro()
+#'
+#' # it can also be used in a normal ggplot2 object once the coordinate is set
+#' ggplot(mapping = aes(x = c(0, 30), y = c(0.0, 0.05))) +
+#'     geom_maskarea(aes(units = "SI", pres = 101325))
+#'
+#' # the line style can be further customized like 'ggplot2::geom_line()'
+#' ggplot(mapping = aes(x = c(0, 30), y = c(0.0, 0.05))) +
+#'     geom_maskarea(aes(units = "SI", pres = 101325), color = "blue", fill = "green")
+#'
 #' @export
+# geom_maskarea {{{
 geom_maskarea <- function (mapping = NULL, data = NULL, n = 201, ..., na.rm = FALSE, inherit.aes = TRUE) {
     layer(data = data, mapping = mapping, stat = "identity", geom = GeomMaskArea,
           position = "identity", show.legend = FALSE, inherit.aes = inherit.aes,

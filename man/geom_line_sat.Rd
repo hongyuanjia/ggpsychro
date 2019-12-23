@@ -76,19 +76,15 @@ aesthetics that control the calculation of the saturation line points
 }
 
 \examples{
-
-# by default, a saturation line is automatically added when calling
-'ggpsychro()' function
+# by default, a saturation line is automatically added when calling 'ggpsychro()' function
 ggpsychro()
 
 # it can also be used in a normal ggplot2 object once the coordinate is set
 ggplot() +
-    coord_cartesian(c(10, 30), c(0.01, 0.05)) +
     geom_line_sat(aes(units = "SI", pres = 101325))
 
 # the line style can be further customized like 'ggplot2::geom_line()'
 ggplot() +
-    coord_cartesian(c(10, 30), c(0.01, 0.05)) +
     geom_line_sat(aes(units = "SI", pres = 101325), color = "blue", size = 2)
 
 }
