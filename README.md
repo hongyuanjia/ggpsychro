@@ -15,7 +15,7 @@ coverage](https://codecov.io/gh/hongyuanjia/ggpsychro/branch/master/graph/badge.
 status](https://www.r-pkg.org/badges/version/ggpsychro)](https://CRAN.R-project.org/package=ggpsychro)
 <!-- badges: end -->
 
-> ‘ggplot2’ extension for making pyschrometric charts.
+> ‘ggplot2’ extension for making psychrometric charts.
 
 ## Installation
 
