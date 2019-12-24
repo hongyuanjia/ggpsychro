@@ -13,7 +13,8 @@ Depends:
     R (>= 3.2),
     ggplot2 (>= 3.0.0)
 Imports:
-    psychrolib
+    psychrolib,
+    scales (>= 1.1.0)
 Suggests:
     testthat,
     covr
@@ -37,6 +38,7 @@ Collate:
     'geom-maskarea.R'
     'ggproto-classes.R'
     'ggpsychro-package.R'
+    'label.R'
     'plot.R'
     'psychro-extra.R'
     'stat.R'

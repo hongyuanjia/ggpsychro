@@ -41,11 +41,7 @@ relhum_trans <- function (units) {
         transform = function (x) x * 100.0,
         inverse = function (x) x / 100.0,
         domain = c(-100.0, 100.0),
-        format = function (x) {
-            x[1L] <- paste("RH", x[1L], "%")
-            x[-1L] <- paste(x[-1L], "%")
-            x
-        }
+        format = label_relhum(units = units)
     )
 }
 # }}}
@@ -58,12 +54,7 @@ wetbulb_trans <- function (units) {
     units <- match.arg(units, c("SI", "IP"))
     trans_new("wetbulb", "force", "force",
         domain = get_tdb_limits(units),
-        format = function (x) {
-            symbol <- switch(units, SI = expression(degree*C), IP = expression(degree*F))
-            x[1L] <- paste0("Wet-bulb ~", x[1L], "*", symbol)
-            x[-1L] <- paste0(x[-1L], "*", symbol)
-            x
-        }
+        format = label_wetbulb(units = units)
     )
 }
 # }}}
@@ -75,17 +66,7 @@ wetbulb_trans <- function (units) {
 vappres_trans <- function (units) {
     units <- match.arg(units, c("SI", "IP"))
     trans_new("vappres", "force", "force",
-        format = function (x) {
-            x <- sprintf("%.2f", x / 1000.0)
-            if (units == "SI") {
-                x[1L] <- paste("Vapor Pressure", x[1L], "kPa")
-                x[-1L] <- paste(x[-1L], "kPa")
-            } else {
-                x[1L] <- paste(x[1L], "kPsi")
-                x[-1L] <- paste(x[-1L], "kPsi")
-            }
-            x
-        }
+        format = label_vappres(units = units)
     )
 }
 # }}}
@@ -97,16 +78,7 @@ vappres_trans <- function (units) {
 specvol_trans <- function (units) {
     units <- match.arg(units, c("SI", "IP"))
     trans_new("specvol", "force", "force",
-        format = function (x) {
-            x <- sprintf("%.2f", x)
-            if (units == "SI") {
-                x[1L] <- paste0("'Specific vol'*", x[1L], "* m^3 / kg")
-                x[-1L] <- paste0(x[-1L], " * m^3 / kg")
-            } else {
-                x[1L] <- paste0("'Specific vol'*", x[1L], "* ft^3 / lb")
-                x[-1L] <- paste0(x[-1L], " * ft^3 / lb")
-            }
-        }
+        format = label_specvol(units = units)
     )
 }
 # }}}
@@ -120,17 +92,7 @@ enthalpy_trans <- function (units) {
     trans_new("enthalpy",
         transform = function (x) narrow_enth(x, units),
         inverse = function (x) amplify_hum(x, units),
-        format = function (x) {
-            x <- round(x, digits = 2)
-            if (units == "SI") {
-                x[1L] <- paste0("Enthalpy ", x[1L], " kJ / kg")
-                x[-1L] <- paste0(x[-1L], " KJ / kg")
-            } else {
-                x[1L] <- paste0("Enthalpy ", x[1L], " Btu / lb")
-                x[-1L] <- paste0(x[-1L], " Btu / lb")
-            }
-            x
-        }
+        format = label_enthalpy(units = units)
     )
 }
 # }}}

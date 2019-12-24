@@ -16,7 +16,7 @@ scale_drybulb_continuous(
   minor_breaks = waiver(),
   labels = waiver(),
   limits = NULL,
-  units = "SI",
+  units = waiver(),
   ...
 )
 
@@ -26,7 +26,7 @@ scale_humratio_continuous(
   minor_breaks = waiver(),
   labels = waiver(),
   limits = NULL,
-  units = "SI",
+  units = waiver(),
   ...
 )
 
@@ -34,8 +34,7 @@ scale_grid_relhum(
   breaks = waiver(),
   minor_breaks = waiver(),
   labels = waiver(),
-  units = "SI",
-  position = "right",
+  units = waiver(),
   ...
 )
 
@@ -44,8 +43,7 @@ scale_grid_wetbulb(
   minor_breaks = waiver(),
   labels = waiver(),
   limits = NULL,
-  units = "SI",
-  position = "right",
+  units = waiver(),
   ...
 )
 
@@ -54,8 +52,7 @@ scale_grid_vappres(
   minor_breaks = waiver(),
   labels = waiver(),
   limits = NULL,
-  units = "SI",
-  position = "right",
+  units = waiver(),
   ...
 )
 
@@ -64,8 +61,7 @@ scale_grid_specvol(
   minor_breaks = waiver(),
   labels = waiver(),
   limits = NULL,
-  units = "SI",
-  position = "right",
+  units = waiver(),
   ...
 )
 
@@ -74,8 +70,7 @@ scale_grid_enthalpy(
   minor_breaks = waiver(),
   labels = waiver(),
   limits = NULL,
-  units = "SI",
-  position = "right",
+  units = waiver(),
   ...
 )
 }
@@ -123,13 +118,13 @@ Use \code{NA} to refer to the existing minimum or maximum
 new limits
 }}
 
-\item{units}{A string indicating the system of units chosen. Should be either
-\code{"SI"} or \code{"IP"}.}
+\item{units}{A string indicating the system of units chosen. Should be:
+\itemize{
+\item \code{waiver()} for using the parent plot units set in \code{\link[=ggpsychro]{ggpsychro()}}
+\item Either \code{SI} or \code{"IP"}
+}}
 
 \item{...}{Other arguments passed on to \code{scale_(x|y)_continuous()}}
-
-\item{position}{The position of the axis. "left" or "right" for vertical
-scales, "top" or "bottom" for horizontal scales}
 }
 \description{
 Transformation object for psychrometric chart
