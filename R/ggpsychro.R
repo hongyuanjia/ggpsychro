@@ -86,6 +86,10 @@ ggpsychro <- function (data = NULL, mapping = aes(),
     # base
     base <- ggplot(data = data, mapping = mapping, environment = parent.frame())
 
+    # store units and pressure
+    base$psychro$units <- units
+    base$psychro$pressure <- pres
+
     # set plot axes limit
     if (mollier) {
         coord <- coord_flip(xlim = tdb_lim, ylim = hum_lim, expand = FALSE)

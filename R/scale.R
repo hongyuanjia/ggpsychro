@@ -6,25 +6,21 @@ NULL
 #' @inheritParams ggplot2::continuous_scale
 #' @inheritParams ggplot2::scale_x_continuous
 #'
-#' @param units A string indicating the system of units chosen. Should be either
-#'        `"SI"` or `"IP"`.
+#' @param units A string indicating the system of units chosen. Should be:
+#' * `waiver()` for using the parent plot units set in [ggpsychro()]
+#' * Either `SI` or `"IP"`
 #'
 #' @rdname scale
 #' @importFrom ggplot2 continuous_scale
 #' @export
 # scale_drybulb_continuous {{{
 scale_drybulb_continuous <- function (name = waiver(), breaks = waiver(), minor_breaks = waiver(), labels = waiver(),
-                                      limits = NULL, units = "SI", ...) {
-    cs <- continuous_scale(
+                                      limits = NULL, units = waiver(), ...) {
+    psychro_continuous_scale(
         c("x", "xmin", "xmax", "xend", "xintercept", "xmin_final", "xmax_final", "xlower", "xmiddle", "xupper", "x0"),
-        "position_c", identity, name = name,
+        "drybulb", identity, name = name,
         breaks = breaks, minor_breaks = minor_breaks, labels = labels,
-        limits = limits, expand = c(0, 0), trans = drybulb_trans(units),
-        position = "bottom", ...
-    )
-
-    class(cs) <- c("PsyScale", class(cs))
-    cs
+        limits = limits, expand = c(0, 0), position = "bottom", ...)
 }
 # }}}
 
@@ -33,17 +29,12 @@ scale_drybulb_continuous <- function (name = waiver(), breaks = waiver(), minor_
 #' @export
 # scale_humratio_continuous {{{
 scale_humratio_continuous <- function (name = waiver(), breaks = waiver(), minor_breaks = waiver(), labels = waiver(),
-                                       limits = NULL, units = "SI", ...) {
-    cs <- continuous_scale(
+                                       limits = NULL, units = waiver(), ...) {
+    psychro_continuous_scale(
         c("y", "ymin", "ymax", "yend", "yintercept", "ymin_final", "ymax_final", "lower", "middle", "upper", "y0"),
-        "position_c", identity, name = name,
+        "humratio", identity, name = name,
         breaks = breaks, minor_breaks = minor_breaks, labels = labels,
-        limits = limits, expand = c(0, 0), trans = humratio_trans(units),
-        position = "bottom", ...
-    )
-
-    class(cs) <- c("PsyScale", class(cs))
-    cs
+        limits = limits, expand = c(0, 0), position = "bottom", ...)
 }
 # }}}
 
@@ -51,15 +42,14 @@ scale_humratio_continuous <- function (name = waiver(), breaks = waiver(), minor
 #' @importFrom ggplot2 continuous_scale
 #' @export
 # scale_grid_relhum {{{
-scale_grid_relhum <- function (breaks = waiver(), minor_breaks = waiver(), labels = waiver(),
-                               units = "SI", position = "right", ...) {
-    cs <- continuous_scale("rel_hum", "grid_relhum", identity,
+scale_grid_relhum <- function (breaks = waiver(), minor_breaks = waiver(),
+                               labels = waiver(), units = waiver(), ...) {
+    psychro_continuous_scale("grid_relhum", "grid_relhum", identity,
         name = "", breaks = breaks, minor_breaks = minor_breaks, labels = labels,
-        limits = c(0.0, 1.0), expand = c(0, 0), trans = relhum_trans(units),...
+        limits = c(0.0, 100.0), expand = c(0, 0),
+        trans = if (is.waive(units)) empty_trans() else relhum_trans(units),
+        ...
     )
-
-    class(cs) <- c("PsyScale", class(cs))
-    cs
 }
 # }}}
 
@@ -67,15 +57,14 @@ scale_grid_relhum <- function (breaks = waiver(), minor_breaks = waiver(), label
 #' @importFrom ggplot2 continuous_scale
 #' @export
 # scale_grid_wetbulb {{{
-scale_grid_wetbulb <- function (breaks = waiver(), minor_breaks = waiver(), labels = waiver(),
-                                limits = NULL, units = "SI", position = "right", ...) {
-    cs <- continuous_scale("wet_bulb", "grid_wetbulb", identity,
+scale_grid_wetbulb <- function (breaks = waiver(), minor_breaks = waiver(),
+                                labels = waiver(), limits = NULL, units = waiver(), ...) {
+    psychro_continuous_scale("grid_wetbulb", "grid_wetbulb", identity,
         name = "", breaks = breaks, minor_breaks = minor_breaks, labels = labels,
-        limits = limits, expand = c(0, 0), trans = wetbulb_trans(units), ...
+        limits = limits, expand = c(0, 0),
+        trans = if (is.waive(units)) empty_trans() else wetbulb_trans(units),
+        ...
     )
-
-    class(cs) <- c("PsyScale", class(cs))
-    cs
 }
 # }}}
 
@@ -83,15 +72,14 @@ scale_grid_wetbulb <- function (breaks = waiver(), minor_breaks = waiver(), labe
 #' @importFrom ggplot2 continuous_scale
 #' @export
 # scale_grid_vappres {{{
-scale_grid_vappres <- function (breaks = waiver(), minor_breaks = waiver(), labels = waiver(),
-                                limits = NULL, units = "SI", position = "right", ...) {
-    cs <- continuous_scale("vap_pres", "grid_vappres", identity,
+scale_grid_vappres <- function (breaks = waiver(), minor_breaks = waiver(),
+                                labels = waiver(), limits = NULL, units = waiver(), ...) {
+    psychro_continuous_scale("grid_vappres", "grid_vappres", identity,
         name = "", breaks = breaks, minor_breaks = minor_breaks, labels = labels,
-        limits = limits, expand = c(0, 0), trans = vappres_trans(units), ...
+        limits = limits, expand = c(0, 0),
+        trans = if (is.waive(units)) empty_trans() else vappres_trans(units),
+        ...
     )
-
-    class(cs) <- c("PsyScale", class(cs))
-    cs
 }
 # }}}
 
@@ -99,15 +87,14 @@ scale_grid_vappres <- function (breaks = waiver(), minor_breaks = waiver(), labe
 #' @importFrom ggplot2 continuous_scale
 #' @export
 # scale_grid_specvol {{{
-scale_grid_specvol <- function (breaks = waiver(), minor_breaks = waiver(), labels = waiver(),
-                                limits = NULL, units = "SI", position = "right", ...) {
-    cs <- continuous_scale("spc_vol", "grid_specvol", identity,
+scale_grid_specvol <- function (breaks = waiver(), minor_breaks = waiver(),
+                                labels = waiver(), limits = NULL, units = waiver(), ...) {
+    psychro_continuous_scale("grid_spcvol", "grid_specvol", identity,
         name = "", breaks = breaks, minor_breaks = minor_breaks, labels = labels,
-        limits = limits, expand = c(0, 0), trans = specvol_trans(units), ...
+        limits = limits, expand = c(0, 0),
+        trans = if (is.waive(units)) empty_trans() else specvol_trans(units),
+        ...
     )
-
-    class(cs) <- c("PsyScale", class(cs))
-    cs
 }
 # }}}
 
@@ -115,14 +102,21 @@ scale_grid_specvol <- function (breaks = waiver(), minor_breaks = waiver(), labe
 #' @importFrom ggplot2 continuous_scale
 #' @export
 # scale_grid_enthalpy {{{
-scale_grid_enthalpy <- function (breaks = waiver(), minor_breaks = waiver(), labels = waiver(),
-                                limits = NULL, units = "SI", position = "right", ...) {
-    cs <- continuous_scale("enthalpy", "grid_enthalpy", identity,
+scale_grid_enthalpy <- function (breaks = waiver(), minor_breaks = waiver(),
+                                 labels = waiver(), limits = NULL, units = waiver(), ...) {
+    psychro_continuous_scale("grid_enthalpy", "grid_enthalpy", identity,
         name = "", breaks = breaks, minor_breaks = minor_breaks, labels = labels,
-        limits = limits, expand = c(0, 0), trans = enthalpy_trans(units), ...
+        limits = limits, expand = c(0, 0),
+        trans = if (is.waive(units)) empty_trans() else enthalpy_trans(units),
+        ...
     )
+}
+# }}}
 
-    class(cs) <- c("PsyScale", class(cs))
-    cs
+# psychro_continuous_scale {{{
+psychro_continuous_scale <- function (...) {
+    sc <- continuous_scale(...)
+    class(sc) <- c("PsyScale", class(sc))
+    sc
 }
 # }}}

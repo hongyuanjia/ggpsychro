@@ -2,6 +2,17 @@
 #' @include ggpsychro.R
 NULL
 
+# empty_trans {{{
+empty_trans <- function () {
+    trans_new("empty", "force", "force", breaks = identity, minor_breaks = identity)
+}
+# }}}
+# is.empty_trans {{{
+is.empty_trans <- function (trans) {
+    trans$name == "empty"
+}
+# }}}
+
 #' Create transformation objects for psychrometric chart
 #'
 #' @param units A string indicating the system of units chosen. Should be either
@@ -38,8 +49,8 @@ humratio_trans <- function (units) {
 relhum_trans <- function (units) {
     units <- match.arg(units, c("SI", "IP"))
     trans_new("relhum",
-        transform = function (x) x * 100.0,
-        inverse = function (x) x / 100.0,
+        transform = function (x) x / 100.0,
+        inverse = function (x) x * 100.0,
         domain = c(-100.0, 100.0),
         format = label_relhum(units = units)
     )

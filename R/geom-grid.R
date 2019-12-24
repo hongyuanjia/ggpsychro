@@ -1,29 +1,48 @@
-#' Draw constant psychrometric properties grids
+#' Draw saturation line
 #'
-#' @details
+#' `geom_line_sat()` draws a saturation line based on current psychrometric
+#' chart's dry-bulb temperature (x axis) range and humidity ratio (y axis)
+#' range.
 #'
-#' * `geom_line_sat` for saturation line.
-#' * `geom_grid_relhum` for relative humidity grid in range [0, 100] in %
-#' * `geom_grid_wetbulb` for wet-bulb temperature grid in °F [IP] or °C [SI]
-#' * `geom_grid_vappres` for partial pressure grid of water vapor in Psi [IP]
-#'   or Pa [SI]
-#' * `geom_grid_specvol` for specific volume grid in ft3 lb-1 of dry air [IP] or
-#'    in m3 kg-1 of dry air [SI]
-#' * `geom_grid_enthalpy` for moist air enthalpy grid in Btu lb-1 [IP] or kJ kg-1
+#' `geom_line_sat()` is based on [ggplot2::geom_line()], so you can further
+#' customize the line style in the same way.
 #'
-#' What these [ggplot2::ggproto()] objects do are to take input values,
-#' calculate the corresponding humidity ratio and replace the `y` aesthetic
-#' values in each group.
+#' Normally there is no need to add another saturation line since [ggpsychro()]
+#' calls `geom_line_sat()` internally and makes sure that it is always rendered
+#' at the last.
 #'
 #' @inheritParams ggplot2::layer
-#' @inheritParams ggplot2::geom_point
+#' @inheritParams ggplot2::geom_line
+#'
+#' @param n Number of points to interpolate along
+#'
+#' @section Aesthetics:
+#'
+#' `geom_line_sat()` is drawing using [ggplot2::geom_line()] so support the
+#' same aesthetics: `alpha`, `color`, `linetype` and `size`. It also has
+#' aesthetics that control the calculation of the saturation line points
+#' (required aesthetics are in bold):
+#'
+#' - **`units`**: the unit system to be used. Should be either `"SI"` or `"IP"`.
+#' - **`pres`**: the atmosphere pressure in Psi [IP] or Pa [SI]
+#'
+#' @seealso [ggpsychro()]
+#' @examples
+#' # by default, a saturation line is automatically added when calling 'ggpsychro()' function
+#' ggpsychro()
+#'
+#' # it can also be used in a normal ggplot2 object once the coordinate is set
+#' ggplot() +
+#'     geom_line_sat(aes(units = "SI", pres = 101325))
+#'
+#' # the line style can be further customized like 'ggplot2::geom_line()'
+#' ggplot() +
+#'     geom_line_sat(aes(units = "SI", pres = 101325), color = "blue", size = 2)
 #'
 #' @export
-#' @importFrom ggplot2 layer GeomLine
-#' @rdname geom_grid
 # geom_line_sat {{{
 geom_line_sat <- function (mapping = NULL, data = NULL, n = 201, ..., na.rm = FALSE, inherit.aes = TRUE) {
-    layer(data = data, mapping = mapping, stat = "identity", geom = GeomLineSat,
+    psychro_layer(data = data, mapping = mapping, stat = "identity", geom = GeomLineSat,
           position = "identity", show.legend = FALSE, inherit.aes = inherit.aes,
           params = list(n = n, na.rm = na.rm, ...)
     )
@@ -138,4 +157,22 @@ geom_grid_enthalpy <- function (mapping = NULL, data = NULL, step = 20, label = 
         )
     )
 }
+# }}}
+
+# get_grid_type {{{
+get_grid_type <- function (layer) {
+    nm <- names(.grid_type)[.grid_type %in% class(layer$geom)]
+    if (!length(nm)) return(NA_character_)
+    paste0("grid_", nm)
+}
+# }}}
+
+# .grid_type {{{
+.grid_type <- c(
+    relhum = "GeomGridRelHum",
+    wetbulb = "GeomGridWetBulb",
+    vappres = "GeomGridVapPres",
+    specvol = "GeomGridSpecVol",
+    enthalpy = "GeomGridEnthalpy"
+)
 # }}}

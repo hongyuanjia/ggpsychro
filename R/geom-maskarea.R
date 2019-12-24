@@ -41,7 +41,7 @@
 #' @export
 # geom_maskarea {{{
 geom_maskarea <- function (mapping = NULL, data = NULL, n = 201, ..., na.rm = FALSE, inherit.aes = TRUE) {
-    layer(data = data, mapping = mapping, stat = "identity", geom = GeomMaskArea,
+    psychro_layer(data = data, mapping = mapping, stat = "identity", geom = GeomMaskArea,
           position = "identity", show.legend = FALSE, inherit.aes = inherit.aes,
           params = list(n = n, na.rm = na.rm, ...)
     )
