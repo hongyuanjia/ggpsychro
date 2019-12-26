@@ -259,19 +259,18 @@ GeomGridRelHum <- ggproto("GeomGridRelHum", GeomPath,
     extra_params = c("label", "na.rm"),
 
     default_aes = aes(
-        colour = "#00126B", size = 0.5, linetype = "twodash", alpha = 0.7,
-        label.colour = "#00126B", label.size = 3.88, label.angle = 0, label.hjust = 1.0,
-        label.vjust = -0.3, label.alpha = 0.7, label.family = "", label.fontface = 1, label.lineheight = 1.2
+        colour = "#00126B", size = 0.5, linetype = "twodash", alpha = 0.85,
+        label.colour = "#00126B", label.size = 3.2, label.angle = 0, label.hjust = 1.0,
+        label.vjust = -0.3, label.alpha = 0.85, label.family = "", label.fontface = 1, label.lineheight = 1.2
     ),
-
     setup_data = function (self, data, params) {
         data[order(data$PANEL, data$group, data$relhum), ]
     },
 
     draw_panel = function(self, data, panel_params, coord, label_loc = NULL,
                           label_parse = FALSE, label.color = "#00126B",
-                          label.size = 3.88, label.angle = 0, label.hjust = 1.0,
-                          label.vjust = -0.3, label.alpha = 0.7, label.family = "",
+                          label.size = 3.2, label.angle = 0, label.hjust = 1.0,
+                          label.vjust = -0.3, label.alpha = 0.85, label.family = "",
                           label.fontface = 1, label.lineheight = 1.2) {
         build_grid_panel_grob("relhum", self, data, panel_params, coord, label_loc, label_parse)
     }
@@ -290,9 +289,9 @@ GeomGridWetBulb <- ggproto("GeomGridWetBulb", GeomLine,
     extra_params = c("label", "na.rm"),
 
     default_aes = aes(
-        colour = "#015756", size = 0.5, linetype = "twodash", alpha = 0.7,
-        label.colour = "#015756", label.size = 3.88, label.angle = 0, label.hjust = 0.0,
-        label.vjust = -0.3, label.alpha = 0.7, label.family = "", label.fontface = 1,
+        colour = "#015756", size = 0.5, linetype = "twodash", alpha = 0.85,
+        label.colour = "#015756", label.size = 3.2, label.angle = 0, label.hjust = 0.0,
+        label.vjust = -0.3, label.alpha = 0.85, label.family = "", label.fontface = 1,
         label.lineheight = 1.2
     ),
 
@@ -302,8 +301,8 @@ GeomGridWetBulb <- ggproto("GeomGridWetBulb", GeomLine,
 
     draw_panel = function(self, data, panel_params, coord, label_loc = NULL,
                           label_parse = TRUE, label.color = "#015756",
-                          label.size = 3.88, label.angle = 0, label.hjust = 0.0,
-                          label.vjust = -0.3, label.alpha = 0.7, label.family = "",
+                          label.size = 3.2, label.angle = 0, label.hjust = 0.0,
+                          label.vjust = -0.3, label.alpha = 0.85, label.family = "",
                           label.fontface = 1, label.lineheight = 1.2) {
         build_grid_panel_grob("wetbulb", self, data, panel_params, coord, label_loc, label_parse)
     }
@@ -322,9 +321,9 @@ GeomGridVapPres <- ggproto("GeomGridVapPres", GeomLine,
     extra_params = c("label", "na.rm"),
 
     default_aes = aes(
-        colour = "#941919", size = 0.5, linetype = 2, alpha = 0.7,
-        label.colour = "#941919", label.size = 3.88, label.angle = 0, label.hjust = 0.0,
-        label.vjust = -0.3, label.alpha = 0.7, label.family = "", label.fontface = 1,
+        colour = "#941919", size = 0.5, linetype = 2, alpha = 0.85,
+        label.colour = "#941919", label.size = 3.2, label.angle = 0, label.hjust = 0.0,
+        label.vjust = -0.3, label.alpha = 0.85, label.family = "", label.fontface = 1,
         label.lineheight = 1.2
     ),
 
@@ -334,8 +333,8 @@ GeomGridVapPres <- ggproto("GeomGridVapPres", GeomLine,
 
     draw_panel = function(self, data, panel_params, coord, label_loc = NULL,
                           label_parse = FALSE, label.color = "#941919",
-                          label.size = 3.88, label.angle = 0, label.hjust = 0.0,
-                          label.vjust = -0.3, label.alpha = 0.7, label.family = "",
+                          label.size = 3.2, label.angle = 0, label.hjust = 0.0,
+                          label.vjust = -0.3, label.alpha = 0.85, label.family = "",
                           label.fontface = 1, label.lineheight = 1.2) {
         build_grid_panel_grob("vappres", self, data, panel_params, coord, label_loc, label_parse)
     }
@@ -354,9 +353,9 @@ GeomGridSpecVol <- ggproto("GeomGridSpecVol", GeomLine,
     extra_params = c("label", "na.rm"),
 
     default_aes = aes(
-        colour = "#108860", size = 0.5, linetype = 1, alpha = 0.7,
-        label.colour = "#108860", label.size = 3.88, label.angle = 0, label.hjust = 1.0,
-        label.vjust = -0.3, label.alpha = 0.7, label.family = "", label.fontface = 1,
+        colour = "#108860", size = 0.5, linetype = 1, alpha = 0.85,
+        label.colour = "#108860", label.size = 3.2, label.angle = 0, label.hjust = 1.0,
+        label.vjust = -0.3, label.alpha = 0.85, label.family = "", label.fontface = 1,
         label.lineheight = 1.2
     ),
 
@@ -366,8 +365,8 @@ GeomGridSpecVol <- ggproto("GeomGridSpecVol", GeomLine,
 
     draw_panel = function(self, data, panel_params, coord, label_loc = NULL,
                           label_parse = FALSE, label.color = "#108860",
-                          label.size = 3.88, label.angle = 0, label.hjust = 0.0,
-                          label.vjust = -0.3, label.alpha = 0.7, label.family = "",
+                          label.size = 3.2, label.angle = 0, label.hjust = 0.0,
+                          label.vjust = -0.3, label.alpha = 0.85, label.family = "",
                           label.fontface = 1, label.lineheight = 1.2) {
         build_grid_panel_grob("specvol", self, data, panel_params, coord, label_loc, label_parse)
     }
@@ -386,9 +385,9 @@ GeomGridEnthalpy <- ggproto("GeomGridEnthalpy", GeomLine,
     extra_params = c("label", "na.rm"),
 
     default_aes = aes(
-        colour = "#633F87", size = 0.5, linetype = "twodash", alpha = 0.7,
-        label.colour = "#633F87", label.size = 3.88, label.angle = 0, label.hjust = 1.0,
-        label.vjust = -0.3, label.alpha = 0.7, label.family = "", label.fontface = 1,
+        colour = "#633F87", size = 0.5, linetype = "twodash", alpha = 0.85,
+        label.colour = "#633F87", label.size = 3.2, label.angle = 0, label.hjust = 1.0,
+        label.vjust = -0.3, label.alpha = 0.85, label.family = "", label.fontface = 1,
         label.lineheight = 1.2
     ),
 
@@ -398,8 +397,8 @@ GeomGridEnthalpy <- ggproto("GeomGridEnthalpy", GeomLine,
 
     draw_panel = function(self, data, panel_params, coord, label_loc = NULL,
                           label_parse = TRUE, label.color = "#633F87",
-                          label.size = 3.88, label.angle = 0, label.hjust = 1.0,
-                          label.vjust = -0.3, label.alpha = 0.7, label.family = "",
+                          label.size = 3.2, label.angle = 0, label.hjust = 1.0,
+                          label.vjust = -0.3, label.alpha = 0.85, label.family = "",
                           label.fontface = 1, label.lineheight = 1.2) {
         build_grid_panel_grob("enthalpy", self, data, panel_params, coord, label_loc, label_parse)
     }
