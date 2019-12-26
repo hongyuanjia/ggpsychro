@@ -1,4 +1,3 @@
-# ggpsychro {{{
 #' Create a ggpsychro plot
 #'
 #' This function is the equivalent of [ggplot2::ggplot()] in ggplot2.
@@ -61,6 +60,7 @@
 #' @importFrom psychrolib GetStandardAtmPressure
 #' @importFrom ggplot2 ggplot aes coord_cartesian coord_flip xlab ylab scale_y_continuous waiver
 #' @export
+# ggpsychro {{{
 ggpsychro <- function (data = NULL, mapping = aes(),
                        tdb_lim = c(0, 50), hum_lim = c(0, 50), altitude = 0L,
                        mask_style = waiver(), sat_style = waiver(), units = "SI",
@@ -110,12 +110,8 @@ ggpsychro <- function (data = NULL, mapping = aes(),
         }
     })
 
-    # scales
-    xs <- scale_drybulb_continuous(units = units)
-    ys <- scale_humratio_continuous(units = units)
-
     # combine
-    p <- base + coord + lab + xs + ys + theme_psychro()
+    p <- structure(base + coord + lab + theme_psychro(), class = c("ggpsychro", "gg", "ggplot"))
 
     # add mask
     mask <- do.call(geom_maskarea, mask_style)
@@ -123,67 +119,16 @@ ggpsychro <- function (data = NULL, mapping = aes(),
     # add saturation line
     sat <- do.call(geom_line_sat, sat_style)
 
-    structure(p + mask + sat, class = c("ggpsychro", "gg", "ggplot"))
+    p + mask + sat
 }
 # }}}
 
-# package options {{{
-GGPSY_OPT <- new.env(parent = emptyenv())
-# dry-bulb temp limit in Celsius [SI]
-GGPSY_OPT$tdb_min <- -50.0
-GGPSY_OPT$tdb_max <- 100.0
-# humidity ratio limit in g_H2O kg_Air-1 [SI]
-GGPSY_OPT$hum_min <- 0.0
-GGPSY_OPT$hum_max <- 60.0
-# all known ggplot x aes
-GGPSY_OPT$x_aes <- c("x", "xmin", "xmax", "xend", "xintercept", "xmin_final",
-    "xmax_final", "xlower", "xmiddle", "xupper", "x0")
-# all known ggplot y aes
-GGPSY_OPT$y_aes <- c("y", "ymin", "ymax", "yend", "yintercept", "ymin_final",
-    "ymax_final", "lower", "middle", "upper", "y0")
-# }}}
-
-# get_tdb_limits {{{
-get_tdb_limits <- function (units) {
-    if (units == "SI") {
-        c(GGPSY_OPT$tdb_min, GGPSY_OPT$tdb_max)
-    } else if (units == "IP") {
-        bid_conv(c(GGPSY_OPT$tdb_min, GGPSY_OPT$tdb_max), "F")
-    }
-}
-# }}}
-# get_hum_limits {{{
-get_hum_limits <- function (units) {
-    if (units == "SI") {
-        c(GGPSY_OPT$hum_min, GGPSY_OPT$hum_max)
-    } else if (units == "IP") {
-        bid_conv(c(GGPSY_OPT$hum_min, GGPSY_OPT$hum_max), "Gr")
-    }
-}
-# }}}
-# get_units {{{
-get_units <- function (data) {
-    u <- unique(data$units)
-
-    if (is.integer(u)) u <- decode_units(u)
-
-    if (length(u) > 1L || (!u %in% c("SI", "IP"))) {
-        stop("The system of units has to be either SI or IP.")
-    }
-
-    u
-}
-# }}}
-# get_pres {{{
-get_pres <- function (data) {
-    # check pressure
-    pres <- unique(data$pres)
-
-    if (length(pres) > 1L) {
-        warning(sprintf("Multiple atmosphere pressure value found. Only the first one will be used (%.f).", pres))
-        pres <- pres[[1L]]
-    }
-
-    pres
+#' Reports whether x is a ggplot object
+#' @param x An object to test
+#' @keywords internal
+#' @export
+# is.ggpsychro {{{
+is.ggpsychro <- function (x) {
+    inherits(x, "ggpsychro")
 }
 # }}}

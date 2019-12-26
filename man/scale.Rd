@@ -3,11 +3,11 @@
 \name{scale_drybulb_continuous}
 \alias{scale_drybulb_continuous}
 \alias{scale_humratio_continuous}
-\alias{scale_grid_relhum}
-\alias{scale_grid_wetbulb}
-\alias{scale_grid_vappres}
-\alias{scale_grid_specvol}
-\alias{scale_grid_enthalpy}
+\alias{scale_relhum}
+\alias{scale_wetbulb}
+\alias{scale_vappres}
+\alias{scale_specvol}
+\alias{scale_enthalpy}
 \title{Transformation object for psychrometric chart}
 \usage{
 scale_drybulb_continuous(
@@ -30,7 +30,7 @@ scale_humratio_continuous(
   ...
 )
 
-scale_grid_relhum(
+scale_relhum(
   breaks = waiver(),
   minor_breaks = waiver(),
   labels = waiver(),
@@ -38,16 +38,7 @@ scale_grid_relhum(
   ...
 )
 
-scale_grid_wetbulb(
-  breaks = waiver(),
-  minor_breaks = waiver(),
-  labels = waiver(),
-  limits = NULL,
-  units = waiver(),
-  ...
-)
-
-scale_grid_vappres(
+scale_wetbulb(
   breaks = waiver(),
   minor_breaks = waiver(),
   labels = waiver(),
@@ -56,7 +47,7 @@ scale_grid_vappres(
   ...
 )
 
-scale_grid_specvol(
+scale_vappres(
   breaks = waiver(),
   minor_breaks = waiver(),
   labels = waiver(),
@@ -65,7 +56,16 @@ scale_grid_specvol(
   ...
 )
 
-scale_grid_enthalpy(
+scale_specvol(
+  breaks = waiver(),
+  minor_breaks = waiver(),
+  labels = waiver(),
+  limits = NULL,
+  units = waiver(),
+  ...
+)
+
+scale_enthalpy(
   breaks = waiver(),
   minor_breaks = waiver(),
   labels = waiver(),
@@ -84,10 +84,10 @@ omitted.}
 \itemize{
 \item \code{NULL} for no breaks
 \item \code{waiver()} for the default breaks computed by the
-transformation object
+\link[scales:trans_new]{transformation object}
 \item A numeric vector of positions
 \item A function that takes the limits as input and returns breaks
-as output
+as output (e.g., a function returned by \code{\link[scales:extended_breaks]{scales::extended_breaks()}})
 }}
 
 \item{minor_breaks}{One of:
@@ -116,6 +116,9 @@ as output
 Use \code{NA} to refer to the existing minimum or maximum
 \item A function that accepts the existing (automatic) limits and returns
 new limits
+Note that setting limits on positional scales will \strong{remove} data outside of the limits.
+If the purpose is to zoom, use the limit argument in the coordinate system
+(see \code{\link[ggplot2:coord_cartesian]{coord_cartesian()}}).
 }}
 
 \item{units}{A string indicating the system of units chosen. Should be:
@@ -124,7 +127,7 @@ new limits
 \item Either \code{SI} or \code{"IP"}
 }}
 
-\item{...}{Other arguments passed on to \code{scale_(x|y)_continuous()}}
+\item{...}{Other arguments passed on to \verb{scale_(x|y)_continuous()}}
 }
 \description{
 Transformation object for psychrometric chart

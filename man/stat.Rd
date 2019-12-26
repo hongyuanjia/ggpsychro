@@ -4,7 +4,7 @@
 \alias{stat_relhum}
 \alias{stat_wetbulb}
 \alias{stat_vappres}
-\alias{stat_specheat}
+\alias{stat_specvol}
 \alias{stat_enthalpy}
 \title{Calculate psychrometric properties of moist air}
 \usage{
@@ -41,7 +41,7 @@ stat_vappres(
   inherit.aes = TRUE
 )
 
-stat_specheat(
+stat_specvol(
   mapping = NULL,
   data = NULL,
   geom = "point",
@@ -113,16 +113,45 @@ Calculate psychrometric properties of moist air
 }
 \details{
 \itemize{
-\item \code{stat_relhum} for relative humidity in range \link{0, 100} in \%
-\item \code{stat_wetbulb} for wet-bulb temperature in °F \link{IP} or °C \link{SI}
-\item \code{stat_vappres} for partial pressure of water vapor in moist air in Psi \link{IP}
-or Pa \link{SI}
-\item \code{stat_specvol} for specific volume of moist air in ft3 lb-1 of dry air \link{IP}
-or in m3 kg-1 of dry air \link{SI}
-\item \code{stat_enthalpy} for moist air enthalpy in Btu lb-1 \link{IP} or J kg-1
+\item \code{stat_relhum} requires an extra \code{relhum} aesthetics for relative humidity
+in range \link{0, 100} in \%
+\item \code{stat_wetbulb} requires an extra \code{wetbulb} aesthetics for wet-bulb
+temperature in °F \link{IP} or °C \link{SI}
+\item \code{stat_vappres} requires an extra \code{vappres} aesthetics for partial pressure
+of water vapor in moist air in Psi \link{IP} or Pa \link{SI}
+\item \code{stat_specvol} requires an extra \code{specvol} aesthetics for specific volume
+of moist air in ft3 lb-1 of dry air \link{IP} or in m3 kg-1 of dry air \link{SI}
+\item \code{stat_enthalpy} requires an extra \code{enthalpy} aesthetics for moist air
+enthalpy in Btu lb-1 \link{IP} or J kg-1
 }
 
 What these \code{\link[ggplot2:ggproto]{ggplot2::ggproto()}} objects do are to take input values,
 calculate the corresponding humidity ratio and replace the \code{y} aesthetic
 values in each group.
+
+All of stats above requires two additional aesthetics:
+\itemize{
+\item \code{units}: A single string indicating the units sytem to use. Should be
+either \code{"SI"} or \verb{"IP" or }waiver()\verb{which uses the value from the parent plot. Default:}waiver()`
+\item \code{pres}: A single number indicating the atmosphere pressure in Pa \link{SI} or
+Psi \link{IP}. If \code{waiver()}, the pressure calculated from the parent plot's
+altitude value will be used. Default: \code{waiver()}
+}
+
+However, when these stats are used inside a ggplot \verb{geom_*} as the \code{stat}
+argument, both \code{units} and \code{pres} have to be specified.
+}
+\examples{
+p <- ggpsychro() + geom_grid_relhum() # add relative humidity grid lines
+
+# draw a point with dry-bulb at 30C and relative humidity at 60\%
+p + geom_point(aes(x = 30, relhum = 0.6), stat = "relhum", size = 5)
+
+# draw a constant relative humidity line of 60\% with dry-bulb from 20C to 30C
+## use stat_* directly
+p + stat_relhum(geom = "line", aes(x = 20:30, relhum = 0.6), size = 2)
+## OR
+## use as thet `stat` argument inside an ggplot `geom_*` function
+p + geom_line(aes(x = 20:30, relhum = 0.6), stat = "relhum")
+
 }

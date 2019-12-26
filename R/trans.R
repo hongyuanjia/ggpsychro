@@ -19,12 +19,15 @@ is.empty_trans <- function (trans) {
 #'        `"SI"` or `"IP"`.
 #'
 #' @rdname trans
-#' @importFrom scales trans_new
+#' @importFrom scales trans_new extended_breaks regular_minor_breaks
 #' @export
 # drybulb_trans {{{
 drybulb_trans <- function (units) {
     units <- match.arg(units, c("SI", "IP"))
-    trans_new("drybulb", "force", "force", domain = get_tdb_limits(units))
+    trans_new("drybulb", "force", "force",
+        breaks = extended_breaks(10),
+        domain = get_tdb_limits(units)
+    )
 }
 # }}}
 
@@ -37,6 +40,7 @@ humratio_trans <- function (units) {
     trans_new("humratio",
         transform = function(hum) narrow_hum(hum, units),
         inverse = function (hum) amplify_hum(hum, units),
+        breaks = extended_breaks(10),
         domain = get_hum_limits(units),
     )
 }
@@ -48,10 +52,9 @@ humratio_trans <- function (units) {
 # relhum_trans {{{
 relhum_trans <- function (units) {
     units <- match.arg(units, c("SI", "IP"))
-    trans_new("relhum",
-        transform = function (x) x / 100.0,
-        inverse = function (x) x * 100.0,
-        domain = c(-100.0, 100.0),
+    trans_new("relhum", "force", "force",
+        domain = c(0.0, 1.0),
+        breaks = extended_breaks(8),
         format = label_relhum(units = units)
     )
 }
@@ -64,6 +67,7 @@ relhum_trans <- function (units) {
 wetbulb_trans <- function (units) {
     units <- match.arg(units, c("SI", "IP"))
     trans_new("wetbulb", "force", "force",
+        breaks = extended_breaks(8),
         domain = get_tdb_limits(units),
         format = label_wetbulb(units = units)
     )
@@ -77,6 +81,7 @@ wetbulb_trans <- function (units) {
 vappres_trans <- function (units) {
     units <- match.arg(units, c("SI", "IP"))
     trans_new("vappres", "force", "force",
+        breaks = extended_breaks(8),
         format = label_vappres(units = units)
     )
 }
@@ -89,6 +94,7 @@ vappres_trans <- function (units) {
 specvol_trans <- function (units) {
     units <- match.arg(units, c("SI", "IP"))
     trans_new("specvol", "force", "force",
+        breaks = extended_breaks(8),
         format = label_specvol(units = units)
     )
 }
@@ -100,9 +106,8 @@ specvol_trans <- function (units) {
 # enthalpy_trans {{{
 enthalpy_trans <- function (units) {
     units <- match.arg(units, c("SI", "IP"))
-    trans_new("enthalpy",
-        transform = function (x) narrow_enth(x, units),
-        inverse = function (x) amplify_hum(x, units),
+    trans_new("enthalpy", "force", "force",
+        breaks = extended_breaks(8),
         format = label_enthalpy(units = units)
     )
 }

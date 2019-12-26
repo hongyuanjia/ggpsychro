@@ -14,6 +14,12 @@
 #' @inheritParams ggplot2::layer
 #' @inheritParams ggplot2::geom_polygon
 #'
+#' @param units A single string indicating the units sytem to use. Should be
+#'        either `"SI"` or `"IP" or `waiver()` which uses the value from the
+#'        parent plot. Default: `waiver()`.
+#' @param pres A single number indicating the atmosphere pressure in Pa [SI] or
+#'        Psi [IP]. If `waiver()`, the pressure calculated from the parent
+#'        plot's altitude value will be used. Default: `waiver()`.
 #' @param n Number of points to interpolate along
 #'
 #' @section Aesthetics:
@@ -21,7 +27,6 @@
 #' `geom_maskarea()` understands the following aesthetics (required aesthetics
 #' are in bold).
 #'
-#' - **`n`**
 #' - `color`
 #' - `size`
 #' - `linetype`
@@ -30,20 +35,27 @@
 #' # by default, a mask is automatically added when calling 'ggpsychro()' function
 #' ggpsychro()
 #'
-#' # it can also be used in a normal ggplot2 object once the coordinate is set
-#' ggplot(mapping = aes(x = c(0, 30), y = c(0.0, 0.05))) +
-#'     geom_maskarea(aes(units = "SI", pres = 101325))
+#' # replace with another mask area for pressure at 102000
+#' ggpsychro() +
+#'     geom_maskarea(units = "SI", pres = 102000)
 #'
 #' # the line style can be further customized like 'ggplot2::geom_line()'
-#' ggplot(mapping = aes(x = c(0, 30), y = c(0.0, 0.05))) +
-#'     geom_maskarea(aes(units = "SI", pres = 101325), color = "blue", fill = "green")
+#' ggpsychro() +
+#'     geom_maskarea(units = "SI", pres = 101325, color = "blue", fill = "green")
 #'
 #' @export
 # geom_maskarea {{{
-geom_maskarea <- function (mapping = NULL, data = NULL, n = 201, ..., na.rm = FALSE, inherit.aes = TRUE) {
-    psychro_layer(data = data, mapping = mapping, stat = "identity", geom = GeomMaskArea,
-          position = "identity", show.legend = FALSE, inherit.aes = inherit.aes,
-          params = list(n = n, na.rm = na.rm, ...)
+geom_maskarea <- function (mapping = NULL, data = NULL, units = waiver(), pres = waiver(),
+                           n = 201, ..., na.rm = FALSE) {
+    warn_has_input(mapping, data)
+    assert_unit(units)
+    assert_pressure(pres)
+    assert_count(n, positive = TRUE)
+
+    psychro_layer("PsyLayerMaskArea",
+        data = data, mapping = mapping, stat = "relhum", geom = GeomMaskArea,
+        position = "identity", show.legend = FALSE, inherit.aes = FALSE,
+        params = list(n = n, units = units, pres = pres, na.rm = na.rm, ...)
     )
 }
 # }}}
@@ -56,43 +68,35 @@ geom_maskarea <- function (mapping = NULL, data = NULL, n = 201, ..., na.rm = FA
 #' @export
 # GeomMaskArea {{{
 GeomMaskArea <- ggproto("GeomMaskArea", GeomPolygon,
+    required_aes = c("x", "y", "units", "pres", "n"),
+
     draw_panel = function(self, data, panel_params, coord) {
-        # always set alpha to 1.0
-        data$alpha <- 1.0
-
-        # get units
-        units <- get_units(data)
-
-        # check pressure
-        pres <- get_pres(data)
-
-        # check n
-        n <- unique(data$n)
-        assert_count(n, positive = TRUE)
+        # clean
+        data$n <- NULL
+        data$pres <- NULL
+        data$units <- NULL
+        data$relhum <- NULL
 
         # get coord ranges
         ranges <- coord$backtransform_range(panel_params)
 
-        # create tdb seqs
-        tdb <- seq(ranges$x[[1L]], ranges$x[[2L]], length.out = data$n[[1L]])
-        # calculate hum ratio at saturation
-        hum <- with_units(units, GetHumRatioFromRelHum(tdb, 1.0, pres))
-        # include the first and the last
-        tdb <- c(ranges$x[[1L]], tdb, ranges$x[[2L]])
-        hum <- c(ranges$y[[2L]], hum, ranges$y[[2L]])
+        # include the first and the last point
+        data0 <- data[1, ]
+        data0$x <- ranges$x[[1L]]
+        data0$y <- ranges$y[[2L]]
 
-        # combine data
-        data <- unique(data[c("PANEL", "group", names(self$default_aes))])
-        d <- lapply(data$PANEL, function (pnl) new_data_frame(list(x = tdb, y = hum, PANEL = rep(pnl, length(tdb)))))
-        d <- do.call(rbind, d)
-        data <- merge(d, data, by = "PANEL")
+        data1 <- data[nrow(data), ]
+        data1$x <- ranges$x[[2L]]
+        data1$y <- ranges$y[[2L]]
+
+        data <- rbind(data0, data, data1)
+
+        coord$tranform
 
         GeomPolygon$draw_panel(data, panel_params, coord)
     },
 
-    required_aes = c("pres", "n", "units"),
-
-    default_aes = aes(colour = "NA", fill = "white", size = 0.5, linetype = 1,
+    default_aes = aes(colour = "white", fill = "white", size = 0.5, linetype = 1,
         alpha = 1.0
     )
 )

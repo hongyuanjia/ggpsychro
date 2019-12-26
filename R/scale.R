@@ -14,13 +14,22 @@ NULL
 #' @importFrom ggplot2 continuous_scale
 #' @export
 # scale_drybulb_continuous {{{
-scale_drybulb_continuous <- function (name = waiver(), breaks = waiver(), minor_breaks = waiver(), labels = waiver(),
-                                      limits = NULL, units = waiver(), ...) {
+scale_drybulb_continuous <- function (name = waiver(), breaks = waiver(), minor_breaks = waiver(),
+                                      labels = waiver(), limits = NULL, units = waiver(), ...) {
+    if (is.waive(units)) {
+        trans <- empty_trans()
+    } else {
+        units <- match.arg(units, c("SI", "IP"))
+        trans <- drybulb_trans(units)
+    }
+
     psychro_continuous_scale(
         c("x", "xmin", "xmax", "xend", "xintercept", "xmin_final", "xmax_final", "xlower", "xmiddle", "xupper", "x0"),
         "drybulb", identity, name = name,
         breaks = breaks, minor_breaks = minor_breaks, labels = labels,
-        limits = limits, expand = c(0, 0), position = "bottom", ...)
+        trans = trans, limits = limits, expand = c(0, 0), position = "bottom",
+        guide = "axis", super = ScaleContinuousPosition, ...
+    )
 }
 # }}}
 
@@ -28,25 +37,34 @@ scale_drybulb_continuous <- function (name = waiver(), breaks = waiver(), minor_
 #' @importFrom ggplot2 continuous_scale
 #' @export
 # scale_humratio_continuous {{{
-scale_humratio_continuous <- function (name = waiver(), breaks = waiver(), minor_breaks = waiver(), labels = waiver(),
-                                       limits = NULL, units = waiver(), ...) {
+scale_humratio_continuous <- function (name = waiver(), breaks = waiver(), minor_breaks = waiver(),
+                                       labels = waiver(), limits = NULL, units = waiver(), ...) {
+    if (is.waive(units)) {
+        trans <- empty_trans()
+    } else {
+        units <- match.arg(units, c("SI", "IP"))
+        trans <- humratio_trans(units)
+    }
+
     psychro_continuous_scale(
         c("y", "ymin", "ymax", "yend", "yintercept", "ymin_final", "ymax_final", "lower", "middle", "upper", "y0"),
         "humratio", identity, name = name,
         breaks = breaks, minor_breaks = minor_breaks, labels = labels,
-        limits = limits, expand = c(0, 0), position = "bottom", ...)
+        trans = trans, limits = limits, expand = c(0, 0), position = "right",
+        guide = "axis", super = ScaleContinuousPosition, ...
+    )
 }
 # }}}
 
 #' @rdname scale
 #' @importFrom ggplot2 continuous_scale
 #' @export
-# scale_grid_relhum {{{
-scale_grid_relhum <- function (breaks = waiver(), minor_breaks = waiver(),
+# scale_relhum {{{
+scale_relhum <- function (breaks = waiver(), minor_breaks = waiver(),
                                labels = waiver(), units = waiver(), ...) {
-    psychro_continuous_scale("grid_relhum", "grid_relhum", identity,
+    psychro_continuous_scale("relhum", "relhum", identity,
         name = "", breaks = breaks, minor_breaks = minor_breaks, labels = labels,
-        limits = c(0.0, 100.0), expand = c(0, 0),
+        limits = c(0.0, 1.0), expand = c(0, 0),
         trans = if (is.waive(units)) empty_trans() else relhum_trans(units),
         ...
     )
@@ -56,10 +74,10 @@ scale_grid_relhum <- function (breaks = waiver(), minor_breaks = waiver(),
 #' @rdname scale
 #' @importFrom ggplot2 continuous_scale
 #' @export
-# scale_grid_wetbulb {{{
-scale_grid_wetbulb <- function (breaks = waiver(), minor_breaks = waiver(),
+# scale_wetbulb {{{
+scale_wetbulb <- function (breaks = waiver(), minor_breaks = waiver(),
                                 labels = waiver(), limits = NULL, units = waiver(), ...) {
-    psychro_continuous_scale("grid_wetbulb", "grid_wetbulb", identity,
+    psychro_continuous_scale("wetbulb", "wetbulb", identity,
         name = "", breaks = breaks, minor_breaks = minor_breaks, labels = labels,
         limits = limits, expand = c(0, 0),
         trans = if (is.waive(units)) empty_trans() else wetbulb_trans(units),
@@ -71,10 +89,10 @@ scale_grid_wetbulb <- function (breaks = waiver(), minor_breaks = waiver(),
 #' @rdname scale
 #' @importFrom ggplot2 continuous_scale
 #' @export
-# scale_grid_vappres {{{
-scale_grid_vappres <- function (breaks = waiver(), minor_breaks = waiver(),
+# scale_vappres {{{
+scale_vappres <- function (breaks = waiver(), minor_breaks = waiver(),
                                 labels = waiver(), limits = NULL, units = waiver(), ...) {
-    psychro_continuous_scale("grid_vappres", "grid_vappres", identity,
+    psychro_continuous_scale("vappres", "vappres", identity,
         name = "", breaks = breaks, minor_breaks = minor_breaks, labels = labels,
         limits = limits, expand = c(0, 0),
         trans = if (is.waive(units)) empty_trans() else vappres_trans(units),
@@ -86,10 +104,10 @@ scale_grid_vappres <- function (breaks = waiver(), minor_breaks = waiver(),
 #' @rdname scale
 #' @importFrom ggplot2 continuous_scale
 #' @export
-# scale_grid_specvol {{{
-scale_grid_specvol <- function (breaks = waiver(), minor_breaks = waiver(),
+# scale_specvol {{{
+scale_specvol <- function (breaks = waiver(), minor_breaks = waiver(),
                                 labels = waiver(), limits = NULL, units = waiver(), ...) {
-    psychro_continuous_scale("grid_spcvol", "grid_specvol", identity,
+    psychro_continuous_scale("specvol", "specvol", identity,
         name = "", breaks = breaks, minor_breaks = minor_breaks, labels = labels,
         limits = limits, expand = c(0, 0),
         trans = if (is.waive(units)) empty_trans() else specvol_trans(units),
@@ -101,10 +119,10 @@ scale_grid_specvol <- function (breaks = waiver(), minor_breaks = waiver(),
 #' @rdname scale
 #' @importFrom ggplot2 continuous_scale
 #' @export
-# scale_grid_enthalpy {{{
-scale_grid_enthalpy <- function (breaks = waiver(), minor_breaks = waiver(),
+# scale_enthalpy {{{
+scale_enthalpy <- function (breaks = waiver(), minor_breaks = waiver(),
                                  labels = waiver(), limits = NULL, units = waiver(), ...) {
-    psychro_continuous_scale("grid_enthalpy", "grid_enthalpy", identity,
+    psychro_continuous_scale("enthalpy", "enthalpy", identity,
         name = "", breaks = breaks, minor_breaks = minor_breaks, labels = labels,
         limits = limits, expand = c(0, 0),
         trans = if (is.waive(units)) empty_trans() else enthalpy_trans(units),
@@ -114,9 +132,62 @@ scale_grid_enthalpy <- function (breaks = waiver(), minor_breaks = waiver(),
 # }}}
 
 # psychro_continuous_scale {{{
-psychro_continuous_scale <- function (...) {
-    sc <- continuous_scale(...)
+psychro_continuous_scale <- function (..., guide = "none", super = ScaleContinuousPosition) {
+    sc <- continuous_scale(..., guide = guide, super = super)
     class(sc) <- c("PsyScale", class(sc))
     sc
 }
 # }}}
+
+# use stat to compute corresponding hum-ratio values
+# scale_relhum_continuous --> for grid
+# scale_relhum_color --> for points
+# scale_relhum_fill --> for fill
+# scale_relhum_size --> for line size
+# scale_relhum_linetype --> for line type
+
+# Look up the scale that should be used for a given aesthetic
+# adopted from https://github.com/tidyverse/ggplot2/blob/master/R/aes.r
+aes_to_scale <- function(var) {
+    var[var %in% c("x", "xmin", "xmax", "xend", "xintercept")] <- "x"
+    var[var %in% c("y", "ymin", "ymax", "yend", "yintercept")] <- "y"
+
+    var
+}
+
+#' @rdname ggpsychro-extensions
+#' @format NULL
+#' @usage NULL
+#' @export
+PsyScale <- ggproto("PsyScale", ScaleContinuous,
+  secondary.axis = waiver(),
+  # Position aesthetics don't map, because the coordinate system takes
+  # care of it. But they do need to be made in to doubles, so stat methods
+  # can tell the difference between continuous and discrete data.
+  map = function(self, x, limits = self$get_limits()) {
+    scaled <- as.numeric(self$oob(x, limits))
+    ifelse(!is.na(scaled), scaled, self$na.value)
+  },
+  break_info = function(self, range = NULL) {
+    breaks <- ggproto_parent(ScaleContinuous, self)$break_info(range)
+    if (!(is.waive(self$secondary.axis) || self$secondary.axis$empty())) {
+      self$secondary.axis$init(self)
+      breaks <- c(breaks, self$secondary.axis$break_info(breaks$range, self))
+    }
+    breaks
+  },
+  sec_name = function(self) {
+    if (is.waive(self$secondary.axis)) {
+      waiver()
+    } else {
+      self$secondary.axis$name
+    }
+  },
+  make_sec_title = function(self, title) {
+    if (!is.waive(self$secondary.axis)) {
+      self$secondary.axis$make_title(title)
+    } else {
+      ggproto_parent(ScaleContinuous, self)$make_sec_title(title)
+    }
+  }
+)

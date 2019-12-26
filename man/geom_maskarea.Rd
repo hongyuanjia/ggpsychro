@@ -7,10 +7,11 @@
 geom_maskarea(
   mapping = NULL,
   data = NULL,
+  units = waiver(),
+  pres = waiver(),
   n = 201,
   ...,
-  na.rm = FALSE,
-  inherit.aes = TRUE
+  na.rm = FALSE
 )
 }
 \arguments{
@@ -34,6 +35,13 @@ the plot data. The return value must be a \code{data.frame}, and
 will be used as the layer data. A \code{function} can be created
 from a \code{formula} (e.g. \code{~ head(.x, 10)}).}
 
+\item{units}{A single string indicating the units sytem to use. Should be
+either \code{"SI"} or \verb{"IP" or }waiver()\verb{which uses the value from the parent plot. Default:}waiver()`.}
+
+\item{pres}{A single number indicating the atmosphere pressure in Pa \link{SI} or
+Psi \link{IP}. If \code{waiver()}, the pressure calculated from the parent
+plot's altitude value will be used. Default: \code{waiver()}.}
+
 \item{n}{Number of points to interpolate along}
 
 \item{...}{Other arguments passed on to \code{\link[ggplot2:layer]{layer()}}. These are
@@ -43,11 +51,6 @@ to the paired geom/stat.}
 
 \item{na.rm}{If \code{FALSE}, the default, missing values are removed with
 a warning. If \code{TRUE}, missing values are silently removed.}
-
-\item{inherit.aes}{If \code{FALSE}, overrides the default aesthetics,
-rather than combining with them. This is most useful for helper functions
-that define both data and aesthetics and shouldn't inherit behaviour from
-the default plot specification, e.g. \code{\link[ggplot2:borders]{borders()}}.}
 }
 \description{
 \code{geom_maskarea()} draws a polygon to mask all area outside of the saturation
@@ -68,7 +71,6 @@ after other layers.
 \code{geom_maskarea()} understands the following aesthetics (required aesthetics
 are in bold).
 \itemize{
-\item \strong{\code{n}}
 \item \code{color}
 \item \code{size}
 \item \code{linetype}
@@ -79,12 +81,12 @@ are in bold).
 # by default, a mask is automatically added when calling 'ggpsychro()' function
 ggpsychro()
 
-# it can also be used in a normal ggplot2 object once the coordinate is set
-ggplot(mapping = aes(x = c(0, 30), y = c(0.0, 0.05))) +
-    geom_maskarea(aes(units = "SI", pres = 101325))
+# replace with another mask area for pressure at 102000
+ggpsychro() +
+    geom_maskarea(units = "SI", pres = 102000)
 
 # the line style can be further customized like 'ggplot2::geom_line()'
-ggplot(mapping = aes(x = c(0, 30), y = c(0.0, 0.05))) +
-    geom_maskarea(aes(units = "SI", pres = 101325), color = "blue", fill = "green")
+ggpsychro() +
+    geom_maskarea(units = "SI", pres = 101325, color = "blue", fill = "green")
 
 }

@@ -56,7 +56,7 @@ label_humratio <- function(x, accuracy = NULL, scale = 1, units,
 # label_relhum {{{
 label_relhum <- function(x, accuracy = NULL, scale = 1, units,
                          big.mark = ",", decimal.mark = ".", trim = TRUE, ...) {
-    label_unit(x, accuracy = accuracy, scale = scale, type = "rel_hum", units = units,
+    label_unit(x, accuracy = accuracy, scale = scale, type = "relhum", units = units,
         big.mark, decimal.mark, trim, ...)
 }
 # }}}
@@ -66,7 +66,7 @@ label_relhum <- function(x, accuracy = NULL, scale = 1, units,
 # label_wetbulb {{{
 label_wetbulb <- function(x, accuracy = NULL, scale = 1, units,
                          big.mark = ",", decimal.mark = ".", trim = TRUE, ...) {
-    label_unit(x, accuracy = accuracy, scale = scale, type = "wet_bulb", units = units,
+    label_unit(x, accuracy = accuracy, scale = scale, type = "wetbulb", units = units,
         big.mark, decimal.mark, trim, ...)
 }
 # }}}
@@ -76,7 +76,7 @@ label_wetbulb <- function(x, accuracy = NULL, scale = 1, units,
 # label_vappres {{{
 label_vappres <- function(x, accuracy = NULL, scale = 1, units,
                          big.mark = ",", decimal.mark = ".", trim = TRUE, ...) {
-    label_unit(x, accuracy = accuracy, scale = scale, type = "vap_pres", units = units,
+    label_unit(x, accuracy = accuracy, scale = scale, type = "vappres", units = units,
         big.mark, decimal.mark, trim, ...)
 }
 # }}}
@@ -86,7 +86,7 @@ label_vappres <- function(x, accuracy = NULL, scale = 1, units,
 # label_specvol {{{
 label_specvol <- function(x, accuracy = NULL, scale = 1, units,
                          big.mark = ",", decimal.mark = ".", trim = TRUE, ...) {
-    label_unit(x, accuracy = accuracy, scale = scale, type = "spec_vol", units = units,
+    label_unit(x, accuracy = accuracy, scale = scale, type = "specvol", units = units,
         big.mark, decimal.mark, trim, ...)
 }
 # }}}
@@ -130,9 +130,10 @@ specvol_format <- label_specvol
 enthalpy_format <- label_enthalpy
 
 # label_unit {{{
-#' @importFrom scales label_parse number
+#' @importFrom scales number
 label_unit <- function (x, accuracy = NULL, scale = 1, type, units,
-                        big.mark = ",", decimal.mark = ".", trim = TRUE, ...) {
+                        big.mark = ",", decimal.mark = ".", trim = TRUE,
+                        ...) {
     force_all(
         accuracy,
         scale,
@@ -156,6 +157,9 @@ label_unit <- function (x, accuracy = NULL, scale = 1, type, units,
     }
 
     function (x) {
+        if (type == "relhum") x <- x * 100.0
+        if (type == "vappres") x <- x / 1000.0
+        if (type == "enthalpy") x <- x / 1000.0
         num <- number(x, accuracy = accuracy, scale = scale,
             prefix = "", suffix = suffix,
             big.mark = big.mark, decimal.mark = decimal.mark,
@@ -165,9 +169,7 @@ label_unit <- function (x, accuracy = NULL, scale = 1, type, units,
             num <- gsub("(\\d+)", "'\\1'", num, perl = TRUE)
         }
 
-        num[[1L]] <- paste(prefix, num[[1L]])
-
-        if (need_parse(type)) num <- label_parse()(num)
+        num[1] <- paste(prefix, num[1])
 
         num
     }
@@ -182,7 +184,12 @@ get_unit <- function (unit, type) {
 
 # get_prefix {{{
 get_prefix <- function (type) {
-    gsub("_", " ", gsub("^(\\w)", "\\U\\1", type, perl = TRUE))
+    if (type == "relhum") {
+        "RH"
+    } else {
+        pre <- gsub("_", " ", gsub("_(\\w)", "\\U\\1", type, perl = TRUE))
+        gsub("^(\\w)", "\\U\\1", pre, perl = TRUE)
+    }
 }
 # }}}
 
@@ -190,38 +197,6 @@ get_prefix <- function (type) {
 need_parse <- function (type) {
     .unit_list$parse[[type]]
 }
-# }}}
-
-# .unit_list {{{
-.unit_list <- list(
-    SI = list(
-        dry_bulb = "degree * C",
-        hum_ratio = "g[m] * ' / ' * kg[da]",
-        rel_hum = "%",
-        wet_bulb = "degree * C",
-        vap_pres = "kPa",
-        spec_vol = "m^3 * ' / ' * kg",
-        enthalpy = "kJ * ' / ' * kg"
-    ),
-    IP = list(
-        dry_bulb = "degree * C",
-        hum_ratio = "gr[m] * ' / ' * lb[da]",
-        rel_hum = "%",
-        wet_bulb = "degree * F",
-        vap_pres = "kPsi",
-        spec_vol = "ft^3 * ' / ' * lb",
-        enthalpy = "Btu * ' / ' * lb"
-    ),
-    parse = list(
-        dry_bulb = TRUE,
-        hum_ratio = TRUE,
-        rel_hum = FALSE,
-        wet_bulb = TRUE,
-        vap_pres = FALSE,
-        spec_vol = TRUE,
-        enthalpy = TRUE
-    )
-)
 # }}}
 
 # force_all {{{

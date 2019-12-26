@@ -6,7 +6,7 @@ is.waive <- function(x) inherits(x, "waiver")
 # No checking, recycling etc. unless asked for
 new_data_frame <- function(x = list(), n = NULL) {
     if (length(x) != 0 && is.null(names(x))) {
-        abort("Elements must be named")
+        stop("Elements must be named")
     }
     lengths <- vapply(x, length, integer(1))
     if (is.null(n)) {
@@ -15,7 +15,7 @@ new_data_frame <- function(x = list(), n = NULL) {
     for (i in seq_along(x)) {
         if (lengths[i] == n) next
         if (lengths[i] != 1) {
-            abort("Elements must equal the number of rows or 1")
+            stop("Elements must equal the number of rows or 1")
         }
         x[[i]] <- rep(x[[i]], n)
     }
@@ -36,16 +36,16 @@ with_units <- function (units, expr) {
 
     force(expr)
 }
+# }}}
 # encode_units {{{
 encode_units <- function (units) {
-    switch(units, "SI" = 1L, "IP" = 2L, stop())
+    switch(units, "SI" = 1L, "IP" = 2L, stop("'units' can only be either 'SI' or 'IP'."))
 }
 # }}}
 # decode_units {{{
 decode_units <- function (code) {
     c("SI", "IP")[code]
 }
-# }}}
 # }}}
 
 # bid_conv {{{
@@ -62,6 +62,18 @@ get_f_from_c <- function (x) x * 9. / 5. + 32.
 get_c_from_f <- function (x) (x - 32) * 5. / 9.
 get_g_from_gr <- function (x) x / 7.
 get_gr_from_g <- function (x) x * 7.
+# }}}
+
+# dist_euclid {{{
+dist_euclid <- function (x, y, xend, yend) {
+    sqrt((xend - x) ^2 + (yend - y)^2)
+}
+# }}}
+
+# rep_dataframe {{{
+rep_dataframe <- function (df, n) {
+    do.call(rbind, replicate(n, df, simplify = FALSE))
+}
 # }}}
 
 # The units of humidity ratio is lb_H2O lb_Air-1 [IP] or kg_H2O kg_Air-1 [SI],
