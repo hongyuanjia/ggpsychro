@@ -164,6 +164,6 @@ Copyright © 2019 Hongyuan Jia
 
 ## Contribute
 
-Please note that the ‘epwshiftr’ project is released with a [Contributor
+Please note that the ‘ggpsychro’ project is released with a [Contributor
 Code of Conduct](.github/CODE_OF_CONDUCT.md). By contributing to this
 project, you agree to abide by its terms.
