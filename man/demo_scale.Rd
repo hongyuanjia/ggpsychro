@@ -15,3 +15,4 @@ demo_scale(x, ...)
 This function generates ggplot2 code needed to use scales functions for real
 code.
 }
+\keyword{internal}

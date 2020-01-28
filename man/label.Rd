@@ -25,6 +25,7 @@ label_drybulb(
   big.mark = ",",
   decimal.mark = ".",
   trim = TRUE,
+  parse = FALSE,
   ...
 )
 
@@ -36,6 +37,7 @@ label_humratio(
   big.mark = ",",
   decimal.mark = ".",
   trim = TRUE,
+  parse = FALSE,
   ...
 )
 
@@ -47,6 +49,7 @@ label_relhum(
   big.mark = ",",
   decimal.mark = ".",
   trim = TRUE,
+  parse = FALSE,
   ...
 )
 
@@ -58,6 +61,7 @@ label_wetbulb(
   big.mark = ",",
   decimal.mark = ".",
   trim = TRUE,
+  parse = FALSE,
   ...
 )
 
@@ -69,6 +73,7 @@ label_vappres(
   big.mark = ",",
   decimal.mark = ".",
   trim = TRUE,
+  parse = FALSE,
   ...
 )
 
@@ -80,6 +85,7 @@ label_specvol(
   big.mark = ",",
   decimal.mark = ".",
   trim = TRUE,
+  parse = FALSE,
   ...
 )
 
@@ -91,6 +97,7 @@ label_enthalpy(
   big.mark = ",",
   decimal.mark = ".",
   trim = TRUE,
+  parse = FALSE,
   ...
 )
 
@@ -102,6 +109,7 @@ drybulb_format(
   big.mark = ",",
   decimal.mark = ".",
   trim = TRUE,
+  parse = FALSE,
   ...
 )
 
@@ -113,6 +121,7 @@ humratio_format(
   big.mark = ",",
   decimal.mark = ".",
   trim = TRUE,
+  parse = FALSE,
   ...
 )
 
@@ -124,6 +133,7 @@ relhum_format(
   big.mark = ",",
   decimal.mark = ".",
   trim = TRUE,
+  parse = FALSE,
   ...
 )
 
@@ -135,6 +145,7 @@ wetbulb_format(
   big.mark = ",",
   decimal.mark = ".",
   trim = TRUE,
+  parse = FALSE,
   ...
 )
 
@@ -146,6 +157,7 @@ vappres_format(
   big.mark = ",",
   decimal.mark = ".",
   trim = TRUE,
+  parse = FALSE,
   ...
 )
 
@@ -157,6 +169,7 @@ specvol_format(
   big.mark = ",",
   decimal.mark = ".",
   trim = TRUE,
+  parse = FALSE,
   ...
 )
 
@@ -168,6 +181,7 @@ enthalpy_format(
   big.mark = ",",
   decimal.mark = ".",
   trim = TRUE,
+  parse = FALSE,
   ...
 )
 }
@@ -196,6 +210,9 @@ decimal point.}
 \item{trim}{Logical, if \code{FALSE}, values are right-justified to a common
 width (see \code{\link[base:format]{base::format()}}).}
 
+\item{parse}{If \code{TRUE}, the labels will be parsed into expressions and
+displayed as described in \code{?plotmath}. Default: \code{FALSE}.}
+
 \item{...}{Other arguments passed on to \code{\link[base:format]{base::format()}}.}
 }
 \value{
@@ -213,26 +230,26 @@ Format numbers as main variables on the psychrometric chart.
 }
 \examples{
 # for labelling dry-bulb temperature
-demo_scale(10:50, labels = label_drybulb(units = "SI"))
-demo_scale(10:50, labels = label_drybulb(units = "IP"))
+demo_scale(10:50, labels = label_drybulb(units = "SI", parse = TRUE))
+demo_scale(10:50, labels = label_drybulb(units = "IP", parse = TRUE))
 
 # for labelling humidity ratio
-demo_scale(10:20, labels = label_humratio(scale = 0.001, units = "SI"))
-demo_scale(10:20, labels = label_humratio(scale = 0.007, units = "IP"))
+demo_scale(10:20, labels = label_humratio(scale = 0.001, units = "SI", parse = TRUE))
+demo_scale(10:20, labels = label_humratio(scale = 0.007, units = "IP", parse = TRUE))
 
-demo_scale(10:50, labels = label_relhum(units = "SI"))
-demo_scale(10:50, labels = label_relhum(units = "IP"))
+demo_scale(10:50, labels = label_relhum(units = "SI", parse = TRUE))
+demo_scale(10:50, labels = label_relhum(units = "IP", parse = TRUE))
 
-demo_scale(10:50, labels = label_wetbulb(units = "SI"))
-demo_scale(10:50, labels = label_wetbulb(units = "IP"))
+demo_scale(10:50, labels = label_wetbulb(units = "SI", parse = TRUE))
+demo_scale(10:50, labels = label_wetbulb(units = "IP", parse = TRUE))
 
-demo_scale(10:50, labels = label_specvol(units = "SI"))
-demo_scale(10:50, labels = label_specvol(units = "IP"))
+demo_scale(10:50, labels = label_specvol(units = "SI", parse = TRUE))
+demo_scale(10:50, labels = label_specvol(units = "IP", parse = TRUE))
 
-demo_scale(10:50, labels = label_vappres(units = "SI"))
-demo_scale(10:50, labels = label_vappres(units = "IP"))
+demo_scale(10:50, labels = label_vappres(units = "SI", parse = TRUE))
+demo_scale(10:50, labels = label_vappres(units = "IP", parse = TRUE))
 
-demo_scale(seq(1000, 2000), labels = label_enthalpy(units = "SI"))
-demo_scale(seq(1000, 2000), labels = label_enthalpy(units = "IP"))
+demo_scale(seq(1000, 2000), labels = label_enthalpy(units = "SI", parse = TRUE))
+demo_scale(seq(1000, 2000), labels = label_enthalpy(units = "IP", parse = TRUE))
 
 }
