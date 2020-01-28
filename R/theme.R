@@ -8,8 +8,10 @@
 #' @keywords internal
 #' @author Hongyuan Jia
 #' @importFrom ggplot2 element_blank element_line element_rect element_text theme theme_bw
+#' @export
 #' @examples
 #' theme_psychro()
+#'
 theme_psychro <- function(background = "white", base_size = 11, base_family = "", base_line_size = base_size/22, base_rect_size = base_size/22) {
     # use theme_bw as the base
     th <- theme_bw(base_size = base_size, base_family = base_family,
@@ -53,7 +55,7 @@ theme_psychro_ashrae <- function (base_size = 11, base_family = "",
          axis.ticks = element_line(size = 0.2),
          axis.ticks.length.x = unit(0.3, "lines"),
          axis.ticks.length.y = unit(0.3, "lines"),
-         axis.text.x.bottom = element_text(margin = margin(t = .5, unit = "lines")),
+         axis.text.x.bottom = element_text(margin = ggplot2::margin(t = .5, unit = "lines")),
          panel.border = element_blank()
         )
 }

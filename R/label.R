@@ -3,7 +3,7 @@
 #' Format numbers as main variables on the psychrometric chart.
 #'
 #' @param x A numeric vector
-#' @param A single string indcating the unit system to use. Should be either
+#' @param units A single string indcating the unit system to use. Should be either
 #'        `"SI"` or `"IP"`
 #' @inherit scales::number_format params return
 #'

@@ -7,23 +7,30 @@
 #' `create_layout` and passed as the data argument. See *Details* for
 #' a description of all available layouts.
 #'
+#' @param data Default dataset to use for plot. If not already a data.frame,
+#'        will be converted to one by [ggplot2::fortify()]. If not specified,
+#'        must be supplied in each layer added to the plot.
+#'
+#' @param mapping Default list of aesthetic mappings to use for plot. If not
+#'        specified, must be supplied in each layer added to the plot.
+#'
 #' @param tdb_lim A numeric vector of length-2 indicating the dry-bulb
 #'        temperature limits. Should be in range
-#'        `[-50, 100]` °C [SI] or
-#'        `[-58, 212]` °F [IP].
+#'        `[-50, 100]` °C \\[SI\\] or
+#'        `[-58, 212]` °F \\[IP\\].
 #'        If `waiver()`, default values will be
-#'        `[0, 50]` °C [SI] or
-#'        `[30, 120]` °F [IP]. Default: `waiver()`.
+#'        `[0, 50]` °C \\[SI\\] or
+#'        `[30, 120]` °F \\[IP\\]. Default: `waiver()`.
 #'
 #' @param hum_lim A numeric vector of length-2 indicating the humidity ratio
 #'        limits. Should be in range
-#'        `[0, 60]` g_H20 kg_Air-1 [SI] or
-#'        `[0, 350]` gr_H20 lb_Air-1 [IP].
+#'        `[0, 60]` g_H20 kg_Air-1 \\[SI\\] or
+#'        `[0, 350]` gr_H20 lb_Air-1 \\[IP\\].
 #'        If `waiver()`, default values will be
-#'        `[0, 30]` g_H20 kg_Air-1 [SI] or
-#'        `[0, 210]` gr_H20 lb_Air-1 [IP]. Default: `waiver()`.
+#'        `[0, 30]` g_H20 kg_Air-1 \\[SI\\] or
+#'        `[0, 210]` gr_H20 lb_Air-1 \\[IP\\]. Default: `waiver()`.
 #'
-#' @param altitude A single number of altitude in m [SI] or ft [IP].
+#' @param altitude A single number of altitude in m \\[SI\\] or ft \\[IP\\].
 #'
 #' @param mask_style A list containg settings to format mask area. Will be
 #'        directly passed to [ggplot2::geom_polygon()]. If `waiver()`, defaults
@@ -59,6 +66,7 @@
 #' @importFrom checkmate assert_number assert_numeric assert_flag
 #' @importFrom psychrolib GetStandardAtmPressure
 #' @importFrom ggplot2 ggplot aes coord_cartesian coord_flip xlab ylab scale_y_continuous waiver
+#' @author Hongyuan Jia
 #' @export
 # ggpsychro {{{
 ggpsychro <- function (data = NULL, mapping = aes(),

@@ -1,5 +1,5 @@
 Package: ggpsychro
-Title: 'ggplot2' extension for making pyschrometric charts
+Title: A 'ggplot2' Extension for Making Pyschrometric Charts
 Version: 0.0.0.9000
 Authors@R:
     person(given = "Hongyuan",
@@ -8,7 +8,7 @@ Authors@R:
            email = "hongyuan.jia@bears-berkeley.sg",
            comment = c(ORCID = "02-0075-8183"))
 Description:
-    'ggplot2' extension for making pyschrometric charts
+    A 'ggplot2' extension for making pyschrometric charts.
 Depends:
     R (>= 3.2),
     ggplot2 (>= 3.0.0)

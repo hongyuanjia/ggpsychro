@@ -3,15 +3,15 @@
 #' @details
 #'
 #' * `stat_relhum` requires an extra `relhum` aesthetics for relative humidity
-#'   in range [0, 100] in %
+#'   in range \\[0, 100\\] in %
 #' * `stat_wetbulb` requires an extra `wetbulb` aesthetics for wet-bulb
-#'   temperature in °F [IP] or °C [SI]
+#'   temperature in °F \\[IP\\] or °C \\[SI\\]
 #' * `stat_vappres` requires an extra `vappres` aesthetics for partial pressure
-#'   of water vapor in moist air in Psi [IP] or Pa [SI]
+#'   of water vapor in moist air in Psi \\[IP\\] or Pa \\[SI\\]
 #' * `stat_specvol` requires an extra `specvol` aesthetics for specific volume
-#'   of moist air in ft3 lb-1 of dry air [IP] or in m3 kg-1 of dry air [SI]
+#'   of moist air in ft3 lb-1 of dry air \\[IP\\] or in m3 kg-1 of dry air \\[SI\\]
 #' * `stat_enthalpy` requires an extra `enthalpy` aesthetics for moist air
-#'   enthalpy in Btu lb-1 [IP] or J kg-1
+#'   enthalpy in Btu lb-1 \\[IP\\] or J kg-1
 #'
 #' What these [ggplot2::ggproto()] objects do are to take input values,
 #' calculate the corresponding humidity ratio and replace the `y` aesthetic
@@ -23,8 +23,8 @@
 #'   either `"SI"` or `"IP" or `waiver()` which uses the value from the parent
 #'   plot. Default: `waiver()`
 #'
-#' * `pres`: A single number indicating the atmosphere pressure in Pa [SI] or
-#'   Psi [IP]. If `waiver()`, the pressure calculated from the parent plot's
+#' * `pres`: A single number indicating the atmosphere pressure in Pa \\[SI\\] or
+#'   Psi \\[IP\\]. If `waiver()`, the pressure calculated from the parent plot's
 #'   altitude value will be used. Default: `waiver()`
 #'
 #' However, when these stats are used inside a ggplot `geom_*` as the `stat`

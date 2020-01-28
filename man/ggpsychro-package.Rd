@@ -4,9 +4,9 @@
 \name{ggpsychro-package}
 \alias{ggpsychro-package}
 \alias{_PACKAGE}
-\title{ggpsychro: 'ggplot2' extension for making pyschrometric charts}
+\title{ggpsychro: A 'ggplot2' Extension for Making Pyschrometric Charts}
 \description{
-'ggplot2' extension for making pyschrometric charts
+A 'ggplot2' extension for making pyschrometric charts.
 }
 \seealso{
 Useful links:

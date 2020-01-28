@@ -17,8 +17,8 @@
 #' @param units A single string indicating the units sytem to use. Should be
 #'        either `"SI"` or `"IP" or `waiver()` which uses the value from the
 #'        parent plot. Default: `waiver()`
-#' @param pres A single number indicating the atmosphere pressure in Pa [SI] or
-#'        Psi [IP]. If `waiver()`, the pressure calculated from the parent
+#' @param pres A single number indicating the atmosphere pressure in Pa \\[SI\\] or
+#'        Psi \\[IP\\]. If `waiver()`, the pressure calculated from the parent
 #'        plot's altitude value will be used. Default: `waiver()`
 #' @param n Number of points to interpolate along
 #'
@@ -61,13 +61,13 @@ geom_line_sat <- function (mapping = NULL, data = NULL, units = waiver(), pres =
 #' specific volume and enthalpy, based on current psychrometric chart's dry-bulb
 #' temperature range and humidity ratio range.
 #'
-#' * `geom_grid_relhum()` for relative humidity grid in range [0, 100] in %
-#' * `geom_grid_wetbulb()` for wet-bulb temperature grid in °F [IP] or °C [SI]
-#' * `geom_grid_vappres()` for partial pressure grid of water vapor in Psi [IP]
-#'   or Pa [SI]
-#' * `geom_grid_specvol()` for specific volume grid in ft3 lb-1 of dry air [IP] or
-#'    in m3 kg-1 of dry air [SI]
-#' * `geom_grid_enthalpy()` for moist air enthalpy grid in Btu lb-1 [IP] or kJ kg-1
+#' * `geom_grid_relhum()` for relative humidity grid in range \\[0, 100\\] in %
+#' * `geom_grid_wetbulb()` for wet-bulb temperature grid in °F \\[IP\\] or °C \\[SI\\]
+#' * `geom_grid_vappres()` for partial pressure grid of water vapor in Psi \\[IP\\]
+#'   or Pa \\[SI\\]
+#' * `geom_grid_specvol()` for specific volume grid in ft3 lb-1 of dry air \\[IP\\] or
+#'    in m3 kg-1 of dry air \\[SI\\]
+#' * `geom_grid_enthalpy()` for moist air enthalpy grid in Btu lb-1 \\[IP\\] or kJ kg-1
 #'
 #' Each `geom_grid_*()` comes along with a corresponding
 #' [`scale_*()`][scale_relhum()] function for customizing scale
@@ -79,6 +79,12 @@ geom_line_sat <- function (mapping = NULL, data = NULL, units = waiver(), pres =
 #'
 #' @inheritParams ggplot2::layer
 #' @inheritParams ggplot2::geom_point
+#' @param units A single string indicating the units sytem to use. Should be
+#'        either `"SI"` or `"IP" or `waiver()` which uses the value from the
+#'        parent plot. Default: `waiver()`
+#' @param pres A single number indicating the atmosphere pressure in Pa \\[SI\\] or
+#'        Psi \\[IP\\]. If `waiver()`, the pressure calculated from the parent
+#'        plot's altitude value will be used. Default: `waiver()`
 #' @param n Number of points to interpolate along. Only used in
 #'        `geom_grid_relhum()`.
 #' @param label_loc A single number in range (0, 1) indicating label position
@@ -477,8 +483,8 @@ build_grid_panel_grob <- function (type, self, data, panel_params, coord,
         label, data$x, data$y, default.units = "native",
         hjust = data$label.hjust, vjust = data$label.vjust, rot = data$angle,
         gp = grid::gpar(
-            col = alpha(data$label.colour, data$label.alpha),
-            fontsize = data$label.size * .pt,
+            col = scales::alpha(data$label.colour, data$label.alpha),
+            fontsize = data$label.size * ggplot2::.pt,
             fontfamily = data$label.family,
             fontface = data$label.fontface,
             lineheight = data$label.lineheight
@@ -690,6 +696,14 @@ compute_just <- function(just, x) {
             bottom = 0, middle = 0.5, top = 1)[just])
 }
 # }}}
+# just_dir {{{
+just_dir <- function (x, tol = 0.001) {
+    out <- rep(2L, length(x))
+    out[x < 0.5 - tol] <- 1L
+    out[x > 0.5 + tol] <- 3L
+    out
+}
+# }}}
 # cal_sat_intercept {{{
 cal_sat_intercept <- function (ranges, pres, units, y = NULL, slope, intercept, num = 500L) {
     x <- seq(ranges$x[[1L]], ranges$x[[2L]], length.out = num)
@@ -709,8 +723,7 @@ root_sat_intercept <- function (ranges, pres, units, slope, intercept, tol = 0.0
             slope * x + intercept - amplify_hum(with_units(units, GetHumRatioFromRelHum(x, 1.0, pres)), units)
         }
 
-        # uniroot(fun, ranges$x, tol = tol)
-        tryCatch(uniroot(fun, ranges$x, tol = tol),
+        tryCatch(stats::uniroot(fun, ranges$x, tol = tol),
             error = function (e) list(root = NA_real_))
     }
     Map(find_root, slope = slope, intercept = intercept)

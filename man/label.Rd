@@ -185,6 +185,9 @@ Applied to rescaled data.}
 formating. This is useful if the underlying data is very small or very
 large.}
 
+\item{units}{A single string indcating the unit system to use. Should be either
+\code{"SI"} or \code{"IP"}}
+
 \item{big.mark}{Character used between every 3 digits to separate thousands.}
 
 \item{decimal.mark}{The character to be used to indicate the numeric
@@ -194,9 +197,6 @@ decimal point.}
 width (see \code{\link[base:format]{base::format()}}).}
 
 \item{...}{Other arguments passed on to \code{\link[base:format]{base::format()}}.}
-
-\item{A}{single string indcating the unit system to use. Should be either
-\code{"SI"} or \code{"IP"}}
 }
 \value{
 All \code{label_()} functions return a "labelling" function, i.e. a function that

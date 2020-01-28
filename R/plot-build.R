@@ -2,6 +2,9 @@
 #' @export
 # ggplot_build.ggpsychro {{{
 ggplot_build.ggpsychro <- function (plot) {
+    # get rid of R CMD check NOTE
+    x <- y <- relhum <- label <- wetbulb <- vappres <- specvol <- enthalpy <- NULL
+
     # retrieve meta data
     meta <- plot$psychro
 
@@ -164,7 +167,7 @@ compute_grid_data <- function (layer, coord, scale_drybulb, scale_grid, keep_bou
     lim_drybulb <- scale_drybulb$transform(coord$limits$x)
 
     # get major breaks
-    breaks <- na.omit(scale_grid$get_breaks())
+    breaks <- stats::na.omit(scale_grid$get_breaks())
     if (is.null(breaks) || !length(breaks)) {
         empty <- new_data_frame(list(value = numeric(), x = numeric(), y = numeric(), label = character()))
         names(empty)[1L] <- scale_grid$aesthetics

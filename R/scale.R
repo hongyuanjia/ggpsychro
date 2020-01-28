@@ -28,7 +28,7 @@ scale_drybulb_continuous <- function (name = waiver(), breaks = waiver(), minor_
         "drybulb", identity, name = name,
         breaks = breaks, minor_breaks = minor_breaks, labels = labels,
         trans = trans, limits = limits, expand = c(0, 0), position = "bottom",
-        super = ScaleContinuousPosition, ...
+        ...
     )
 }
 # }}}
@@ -51,7 +51,7 @@ scale_humratio_continuous <- function (name = waiver(), breaks = waiver(), minor
         "humratio", identity, name = name,
         breaks = breaks, minor_breaks = minor_breaks, labels = labels,
         trans = trans, limits = limits, expand = c(0, 0), position = "right",
-        super = ScaleContinuousPosition, ...
+        ...
     )
 }
 # }}}
@@ -132,7 +132,7 @@ scale_enthalpy <- function (breaks = waiver(), minor_breaks = waiver(),
 # }}}
 
 # psychro_continuous_scale {{{
-psychro_continuous_scale <- function (..., guide = "none", super = ScaleContinuousPosition) {
+psychro_continuous_scale <- function (..., guide = "none", super = ggplot2::ScaleContinuousPosition) {
     sc <- continuous_scale(..., guide = guide, super = super)
     class(sc) <- c("PsyScale", class(sc))
     sc

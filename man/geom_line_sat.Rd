@@ -38,8 +38,8 @@ from a \code{formula} (e.g. \code{~ head(.x, 10)}).}
 \item{units}{A single string indicating the units sytem to use. Should be
 either \code{"SI"} or \verb{"IP" or }waiver()\verb{which uses the value from the parent plot. Default:}waiver()`}
 
-\item{pres}{A single number indicating the atmosphere pressure in Pa \link{SI} or
-Psi \link{IP}. If \code{waiver()}, the pressure calculated from the parent
+\item{pres}{A single number indicating the atmosphere pressure in Pa \[SI\] or
+Psi \[IP\]. If \code{waiver()}, the pressure calculated from the parent
 plot's altitude value will be used. Default: \code{waiver()}}
 
 \item{n}{Number of points to interpolate along}

@@ -114,15 +114,15 @@ Calculate psychrometric properties of moist air
 \details{
 \itemize{
 \item \code{stat_relhum} requires an extra \code{relhum} aesthetics for relative humidity
-in range \link{0, 100} in \%
+in range \[0, 100\] in \%
 \item \code{stat_wetbulb} requires an extra \code{wetbulb} aesthetics for wet-bulb
-temperature in °F \link{IP} or °C \link{SI}
+temperature in °F \[IP\] or °C \[SI\]
 \item \code{stat_vappres} requires an extra \code{vappres} aesthetics for partial pressure
-of water vapor in moist air in Psi \link{IP} or Pa \link{SI}
+of water vapor in moist air in Psi \[IP\] or Pa \[SI\]
 \item \code{stat_specvol} requires an extra \code{specvol} aesthetics for specific volume
-of moist air in ft3 lb-1 of dry air \link{IP} or in m3 kg-1 of dry air \link{SI}
+of moist air in ft3 lb-1 of dry air \[IP\] or in m3 kg-1 of dry air \[SI\]
 \item \code{stat_enthalpy} requires an extra \code{enthalpy} aesthetics for moist air
-enthalpy in Btu lb-1 \link{IP} or J kg-1
+enthalpy in Btu lb-1 \[IP\] or J kg-1
 }
 
 What these \code{\link[ggplot2:ggproto]{ggplot2::ggproto()}} objects do are to take input values,
@@ -133,8 +133,8 @@ All of stats above requires two additional aesthetics:
 \itemize{
 \item \code{units}: A single string indicating the units sytem to use. Should be
 either \code{"SI"} or \verb{"IP" or }waiver()\verb{which uses the value from the parent plot. Default:}waiver()`
-\item \code{pres}: A single number indicating the atmosphere pressure in Pa \link{SI} or
-Psi \link{IP}. If \code{waiver()}, the pressure calculated from the parent plot's
+\item \code{pres}: A single number indicating the atmosphere pressure in Pa \[SI\] or
+Psi \[IP\]. If \code{waiver()}, the pressure calculated from the parent plot's
 altitude value will be used. Default: \code{waiver()}
 }
 

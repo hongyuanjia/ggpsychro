@@ -23,6 +23,7 @@ Custom theme for psychrometric chart.
 }
 \examples{
 theme_psychro()
+
 }
 \author{
 Hongyuan Jia

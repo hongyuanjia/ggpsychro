@@ -34,7 +34,7 @@ geom_grid_wetbulb(
 geom_grid_vappres(
   mapping = NULL,
   data = NULL,
-  label_loc = 0.3,
+  label_loc = 0.5,
   label_parse = FALSE,
   units = waiver(),
   pres = waiver(),
@@ -45,7 +45,7 @@ geom_grid_vappres(
 geom_grid_specvol(
   mapping = NULL,
   data = NULL,
-  label_loc = 0.3,
+  label_loc = 0.95,
   label_parse = TRUE,
   units = waiver(),
   pres = waiver(),
@@ -56,7 +56,7 @@ geom_grid_specvol(
 geom_grid_enthalpy(
   mapping = NULL,
   data = NULL,
-  label_loc = 0.3,
+  label_loc = 0.95,
   label_parse = TRUE,
   units = waiver(),
   pres = waiver(),
@@ -103,6 +103,13 @@ if needed:
 \item{label_parse}{If \code{TRUE}, the labels will be parsed into expressions and
 displayed as described in \code{?plotmath}.}
 
+\item{units}{A single string indicating the units sytem to use. Should be
+either \code{"SI"} or \verb{"IP" or }waiver()\verb{which uses the value from the parent plot. Default:}waiver()`}
+
+\item{pres}{A single number indicating the atmosphere pressure in Pa \[SI\] or
+Psi \[IP\]. If \code{waiver()}, the pressure calculated from the parent
+plot's altitude value will be used. Default: \code{waiver()}}
+
 \item{...}{Other arguments passed on to \code{\link[ggplot2:layer]{layer()}}. These are
 often aesthetics, used to set an aesthetic to a fixed value, like
 \code{colour = "red"} or \code{size = 3}. They may also be parameters
@@ -119,13 +126,13 @@ temperature range and humidity ratio range.
 }
 \details{
 \itemize{
-\item \code{geom_grid_relhum()} for relative humidity grid in range \link{0, 100} in \%
-\item \code{geom_grid_wetbulb()} for wet-bulb temperature grid in °F \link{IP} or °C \link{SI}
-\item \code{geom_grid_vappres()} for partial pressure grid of water vapor in Psi \link{IP}
-or Pa \link{SI}
-\item \code{geom_grid_specvol()} for specific volume grid in ft3 lb-1 of dry air \link{IP} or
-in m3 kg-1 of dry air \link{SI}
-\item \code{geom_grid_enthalpy()} for moist air enthalpy grid in Btu lb-1 \link{IP} or kJ kg-1
+\item \code{geom_grid_relhum()} for relative humidity grid in range \[0, 100\] in \%
+\item \code{geom_grid_wetbulb()} for wet-bulb temperature grid in °F \[IP\] or °C \[SI\]
+\item \code{geom_grid_vappres()} for partial pressure grid of water vapor in Psi \[IP\]
+or Pa \[SI\]
+\item \code{geom_grid_specvol()} for specific volume grid in ft3 lb-1 of dry air \[IP\] or
+in m3 kg-1 of dry air \[SI\]
+\item \code{geom_grid_enthalpy()} for moist air enthalpy grid in Btu lb-1 \[IP\] or kJ kg-1
 }
 
 Each \verb{geom_grid_*()} comes along with a corresponding
