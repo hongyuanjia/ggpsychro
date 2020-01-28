@@ -28,7 +28,7 @@ scale_drybulb_continuous <- function (name = waiver(), breaks = waiver(), minor_
         "drybulb", identity, name = name,
         breaks = breaks, minor_breaks = minor_breaks, labels = labels,
         trans = trans, limits = limits, expand = c(0, 0), position = "bottom",
-        guide = "axis", super = ScaleContinuousPosition, ...
+        super = ScaleContinuousPosition, ...
     )
 }
 # }}}
@@ -51,7 +51,7 @@ scale_humratio_continuous <- function (name = waiver(), breaks = waiver(), minor
         "humratio", identity, name = name,
         breaks = breaks, minor_breaks = minor_breaks, labels = labels,
         trans = trans, limits = limits, expand = c(0, 0), position = "right",
-        guide = "axis", super = ScaleContinuousPosition, ...
+        super = ScaleContinuousPosition, ...
     )
 }
 # }}}
