@@ -31,7 +31,7 @@ new_data_frame <- function(x = list(), n = NULL) {
 #' @importFrom psychrolib SetUnitSystem
 with_units <- function (units, expr) {
     psychrolib::SetUnitSystem(units)
-    psy_op <- psychrolib:::PSYCHRO_OPT
+
     on.exit(psy_op$UNITS <- NA_character_, add = TRUE)
 
     force(expr)

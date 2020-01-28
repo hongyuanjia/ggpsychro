@@ -3,10 +3,12 @@
 #' @importFrom psychrolib GetTRankineFromTFahrenheit GetTKelvinFromTCelsius isIP
 GetHumRatioFromAirVolume <- function (TDryBulb, AirVolume, Pressure) {
     if (isIP()) {
-        HumRatio <- (AirVolume * (144 * Pressure) / (psychrolib:::R_DA_IP * GetTRankineFromTFahrenheit(TDryBulb)) - 1) / 1.607858
+        r_da <- get("R_DA_IP", envir = asNamespace("psychrolib"), inherits = FALSE)
+        HumRatio <- (AirVolume * (144 * Pressure) / (r_da * GetTRankineFromTFahrenheit(TDryBulb)) - 1) / 1.607858
     } else {
-        HumRatio <- (AirVolume * Pressure / (psychrolib:::R_DA_SI * GetTKelvinFromTCelsius(TDryBulb)) - 1) / 1.607858
+        r_da <- get("R_DA_IP", envir = asNamespace("psychrolib"), inherits = FALSE)
+        HumRatio <- (AirVolume * Pressure / (r_da * GetTKelvinFromTCelsius(TDryBulb)) - 1) / 1.607858
     }
 
-    pmax(HumRatio, psychrolib:::PSYCHRO_OPT$MIN_HUM_RATIO)
+    pmax(HumRatio, psy_op$MIN_HUM_RATIO)
 }

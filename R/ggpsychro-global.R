@@ -1,4 +1,7 @@
 # package options {{{
+# psychrolib package env
+psy_op <- get("PSYCHRO_OPT", envir = asNamespace("psychrolib"), inherits = FALSE)
+
 GGPSY_OPT <- new.env(parent = emptyenv())
 # dry-bulb temp limit in Celsius [SI]
 GGPSY_OPT$tdb_min <- -50.0
