@@ -46,7 +46,7 @@ GGPSY_OPT$y_aes <- c("y", "ymin", "ymax", "yend", "yintercept", "ymin_final",
         enthalpy = "kJ * ' / ' * kg"
     ),
     IP = list(
-        drybulb = "degree * C",
+        drybulb = "degree * F",
         humratio = "gr[m] * ' / ' * lb[da]",
         relhum = "%",
         wetbulb = "degree * F",
