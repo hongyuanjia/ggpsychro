@@ -36,7 +36,7 @@
 # label_drybulb {{{
 label_drybulb <- function(x, accuracy = NULL, scale = 1, units,
                          big.mark = ",", decimal.mark = ".", trim = TRUE, ...) {
-    label_unit(x, accuracy = accuracy, scale = scale, type = "dry_bulb", units = units,
+    label_unit(x, accuracy = accuracy, scale = scale, type = "drybulb", units = units,
         big.mark, decimal.mark, trim, ...)
 }
 # }}}
@@ -46,7 +46,7 @@ label_drybulb <- function(x, accuracy = NULL, scale = 1, units,
 # label_humratio {{{
 label_humratio <- function(x, accuracy = NULL, scale = 1, units,
                          big.mark = ",", decimal.mark = ".", trim = TRUE, ...) {
-    label_unit(x, accuracy = accuracy, scale = scale, type = "hum_ratio", units = units,
+    label_unit(x, accuracy = accuracy, scale = scale, type = "humratio", units = units,
         big.mark, decimal.mark, trim, ...)
 }
 # }}}
