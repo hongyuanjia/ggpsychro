@@ -10,16 +10,14 @@
 #' @inherit scales::number_format params return
 #'
 #' @examples
-#' # for labelling dry-bulb temperature
 #' demo_scale(10:50, labels = label_drybulb(units = "SI", parse = TRUE))
 #' demo_scale(10:50, labels = label_drybulb(units = "IP", parse = TRUE))
 #'
-#' # for labelling humidity ratio
 #' demo_scale(10:20, labels = label_humratio(scale = 0.001, units = "SI", parse = TRUE))
 #' demo_scale(10:20, labels = label_humratio(scale = 0.007, units = "IP", parse = TRUE))
 #'
-#' demo_scale(10:50, labels = label_relhum(units = "SI", parse = TRUE))
-#' demo_scale(10:50, labels = label_relhum(units = "IP", parse = TRUE))
+#' demo_scale(10:50, labels = label_relhum(units = "SI"))
+#' demo_scale(10:50, labels = label_relhum(units = "IP"))
 #'
 #' demo_scale(10:50, labels = label_wetbulb(units = "SI", parse = TRUE))
 #' demo_scale(10:50, labels = label_wetbulb(units = "IP", parse = TRUE))
@@ -27,8 +25,8 @@
 #' demo_scale(10:50, labels = label_specvol(units = "SI", parse = TRUE))
 #' demo_scale(10:50, labels = label_specvol(units = "IP", parse = TRUE))
 #'
-#' demo_scale(10:50, labels = label_vappres(units = "SI", parse = TRUE))
-#' demo_scale(10:50, labels = label_vappres(units = "IP", parse = TRUE))
+#' demo_scale(10:50, labels = label_vappres(units = "SI"))
+#' demo_scale(10:50, labels = label_vappres(units = "IP"))
 #'
 #' demo_scale(seq(1000, 2000), labels = label_enthalpy(units = "SI", parse = TRUE))
 #' demo_scale(seq(1000, 2000), labels = label_enthalpy(units = "IP", parse = TRUE))
@@ -150,10 +148,10 @@ label_unit <- function (x, accuracy = NULL, scale = 1, type, units,
 
     prefix <- get_prefix(type)
     suffix <- paste0(" ", get_unit(units, type))
+    if (parse && suffix == " %") suffix <- paste0("'", suffix, "'")
 
-    if (need_parse(type)) {
+    if (parse || need_parse(type)) {
         prefix <- paste0("'", prefix, " '*")
-        if (suffix == " %") suffix <- paste0("'", suffix, "'")
         suffix <- paste("*~", suffix)
         big.mark <- paste0("*'", big.mark, "'*")
         decimal.mark <- paste0("*'", decimal.mark, "'*")

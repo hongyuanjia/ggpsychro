@@ -229,16 +229,14 @@ rather than axes.
 Format numbers as main variables on the psychrometric chart.
 }
 \examples{
-# for labelling dry-bulb temperature
 demo_scale(10:50, labels = label_drybulb(units = "SI", parse = TRUE))
 demo_scale(10:50, labels = label_drybulb(units = "IP", parse = TRUE))
 
-# for labelling humidity ratio
 demo_scale(10:20, labels = label_humratio(scale = 0.001, units = "SI", parse = TRUE))
 demo_scale(10:20, labels = label_humratio(scale = 0.007, units = "IP", parse = TRUE))
 
-demo_scale(10:50, labels = label_relhum(units = "SI", parse = TRUE))
-demo_scale(10:50, labels = label_relhum(units = "IP", parse = TRUE))
+demo_scale(10:50, labels = label_relhum(units = "SI"))
+demo_scale(10:50, labels = label_relhum(units = "IP"))
 
 demo_scale(10:50, labels = label_wetbulb(units = "SI", parse = TRUE))
 demo_scale(10:50, labels = label_wetbulb(units = "IP", parse = TRUE))
@@ -246,8 +244,8 @@ demo_scale(10:50, labels = label_wetbulb(units = "IP", parse = TRUE))
 demo_scale(10:50, labels = label_specvol(units = "SI", parse = TRUE))
 demo_scale(10:50, labels = label_specvol(units = "IP", parse = TRUE))
 
-demo_scale(10:50, labels = label_vappres(units = "SI", parse = TRUE))
-demo_scale(10:50, labels = label_vappres(units = "IP", parse = TRUE))
+demo_scale(10:50, labels = label_vappres(units = "SI"))
+demo_scale(10:50, labels = label_vappres(units = "IP"))
 
 demo_scale(seq(1000, 2000), labels = label_enthalpy(units = "SI", parse = TRUE))
 demo_scale(seq(1000, 2000), labels = label_enthalpy(units = "IP", parse = TRUE))
