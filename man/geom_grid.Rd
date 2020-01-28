@@ -106,8 +106,8 @@ displayed as described in \code{?plotmath}.}
 \item{units}{A single string indicating the units sytem to use. Should be
 either \code{"SI"} or \verb{"IP" or }waiver()\verb{which uses the value from the parent plot. Default:}waiver()`}
 
-\item{pres}{A single number indicating the atmosphere pressure in Pa \[SI\] or
-Psi \[IP\]. If \code{waiver()}, the pressure calculated from the parent
+\item{pres}{A single number indicating the atmosphere pressure in Pa [SI] or
+Psi [IP]. If \code{waiver()}, the pressure calculated from the parent
 plot's altitude value will be used. Default: \code{waiver()}}
 
 \item{...}{Other arguments passed on to \code{\link[ggplot2:layer]{layer()}}. These are
@@ -126,13 +126,13 @@ temperature range and humidity ratio range.
 }
 \details{
 \itemize{
-\item \code{geom_grid_relhum()} for relative humidity grid in range \[0, 100\] in \%
-\item \code{geom_grid_wetbulb()} for wet-bulb temperature grid in °F \[IP\] or °C \[SI\]
-\item \code{geom_grid_vappres()} for partial pressure grid of water vapor in Psi \[IP\]
-or Pa \[SI\]
-\item \code{geom_grid_specvol()} for specific volume grid in ft3 lb-1 of dry air \[IP\] or
-in m3 kg-1 of dry air \[SI\]
-\item \code{geom_grid_enthalpy()} for moist air enthalpy grid in Btu lb-1 \[IP\] or kJ kg-1
+\item \code{geom_grid_relhum()} for relative humidity grid in range [0, 100] in \%
+\item \code{geom_grid_wetbulb()} for wet-bulb temperature grid in °F [IP] or °C [SI]
+\item \code{geom_grid_vappres()} for partial pressure grid of water vapor in Psi [IP]
+or Pa [SI]
+\item \code{geom_grid_specvol()} for specific volume grid in ft3 lb-1 of dry air [IP] or
+in m3 kg-1 of dry air [SI]
+\item \code{geom_grid_enthalpy()} for moist air enthalpy grid in Btu lb-1 [IP] or kJ kg-1
 }
 
 Each \verb{geom_grid_*()} comes along with a corresponding

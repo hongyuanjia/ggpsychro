@@ -17,8 +17,8 @@
 #' @param units A single string indicating the units sytem to use. Should be
 #'        either `"SI"` or `"IP" or `waiver()` which uses the value from the
 #'        parent plot. Default: `waiver()`.
-#' @param pres A single number indicating the atmosphere pressure in Pa \\[SI\\] or
-#'        Psi \\[IP\\]. If `waiver()`, the pressure calculated from the parent
+#' @param pres A single number indicating the atmosphere pressure in Pa \[SI\] or
+#'        Psi \[IP\]. If `waiver()`, the pressure calculated from the parent
 #'        plot's altitude value will be used. Default: `waiver()`.
 #' @param n Number of points to interpolate along
 #'

@@ -17,8 +17,8 @@
 #' @param units A single string indicating the units sytem to use. Should be
 #'        either `"SI"` or `"IP" or `waiver()` which uses the value from the
 #'        parent plot. Default: `waiver()`
-#' @param pres A single number indicating the atmosphere pressure in Pa \\[SI\\] or
-#'        Psi \\[IP\\]. If `waiver()`, the pressure calculated from the parent
+#' @param pres A single number indicating the atmosphere pressure in Pa \[SI\] or
+#'        Psi \[IP\]. If `waiver()`, the pressure calculated from the parent
 #'        plot's altitude value will be used. Default: `waiver()`
 #' @param n Number of points to interpolate along
 #'
@@ -61,13 +61,13 @@ geom_line_sat <- function (mapping = NULL, data = NULL, units = waiver(), pres =
 #' specific volume and enthalpy, based on current psychrometric chart's dry-bulb
 #' temperature range and humidity ratio range.
 #'
-#' * `geom_grid_relhum()` for relative humidity grid in range \\[0, 100\\] in %
-#' * `geom_grid_wetbulb()` for wet-bulb temperature grid in °F \\[IP\\] or °C \\[SI\\]
-#' * `geom_grid_vappres()` for partial pressure grid of water vapor in Psi \\[IP\\]
-#'   or Pa \\[SI\\]
-#' * `geom_grid_specvol()` for specific volume grid in ft3 lb-1 of dry air \\[IP\\] or
-#'    in m3 kg-1 of dry air \\[SI\\]
-#' * `geom_grid_enthalpy()` for moist air enthalpy grid in Btu lb-1 \\[IP\\] or kJ kg-1
+#' * `geom_grid_relhum()` for relative humidity grid in range \[0, 100\] in %
+#' * `geom_grid_wetbulb()` for wet-bulb temperature grid in °F \[IP\] or °C \[SI\]
+#' * `geom_grid_vappres()` for partial pressure grid of water vapor in Psi \[IP\]
+#'   or Pa \[SI\]
+#' * `geom_grid_specvol()` for specific volume grid in ft3 lb-1 of dry air \[IP\] or
+#'    in m3 kg-1 of dry air \[SI\]
+#' * `geom_grid_enthalpy()` for moist air enthalpy grid in Btu lb-1 \[IP\] or kJ kg-1
 #'
 #' Each `geom_grid_*()` comes along with a corresponding
 #' [`scale_*()`][scale_relhum()] function for customizing scale
@@ -82,8 +82,8 @@ geom_line_sat <- function (mapping = NULL, data = NULL, units = waiver(), pres =
 #' @param units A single string indicating the units sytem to use. Should be
 #'        either `"SI"` or `"IP" or `waiver()` which uses the value from the
 #'        parent plot. Default: `waiver()`
-#' @param pres A single number indicating the atmosphere pressure in Pa \\[SI\\] or
-#'        Psi \\[IP\\]. If `waiver()`, the pressure calculated from the parent
+#' @param pres A single number indicating the atmosphere pressure in Pa \[SI\] or
+#'        Psi \[IP\]. If `waiver()`, the pressure calculated from the parent
 #'        plot's altitude value will be used. Default: `waiver()`
 #' @param n Number of points to interpolate along. Only used in
 #'        `geom_grid_relhum()`.
