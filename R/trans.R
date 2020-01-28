@@ -21,6 +21,14 @@ is.empty_trans <- function (trans) {
 #' @rdname trans
 #' @importFrom scales trans_new extended_breaks regular_minor_breaks
 #' @export
+#' @examples
+#' plot(drybulb_trans("SI"), xlim = c(0, 5))
+#' plot(humratio_trans("SI"), xlim = c(0, 1000))
+#' plot(relhum_trans("SI"), xlim = c(0, 1))
+#' plot(wetbulb_trans("SI"), xlim = c(-50, 40))
+#' plot(vappres_trans("SI"), xlim = c(1000, 4000))
+#' plot(specvol_trans("SI"), xlim = c(0.8, 1))
+#'
 # drybulb_trans {{{
 drybulb_trans <- function (units) {
     units <- match.arg(units, c("SI", "IP"))

@@ -8,11 +8,22 @@ NULL
 #'
 #' @param units A string indicating the system of units chosen. Should be:
 #' * `waiver()` for using the parent plot units set in [ggpsychro()]
-#' * Either `SI` or `"IP"`
+#' * Either `"SI"` or `"IP"`
 #'
 #' @rdname scale
 #' @importFrom ggplot2 continuous_scale
 #' @export
+#' @examples
+#' ggpsychro() +
+#'     geom_grid_relhum() +
+#'     scale_relhum(minor_breaks = NULL) +
+#'     geom_grid_wetbulb() +
+#'     scale_wetbulb(breaks = seq(25, 30, by = 5), minor_breaks = NULL) +
+#'     geom_grid_vappres() +
+#'     scale_vappres(breaks = seq(6000, 7000, by = 500), limits = c(6000, 7000)) +
+#'     geom_grid_specvol() +
+#'     scale_specvol(labels = NULL)
+#'
 # scale_drybulb_continuous {{{
 scale_drybulb_continuous <- function (name = waiver(), breaks = waiver(), minor_breaks = waiver(),
                                       labels = waiver(), limits = NULL, units = waiver(), ...) {

@@ -121,11 +121,23 @@ new limits
 \item{units}{A string indicating the system of units chosen. Should be:
 \itemize{
 \item \code{waiver()} for using the parent plot units set in \code{\link[=ggpsychro]{ggpsychro()}}
-\item Either \code{SI} or \code{"IP"}
+\item Either \code{"SI"} or \code{"IP"}
 }}
 
 \item{...}{Other arguments passed on to \code{scale_(x|y)_continuous()}}
 }
 \description{
 Transformation object for psychrometric chart
+}
+\examples{
+ggpsychro() +
+    geom_grid_relhum() +
+    scale_relhum(minor_breaks = NULL) +
+    geom_grid_wetbulb() +
+    scale_wetbulb(breaks = seq(25, 30, by = 5), minor_breaks = NULL) +
+    geom_grid_vappres() +
+    scale_vappres(breaks = seq(6000, 7000, by = 500), limits = c(6000, 7000)) +
+    geom_grid_specvol() +
+    scale_specvol(labels = NULL)
+
 }

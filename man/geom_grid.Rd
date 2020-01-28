@@ -175,3 +175,19 @@ aligns it away from the center.
 }
 }
 
+\examples{
+# add all grid components
+ggpsychro() +
+    geom_grid_relhum() +
+    geom_grid_wetbulb() +
+    geom_grid_vappres() +
+    geom_grid_specvol() +
+    geom_grid_enthalpy()
+
+# custom grid style
+ggpsychro() +
+    geom_grid_relhum(alpha = 1.0, label.alpha = 1.0, label.size = 6, label.fontface = 2) +
+    geom_grid_wetbulb(size = 1.0, color = "black", alpha = 1.0, label_loc = NA) +
+    geom_grid_vappres(label.size = 5)
+
+}
