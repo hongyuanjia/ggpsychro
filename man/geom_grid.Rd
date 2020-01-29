@@ -127,7 +127,7 @@ temperature range and humidity ratio range.
 \details{
 \itemize{
 \item \code{geom_grid_relhum()} for relative humidity grid in range [0, 100] in \%
-\item \code{geom_grid_wetbulb()} for wet-bulb temperature grid in °F [IP] or °C [SI]
+\item \code{geom_grid_wetbulb()} for wet-bulb temperature grid in degree_F [IP] or degree_C [SI]
 \item \code{geom_grid_vappres()} for partial pressure grid of water vapor in Psi [IP]
 or Pa [SI]
 \item \code{geom_grid_specvol()} for specific volume grid in ft3 lb-1 of dry air [IP] or

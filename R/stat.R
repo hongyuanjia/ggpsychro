@@ -5,7 +5,7 @@
 #' * `stat_relhum` requires an extra `relhum` aesthetics for relative humidity
 #'   in range \[0, 100\] in %
 #' * `stat_wetbulb` requires an extra `wetbulb` aesthetics for wet-bulb
-#'   temperature in °F \[IP\] or °C \[SI\]
+#'   temperature in degree_F \[IP\] or degree_C \[SI\]
 #' * `stat_vappres` requires an extra `vappres` aesthetics for partial pressure
 #'   of water vapor in moist air in Psi \[IP\] or Pa \[SI\]
 #' * `stat_specvol` requires an extra `specvol` aesthetics for specific volume

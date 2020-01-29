@@ -116,7 +116,7 @@ Calculate psychrometric properties of moist air
 \item \code{stat_relhum} requires an extra \code{relhum} aesthetics for relative humidity
 in range [0, 100] in \%
 \item \code{stat_wetbulb} requires an extra \code{wetbulb} aesthetics for wet-bulb
-temperature in °F [IP] or °C [SI]
+temperature in degree_F [IP] or degree_C [SI]
 \item \code{stat_vappres} requires an extra \code{vappres} aesthetics for partial pressure
 of water vapor in moist air in Psi [IP] or Pa [SI]
 \item \code{stat_specvol} requires an extra \code{specvol} aesthetics for specific volume

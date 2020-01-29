@@ -16,11 +16,11 @@
 #'
 #' @param tdb_lim A numeric vector of length-2 indicating the dry-bulb
 #'        temperature limits. Should be in range
-#'        `[-50, 100]` °C \[SI\] or
-#'        `[-58, 212]` °F \[IP\].
+#'        `[-50, 100]` degree_C \[SI\] or
+#'        `[-58, 212]` degree_F \[IP\].
 #'        If `waiver()`, default values will be
-#'        `[0, 50]` °C \[SI\] or
-#'        `[30, 120]` °F \[IP\]. Default: `waiver()`.
+#'        `[0, 50]` degree_C \[SI\] or
+#'        `[30, 120]` degree_F \[IP\]. Default: `waiver()`.
 #'
 #' @param hum_lim A numeric vector of length-2 indicating the humidity ratio
 #'        limits. Should be in range

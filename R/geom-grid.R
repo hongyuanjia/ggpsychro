@@ -62,7 +62,7 @@ geom_line_sat <- function (mapping = NULL, data = NULL, units = waiver(), pres =
 #' temperature range and humidity ratio range.
 #'
 #' * `geom_grid_relhum()` for relative humidity grid in range \[0, 100\] in %
-#' * `geom_grid_wetbulb()` for wet-bulb temperature grid in °F \[IP\] or °C \[SI\]
+#' * `geom_grid_wetbulb()` for wet-bulb temperature grid in degree_F \[IP\] or degree_C \[SI\]
 #' * `geom_grid_vappres()` for partial pressure grid of water vapor in Psi \[IP\]
 #'   or Pa \[SI\]
 #' * `geom_grid_specvol()` for specific volume grid in ft3 lb-1 of dry air \[IP\] or

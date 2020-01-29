@@ -26,11 +26,11 @@ specified, must be supplied in each layer added to the plot.}
 
 \item{tdb_lim}{A numeric vector of length-2 indicating the dry-bulb
 temperature limits. Should be in range
-\verb{[-50, 100]} °C [SI] or
-\verb{[-58, 212]} °F [IP].
+\verb{[-50, 100]} degree_C [SI] or
+\verb{[-58, 212]} degree_F [IP].
 If \code{waiver()}, default values will be
-\verb{[0, 50]} °C [SI] or
-\verb{[30, 120]} °F [IP]. Default: \code{waiver()}.}
+\verb{[0, 50]} degree_C [SI] or
+\verb{[30, 120]} degree_F [IP]. Default: \code{waiver()}.}
 
 \item{hum_lim}{A numeric vector of length-2 indicating the humidity ratio
 limits. Should be in range
