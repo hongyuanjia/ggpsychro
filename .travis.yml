@@ -22,7 +22,7 @@ cache:
   - packages
   - $HOME/.ccache
   - $HOME/Library/Caches/Homebrew
-latex: false
+latex: true
 
 # environment variables --------------------------------------------------------
 
