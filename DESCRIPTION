@@ -20,7 +20,7 @@ Suggests:
     testthat,
     covr
 Remotes:
-    hongyuanjia/psychrolib/src/r
+    hongyuanjia/psychrolib/src/r@build
 License: MIT + file LICENSE
 URL: https://github.com/hongyuanjia/ggpsychro
 BugReports: https://github.com/hongyuanjia/ggpsychro/issues
