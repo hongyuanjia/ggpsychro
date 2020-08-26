@@ -15,6 +15,7 @@ GGPSY_OPT$x_aes <- c("x", "xmin", "xmax", "xend", "xintercept", "xmin_final",
 # all known ggplot y aes
 GGPSY_OPT$y_aes <- c("y", "ymin", "ymax", "yend", "yintercept", "ymin_final",
     "ymax_final", "lower", "middle", "upper", "y0")
+GGPSY_OPT$ggplot_ver <- tryCatch(packageVersion("ggplot2"), error = function (e) 0.0)
 # }}}
 
 # .layer_list {{{
