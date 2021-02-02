@@ -84,10 +84,10 @@ omitted.}
 \itemize{
 \item \code{NULL} for no breaks
 \item \code{waiver()} for the default breaks computed by the
-transformation object
+\link[scales:trans_new]{transformation object}
 \item A numeric vector of positions
 \item A function that takes the limits as input and returns breaks
-as output
+as output (e.g., a function returned by \code{\link[scales:breaks_extended]{scales::extended_breaks()}})
 }}
 
 \item{minor_breaks}{One of:
@@ -116,6 +116,9 @@ as output
 Use \code{NA} to refer to the existing minimum or maximum
 \item A function that accepts the existing (automatic) limits and returns
 new limits
+Note that setting limits on positional scales will \strong{remove} data outside of the limits.
+If the purpose is to zoom, use the limit argument in the coordinate system
+(see \code{\link[ggplot2:coord_cartesian]{coord_cartesian()}}).
 }}
 
 \item{units}{A string indicating the system of units chosen. Should be:
@@ -124,7 +127,7 @@ new limits
 \item Either \code{"SI"} or \code{"IP"}
 }}
 
-\item{...}{Other arguments passed on to \code{scale_(x|y)_continuous()}}
+\item{...}{Other arguments passed on to \verb{scale_(x|y)_continuous()}}
 }
 \description{
 Transformation object for psychrometric chart

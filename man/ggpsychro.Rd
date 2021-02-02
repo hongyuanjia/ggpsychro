@@ -52,7 +52,7 @@ below will be used:
 }}
 
 \item{sat_style}{A list containg settings to format saturation line. Will be
-directly passed to \code{\link[ggplot2:geom_line]{ggplot2::geom_line()}}. If \code{waiver()}, defaults
+directly passed to \code{\link[ggplot2:geom_path]{ggplot2::geom_line()}}. If \code{waiver()}, defaults
 below will be used:
 \itemize{
 \item \code{color}: \verb{#DA251D}

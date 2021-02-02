@@ -58,7 +58,7 @@ chart's dry-bulb temperature (x axis) range and humidity ratio (y axis)
 range.
 }
 \details{
-\code{geom_line_sat()} is based on \code{\link[ggplot2:geom_line]{ggplot2::geom_line()}}, so you can further
+\code{geom_line_sat()} is based on \code{\link[ggplot2:geom_path]{ggplot2::geom_line()}}, so you can further
 customize the line style in the same way.
 
 Normally there is no need to add another saturation line since \code{\link[=ggpsychro]{ggpsychro()}}
@@ -68,7 +68,7 @@ at the last.
 \section{Aesthetics}{
 
 
-\code{geom_line_sat()} is drawing using \code{\link[ggplot2:geom_line]{ggplot2::geom_line()}} so support the
+\code{geom_line_sat()} is drawing using \code{\link[ggplot2:geom_path]{ggplot2::geom_line()}} so support the
 same aesthetics: \code{alpha}, \code{color}, \code{linetype} and \code{size}. It also has
 aesthetics that control the calculation of the saturation line points
 (required aesthetics are in bold):
