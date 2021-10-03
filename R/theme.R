@@ -12,36 +12,15 @@
 #' @examples
 #' theme_psychro()
 #'
-theme_psychro <- function(background = "white", base_size = 11, base_family = "", base_line_size = base_size/22, base_rect_size = base_size/22) {
-    # use theme_bw as the base
-    th <- theme_bw(base_size = base_size, base_family = base_family,
-             base_line_size = base_line_size, base_rect_size = base_rect_size
-    )
-
-    th <- th + theme(
-        # color for grids
-        panel.grid.major.x = element_line(color = "#870021", size = 0.15),
-        panel.grid.minor.x = element_line(color = "#870021", size = 0.15),
-        panel.grid.major.y = element_line(color = "#4E6390", size = 0.15),
-        panel.grid.minor.y = element_line(color = "#4E6390", size = 0.15),
-
-        axis.line.x = element_line(color = "#313329"),
-        axis.line.y = element_line(color = "#313329"),
-
-        axis.text.x = element_text(color = "#313329"),
-        axis.text.y = element_text(color = "#313329"),
-
-        axis.ticks.x = element_line(color = "#313329"),
-        axis.ticks.y = element_line(color = "#313329"),
-
-        # remove panel border
-        panel.border = element_rect(color = "white"),
-        # set chart background
-        panel.background = element_rect(fill = background, color = "white", size = 0.8)
-    )
-
-    th
+theme_grey_psychro <- function(base_size = 11, base_family = "", base_line_size = base_size/22, base_rect_size = base_size/22) {
+    theme_grey(base_size = base_size, base_family = base_family,
+             base_line_size = base_line_size, base_rect_size = base_rect_size) +
+        theme(
+            panel.background = element_rect(fill = NA, color = NA),
+            psychro.panel.background = element_polygon(fill = "gray92", color = NA)
+        )
 }
+theme_gray_psychro <- theme_grey_psychro
 # }}}
 
 # theme_psychro_ashrae {{{

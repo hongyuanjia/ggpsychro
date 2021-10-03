@@ -31,10 +31,11 @@ new_data_frame <- function(x = list(), n = NULL) {
 #' @importFrom psychrolib SetUnitSystem
 with_units <- function (units, expr) {
     psychrolib::SetUnitSystem(units)
+    expr
 
-    on.exit(psy_op$UNITS <- NA_character_, add = TRUE)
+#     on.exit(psy_op$UNITS <- NA_character_, add = TRUE)
 
-    force(expr)
+#     force(expr)
 }
 # }}}
 # encode_units {{{
@@ -137,3 +138,18 @@ line_angle <- function(x, y, xend, yend, degrees = TRUE) {
     }
 }
 # }}}
+remove_na <- function(x) if (!length(x)) NULL else x[!is.na(x)]
+
+cut_oob <- function(x, limits) {
+    x[x < limits[1L]] <- limits[1L]
+    x[x > limits[2L]] <- limits[2L]
+    x
+}
+
+is_oob <- function(x, limits) {
+    x < limits[1L] | x > limits[2L]
+}
+
+rescale01 <- function(x, limits) {
+    (x - limits[1L]) / (limits[2L] - limits[1L])
+}

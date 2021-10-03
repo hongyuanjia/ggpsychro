@@ -1,3 +1,19 @@
+default_labs <- function(units = "SI", mollier = FALSE) {
+    if (units == "SI") {
+        lab_x <- expression("Dry-bulb temperature ("*degree*C*")")
+        lab_y <- expression("Humidity ratio ("*g[m]*"/"*kg[da]*")")
+    } else if (units == "IP") {
+        lab_x <- expression("Dry-bulb temperature ("*degree*F*")")
+        lab_y <- expression("Humidity ratio ("*gr[m]*"/"*lb[da]*")")
+    }
+
+    if (mollier) {
+        list(x = lab_y, y = lab_x)
+    } else {
+        list(x = lab_x, y = lab_y)
+    }
+}
+
 #' Label wet-bulb temperature
 #'
 #' Format numbers as main variables on the psychrometric chart.

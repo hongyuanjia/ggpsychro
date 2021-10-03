@@ -5,28 +5,106 @@ ggplot_build.ggpsychro <- function (plot) {
     # get rid of R CMD check NOTE
     x <- y <- relhum <- label <- wetbulb <- vappres <- specvol <- enthalpy <- NULL
 
+#     # get all layers
+#     layers <- plot$layers
+#     lapply(layers, function (l) l$aes_params)
+
+#     # get all layer grid types
+#     type <- get_geom_types(layers)
+
+    scales <- plot$scales
+    coord <- plot$coordinates
+    layers <- plot$layers
+    data <- plot$data
+
     # retrieve meta data
     meta <- plot$psychro
 
-    # get all layers
-    layers <- plot$layers
-    lapply(layers, function (l) l$aes_params)
+    # determine the x and y variable
+    if (meta$mollier) {
+        x_lim <- meta$hum_lim
+        y_lim <- meta$tdb_lim
+    } else {
+        x_lim <- meta$tdb_lim
+        y_lim <- meta$hum_lim
+    }
 
-    # move mastarea and sat line to the last
-    layers <- cover_mask(layers)
+    # no layers specified
+    if (length(layers) == 0L) {
+        # no data
+        if (is.waive(data)) {
+            # no mapping
+            if (length(plot$mapping) == 0L) {
+                # add fake data in order to get scales probably trained so that
+                # grid lines can be drawn
+                plot$data <- data.frame(x = x_lim, y = y_lim)
+                plot$mapping <- ggplot2::aes(x = x, y = y)
+            # has mapping
+            } else {
+                # let ggplot2 to handle the error
+                return(NextMethod())
+            }
 
-    # get all layer grid types
-    type <- get_geom_types(layers)
+        }
+    # check if there are any data specified in layers
+    } else {
 
-    # get current scale list
-    scales <- plot$scales
+    }
 
-    # get coord
-    coord <- plot$coordinates
+    if (!meta$mollier) {
+        # change y axis position to right
+        if (!scales$has_scale("y")) {
+            scales$add(ggplot2::scale_y_continuous(position = "right"))
+        }
 
-    # add dry-bulb and hum-ratio scales if not exist
-    scales <- add_default_scales(coord, scales, meta$units)
+        scale_y <- scales$get_scales("y")
+        scale_y$position <- "right"
+    } else {
+        # change y axis position to right
+        if (!scales$has_scale("x")) {
+            scales$add(ggplot2::scale_x_continuous(position = "top"))
+        }
 
+        scale_x <- scales$get_scales("x")
+        scale_x$position <- "top"
+    }
+
+    return(NextMethod())
+    browser()
+
+    # add default scales if no data is given or no mapping is given
+    if (is.waive(plot$data) || length(plot$mapping) == 0L) {
+        # determine the x and y variable
+        if (meta$mollier) {
+            x_lim <- meta$hum_lim
+            y_lim <- meta$tdb_lim
+        } else {
+            x_lim <- meta$tdb_lim
+            y_lim <- meta$hum_lim
+        }
+
+        if (!is.null(x_lim)) {
+            if (!scales$has_scale("x")) {
+                browser()
+                scales$add(scale_x_continuous())
+                # should use coordinate system limits in case of limit expansion
+                x_scale <- scales$get_scales("x")
+                x_scale$train(coord$limits$x)
+                x_scale$range
+                x_scale$get_breaks()
+            }
+        }
+
+        if (!is.null(y_lim)) {
+            if (!scales$has_scale("y")) {
+                scales$add(scale_y_continuous())
+                # should use coordinate system limits in case of limit expansion
+                scales$get_scales("y")$train(coord$limits$y)
+            }
+        }
+    }
+
+    return(NextMethod())
     # do nothing if there is no grid layer
     if (all(is.na(type))) return(NextMethod())
 
@@ -53,7 +131,7 @@ ggplot_build.ggpsychro <- function (plot) {
                 scales$add(sc_grid)
             }
 
-            # need to calculte limits to get breaks
+            # need to calculate limits to get breaks
             if (!length(sc_grid$get_breaks())) {
                 ranges <- coord$limits
                 x_range <- scales$get_scales("x")$transform(ranges$x)
@@ -116,7 +194,14 @@ ggplot_build.ggpsychro <- function (plot) {
 
 # add_default_scales {{{
 add_default_scales <- function (coord, scales, units) {
+    # TODO: use dedicated drybulb and hum scales
     if (!scales$has_scale("x")) {
+        # browser()
+        # scales$has_scale("x")
+        # scales$get_scales("x")
+        # scales$n()
+        # scales$scales
+
         scales$add(scale_drybulb_continuous(units = units))
         scales$get_scales("x")$train(coord$limits$x)
     }

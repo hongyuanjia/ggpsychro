@@ -7,11 +7,9 @@
 ggpsychro(
   data = NULL,
   mapping = aes(),
-  tdb_lim = c(0, 50),
-  hum_lim = c(0, 50),
+  tdb_lim = NULL,
+  hum_lim = NULL,
   altitude = 0L,
-  mask_style = waiver(),
-  sat_style = waiver(),
   units = "SI",
   mollier = FALSE
 )
@@ -28,39 +26,18 @@ specified, must be supplied in each layer added to the plot.}
 temperature limits. Should be in range
 \verb{[-50, 100]} degree_C [SI] or
 \verb{[-58, 212]} degree_F [IP].
-If \code{waiver()}, default values will be
-\verb{[0, 50]} degree_C [SI] or
-\verb{[30, 120]} degree_F [IP]. Default: \code{waiver()}.}
+If \code{NULL}, no grid lines will be plotted when no data and aesthetics
+are added, just like normal ggplot behaviour. Default: \code{NULL}.}
 
 \item{hum_lim}{A numeric vector of length-2 indicating the humidity ratio
 limits. Should be in range
 \verb{[0, 60]} g_H20 kg_Air-1 [SI] or
 \verb{[0, 350]} gr_H20 lb_Air-1 [IP].
-If \code{waiver()}, default values will be
-\verb{[0, 30]} g_H20 kg_Air-1 [SI] or
-\verb{[0, 210]} gr_H20 lb_Air-1 [IP]. Default: \code{waiver()}.}
+If \code{NULL}, no grid lines will be plotted when no data and aesthetics
+are added, just like normal ggplot behaviour. Default: \code{NULL}.}
 
-\item{altitude}{A single number of altitude in m [SI] or ft [IP].}
-
-\item{mask_style}{A list containg settings to format mask area. Will be
-directly passed to \code{\link[ggplot2:geom_polygon]{ggplot2::geom_polygon()}}. If \code{waiver()}, defaults
-below will be used:
-\itemize{
-\item \code{fill}: \code{white}
-\item \code{linetype}: \code{1}
-\item \code{size}: \code{0.5}
-}}
-
-\item{sat_style}{A list containg settings to format saturation line. Will be
-directly passed to \code{\link[ggplot2:geom_path]{ggplot2::geom_line()}}. If \code{waiver()}, defaults
-below will be used:
-\itemize{
-\item \code{color}: \verb{#DA251D}
-\item \code{linetype}: \code{1}
-\item \code{size}: \code{1}
-}
-
-Learn more about setting these aesthetics in \code{vignette("ggplot2-specs")}.}
+\item{altitude}{A single number of altitude in m [SI] or ft [IP]. Default:
+\code{0}.}
 
 \item{units}{A string indicating the system of units chosen. Should be either
 \code{"SI"} or \code{"IP"}.}
