@@ -10,7 +10,7 @@ coord_psychro(
   altitude = NULL,
   units = NULL,
   mollier = NULL,
-  expand = TRUE,
+  expand = FALSE,
   default = TRUE,
   clip = "on"
 )

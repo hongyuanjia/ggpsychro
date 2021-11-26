@@ -10,19 +10,19 @@
 \alias{enthalpy_trans}
 \title{Create transformation objects for psychrometric chart}
 \usage{
-drybulb_trans(units)
+drybulb_trans(units = "SI")
 
-humratio_trans(units)
+humratio_trans(units = "SI")
 
-relhum_trans(units)
+relhum_trans(units = "SI")
 
-wetbulb_trans(units)
+wetbulb_trans(units = "SI")
 
-vappres_trans(units)
+vappres_trans(units = "SI")
 
-specvol_trans(units)
+specvol_trans(units = "SI")
 
-enthalpy_trans(units)
+enthalpy_trans(units = "SI")
 }
 \arguments{
 \item{units}{A string indicating the system of units chosen. Should be either
@@ -38,5 +38,4 @@ plot(relhum_trans("SI"), xlim = c(0, 1))
 plot(wetbulb_trans("SI"), xlim = c(-50, 40))
 plot(vappres_trans("SI"), xlim = c(1000, 4000))
 plot(specvol_trans("SI"), xlim = c(0.8, 1))
-
 }

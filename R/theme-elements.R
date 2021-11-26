@@ -14,6 +14,7 @@ element_polygon <- function(fill = NULL, colour = NULL, size = NULL, linetype = 
 len0_null <- function(x) if (length(x) == 0L) NULL else x
 
 #' @importFrom grid polygonGrob
+#' @importFrom ggplot2 element_grob
 #' @export
 element_grob.element_polygon <- function(element, x = c(0.0, 0.5, 1.0, 0.5), y = c(0.5, 1.0, 0.5, 0.0),
                                          fill = NULL, colour = NULL, size = NULL, linetype = NULL, ...) {

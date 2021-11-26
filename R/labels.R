@@ -49,73 +49,59 @@ default_labs <- function(units = "SI", mollier = FALSE) {
 #'
 #' @rdname label
 #' @export
-# label_drybulb {{{
 label_drybulb <- function(x, accuracy = NULL, scale = 1, units,
                          big.mark = ",", decimal.mark = ".", trim = TRUE, parse = FALSE, ...) {
     label_unit(x, accuracy = accuracy, scale = scale, type = "drybulb", units = units,
         big.mark, decimal.mark, trim, parse, ...)
 }
-# }}}
 
 #' @rdname label
 #' @export
-# label_humratio {{{
 label_humratio <- function(x, accuracy = NULL, scale = 1, units,
                          big.mark = ",", decimal.mark = ".", trim = TRUE, parse = FALSE, ...) {
     label_unit(x, accuracy = accuracy, scale = scale, type = "humratio", units = units,
         big.mark, decimal.mark, trim, parse, ...)
 }
-# }}}
 
 #' @rdname label
 #' @export
-# label_relhum {{{
 label_relhum <- function(x, accuracy = NULL, scale = 1, units,
                          big.mark = ",", decimal.mark = ".", trim = TRUE, parse = FALSE, ...) {
     label_unit(x, accuracy = accuracy, scale = scale, type = "relhum", units = units,
         big.mark, decimal.mark, trim, parse, ...)
 }
-# }}}
 
 #' @rdname label
 #' @export
-# label_wetbulb {{{
 label_wetbulb <- function(x, accuracy = NULL, scale = 1, units,
                          big.mark = ",", decimal.mark = ".", trim = TRUE, parse = FALSE, ...) {
     label_unit(x, accuracy = accuracy, scale = scale, type = "wetbulb", units = units,
         big.mark, decimal.mark, trim, parse, ...)
 }
-# }}}
 
 #' @rdname label
 #' @export
-# label_vappres {{{
 label_vappres <- function(x, accuracy = NULL, scale = 1, units,
                          big.mark = ",", decimal.mark = ".", trim = TRUE, parse = FALSE, ...) {
     label_unit(x, accuracy = accuracy, scale = scale, type = "vappres", units = units,
         big.mark, decimal.mark, trim, parse, ...)
 }
-# }}}
 
 #' @rdname label
 #' @export
-# label_specvol {{{
 label_specvol <- function(x, accuracy = NULL, scale = 1, units,
                          big.mark = ",", decimal.mark = ".", trim = TRUE, parse = FALSE, ...) {
     label_unit(x, accuracy = accuracy, scale = scale, type = "specvol", units = units,
         big.mark, decimal.mark, trim, parse, ...)
 }
-# }}}
 
 #' @rdname label
 #' @export
-# label_enthalpy {{{
 label_enthalpy <- function(x, accuracy = NULL, scale = 1, units,
                          big.mark = ",", decimal.mark = ".", trim = TRUE, parse = FALSE, ...) {
     label_unit(x, accuracy = accuracy, scale = scale, type = "enthalpy", units = units,
         big.mark, decimal.mark, trim, parse, ...)
 }
-# }}}
 
 #' @rdname label
 #' @export
@@ -145,7 +131,6 @@ specvol_format <- label_specvol
 #' @export
 enthalpy_format <- label_enthalpy
 
-# label_unit {{{
 #' @importFrom scales number
 label_unit <- function (x, accuracy = NULL, scale = 1, type, units,
                         big.mark = ",", decimal.mark = ".", trim = TRUE, parse = FALSE,
@@ -195,15 +180,11 @@ label_unit <- function (x, accuracy = NULL, scale = 1, type, units,
         }
     }
 }
-# }}}
 
-# get_unit {{{
 get_unit <- function (unit, type) {
     .unit_list[[unit]][[type]]
 }
-# }}}
 
-# get_prefix {{{
 get_prefix <- function (type) {
     if (type == "relhum") {
         "RH"
@@ -212,21 +193,14 @@ get_prefix <- function (type) {
         gsub("^(\\w)", "\\U\\1", pre, perl = TRUE)
     }
 }
-# }}}
 
-# need_parse {{{
 need_parse <- function (type) {
     .unit_list$parse[[type]]
 }
-# }}}
 
-# force_all {{{
 # reference r-lib/scales/R/utils.r
 force_all <- function (...) list(...)
-# }}}
 
-# demo_scale {{{
-# adopted from scales::demo_continuous
 #' Demonstrate scales functions with ggplot2 code
 #'
 #' This function generates ggplot2 code needed to use scales functions for real
@@ -237,6 +211,7 @@ force_all <- function (...) list(...)
 #'
 #' @keywords internal
 #' @export
+# adopted from scales::demo_continuous
 demo_scale <- function (x, ...) {
     df <- data.frame(x = x, stringsAsFactors = FALSE)
     ggplot2::ggplot(df, ggplot2::aes(x, 1)) +
@@ -245,4 +220,3 @@ demo_scale <- function (x, ...) {
         ggplot2::scale_y_continuous(NULL, breaks = NULL) +
         ggplot2::theme(aspect.ratio = 1 / 5)
 }
-# }}}

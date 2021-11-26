@@ -57,7 +57,11 @@ Alternatively a layout can be prepared in advance using
 a description of all available layouts.
 }
 \examples{
-ggpsychro()
+ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50))
+
+ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50), mollier = TRUE)
+
+ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50), units = "IP", altitude = 100)
 
 }
 \author{

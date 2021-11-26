@@ -1,96 +1,152 @@
 #' Draw drybulb and hum ratio grid lines
 #'
 #' @param theme A ggplot [theme][ggplot2::theme]
-#' @param x.minor,x.major A numeric vector of x axis minor/major breaks in
-#'        **native** units.
-#' @param y.minor,y.major A numeric vector of y axis minor/major breaks in
-#'        **native** units.
-#' @param x.limits,y.limits A length-2 numeric vector of x and y axis limits in
-#'        the original coordinate system, i.e. not-transformed.
-#' @param pressure A single number of atmospheric pressure in \[Pa\].
-#' @param units A string indicating the system of units chosen. Should be either
-#'        `"SI"` or `"IP"`.
+#' @param tdb.minor,tdb.major A numeric vector of dry-bulb temperature
+#'        minor/major breaks in **native** units.
+#' @param hum.minor,hum.major A numeric vector of humidity ratio minor/major
+#'        breaks in **native** units.
+#' @param saturation,rh.minor,rh.major,twb.minor,twb.major,vappres.minor,
+#'        vappres.major,specvol.minor,specvol.major,enthalpy.minor, enthalpy.major
+#'        A list of 4 elements, i.e. `tdb`, `hum`, `len`, and `n`.
 #' @param mollier A single logical value indicating weather a Mollier plot is
 #'        desired
 #' @noRd
-guide_grid_psychro <- function(theme,
-                               x, y,
-                               x.minor, xy.minor, x.major, xy.major,
-                               y.minor, yx.minor, y.major, yx.major,
-                               mollier) {
-    bound_x <- c(1, 0)[c(!mollier, mollier)]
-    bound_y <- c(0, 1)[c(!mollier, mollier)]
+guide_grid_psychro <- function(theme, tdb.minor, tdb.major, hum.minor, hum.major,
+                               saturation,
+                               rh.minor, rh.major, twb.minor, twb.major,
+                               vappres.minor, vappres.major, specvol.minor, specvol.major,
+                               enthalpy.minor, enthalpy.major, mollier) {
+    # create psychrometric chart panel
+    if (mollier) {
+        psychro_panel <- ggplot2::element_render(
+            theme, "psychro.panel.background",
+            x = c(0.0, 0.0, 1.0, rev(saturation$hum), saturation$hum[1L]),
+            y = c(0.0, 1.0, 1.0, rev(saturation$tdb), 0.0)
+        )
 
-    init_vert <- function(v1, v2end, v2bound, type = "y") {
-        v2 <- rep(0:1, length(v1))
-        v2[v2 == v2bound] <- v2end
+        psychro_mask <- ggplot2::element_render(
+            theme, "psychro.panel.mask",
+            x = c(saturation$hum, 1.0, saturation$hum[1L]),
+            y = c(saturation$tdb, 0.0, 0.0)
+        )
 
-        out <- list(v1 = rep(v1, each = 2L), v2 = v2)
+        nm_tdb <- "y"
+        nm_hum <- "x"
+        nm_x <- "hum"
+        nm_y <- "tdb"
+    } else {
+        psychro_panel <- ggplot2::element_render(
+            theme, "psychro.panel.background",
+            x = c(0.0, 0.0,                saturation$tdb, 1.0, 1.0),
+            y = c(0.0, saturation$hum[1L], saturation$hum, 1.0, 0.0)
+        )
 
-        if (type == "x") {
-            names(out)[1:2] <- c("x", "y")
-        } else {
-            names(out)[1:2] <- c("y", "x")
-        }
+        psychro_mask <- ggplot2::element_render(
+            theme, "psychro.panel.mask",
+            x = c(0.0, rev(saturation$tdb), 0.0),
+            y = c(1.0, rev(saturation$hum), saturation$hum[1L])
+        )
 
-        out$id.lengths <- rep(2, length(v1))
-        out
+        nm_tdb <- "x"
+        nm_hum <- "y"
+        nm_x <- "tdb"
+        nm_y <- "hum"
     }
 
-    grob <- grid::grobTree(
-        ggplot2::element_render(theme, "panel.background"),
-        if (length(x) && length(y)) {
-            if (mollier) {
-                vx <- rev(x)
-                vy <- rev(y)
-                vx <- c(0.0, 0.0, 1.0, 1.0,   vx,  vx[length(vx)])
-                vy <- c(0.0, 1.0, 1.0, vy[1L], vy, 0.0           )
-            } else {
-                vx <- c(0.0, 0.0, x, 1.0, 1.0)
-                vy <- c(0.0, y[1L],   y, 1.0, 0.0)
-            }
+    grid_elem <- function(x, type, var) {
+        vx <- rep(x, each = 2L)
+        vy <- rep(0:1, length(x))
+        v <- if (var == "x") list(x = vx, y = vy) else list(x = vy, y = vx)
 
-            ggplot2::element_render(
-                theme, "psychro.panel.background",
-                vx, vy
-            )
+        ggplot2::element_render(
+            theme, paste("panel.grid", type, var, sep = "."),
+            x = v$x, y = v$y, id.lengths = rep(2, length(x))
+        )
+    }
+
+    psy_grid_elem <- function(x, type, var) {
+        ggplot2::element_render(
+            theme, paste("psychro.panel.grid", type, var, sep = "."),
+            x = x[[c("tdb", "hum")[c(!mollier, mollier)]]],
+            y = x[[c("tdb", "hum")[c(mollier, !mollier)]]],
+            id.lengths = rep(x$len, x$n)
+        )
+    }
+
+    grill <- grid::grobTree(
+        ggplot2::element_render(theme, "panel.background"),
+
+        psychro_mask, psychro_panel,
+
+        if (length(hum.minor)) {
+            clip_grob(psychro_panel, grid_elem(hum.minor, "minor", nm_hum))
         },
-        if (length(y.minor)) {
-            vert <- init_vert(y.minor, yx.minor, bound_y, "y")
-            ggplot2::element_render(
-                theme, "panel.grid.minor.y",
-                x = vert$x, y = vert$y, id.lengths = vert$id.lengths
-            )
+
+        if (length(tdb.minor)) {
+            clip_grob(psychro_panel, grid_elem(tdb.minor, "minor", nm_tdb))
         },
-        if (length(y.major)) {
-            vert <- init_vert(y.major, yx.major, bound_y, "y")
-            ggplot2::element_render(
-                theme, "panel.grid.major.y",
-                x = vert$x, y = vert$y, id.lengths = vert$id.lengths
-            )
+
+        if (length(hum.major)) {
+            clip_grob(psychro_panel, grid_elem(hum.major, "major", nm_hum))
         },
-        if (length(x.minor)) {
-            vert <- init_vert(x.minor, xy.minor, bound_x, "x")
-            ggplot2::element_render(
-                theme, "panel.grid.minor.x",
-                x = vert$x, y = vert$y, id.lengths = vert$id.lengths
-            )
+
+        if (length(tdb.major)) {
+            clip_grob(psychro_panel, grid_elem(tdb.major, "major", nm_tdb))
         },
-        if (length(x.major)) {
-            vert <- init_vert(x.major, xy.major, bound_x, "x")
-            ggplot2::element_render(
-                theme, "panel.grid.major.x",
-                x = vert$x, y = vert$y, id.lengths = vert$id.lengths
-            )
+
+        if (length(rh.minor)) {
+            psy_grid_elem(rh.minor, "minor", "relhum")
         },
-        if (length(x) && length(y)) {
+
+        if (length(rh.major)) {
+            psy_grid_elem(rh.major, "major", "relhum")
+        },
+
+        if (length(twb.minor)) {
+            psy_grid_elem(twb.minor, "minor", "wetbulb")
+        },
+
+        if (length(twb.major)) {
+            psy_grid_elem(twb.major, "major", "wetbulb")
+        },
+
+        if (length(vappres.minor)) {
+            clip_grob(psychro_panel, psy_grid_elem(vappres.minor, "minor", "vappres"))
+        },
+
+        if (length(vappres.major)) {
+            clip_grob(psychro_panel, psy_grid_elem(vappres.major, "major", "vappres"))
+        },
+
+        if (length(specvol.minor)) {
+            clip_grob(psychro_panel, psy_grid_elem(specvol.minor, "minor", "specvol"))
+        },
+
+        if (length(specvol.major)) {
+            clip_grob(psychro_panel, psy_grid_elem(specvol.major, "major", "specvol"))
+        },
+
+        if (length(enthalpy.minor)) {
+            clip_grob(psychro_panel, psy_grid_elem(enthalpy.minor, "minor", "enthalpy"))
+        },
+
+        if (length(enthalpy.major)) {
+            clip_grob(psychro_panel, psy_grid_elem(enthalpy.major, "major", "enthalpy"))
+        },
+
+        if (length(saturation)) {
             ggplot2::element_render(
-                theme, "psychro.panel.grid.satuation",
-                x = x, y = y
+                theme, "psychro.panel.grid.saturation",
+                x = saturation[[nm_x]], y = saturation[[nm_y]]
             )
         }
     )
-    grob$name <- grid::grobName(grob, "grill")
 
-    grob
+    grill$name <- grid::grobName(grill, "grill")
+    grill
+}
+
+#' @importFrom gridGeometry polyclipGrob
+clip_grob <- function(panel, grob, op = "intersection") {
+    gridGeometry::polyclipGrob(grob, panel, op, name = grob$name, gp = grob$gp)
 }

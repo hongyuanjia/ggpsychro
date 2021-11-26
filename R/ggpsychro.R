@@ -42,7 +42,11 @@
 #' @keywords psychrometric
 #'
 #' @examples
-#' ggpsychro()
+#' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50))
+#'
+#' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50), mollier = TRUE)
+#'
+#' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50), units = "IP", altitude = 100)
 #'
 #' @importFrom checkmate assert_number assert_numeric assert_flag assert_choice
 #' @importFrom psychrolib GetStandardAtmPressure
@@ -77,7 +81,7 @@ ggpsychro <- function (data = NULL, mapping = aes(), tdb_lim = NULL, hum_lim = N
     # set default axis label
     p$labels <- default_labs(units = units, mollier = mollier)
 
-    p + theme_grey_psychro()
+    p + theme_psychro()
 }
 
 #' Reports whether x is a ggplot object

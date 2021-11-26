@@ -35,21 +35,7 @@
 #' @importFrom ggplot2 ggproto Stat Geom
 #' @rdname stat
 #'
-#' @examples
-#' p <- ggpsychro() + geom_grid_relhum() # add relative humidity grid lines
-#'
-#' # draw a point with dry-bulb at 30C and relative humidity at 60%
-#' p + geom_point(aes(x = 30, relhum = 0.6), stat = "relhum", size = 5)
-#'
-#' # draw a constant relative humidity line of 60% with dry-bulb from 20C to 30C
-#' ## use stat_* directly
-#' p + stat_relhum(geom = "line", aes(x = 20:30, relhum = 0.6), size = 2)
-#' ## OR
-#' ## use as thet `stat` argument inside an ggplot `geom_*` function
-#' p + geom_line(aes(x = 20:30, relhum = 0.6), stat = "relhum")
-#'
 #' @export
-# stat_relhum {{{
 stat_relhum <- function (mapping = NULL, data = NULL, geom = "point", position = "identity",
                          ..., na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
     psychro_layer(
@@ -58,11 +44,9 @@ stat_relhum <- function (mapping = NULL, data = NULL, geom = "point", position =
         params = list(na.rm = na.rm, ...)
     )
 }
-# }}}
 
 #' @export
 #' @rdname stat
-# stat_wetbulb {{{
 stat_wetbulb <- function (mapping = NULL, data = NULL, geom = "point", position = "identity",
                          ..., na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
     psychro_layer(
@@ -71,11 +55,9 @@ stat_wetbulb <- function (mapping = NULL, data = NULL, geom = "point", position 
         params = list(na.rm = na.rm, ...)
     )
 }
-# }}}
 
 #' @export
 #' @rdname stat
-# stat_vappres {{{
 stat_vappres <- function (mapping = NULL, data = NULL, geom = "point", position = "identity",
                          ..., na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
     psychro_layer(
@@ -84,11 +66,9 @@ stat_vappres <- function (mapping = NULL, data = NULL, geom = "point", position 
         params = list(na.rm = na.rm, ...)
     )
 }
-# }}}
 
 #' @export
 #' @rdname stat
-# stat_specvol {{{
 stat_specvol <- function (mapping = NULL, data = NULL, geom = "point", position = "identity",
                           ..., na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
     psychro_layer(
@@ -97,11 +77,9 @@ stat_specvol <- function (mapping = NULL, data = NULL, geom = "point", position 
         params = list(na.rm = na.rm, ...)
     )
 }
-# }}}
 
 #' @export
 #' @rdname stat
-# stat_enthalpy {{{
 stat_enthalpy <- function (mapping = NULL, data = NULL, geom = "point", position = "identity",
                          ..., na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
     psychro_layer(
@@ -110,9 +88,7 @@ stat_enthalpy <- function (mapping = NULL, data = NULL, geom = "point", position
         params = list(na.rm = na.rm, ...)
     )
 }
-# }}}
 
-# init_stat_data {{{
 init_stat_data <- function (data, params) {
     if (!"units" %in% names(data)) {
         data$units <- encode_units(params$units)
@@ -126,14 +102,12 @@ init_stat_data <- function (data, params) {
 
     data
 }
-# }}}
 
 #' @rdname ggpsychro-extensions
 #' @format NULL
 #' @usage NULL
 #' @importFrom psychrolib GetHumRatioFromRelHum
 #' @export
-# StatRelhum {{{
 StatRelhum <- ggproto(
     "StatRelhum", Stat,
 
@@ -162,14 +136,12 @@ StatRelhum <- ggproto(
         data[cols]
     }
 )
-# }}}
 
 #' @rdname ggpsychro-extensions
 #' @format NULL
 #' @usage NULL
 #' @importFrom psychrolib GetHumRatioFromTWetBulb
 #' @export
-# StatWetbulb {{{
 StatWetbulb <- ggproto(
     "StatWetbulb", Stat,
 
@@ -198,14 +170,12 @@ StatWetbulb <- ggproto(
         data[cols]
     }
 )
-# }}}
 
 #' @rdname ggpsychro-extensions
 #' @format NULL
 #' @usage NULL
 #' @importFrom psychrolib GetHumRatioFromVapPres
 #' @export
-# StatVappres {{{
 StatVappres <- ggproto(
     "StatVappres", Stat,
 
@@ -233,13 +203,11 @@ StatVappres <- ggproto(
         data[cols]
     }
 )
-# }}}
 
 #' @rdname ggpsychro-extensions
 #' @format NULL
 #' @usage NULL
 #' @export
-# StatSpecvol {{{
 StatSpecvol <- ggproto(
     "StatSpecvol", Stat,
 
@@ -267,14 +235,12 @@ StatSpecvol <- ggproto(
         data[cols]
     }
 )
-# }}}
 
 #' @rdname ggpsychro-extensions
 #' @format NULL
 #' @usage NULL
 #' @importFrom psychrolib GetHumRatioFromEnthalpyAndTDryBulb
 #' @export
-# StatEnthalpy {{{
 StatEnthalpy <- ggproto(
     "StatEnthalpy", Stat,
 
@@ -300,4 +266,3 @@ StatEnthalpy <- ggproto(
         data[cols]
     }
 )
-# }}}

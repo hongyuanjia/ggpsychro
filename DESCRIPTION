@@ -13,6 +13,7 @@ Depends:
     R (>= 3.2),
     ggplot2 (>= 3.0.0)
 Imports:
+    gridGeometry,
     checkmate,
     psychrolib,
     scales (>= 1.1.0)
@@ -24,22 +25,19 @@ License: MIT + file LICENSE
 URL: https://github.com/hongyuanjia/ggpsychro
 BugReports: https://github.com/hongyuanjia/ggpsychro/issues
 Encoding: UTF-8
-LazyData: true
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Roxygen: list(markdown = TRUE)
 Collate: 
     'ggpsychro-global.R'
     'aaa-.R'
     'coord-psychro.R'
-    'facet-.R'
-    'geom-grid.R'
-    'geom-maskarea.R'
     'ggproto-classes.R'
     'ggpsychro-package.R'
     'ggpsychro.R'
-    'guide-grid.R'
+    'guides-grid.R'
     'labels.R'
     'layer.R'
+    'layout.R'
     'plot-build.R'
     'plot-construction.R'
     'psychro-extra.R'

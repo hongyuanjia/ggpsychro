@@ -1,6 +1,9 @@
+#' @importFrom ggplot2 ggplot_add
 #' @export
 ggplot_add.CoordPsychro <- function(object, plot, object_name) {
-    if (!is.ggpsychro(plot)) return(NextMethod())
+    if (!is.ggpsychro(plot)) {
+        return(NextMethod())
+    }
 
     # update plot meta data if necessary
     if (is.null(object$mollier)) {
@@ -64,62 +67,22 @@ ggplot_add.CoordPsychro <- function(object, plot, object_name) {
     plot
 }
 
-#' @importFrom ggplot2 ggplot_add
 #' @export
-# ggplot_add.PsyLayer{{{
-ggplot_add.PsyLayer <- function (object, plot, object_name) {
-    if (!is.ggpsychro(plot)) {
-        names(object$mapping)
-        if ( is.waive(object$aes_params$units) ||
-            (is.null(object$aes_params$units) && !"units" %in% names(object$mapping))) {
-            abort_unit_waiver(object_name)
-        }
-        return(NextMethod())
-    }
-
-    meta <- plot$psychro
-
-    if (is.ggpsychro(plot)) {
-        object <- add_default_meta(object, meta$units, meta$pressure)
-    }
-    NextMethod()
-}
-# }}}
-
-#' @importFrom ggplot2 ggplot_add
-#' @export
-# ggplot_add.PsyScale {{{
-ggplot_add.PsyScale <- function (object, plot, object_name) {
-    # check if the trans is set with units being waiver()
+ggplot_add.PsyScale <- function(object, plot, object_name) {
+    # check if the trans is set as waiver()
     if (is.empty_trans(object$trans)) {
-        if (!is.ggpsychro(plot)) abort_unit_waiver(object_name)
         # assign new trans
-        object$trans <- get_trans_by_aes(object$scale_name)(units = plot$psychro$units)
+        trans <- get(paste0(object$scale_name, "_trans"), envir = asNamespace("ggpsychro"))
+        object$trans <- trans(units = plot$psychro$units)
+    }
+
+    if (identical(object$scale_name, "drybulb")) {
+        object$aesthetics <- if (plot$psychro$mollier) GGPSY_OPT$y_aes else GGPSY_OPT$x_aes
+    }
+
+    if (identical(object$scale_name, "humratio")) {
+        object$aesthetics <- if (plot$psychro$mollier) GGPSY_OPT$x_aes else GGPSY_OPT$y_aes
     }
 
     NextMethod()
 }
-# }}}
-
-# add_default_meta {{{
-add_default_meta <- function (object, units, pressure) {
-    types <- paste(c("geom", "stat", "aes"), "params", sep = "_")
-
-    for (type in types) {
-        # add if not exists
-        if (is.null(object[[type]])) {
-            object[[type]] <- list(units = units, pres = pressure)
-        } else {
-            if (is.waive(object[[type]]$units) || is.null(object[[type]]$units)) {
-                object[[type]]$units <- units
-            }
-
-            if (is.waive(object[[type]]$pres) || is.null(object[[type]]$pres)) {
-                object[[type]]$pres <- pressure
-            }
-        }
-    }
-
-    object
-}
-# }}}

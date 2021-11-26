@@ -141,17 +141,3 @@ altitude value will be used. Default: \code{waiver()}
 However, when these stats are used inside a ggplot \verb{geom_*} as the \code{stat}
 argument, both \code{units} and \code{pres} have to be specified.
 }
-\examples{
-p <- ggpsychro() + geom_grid_relhum() # add relative humidity grid lines
-
-# draw a point with dry-bulb at 30C and relative humidity at 60\%
-p + geom_point(aes(x = 30, relhum = 0.6), stat = "relhum", size = 5)
-
-# draw a constant relative humidity line of 60\% with dry-bulb from 20C to 30C
-## use stat_* directly
-p + stat_relhum(geom = "line", aes(x = 20:30, relhum = 0.6), size = 2)
-## OR
-## use as thet `stat` argument inside an ggplot `geom_*` function
-p + geom_line(aes(x = 20:30, relhum = 0.6), stat = "relhum")
-
-}
