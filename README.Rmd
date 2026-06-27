@@ -185,8 +185,11 @@ ggpsychro(epw$data()[month %in% 5:8], tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
 Hourly weather and simulation outputs can be summarized as psychrometric tiles.
 `geom_psychro_tile()` accepts either humidity ratio (`y`) or relative humidity
 (`relhum`) and exposes `after_stat(hours)` for distribution plots. Tiles use a
-small default gap and partial transparency; use `gap`, `alpha`, `colour`, and
-`linewidth` to tune their appearance.
+small default gap, partial transparency, and a tile-aware cell grid across the
+chart area so the bin system is visible even where no observations fall. Use
+`binwidth` and `boundary` to define the dry-bulb and humidity-ratio cells, and
+`gap`, `alpha`, `cell.grid.*`, `colour`, and `linewidth` to tune their
+appearance.
 
 ```{r tile-hours, out.width = "80%", message = FALSE, warning = FALSE}
 hour <- seq(0, 2 * pi, length.out = 240)

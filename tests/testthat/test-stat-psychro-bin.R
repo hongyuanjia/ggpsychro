@@ -99,6 +99,10 @@ test_that("psychrometric tile defaults set gap and alpha", {
         c(0.00184, 0.00184),
         tolerance = 1e-8
     )
+    expect_equal(tiles$cell_xmin, c(20, 22), tolerance = 1e-8)
+    expect_equal(tiles$cell_xmax, c(22, 24), tolerance = 1e-8)
+    expect_equal(tiles$cell_ymin, c(0.008, 0.008), tolerance = 1e-8)
+    expect_equal(tiles$cell_ymax, c(0.010, 0.010), tolerance = 1e-8)
     expect_equal(unique(tiles$alpha), 0.85)
     expect_equal(sum(tiles$count), nrow(d))
 
@@ -115,6 +119,12 @@ test_that("psychrometric tile defaults set gap and alpha", {
 
     expect_equal(tiles$xmax - tiles$xmin, c(2, 2), tolerance = 1e-8)
     expect_equal(tiles$ymax - tiles$ymin, c(0.002, 0.002), tolerance = 1e-8)
+    expect_equal(tiles$cell_xmax - tiles$cell_xmin, c(2, 2), tolerance = 1e-8)
+    expect_equal(
+        tiles$cell_ymax - tiles$cell_ymin,
+        c(0.002, 0.002),
+        tolerance = 1e-8
+    )
     expect_equal(unique(tiles$alpha), 1)
 
     built <- ggplot2::ggplot_build(
@@ -129,6 +139,76 @@ test_that("psychrometric tile defaults set gap and alpha", {
     )
     expect_gt(length(unique(built$data[[1L]]$alpha)), 1L)
     expect_false(any(built$data[[1L]]$alpha == 0.85))
+})
+
+test_that("psychrometric tile boundary controls bin alignment", {
+    d <- data.frame(
+        dry_bulb = c(20.1, 20.8, 22.1),
+        humidity_ratio = c(8.1, 8.5, 8.2)
+    )
+
+    built <- ggplot2::ggplot_build(
+        ggpsychro(d, tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+            geom_psychro_tile(
+                ggplot2::aes(dry_bulb, humidity_ratio),
+                binwidth = c(2, 2),
+                boundary = c(1, 1),
+                gap = 0.2
+            )
+    )
+    tiles <- built$data[[1L]][order(built$data[[1L]]$x), ]
+
+    expect_equal(tiles$cell_xmin, c(19, 21), tolerance = 1e-8)
+    expect_equal(tiles$cell_xmax, c(21, 23), tolerance = 1e-8)
+    expect_equal(tiles$cell_ymin, c(0.007, 0.007), tolerance = 1e-8)
+    expect_equal(tiles$cell_ymax, c(0.009, 0.009), tolerance = 1e-8)
+    expect_equal(tiles$x, c(20, 22), tolerance = 1e-8)
+    expect_equal(tiles$y, c(0.008, 0.008), tolerance = 1e-8)
+    expect_equal(tiles$xmax - tiles$xmin, c(1.6, 1.6), tolerance = 1e-8)
+    expect_equal(
+        tiles$ymax - tiles$ymin,
+        c(0.0016, 0.0016),
+        tolerance = 1e-8
+    )
+    expect_equal(tiles$cell_xmax - tiles$cell_xmin, c(2, 2), tolerance = 1e-8)
+    expect_equal(
+        tiles$cell_ymax - tiles$cell_ymin,
+        c(0.002, 0.002),
+        tolerance = 1e-8
+    )
+    expect_equal(sum(tiles$count), nrow(d))
+})
+
+test_that("psychrometric tile cell grid covers the chart area", {
+    d <- data.frame(
+        dry_bulb = c(20.1, 20.8, 22.1),
+        humidity_ratio = c(8.1, 8.5, 8.2)
+    )
+
+    built <- ggplot2::ggplot_build(
+        ggpsychro(d, tdb_lim = c(10, 35), hum_lim = c(0, 20)) +
+            geom_psychro_tile(
+                ggplot2::aes(dry_bulb, humidity_ratio),
+                binwidth = c(2, 2)
+            )
+    )
+
+    segments <- psychro_tile_cell_segments(
+        built$data[[1L]],
+        built$layout$panel_params[[1L]],
+        built$layout$coord
+    )
+    vertical <- segments[segments$x == segments$xend, , drop = FALSE]
+    horizontal <- segments[segments$y == segments$yend, , drop = FALSE]
+
+    expect_gt(nrow(segments), nrow(built$data[[1L]]) * 4L)
+    expect_equal(min(vertical$x), 10, tolerance = 1e-8)
+    expect_equal(max(vertical$x), 34, tolerance = 1e-8)
+    expect_equal(min(horizontal$y), 0, tolerance = 1e-8)
+    expect_equal(max(horizontal$y), 0.02, tolerance = 1e-8)
+    expect_true(all(vertical$yend <= built$layout$panel_params[[1L]]$y.range[[2L]]))
+    expect_true(any(vertical$yend < built$layout$panel_params[[1L]]$y.range[[2L]]))
+    expect_true(all(horizontal$xend == built$layout$panel_params[[1L]]$x.range[[2L]]))
 })
 
 test_that("psychrometric tile gap is validated", {
@@ -146,6 +226,34 @@ test_that("psychrometric tile gap is validated", {
     expect_error(ggplot2::ggplot_build(p(1)), "`gap` must")
     expect_error(ggplot2::ggplot_build(p(c(0, 0.1))), "`gap` must")
     expect_error(ggplot2::ggplot_build(p(Inf)), "`gap` must")
+})
+
+test_that("psychrometric tile boundary is validated", {
+    d <- data.frame(dry_bulb = 20.1, humidity_ratio = 8.1)
+    p <- function(boundary) {
+        ggpsychro(d, tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+            geom_psychro_tile(
+                ggplot2::aes(dry_bulb, humidity_ratio),
+                binwidth = c(2, 2),
+                boundary = boundary
+            )
+    }
+
+    expect_error(ggplot2::ggplot_build(p("0")), "`boundary` must")
+    expect_error(ggplot2::ggplot_build(p(c(0, 0, 0))), "`boundary` must")
+    expect_error(ggplot2::ggplot_build(p(Inf)), "`boundary` must")
+    expect_error(ggplot2::ggplot_build(p(NA_real_)), "`boundary` must")
+
+    expect_no_error(
+        ggplot2::ggplot_build(
+            ggpsychro(d, tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+                geom_psychro_tile(
+                    ggplot2::aes(dry_bulb, humidity_ratio),
+                    bins = c(2, 2),
+                    boundary = NA_real_
+                )
+        )
+    )
 })
 
 test_that("psychrometric tile stats inherit IP units and pressure", {
@@ -217,6 +325,29 @@ test_that("psychrometric tiles build with grids, fill scales, and facets", {
                 ggplot2::facet_wrap(~period)
         )
     )
+
+    expect_no_error(
+        ggplot2::ggplotGrob(
+            ggpsychro(d, tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
+                geom_grid_relhum() +
+                geom_psychro_tile(
+                    ggplot2::aes(dry_bulb, relhum = relative_humidity),
+                    binwidth = c(5, 2)
+                ) +
+                ggplot2::facet_wrap(~period)
+        )
+    )
+
+    expect_no_error(
+        ggplot2::ggplotGrob(
+            ggpsychro(d, tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
+                geom_psychro_tile(
+                    ggplot2::aes(dry_bulb, relhum = relative_humidity),
+                    binwidth = c(5, 2),
+                    cell.grid = FALSE
+                )
+        )
+    )
 })
 
 test_that("psychrometric tile distribution is stable", {
@@ -231,8 +362,7 @@ test_that("psychrometric tile distribution is stable", {
             geom_grid_relhum() +
             geom_psychro_tile(
                 ggplot2::aes(dry_bulb, relhum = relative_humidity),
-                binwidth = c(2, 2),
-                colour = "white"
+                binwidth = c(2, 2)
             ) +
             ggplot2::scale_fill_gradient(low = "#dbeafe", high = "#1d4ed8")
     )

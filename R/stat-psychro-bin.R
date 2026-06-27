@@ -13,6 +13,10 @@
 #'   dry-bulb temperature units, and the second value is in humidity-ratio units
 #'   (`g/kg` for SI and `gr/lb` for IP). A single number is recycled to both
 #'   directions.
+#' @param boundary Bin boundary in chart display units. The first value is a
+#'   dry-bulb temperature boundary, and the second value is a humidity-ratio
+#'   boundary (`g/kg` for SI and `gr/lb` for IP). A single number is recycled
+#'   to both directions. Only used when `binwidth` is supplied.
 #' @param drop If `TRUE`, the default, omit empty bins.
 #' @param fun Summary function used when the `value` aesthetic is supplied.
 #'   One of `"sum"`, `"mean"`, `"median"`, `"min"`, or `"max"`.
@@ -20,19 +24,27 @@
 #'   tiles at 92% of the bin width and height. Use `gap = 0` for full-size
 #'   tiles. Must be a single finite number greater than or equal to 0 and less
 #'   than 1.
+#' @param cell.grid If `TRUE`, the default, draw a tile-local grid across the
+#'   chart area using the computed psychrometric bin spacing.
+#' @param cell.grid.colour,cell.grid.linewidth,cell.grid.linetype,cell.grid.alpha
+#'   Appearance of the tile-local cell grid.
 #'
 #' @details
 #' The stat accepts either `x` and `y` aesthetics, where `y` is humidity ratio
 #' in chart display units, or `x` and `relhum`, where `relhum` is relative
 #' humidity in percent. Relative humidity inputs inherit the plot unit system
 #' and pressure from [ggpsychro()]. Tiles default to a small gap and `alpha =
-#' 0.85` so psychrometric grid lines remain visible.
+#' 0.85` so psychrometric grid lines remain visible. When `binwidth` is used,
+#' each tile represents one dry-bulb and humidity-ratio cell aligned to
+#' `boundary`; the optional cell grid redraws those bin boundaries across the
+#' chart area.
 #'
 #' @section Computed variables:
 #' * `count`: number of observations in each tile.
 #' * `hours`: same as `count`, named for hourly weather data.
 #' * `value`: aggregated `value` aesthetic when supplied.
 #' * `width`, `height`: tile dimensions after applying `gap`.
+#' * `cell_xmin`, `cell_xmax`, `cell_ymin`, `cell_ymax`: full bin boundaries.
 #'
 #' @examples
 #' d <- data.frame(
@@ -60,7 +72,8 @@
 #' @export
 stat_psychro_bin <- function(mapping = NULL, data = NULL, geom = "tile",
                              position = "identity", ..., bins = 30,
-                             binwidth = NULL, drop = TRUE, fun = "sum",
+                             binwidth = NULL, boundary = c(0, 0),
+                             drop = TRUE, fun = "sum",
                              gap = 0.08,
                              na.rm = FALSE, show.legend = NA,
                              inherit.aes = TRUE) {
@@ -74,7 +87,7 @@ stat_psychro_bin <- function(mapping = NULL, data = NULL, geom = "tile",
         inherit.aes = inherit.aes,
         params = list(
             na.rm = na.rm, bins = bins, binwidth = binwidth,
-            drop = drop, fun = fun, gap = gap, ...
+            boundary = boundary, drop = drop, fun = fun, gap = gap, ...
         )
     )
 }
@@ -83,11 +96,25 @@ stat_psychro_bin <- function(mapping = NULL, data = NULL, geom = "tile",
 #' @export
 geom_psychro_tile <- function(mapping = NULL, data = NULL, stat = "psychro_bin",
                               position = "identity", ..., gap = 0.08,
+                              boundary = c(0, 0), cell.grid = TRUE,
+                              cell.grid.colour = "grey78",
+                              cell.grid.linewidth = 0.25,
+                              cell.grid.linetype = 1,
+                              cell.grid.alpha = 1,
                               na.rm = FALSE,
                               show.legend = NA, inherit.aes = TRUE) {
-    params <- list(na.rm = na.rm, ...)
+    params <- list(
+        na.rm = na.rm,
+        cell.grid = cell.grid,
+        cell.grid.colour = cell.grid.colour,
+        cell.grid.linewidth = cell.grid.linewidth,
+        cell.grid.linetype = cell.grid.linetype,
+        cell.grid.alpha = cell.grid.alpha,
+        ...
+    )
     if (identical(stat, "psychro_bin") || identical(stat, StatPsychroBin)) {
         params$gap <- gap
+        params$boundary <- boundary
     }
 
     psychro_layer(
@@ -100,10 +127,40 @@ geom_psychro_tile <- function(mapping = NULL, data = NULL, stat = "psychro_bin",
 
 GeomPsychroTile <- ggproto(
     "GeomPsychroTile", ggplot2::GeomTile,
+    extra_params = c(
+        "na.rm", "cell.grid", "cell.grid.colour", "cell.grid.linewidth",
+        "cell.grid.linetype", "cell.grid.alpha"
+    ),
     default_aes = utils::modifyList(
         ggplot2::GeomTile$default_aes,
         ggplot2::aes(alpha = 0.85)
-    )
+    ),
+    draw_panel = function(self, data, panel_params, coord, lineend = "butt",
+                          linejoin = "mitre", cell.grid = TRUE,
+                          cell.grid.colour = "grey78",
+                          cell.grid.linewidth = 0.25,
+                          cell.grid.linetype = 1,
+                          cell.grid.alpha = 1) {
+        tiles <- ggplot2::ggproto_parent(ggplot2::GeomTile, self)$draw_panel(
+            data, panel_params, coord, lineend = lineend, linejoin = linejoin
+        )
+
+        if (!isTRUE(cell.grid)) {
+            return(tiles)
+        }
+
+        cell_grid <- psychro_tile_cell_grid_grob(
+            data, panel_params, coord,
+            colour = cell.grid.colour,
+            linewidth = cell.grid.linewidth,
+            linetype = cell.grid.linetype,
+            alpha = cell.grid.alpha,
+            lineend = lineend,
+            linejoin = linejoin
+        )
+
+        grid::grobTree(tiles, cell_grid)
+    }
 )
 
 #' @rdname ggpsychro-extensions
@@ -127,7 +184,8 @@ StatPsychroBin <- ggproto(
     dropped_aes = c("relhum", "value", "pres", "units"),
 
     extra_params = c(
-        "na.rm", "bins", "binwidth", "drop", "fun", "gap", "units", "pres"
+        "na.rm", "bins", "binwidth", "boundary", "drop", "fun", "gap",
+        "units", "pres"
     ),
 
     required_aes = c("x", "y|relhum"),
@@ -135,7 +193,8 @@ StatPsychroBin <- ggproto(
     optional_aes = "value",
 
     compute_group = function(self, data, scales, bins = 30,
-                             binwidth = NULL, drop = TRUE, fun = "sum",
+                             binwidth = NULL, boundary = c(0, 0),
+                             drop = TRUE, fun = "sum",
                              gap = 0.08, na.rm = FALSE) {
         units <- get_units(data)
         gap <- psychro_bin_gap(gap)
@@ -147,10 +206,15 @@ StatPsychroBin <- ggproto(
 
         bins <- psychro_bin_bins(bins)
         binwidth <- psychro_bin_binwidth(binwidth, units)
+        boundary <- psychro_bin_boundary(boundary, units, binwidth)
         fun <- match.arg(fun, c("sum", "mean", "median", "min", "max"))
 
-        x_breaks <- psychro_bin_breaks(data$x, bins[[1L]], binwidth[[1L]])
-        y_breaks <- psychro_bin_breaks(data$y, bins[[2L]], binwidth[[2L]])
+        x_breaks <- psychro_bin_breaks(
+            data$x, bins[[1L]], binwidth[[1L]], boundary[[1L]]
+        )
+        y_breaks <- psychro_bin_breaks(
+            data$y, bins[[2L]], binwidth[[2L]], boundary[[2L]]
+        )
 
         x_bin <- psychro_bin_find(data$x, x_breaks)
         y_bin <- psychro_bin_find(data$y, y_breaks)
@@ -178,6 +242,10 @@ StatPsychroBin <- ggproto(
             y = y_center[grid$y_bin],
             width = x_width[grid$x_bin] * tile_scale,
             height = y_width[grid$y_bin] * tile_scale,
+            cell_xmin = x_breaks[grid$x_bin],
+            cell_xmax = x_breaks[grid$x_bin + 1L],
+            cell_ymin = y_breaks[grid$y_bin],
+            cell_ymax = y_breaks[grid$y_bin + 1L],
             count = as.numeric(counts[keep]),
             hours = as.numeric(counts[keep]),
             value = values[keep]
@@ -225,6 +293,10 @@ psychro_bin_empty <- function() {
         y = numeric(),
         width = numeric(),
         height = numeric(),
+        cell_xmin = numeric(),
+        cell_xmax = numeric(),
+        cell_ymin = numeric(),
+        cell_ymax = numeric(),
         count = numeric(),
         hours = numeric(),
         value = numeric()
@@ -249,6 +321,20 @@ psychro_bin_gap <- function(gap) {
     gap
 }
 
+psychro_bin_boundary <- function(boundary, units, binwidth) {
+    if (all(vapply(binwidth, is.null, logical(1L)))) {
+        return(list(0, 0))
+    }
+
+    if (!is.numeric(boundary) || length(boundary) < 1L ||
+            length(boundary) > 2L || any(!is.finite(boundary))) {
+        stop("`boundary` must be one or two finite numbers.", call. = FALSE)
+    }
+
+    boundary <- rep(boundary, length.out = 2L)
+    list(boundary[[1L]], narrow_hum(boundary[[2L]], units))
+}
+
 psychro_bin_binwidth <- function(binwidth, units) {
     if (is.null(binwidth)) {
         return(list(NULL, NULL))
@@ -264,7 +350,7 @@ psychro_bin_binwidth <- function(binwidth, units) {
     list(binwidth[[1L]], narrow_hum(binwidth[[2L]], units))
 }
 
-psychro_bin_breaks <- function(x, bins, binwidth) {
+psychro_bin_breaks <- function(x, bins, binwidth, boundary = 0) {
     rng <- range(x, finite = TRUE)
 
     if (is.null(binwidth)) {
@@ -274,8 +360,8 @@ psychro_bin_breaks <- function(x, bins, binwidth) {
         return(seq(rng[[1L]], rng[[2L]], length.out = bins + 1L))
     }
 
-    lower <- floor(rng[[1L]] / binwidth) * binwidth
-    upper <- ceiling(rng[[2L]] / binwidth) * binwidth
+    lower <- floor((rng[[1L]] - boundary) / binwidth) * binwidth + boundary
+    upper <- ceiling((rng[[2L]] - boundary) / binwidth) * binwidth + boundary
     if (lower == upper) {
         upper <- lower + binwidth
     }
@@ -310,4 +396,142 @@ psychro_bin_values <- function(data, bin_id, n_bins, fun) {
         split_values, fun, numeric(1L)
     )
     values
+}
+
+psychro_tile_cell_grid_grob <- function(data, panel_params, coord, colour,
+                                        linewidth, linetype, alpha,
+                                        lineend, linejoin) {
+    segments <- psychro_tile_cell_segments(data, panel_params, coord)
+    if (!nrow(segments)) {
+        return(grid::nullGrob())
+    }
+
+    segments$colour <- colour
+    segments$linewidth <- linewidth
+    segments$linetype <- linetype
+    segments$alpha <- alpha
+    segments$group <- seq_len(nrow(segments))
+
+    ggplot2::GeomSegment$draw_panel(
+        segments, panel_params, coord, lineend = lineend,
+        linejoin = linejoin, na.rm = TRUE
+    )
+}
+
+psychro_tile_cell_segments <- function(data, panel_params, coord) {
+    needed <- c("cell_xmin", "cell_xmax", "cell_ymin", "cell_ymax")
+    if (!nrow(data) || !all(needed %in% names(data)) || is.null(panel_params)) {
+        return(new_data_frame(list(
+            x = numeric(), y = numeric(), xend = numeric(), yend = numeric()
+        )))
+    }
+
+    x_spacing <- psychro_tile_cell_spacing(data$cell_xmin, data$cell_xmax)
+    y_spacing <- psychro_tile_cell_spacing(data$cell_ymin, data$cell_ymax)
+    if (is.null(x_spacing) || is.null(y_spacing)) {
+        return(new_data_frame(list(
+            x = numeric(), y = numeric(), xend = numeric(), yend = numeric()
+        )))
+    }
+
+    ranges <- psychro_tile_panel_ranges(panel_params)
+    x_breaks <- psychro_tile_grid_breaks(ranges$x, x_spacing$width, x_spacing$anchor)
+    y_breaks <- psychro_tile_grid_breaks(ranges$y, y_spacing$width, y_spacing$anchor)
+
+    psychro_tile_chart_segments(x_breaks, y_breaks, ranges$x, ranges$y, coord)
+}
+
+psychro_tile_cell_spacing <- function(lower, upper, tolerance = 1e-8) {
+    widths <- unique(round(upper - lower, 12L))
+    widths <- widths[is.finite(widths) & widths > tolerance]
+    if (!length(widths)) {
+        return(NULL)
+    }
+
+    list(width = widths[[1L]], anchor = min(c(lower, upper), na.rm = TRUE))
+}
+
+psychro_tile_panel_ranges <- function(panel_params) {
+    x_range <- panel_params$x.range
+    y_range <- panel_params$y.range
+
+    if (is.null(x_range)) {
+        x_range <- panel_params$x$continuous_range
+    }
+    if (is.null(y_range)) {
+        y_range <- panel_params$y$continuous_range
+    }
+
+    list(x = x_range, y = y_range)
+}
+
+psychro_tile_grid_breaks <- function(range, width, anchor, tolerance = 1e-8) {
+    lower <- ceiling((range[[1L]] - anchor) / width - tolerance) * width + anchor
+    upper <- floor((range[[2L]] - anchor) / width + tolerance) * width + anchor
+
+    if (lower > upper) {
+        return(numeric())
+    }
+
+    seq(lower, upper, by = width)
+}
+
+psychro_tile_chart_segments <- function(x_breaks, y_breaks, x_range, y_range,
+                                        coord) {
+    if (!length(x_breaks) && !length(y_breaks)) {
+        return(new_data_frame(list(
+            x = numeric(), y = numeric(), xend = numeric(), yend = numeric()
+        )))
+    }
+
+    if (isTRUE(coord$mollier) || is.null(coord$units) || is.null(coord$pressure)) {
+        return(psychro_tile_rectangular_segments(x_breaks, y_breaks, x_range, y_range))
+    }
+
+    x_sat <- with_units(
+        coord$units,
+        psychrolib::GetHumRatioFromRelHum(x_breaks, 1.0, coord$pressure)
+    )
+    vertical <- new_data_frame(list(
+        x = x_breaks,
+        y = y_range[[1L]],
+        xend = x_breaks,
+        yend = pmin(y_range[[2L]], x_sat)
+    ))
+    vertical <- vertical[vertical$yend >= vertical$y, , drop = FALSE]
+
+    y_dew <- rep(x_range[[1L]], length(y_breaks))
+    positive <- y_breaks > 0
+    if (any(positive)) {
+        y_dew[positive] <- with_units(
+            coord$units,
+            GetTDewPointFromHumRatioOnly(y_breaks[positive], coord$pressure)
+        )
+    }
+    horizontal <- new_data_frame(list(
+        x = pmax(x_range[[1L]], y_dew),
+        y = y_breaks,
+        xend = x_range[[2L]],
+        yend = y_breaks
+    ))
+    horizontal <- horizontal[horizontal$x <= horizontal$xend, , drop = FALSE]
+
+    unique(rbind(vertical, horizontal))
+}
+
+psychro_tile_rectangular_segments <- function(x_breaks, y_breaks, x_range, y_range) {
+    vertical <- new_data_frame(list(
+        x = x_breaks,
+        y = y_range[[1L]],
+        xend = x_breaks,
+        yend = y_range[[2L]]
+    ))
+    horizontal <- new_data_frame(list(
+        x = x_range[[1L]],
+        y = y_breaks,
+        xend = x_range[[2L]],
+        yend = y_breaks
+    ))
+
+    unique(rbind(vertical, horizontal))
 }

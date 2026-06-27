@@ -13,6 +13,7 @@ stat_psychro_bin(
   ...,
   bins = 30,
   binwidth = NULL,
+  boundary = c(0, 0),
   drop = TRUE,
   fun = "sum",
   gap = 0.08,
@@ -28,6 +29,12 @@ geom_psychro_tile(
   position = "identity",
   ...,
   gap = 0.08,
+  boundary = c(0, 0),
+  cell.grid = TRUE,
+  cell.grid.colour = "grey78",
+  cell.grid.linewidth = 0.25,
+  cell.grid.linetype = 1,
+  cell.grid.alpha = 1,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -117,6 +124,11 @@ dry-bulb temperature units, and the second value is in humidity-ratio units
 (\code{g/kg} for SI and \code{gr/lb} for IP). A single number is recycled to both
 directions.}
 
+\item{boundary}{Bin boundary in chart display units. The first value is a
+dry-bulb temperature boundary, and the second value is a humidity-ratio
+boundary (\code{g/kg} for SI and \code{gr/lb} for IP). A single number is recycled
+to both directions. Only used when \code{binwidth} is supplied.}
+
 \item{drop}{If \code{TRUE}, the default, omit empty bins.}
 
 \item{fun}{Summary function used when the \code{value} aesthetic is supplied.
@@ -155,6 +167,11 @@ give the stat as \code{"count"}.
 \item For more information and other ways to specify the stat, see the
 \link[ggplot2:layer_stats]{layer stat} documentation.
 }}
+
+\item{cell.grid}{If \code{TRUE}, the default, draw a tile-local grid across the
+chart area using the computed psychrometric bin spacing.}
+
+\item{cell.grid.colour, cell.grid.linewidth, cell.grid.linetype, cell.grid.alpha}{Appearance of the tile-local cell grid.}
 }
 \description{
 \code{stat_psychro_bin()} bins observations on dry-bulb temperature and humidity
@@ -165,7 +182,10 @@ useful for weather-hour distributions and gridded simulation summaries.
 The stat accepts either \code{x} and \code{y} aesthetics, where \code{y} is humidity ratio
 in chart display units, or \code{x} and \code{relhum}, where \code{relhum} is relative
 humidity in percent. Relative humidity inputs inherit the plot unit system
-and pressure from \code{\link[=ggpsychro]{ggpsychro()}}. Tiles default to a small gap and \code{alpha = 0.85} so psychrometric grid lines remain visible.
+and pressure from \code{\link[=ggpsychro]{ggpsychro()}}. Tiles default to a small gap and \code{alpha = 0.85} so psychrometric grid lines remain visible. When \code{binwidth} is used,
+each tile represents one dry-bulb and humidity-ratio cell aligned to
+\code{boundary}; the optional cell grid redraws those bin boundaries across the
+chart area.
 }
 \section{Computed variables}{
 
@@ -174,6 +194,7 @@ and pressure from \code{\link[=ggpsychro]{ggpsychro()}}. Tiles default to a smal
 \item \code{hours}: same as \code{count}, named for hourly weather data.
 \item \code{value}: aggregated \code{value} aesthetic when supplied.
 \item \code{width}, \code{height}: tile dimensions after applying \code{gap}.
+\item \code{cell_xmin}, \code{cell_xmax}, \code{cell_ymin}, \code{cell_ymax}: full bin boundaries.
 }
 }
 
