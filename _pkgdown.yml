@@ -1,1 +1,22 @@
+url: https://hongyuanjia.github.io/ggpsychro/
 destination: docs
+
+template:
+  bootstrap: 5
+
+articles:
+- title: Start
+  navbar:
+  contents:
+  - articles/ggpsychro
+- title: Build charts
+  navbar:
+  contents:
+  - articles/grids-and-styles
+  - articles/plotting-data
+  - articles/zones-and-processes
+
+navbar:
+  structure:
+    left: [intro, reference, articles]
+    right: [search, github]

@@ -15,22 +15,11 @@ knitr::opts_chunk$set(
     dev = "png",
     dpi = 100
 )
-
-epw_file <- NULL
-epw_example_available <- FALSE
-if (requireNamespace("eplusr", quietly = TRUE)) {
-    epw_dir <- tryCatch(eplusr::eplus_config(9.6)$dir, error = function(e) NULL)
-    if (!is.null(epw_dir)) {
-        epw_file <- file.path(epw_dir, "WeatherData/USA_CO_Golden-NREL.724666_TMY3.epw")
-        epw_example_available <- file.exists(epw_file)
-    }
-}
 ```
 
 # ggpsychro
 
 <!-- badges: start -->
-[![Codecov test coverage](https://codecov.io/gh/hongyuanjia/ggpsychro/branch/master/graph/badge.svg)](https://codecov.io/gh/hongyuanjia/ggpsychro?branch=master)
 [![CRAN status](https://www.r-pkg.org/badges/version/ggpsychro)](https://CRAN.R-project.org/package=ggpsychro)
 [![R-CMD-check](https://github.com/hongyuanjia/ggpsychro/workflows/R-CMD-check/badge.svg)](https://github.com/hongyuanjia/ggpsychro/actions)
 <!-- badges: end -->
@@ -54,200 +43,19 @@ remotes::install_github("hongyuanjia/ggpsychro")
 
 ## Example
 
-### The basic
+The creation of a psychrometric chart starts with `ggpsychro()`. The result is a
+ggplot object, so grids, stats, geoms, scales, and themes can be added with the
+same `+` workflow used by ggplot2.
 
-Similar with ggplot2, the creation of a psychrometric chart using ggpsychro starts with function
-`ggpsychro()`. You can specify the range of dry-bulb temperature and humidity
-ratio using `tdb_lim` and `hum_lim` and the unit system using `units`.
-
-```{r ggpsychro}
-ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50), units = "IP")
-```
-
-You can also create a mollier chart by setting `mollier` to `TRUE`.
-
-```{r mollier}
-ggpsychro(mollier = TRUE)
-```
-
-The coordinate system can also be added explicitly with `coord_psychro()`.
-
-```{r coord}
-ggpsychro() +
-    coord_psychro(tdb_lim = c(10, 35), hum_lim = c(0, 30), units = "SI")
-```
-
-By default, ggpsychro draws dry-bulb temperature and humidity ratio grid lines,
-the saturation curve, and the psychrometric reference grids.
-
-The style of the saturation line and the mask area can be changed using
-ggplot2 theme elements.
-
-```{r style}
-ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-    theme(
-        psychro.panel.grid.saturation = element_line(color = "black", linetype = 2),
-        psychro.panel.mask = element_polygon(fill = "gray", color = NA)
-    )
-```
-
-### Presets
-
-`psychro_preset()` applies a named grid and theme combination for common chart
-styles. The `ashrae` and `minimal` presets are inspired by the psychrochart
-[ASHRAE](https://github.com/azogue/psychrochart/blob/master/psychrochart/chart_styles/ashrae_chart_style.json)
-and
-[minimal](https://github.com/azogue/psychrochart/blob/master/psychrochart/chart_styles/minimal_chart_style.json)
-chart styles.
-
-```{r preset-ashrae, out.width = "100%", dpi = 300, fig.width = 15, fig.height = 10}
+```{r ggpsychro, fig.alt = "Minimal psychrometric chart with dry-bulb temperature, humidity ratio, and reference grids."}
 ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
-    psychro_preset("ashrae")
-```
-
-```{r preset-minimal, out.width = "100%", dpi = 300, fig.width = 15, fig.height = 10}
-ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
     psychro_preset("minimal")
 ```
 
-### Grid
+State points and process lines can be supplied with dry-bulb temperature plus one
+psychrometric property, such as relative humidity.
 
-ggpsychro renders psychrometric reference grids in `coord_psychro()`. The
-default background grid is drawn without labels. The thin ggplot-style helpers
-can make individual grids explicit and label their major lines:
-
-| Geom                 | Type                 |
-| ---                  | ---                  |
-| `geom_grid_relhum`   | Relative humidity    |
-| `geom_grid_wetbulb`  | Wet-bulb temperature |
-| `geom_grid_vappres`  | Vapor pressure       |
-| `geom_grid_specvol`  | Specific volume      |
-| `geom_grid_enthalpy` | Enthalpy             |
-
-```{r grid, out.width = "100%", dpi = 300, fig.width = 15, fig.height = 10}
-ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-    geom_grid_relhum() +
-    geom_grid_wetbulb() +
-    geom_grid_vappres() +
-    geom_grid_specvol() +
-    geom_grid_enthalpy()
-```
-
-Each grid comes with a corresponding `scale_*_continuous()` function for
-customizing breaks and labels. The `geom_grid_*()` helpers do not create data
-layers; they mark grids as visible or hidden and optionally override line and
-label style.
-
-```{r grid-2, out.width = "100%", dpi = 300, fig.width = 15, fig.height = 10}
-ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-    geom_grid_relhum(linewidth = 0.8, color = "black", label.size = 5) +
-    scale_relhum_continuous(breaks = seq(25, 75, by = 25), minor_breaks = NULL) +
-    geom_grid_wetbulb(color = "black", linewidth = 0.6, label = FALSE) +
-    scale_wetbulb_continuous(breaks = seq(5, 30, by = 5), minor_breaks = NULL) +
-    geom_grid_vappres(show = FALSE) +
-    scale_specvol_continuous(labels = NULL) +
-    geom_grid_enthalpy()
-```
-
-### Stat
-
-ggpsychro provides 5 new ggplot stats to use together with other common ggplot2
-geoms:
-
-| Stat            | Type                 |
-| ---             | ---                  |
-| `stat_relhum`   | Relative humidity    |
-| `stat_wetbulb`  | Wet-bulb temperature |
-| `stat_vappres`  | Vapor pressure       |
-| `stat_specvol`  | Specific volume      |
-| `stat_enthalpy` | Enthalpy             |
-| `stat_psychro_bin` | Psychrometric tile bins |
-
-This makes it quick and easy to add new elements.
-
-Working together with ggplot2 original geoms is as simple as changing `stat` to
-your variable name of interest.
-
-```{r stat-1, message = FALSE, warning = FALSE, eval = epw_example_available}
-epw_file <- file.path(
-    eplusr::eplus_config(9.6)$dir,
-    "WeatherData/USA_CO_Golden-NREL.724666_TMY3.epw"
-)
-epw <- eplusr::read_epw(epw_file)
-
-ggpsychro(epw$data()[month %in% 5:8], tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-    psychro_preset("minimal") +
-    geom_point(
-        aes(dry_bulb_temperature, relhum = relative_humidity),
-        stat = "relhum", color = "#0f766e", alpha = 0.24, size = 0.5, shape = 16
-    ) +
-    facet_wrap(~month, labeller = as_labeller(function(x) paste0("Month: ", x)))
-```
-
-### Tile distributions
-
-Hourly weather and simulation outputs can be summarized as psychrometric tiles.
-`geom_psychro_tile()` accepts either humidity ratio (`y`) or relative humidity
-(`relhum`) and exposes `after_stat(hours)` for distribution plots. Tiles use a
-small default gap, partial transparency, and a tile-aware cell grid across the
-chart area so the bin system is visible even where no observations fall. Use
-`binwidth` and `boundary` to define the dry-bulb and humidity-ratio cells, and
-`gap`, `alpha`, `cell.grid.*`, `colour`, and `linewidth` to tune their
-appearance.
-
-```{r tile-hours, out.width = "80%", message = FALSE, warning = FALSE}
-hour <- seq(0, 2 * pi, length.out = 240)
-weather <- data.frame(
-    dry_bulb = 21 + 8 * sin(hour) + 2 * sin(2 * hour),
-    relative_humidity = 58 - 18 * sin(hour) + 6 * cos(3 * hour)
-)
-weather$cooling_load <- pmax(0, weather$dry_bulb - 24) * 1.5
-
-ggpsychro(weather, tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
-    geom_grid_relhum() +
-    geom_psychro_tile(
-        aes(dry_bulb, relhum = relative_humidity, fill = after_stat(hours)),
-        binwidth = c(1, 1)
-    ) +
-    scale_fill_gradient("Hours", low = "#dbeafe", high = "#1d4ed8")
-```
-
-The same bins can aggregate another metric with `value` and `fun`.
-
-```{r tile-value, out.width = "80%", message = FALSE, warning = FALSE}
-ggpsychro(weather, tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
-    geom_grid_relhum() +
-    geom_psychro_tile(
-        aes(
-            dry_bulb, relhum = relative_humidity,
-            value = cooling_load,
-            fill = after_stat(value)
-        ),
-        binwidth = c(2, 2),
-        fun = "mean"
-    ) +
-    scale_fill_gradient("Mean cooling load", low = "#fef3c7", high = "#b45309")
-```
-
-```{r stat-2}
-ggpsychro(tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
-    geom_grid_relhum() +
-    geom_grid_wetbulb() +
-    # 18 wet-bulb line with dry-bulb from 20 - 30
-    geom_line(aes(x = 20:30, wetbulb = 18), stat = "wetbulb")
-```
-
-### Zones and process lines
-
-`geom_psychro_zone()` draws psychrometric regions from dry-bulb and humidity
-constraints, and `geom_psychro_process()` draws a process line from state
-points. Relative humidity inputs use percent values.
-
-```{r zones-process, out.width = "100%", dpi = 300, fig.width = 12, fig.height = 8}
-zones <- rbind(
-    data.frame(name = "comfort", tdb_min = 20, tdb_max = 26, relhum_min = 35, relhum_max = 60),
-    data.frame(name = "humid", tdb_min = 24, tdb_max = 32, relhum_min = 60, relhum_max = 85)
-)
+```{r psychro-process, out.width = "75%", fig.alt = "Psychrometric process line with four state points on a minimal chart."}
 process <- data.frame(
     dry_bulb_temperature = c(18, 23, 28, 31),
     relative_humidity = c(70, 55, 45, 55)
@@ -255,15 +63,6 @@ process <- data.frame(
 
 ggpsychro(tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
     psychro_preset("minimal") +
-    geom_psychro_zone(
-        aes(
-            tdb_min = tdb_min, tdb_max = tdb_max,
-            relhum_min = relhum_min, relhum_max = relhum_max,
-            fill = name
-        ),
-        data = zones,
-        type = "dbt-rh", alpha = 0.28, colour = NA
-    ) +
     geom_psychro_process(
         aes(tdb = dry_bulb_temperature, relhum = relative_humidity),
         data = process,
@@ -276,6 +75,15 @@ ggpsychro(tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
         colour = "#0f766e", size = 2
     )
 ```
+
+## Learn more
+
+The longer examples live on the pkgdown site:
+
+* [Get started](https://hongyuanjia.github.io/ggpsychro/articles/ggpsychro.html)
+* [Chart grids and styles](https://hongyuanjia.github.io/ggpsychro/articles/grids-and-styles.html)
+* [Plotting psychrometric data](https://hongyuanjia.github.io/ggpsychro/articles/plotting-data.html)
+* [Zones and processes](https://hongyuanjia.github.io/ggpsychro/articles/zones-and-processes.html)
 
 ## Author
 

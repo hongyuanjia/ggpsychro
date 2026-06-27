@@ -5,8 +5,7 @@
 ^README\.Rmd$
 ^cran-comments\.md$
 ^\.github$
-^codecov\.yml$
-^\.covrignore$
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
+^vignettes$
