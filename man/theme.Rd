@@ -69,6 +69,9 @@ legend titles, the plot title and tag text.}
 }
 \value{
 A ggplot2 theme.
+
+\code{theme_psychro_ashrae()} and \code{theme_psychro_minimal()} are inspired by
+psychrochart's ASHRAE and minimal chart styles.
 }
 \description{
 Custom theme for psychrometric chart.
@@ -78,6 +81,12 @@ theme_psychro()
 theme_psychro_ashrae()
 theme_psychro_minimal()
 
+}
+\seealso{
+\itemize{
+\item \href{https://github.com/azogue/psychrochart/blob/master/psychrochart/chart_styles/ashrae_chart_style.json}{psychrochart ASHRAE style}
+\item \href{https://github.com/azogue/psychrochart/blob/master/psychrochart/chart_styles/minimal_chart_style.json}{psychrochart minimal style}
+}
 }
 \author{
 Hongyuan Jia

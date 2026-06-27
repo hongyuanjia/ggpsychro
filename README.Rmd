@@ -94,7 +94,11 @@ ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
 ### Presets
 
 `psychro_preset()` applies a named grid and theme combination for common chart
-styles.
+styles. The `ashrae` and `minimal` presets are inspired by the psychrochart
+[ASHRAE](https://github.com/azogue/psychrochart/blob/master/psychrochart/chart_styles/ashrae_chart_style.json)
+and
+[minimal](https://github.com/azogue/psychrochart/blob/master/psychrochart/chart_styles/minimal_chart_style.json)
+chart styles.
 
 ```{r preset-ashrae, out.width = "100%", dpi = 300, fig.width = 15, fig.height = 10}
 ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +

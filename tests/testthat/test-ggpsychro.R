@@ -336,11 +336,33 @@ test_that("Psychrometric presets configure themes and grids", {
     expect_true(p_minimal$psychro$grids$relhum)
     expect_true(p_minimal$psychro$grids$wetbulb)
     expect_false(p_minimal$psychro$grids$vappres)
-    expect_false(p_minimal$psychro$grids$specvol)
-    expect_false(p_minimal$psychro$grids$enthalpy)
-    expect_true(p_minimal$psychro$grid_labels$relhum$show)
-    expect_false(p_minimal$psychro$grid_labels$wetbulb$show)
-    expect_no_error(ggplot2::ggplot_build(p_minimal))
+    expect_true(p_minimal$psychro$grids$specvol)
+    expect_true(p_minimal$psychro$grids$enthalpy)
+    expect_false(p_minimal$psychro$grid_labels$relhum$show)
+    expect_true(p_minimal$psychro$grid_labels$wetbulb$show)
+    expect_false(p_minimal$psychro$grid_labels$specvol$show)
+    expect_false(p_minimal$psychro$grid_labels$enthalpy$show)
+    expect_no_error(built_minimal <- ggplot2::ggplot_build(p_minimal))
+    panel_minimal <- built_minimal$layout$panel_params[[1L]]
+    expect_equal(remove_na(panel_minimal$x$get_breaks()), seq(0, 50, by = 5))
+    expect_length(remove_na(panel_minimal$x$get_breaks_minor()), 0L)
+    expect_equal(
+        remove_na(panel_minimal$relhum$get_breaks()),
+        seq(0.2, 0.8, by = 0.2),
+        tolerance = 1e-8
+    )
+    expect_length(remove_na(panel_minimal$relhum$get_breaks_minor()), 0L)
+    expect_equal(remove_na(panel_minimal$wetbulb$get_breaks()), seq(10, 30, by = 10))
+    expect_true(all(seq(5, 35, by = 5) %in% remove_na(panel_minimal$wetbulb$get_breaks_minor())))
+    expect_equal(
+        remove_na(panel_minimal$specvol$get_breaks()),
+        seq(0.86, 0.98, by = 0.04),
+        tolerance = 1e-8
+    )
+    expect_equal(
+        remove_na(panel_minimal$enthalpy$get_breaks()),
+        c(20000, 60000, 100000)
+    )
     expect_gt(count_textpath_shapes(p_minimal), 0L)
 
     expect_equal(
