@@ -271,6 +271,106 @@ test_that("Psychrometric grid labels are rendered only for explicit helpers", {
     )
 })
 
+test_that("Psychrometric presets configure themes and grids", {
+    expect_s3_class(theme_psychro_ashrae(), "theme")
+    expect_s3_class(theme_psychro_minimal(), "theme")
+    expect_s3_class(theme_psychro_ashrae()$panel.border, "element_rect")
+
+    expect_error(psychro_preset("invalid"), "arg")
+    expect_error(psychro_preset("ashrae", labels = NA))
+
+    p_ashrae <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+        psychro_preset("ashrae")
+    expect_true(p_ashrae$psychro$grids$relhum)
+    expect_true(p_ashrae$psychro$grids$wetbulb)
+    expect_false(p_ashrae$psychro$grids$vappres)
+    expect_true(p_ashrae$psychro$grids$specvol)
+    expect_true(p_ashrae$psychro$grids$enthalpy)
+    expect_true(p_ashrae$psychro$grid_labels$relhum$show)
+    expect_true(p_ashrae$psychro$grid_labels$wetbulb$show)
+    expect_true(p_ashrae$psychro$grid_labels$specvol$show)
+    expect_true(p_ashrae$psychro$grid_labels$enthalpy$show)
+    expect_no_error(built_ashrae <- ggplot2::ggplot_build(p_ashrae))
+    panel_ashrae <- built_ashrae$layout$panel_params[[1L]]
+    expect_equal(remove_na(panel_ashrae$x$get_breaks()), seq(0, 50, by = 5))
+    expect_equal(remove_na(panel_ashrae$x$get_breaks_minor()), seq(0, 50, by = 1))
+    expect_equal(
+        remove_na(panel_ashrae$y$get_breaks()),
+        seq(0, 0.03, by = 0.005),
+        tolerance = 1e-8
+    )
+    expect_equal(
+        remove_na(panel_ashrae$y$get_breaks_minor()),
+        seq(0, 0.03, by = 0.0005),
+        tolerance = 1e-8
+    )
+    expect_equal(
+        remove_na(panel_ashrae$relhum$get_breaks()),
+        seq(0.1, 0.9, by = 0.1),
+        tolerance = 1e-8
+    )
+    expect_length(remove_na(panel_ashrae$relhum$get_breaks_minor()), 0L)
+    expect_equal(remove_na(panel_ashrae$wetbulb$get_breaks()), seq(0, 30, by = 5))
+    expect_equal(
+        remove_na(panel_ashrae$specvol$get_breaks()),
+        seq(0.80, 0.95, by = 0.05),
+        tolerance = 1e-8
+    )
+    expect_equal(
+        remove_na(panel_ashrae$specvol$get_breaks_minor()),
+        seq(0.78, 0.96, by = 0.01),
+        tolerance = 1e-8
+    )
+    expect_equal(
+        remove_na(panel_ashrae$enthalpy$get_breaks()),
+        c(50000, 100000)
+    )
+    expect_equal(
+        remove_na(panel_ashrae$enthalpy$get_breaks_minor()),
+        seq(10000, 130000, by = 10000)
+    )
+    expect_gt(count_textpath_shapes(p_ashrae), 1L)
+
+    p_minimal <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+        psychro_preset("minimal")
+    expect_true(p_minimal$psychro$grids$relhum)
+    expect_true(p_minimal$psychro$grids$wetbulb)
+    expect_false(p_minimal$psychro$grids$vappres)
+    expect_false(p_minimal$psychro$grids$specvol)
+    expect_false(p_minimal$psychro$grids$enthalpy)
+    expect_true(p_minimal$psychro$grid_labels$relhum$show)
+    expect_false(p_minimal$psychro$grid_labels$wetbulb$show)
+    expect_no_error(ggplot2::ggplot_build(p_minimal))
+    expect_gt(count_textpath_shapes(p_minimal), 0L)
+
+    expect_equal(
+        count_textpath_shapes(
+            ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+                psychro_preset("ashrae", labels = FALSE)
+        ),
+        0L
+    )
+    expect_equal(
+        count_textpath_shapes(
+            ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+                psychro_preset("minimal", labels = FALSE)
+        ),
+        0L
+    )
+
+    testthat::skip_on_os(c("linux", "windows"))
+
+    vdiffr::expect_doppelganger(
+        "ashrae preset",
+        p_ashrae
+    )
+
+    vdiffr::expect_doppelganger(
+        "minimal preset",
+        p_minimal
+    )
+})
+
 test_that("Psychrometric stats inherit units and pressure from the plot", {
     d <- data.frame(
         dry_bulb_temperature = seq(10, 35, length.out = 10),

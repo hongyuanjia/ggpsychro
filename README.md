@@ -81,6 +81,25 @@ ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
 
 <img src="man/figures/README-style-1.png" width="60%" style="display: block; margin: auto;" />
 
+### Presets
+
+`psychro_preset()` applies a named grid and theme combination for common
+chart styles.
+
+``` r
+ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+    psychro_preset("ashrae")
+```
+
+<img src="man/figures/README-preset-ashrae-1.png" width="100%" style="display: block; margin: auto;" />
+
+``` r
+ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+    psychro_preset("minimal")
+```
+
+<img src="man/figures/README-preset-minimal-1.png" width="100%" style="display: block; margin: auto;" />
+
 ### Grid
 
 ggpsychro renders psychrometric reference grids in `coord_psychro()`.
@@ -144,14 +163,14 @@ Working together with ggplot2 original geoms is as simple as changing
 `stat` to your variable name of interest.
 
 ``` r
-library(eplusr) # for reading EPW data
-epw <- read_epw(file.path(
-    eplus_config(9.6)$dir,
+epw_file <- file.path(
+    eplusr::eplus_config(9.6)$dir,
     "WeatherData/USA_CO_Golden-NREL.724666_TMY3.epw"
-))
+)
+epw <- eplusr::read_epw(epw_file)
 
 ggpsychro(epw$data()[month %in% 5:8], tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-    geom_grid_relhum() +
+    psychro_preset("minimal") +
     geom_point(
         aes(dry_bulb_temperature, relhum = relative_humidity),
         stat = "relhum", color = "#0f766e", alpha = 0.24, size = 0.5, shape = 16
@@ -170,6 +189,48 @@ ggpsychro(tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
 ```
 
 <img src="man/figures/README-stat-2-1.png" width="60%" style="display: block; margin: auto;" />
+
+### Zones and process lines
+
+`geom_psychro_zone()` draws psychrometric regions from dry-bulb and
+humidity constraints, and `geom_psychro_process()` draws a process line
+from state points. Relative humidity inputs use percent values.
+
+``` r
+zones <- rbind(
+    data.frame(name = "comfort", tdb_min = 20, tdb_max = 26, relhum_min = 35, relhum_max = 60),
+    data.frame(name = "humid", tdb_min = 24, tdb_max = 32, relhum_min = 60, relhum_max = 85)
+)
+process <- data.frame(
+    dry_bulb_temperature = c(18, 23, 28, 31),
+    relative_humidity = c(70, 55, 45, 55)
+)
+
+ggpsychro(tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
+    psychro_preset("minimal") +
+    geom_psychro_zone(
+        aes(
+            tdb_min = tdb_min, tdb_max = tdb_max,
+            relhum_min = relhum_min, relhum_max = relhum_max,
+            fill = name
+        ),
+        data = zones,
+        type = "dbt-rh", alpha = 0.28, colour = NA
+    ) +
+    geom_psychro_process(
+        aes(tdb = dry_bulb_temperature, relhum = relative_humidity),
+        data = process,
+        colour = "#0f766e", linewidth = 1,
+        arrow = grid::arrow(length = grid::unit(0.08, "inches"))
+    ) +
+    stat_psychro_state(
+        aes(tdb = dry_bulb_temperature, relhum = relative_humidity),
+        data = process,
+        colour = "#0f766e", size = 2
+    )
+```
+
+<img src="man/figures/README-zones-process-1.png" width="100%" style="display: block; margin: auto;" />
 
 ## Author
 

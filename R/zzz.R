@@ -46,4 +46,6 @@
             psychro.panel.grid.minor.enthalpy = ggplot2::el_def("element_line", "psychro.panel.grid.enthalpy")
         )
     )
+
+    register_element_polygon_merge()
 }
