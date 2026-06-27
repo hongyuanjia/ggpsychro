@@ -359,7 +359,6 @@ test_that("psychrometric tile distribution is stable", {
     vdiffr::expect_doppelganger(
         "psychro tile distribution",
         ggpsychro(d, tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
-            geom_grid_relhum() +
             geom_psychro_tile(
                 ggplot2::aes(dry_bulb, relhum = relative_humidity),
                 binwidth = c(2, 2)
