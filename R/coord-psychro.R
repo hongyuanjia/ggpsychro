@@ -148,7 +148,7 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
             lim_en <- with_units(self$units, psychrolib::GetMoistAirEnthalpy(lim_tdb, lim_hum))
 
             # train scales
-            scale_rh$train(lim_rh)
+            scale_rh$train(lim_rh * 100)
             scale_wb$train(lim_wb)
             scale_vp$train(lim_vp)
             scale_sv$train(lim_sv)
@@ -266,8 +266,12 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
         sat <- list(tdb = sat_tdb, hum = sat_hum, len = length(sat_tdb), n = 1L)
 
         # RELHUM GRID LINE
-        bk_rh_major <- remove_na(panel_params$relhum$get_breaks())
-        bk_rh_minor <- setdiff(remove_na(panel_params$relhum$get_breaks_minor()), bk_rh_major)
+        valid_relhum_breaks <- function(breaks) {
+            breaks <- remove_na(breaks)
+            breaks[!is_oob(breaks, c(0, 1))]
+        }
+        bk_rh_major <- valid_relhum_breaks(panel_params$relhum$get_breaks())
+        bk_rh_minor <- setdiff(valid_relhum_breaks(panel_params$relhum$get_breaks_minor()), bk_rh_major)
         rh_major <- if (psychro_grid_enabled(self$grids, "relhum")) {
             self$trans_grid_vert(tdb, "relhum", bk_rh_major, range_tdb, range_hum)
         }

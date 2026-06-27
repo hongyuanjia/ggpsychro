@@ -97,6 +97,27 @@ test_that("Empty psychrometric charts train display ranges", {
     expect_gt(count_line_shapes(ggpsychro(mollier = TRUE)), 10L)
 })
 
+test_that("Relative humidity grid breaks use psychrolib fractions", {
+    built <- ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+            geom_grid_relhum()
+    )
+    breaks <- remove_na(built$layout$panel_params[[1L]]$relhum$get_breaks())
+    expect_equal(breaks, c(0.25, 0.50, 0.75, 1.00), tolerance = 1e-8)
+
+    built <- ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+            geom_grid_relhum() +
+            scale_relhum_continuous(
+                limits = c(25, 100),
+                breaks = seq(25, 100, by = 25),
+                minor_breaks = NULL
+            )
+    )
+    breaks <- remove_na(built$layout$panel_params[[1L]]$relhum$get_breaks())
+    expect_equal(breaks, c(0.25, 0.50, 0.75, 1.00), tolerance = 1e-8)
+})
+
 test_that("Psychrometric grid helpers update coord metadata", {
     p <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
         geom_grid_relhum(color = "red") +

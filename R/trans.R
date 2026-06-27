@@ -21,7 +21,7 @@ is.empty_trans <- function(trans) {
 #' @examples
 #' plot(drybulb_trans("SI"), xlim = c(0, 5))
 #' plot(humratio_trans("SI"), xlim = c(0, 1000))
-#' plot(relhum_trans("SI"), xlim = c(0, 1))
+#' plot(relhum_trans("SI"), xlim = c(0, 100))
 #' plot(wetbulb_trans("SI"), xlim = c(-50, 40))
 #' plot(vappres_trans("SI"), xlim = c(1000, 4000))
 #' plot(specvol_trans("SI"), xlim = c(0.8, 1))
@@ -52,7 +52,7 @@ relhum_trans <- function(units = "SI") {
     trans_new("relhum",
         function(x) x / 100,
         function(x) x * 100,
-        domain = c(0.0, 1.0),
+        domain = c(0.0, 100.0),
         format = label_relhum(units = units)
     )
 }

@@ -122,6 +122,9 @@ ggplot_add.PsyScale <- function(object, plot, object_name, ...) {
         # assign new trans
         trans <- get(paste0(object$scale_name, "_trans"), envir = asNamespace("ggpsychro"))
         object$trans <- trans(units = plot$psychro$units)
+        if (is.numeric(object$limits)) {
+            object$limits <- object$trans$transform(object$limits)
+        }
     }
 
     if (identical(object$scale_name, "drybulb")) {
