@@ -244,6 +244,10 @@ test_that("Psychrometric grid labels are rendered only for explicit helpers", {
         1L
     )
 
+    # Text-on-path glyph positions depend on platform font metrics. Keep these
+    # visual snapshots on macOS, while the behavior checks above run everywhere.
+    testthat::skip_on_os(c("linux", "windows"))
+
     vdiffr::expect_doppelganger(
         "relative humidity grid labels",
         ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
