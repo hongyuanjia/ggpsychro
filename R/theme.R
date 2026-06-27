@@ -66,25 +66,25 @@ theme_psychro_ashrae <- function(base_size = 11, base_family = "",
          psychro.panel.background = element_polygon(fill = "white", color = NA),
          psychro.panel.mask = element_polygon(fill = "white", color = NA),
          panel.grid.major.x = ggplot2::element_line(color = "gray35", linetype = 1, linewidth = 0.25),
-         panel.grid.minor.x = ggplot2::element_line(color = "gray75", linetype = 3, linewidth = 0.15),
+         panel.grid.minor.x = ggplot2::element_line(color = "gray65", linetype = 3, linewidth = 0.12),
          panel.grid.major.y = ggplot2::element_line(color = "gray35", linetype = 1, linewidth = 0.25),
-         panel.grid.minor.y = ggplot2::element_line(color = "gray75", linetype = 3, linewidth = 0.15),
+         panel.grid.minor.y = ggplot2::element_line(color = "gray65", linetype = 3, linewidth = 0.12),
          psychro.panel.grid.saturation = ggplot2::element_line(color = "black", linewidth = 0.7),
          psychro.panel.grid.relhum = ggplot2::element_line(color = "gray20", linewidth = 0.3, linetype = "solid"),
          psychro.panel.grid.major.relhum = ggplot2::element_line(color = "gray10", linewidth = 0.35, linetype = "solid"),
-         psychro.panel.grid.minor.relhum = ggplot2::element_line(color = "gray70", linewidth = 0.15, linetype = "dotted"),
+         psychro.panel.grid.minor.relhum = ggplot2::element_line(color = "gray65", linewidth = 0.12, linetype = "dotted"),
          psychro.panel.grid.wetbulb = ggplot2::element_line(color = "gray45", linewidth = 0.25, linetype = "dashed"),
          psychro.panel.grid.major.wetbulb = ggplot2::element_line(color = "gray35", linewidth = 0.3, linetype = "dashed"),
-         psychro.panel.grid.minor.wetbulb = ggplot2::element_line(color = "gray80", linewidth = 0.15, linetype = "dashed"),
+         psychro.panel.grid.minor.wetbulb = ggplot2::element_line(color = "gray65", linewidth = 0.12, linetype = "dashed"),
          psychro.panel.grid.vappres = ggplot2::element_blank(),
          psychro.panel.grid.major.vappres = ggplot2::element_blank(),
          psychro.panel.grid.minor.vappres = ggplot2::element_blank(),
          psychro.panel.grid.specvol = ggplot2::element_line(color = "gray45", linewidth = 0.2, linetype = "dotdash"),
          psychro.panel.grid.major.specvol = ggplot2::element_line(color = "gray35", linewidth = 0.25, linetype = "dotdash"),
-         psychro.panel.grid.minor.specvol = ggplot2::element_line(color = "gray80", linewidth = 0.12, linetype = "dotdash"),
+         psychro.panel.grid.minor.specvol = ggplot2::element_line(color = "gray68", linewidth = 0.1, linetype = "dotdash"),
          psychro.panel.grid.enthalpy = ggplot2::element_line(color = "gray45", linewidth = 0.2, linetype = "longdash"),
          psychro.panel.grid.major.enthalpy = ggplot2::element_line(color = "gray35", linewidth = 0.25, linetype = "longdash"),
-         psychro.panel.grid.minor.enthalpy = ggplot2::element_line(color = "gray80", linewidth = 0.12, linetype = "longdash")
+         psychro.panel.grid.minor.enthalpy = ggplot2::element_line(color = "gray68", linewidth = 0.1, linetype = "longdash")
     )
 }
 
@@ -144,7 +144,7 @@ theme_psychro_minimal <- function(base_size = 11, base_family = "",
 #' @export
 #'
 #' @examples
-#' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+#' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
 #'     psychro_preset("ashrae")
 #'
 #' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
@@ -157,6 +157,30 @@ psychro_preset <- function(name = c("ashrae", "minimal"), labels = TRUE) {
 
     switch(name,
         ashrae = list(
+            scale_drybulb_continuous(
+                breaks = psychro_regular_breaks(5),
+                minor_breaks = psychro_regular_breaks(1)
+            ),
+            scale_humratio_continuous(
+                breaks = psychro_regular_breaks(5),
+                minor_breaks = psychro_regular_breaks(1)
+            ),
+            scale_relhum_continuous(
+                breaks = seq(10, 100, by = 10),
+                minor_breaks = seq(5, 100, by = 5)
+            ),
+            scale_wetbulb_continuous(
+                breaks = psychro_regular_breaks(5),
+                minor_breaks = psychro_regular_breaks(1)
+            ),
+            scale_specvol_continuous(
+                breaks = psychro_regular_breaks(0.05),
+                minor_breaks = psychro_regular_breaks(0.025)
+            ),
+            scale_enthalpy_continuous(
+                breaks = psychro_regular_breaks(25000),
+                minor_breaks = psychro_regular_breaks(10000)
+            ),
             geom_grid_relhum(label = labels, label.size = 3.1),
             geom_grid_wetbulb(label = labels, label_loc = 0.12, label.size = 2.8),
             geom_grid_vappres(show = FALSE),
@@ -173,4 +197,20 @@ psychro_preset <- function(name = c("ashrae", "minimal"), labels = TRUE) {
             theme_psychro_minimal()
         )
     )
+}
+
+psychro_regular_breaks <- function(by) {
+    force(by)
+
+    function(limits) {
+        limits <- limits[is.finite(limits)]
+        if (!length(limits)) return(numeric())
+        limits <- range(limits)
+        breaks <- seq(
+            floor(limits[[1L]] / by) * by,
+            ceiling(limits[[2L]] / by) * by,
+            by = by
+        )
+        breaks[breaks >= limits[[1L]] & breaks <= limits[[2L]]]
+    }
 }

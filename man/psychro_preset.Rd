@@ -21,7 +21,7 @@ A list of ggplot additions.
 grid labels, and apply a matching psychrometric chart theme.
 }
 \examples{
-ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
     psychro_preset("ashrae")
 
 ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +

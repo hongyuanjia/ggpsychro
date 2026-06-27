@@ -87,7 +87,7 @@ ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
 chart styles.
 
 ``` r
-ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
     psychro_preset("ashrae")
 ```
 
