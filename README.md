@@ -149,13 +149,14 @@ ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
 ggpsychro provides 5 new ggplot stats to use together with other common
 ggplot2 geoms:
 
-| Stat            | Type                 |
-|-----------------|----------------------|
-| `stat_relhum`   | Relative humidity    |
-| `stat_wetbulb`  | Wet-bulb temperature |
-| `stat_vappres`  | Vapor pressure       |
-| `stat_specvol`  | Specific volume      |
-| `stat_enthalpy` | Enthalpy             |
+| Stat               | Type                    |
+|--------------------|-------------------------|
+| `stat_relhum`      | Relative humidity       |
+| `stat_wetbulb`     | Wet-bulb temperature    |
+| `stat_vappres`     | Vapor pressure          |
+| `stat_specvol`     | Specific volume         |
+| `stat_enthalpy`    | Enthalpy                |
+| `stat_psychro_bin` | Psychrometric tile bins |
 
 This makes it quick and easy to add new elements.
 
@@ -179,6 +180,55 @@ ggpsychro(epw$data()[month %in% 5:8], tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
 ```
 
 <img src="man/figures/README-stat-1-1.png" width="60%" style="display: block; margin: auto;" />
+
+### Tile distributions
+
+Hourly weather and simulation outputs can be summarized as psychrometric
+tiles. `geom_psychro_tile()` accepts either humidity ratio (`y`) or
+relative humidity (`relhum`) and exposes `after_stat(hours)` for
+distribution plots.
+
+``` r
+hour <- seq(0, 2 * pi, length.out = 240)
+weather <- data.frame(
+    dry_bulb = 21 + 8 * sin(hour) + 2 * sin(2 * hour),
+    relative_humidity = 58 - 18 * sin(hour) + 6 * cos(3 * hour)
+)
+weather$cooling_load <- pmax(0, weather$dry_bulb - 24) * 1.5
+
+ggpsychro(weather, tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
+    geom_grid_relhum() +
+    geom_psychro_tile(
+        aes(dry_bulb, relhum = relative_humidity, fill = after_stat(hours)),
+        binwidth = c(1, 1),
+        colour = "white",
+        linewidth = 0.15
+    ) +
+    scale_fill_gradient("Hours", low = "#dbeafe", high = "#1d4ed8")
+```
+
+<img src="man/figures/README-tile-hours-1.png" width="80%" style="display: block; margin: auto;" />
+
+The same bins can aggregate another metric with `value` and `fun`.
+
+``` r
+ggpsychro(weather, tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
+    geom_grid_relhum() +
+    geom_psychro_tile(
+        aes(
+            dry_bulb, relhum = relative_humidity,
+            value = cooling_load,
+            fill = after_stat(value)
+        ),
+        binwidth = c(2, 2),
+        fun = "mean",
+        colour = "white",
+        linewidth = 0.15
+    ) +
+    scale_fill_gradient("Mean cooling load", low = "#fef3c7", high = "#b45309")
+```
+
+<img src="man/figures/README-tile-value-1.png" width="80%" style="display: block; margin: auto;" />
 
 ``` r
 ggpsychro(tdb_lim = c(10, 35), hum_lim = c(0, 30)) +

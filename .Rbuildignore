@@ -1,5 +1,6 @@
 ^ggpsychro\.Rproj$
 ^\.Rproj\.user$
+^\.git$
 ^LICENSE\.md$
 ^README\.Rmd$
 ^cran-comments\.md$
