@@ -271,6 +271,67 @@ test_that("Psychrometric grid labels are rendered only for explicit helpers", {
     )
 })
 
+test_that("Psychrometric presets configure themes and grids", {
+    expect_s3_class(theme_psychro_ashrae(), "theme")
+    expect_s3_class(theme_psychro_minimal(), "theme")
+
+    expect_error(psychro_preset("invalid"), "arg")
+    expect_error(psychro_preset("ashrae", labels = NA))
+
+    p_ashrae <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+        psychro_preset("ashrae")
+    expect_true(p_ashrae$psychro$grids$relhum)
+    expect_true(p_ashrae$psychro$grids$wetbulb)
+    expect_false(p_ashrae$psychro$grids$vappres)
+    expect_true(p_ashrae$psychro$grids$specvol)
+    expect_true(p_ashrae$psychro$grids$enthalpy)
+    expect_true(p_ashrae$psychro$grid_labels$relhum$show)
+    expect_true(p_ashrae$psychro$grid_labels$wetbulb$show)
+    expect_true(p_ashrae$psychro$grid_labels$specvol$show)
+    expect_true(p_ashrae$psychro$grid_labels$enthalpy$show)
+    expect_no_error(ggplot2::ggplot_build(p_ashrae))
+    expect_gt(count_textpath_shapes(p_ashrae), 1L)
+
+    p_minimal <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+        psychro_preset("minimal")
+    expect_true(p_minimal$psychro$grids$relhum)
+    expect_true(p_minimal$psychro$grids$wetbulb)
+    expect_false(p_minimal$psychro$grids$vappres)
+    expect_false(p_minimal$psychro$grids$specvol)
+    expect_false(p_minimal$psychro$grids$enthalpy)
+    expect_true(p_minimal$psychro$grid_labels$relhum$show)
+    expect_false(p_minimal$psychro$grid_labels$wetbulb$show)
+    expect_no_error(ggplot2::ggplot_build(p_minimal))
+    expect_gt(count_textpath_shapes(p_minimal), 0L)
+
+    expect_equal(
+        count_textpath_shapes(
+            ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+                psychro_preset("ashrae", labels = FALSE)
+        ),
+        0L
+    )
+    expect_equal(
+        count_textpath_shapes(
+            ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+                psychro_preset("minimal", labels = FALSE)
+        ),
+        0L
+    )
+
+    testthat::skip_on_os(c("linux", "windows"))
+
+    vdiffr::expect_doppelganger(
+        "ashrae preset",
+        p_ashrae
+    )
+
+    vdiffr::expect_doppelganger(
+        "minimal preset",
+        p_minimal
+    )
+})
+
 test_that("Psychrometric stats inherit units and pressure from the plot", {
     d <- data.frame(
         dry_bulb_temperature = seq(10, 35, length.out = 10),

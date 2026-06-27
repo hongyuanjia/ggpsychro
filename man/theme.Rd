@@ -5,6 +5,8 @@
 \alias{theme_grey_psychro}
 \alias{theme_gray_psychro}
 \alias{theme_psychro}
+\alias{theme_psychro_ashrae}
+\alias{theme_psychro_minimal}
 \title{Custom theme for psychrometric chart.}
 \usage{
 theme_grey_psychro(
@@ -35,6 +37,20 @@ theme_psychro(
   base_line_size = base_size/22,
   base_rect_size = base_size/22
 )
+
+theme_psychro_ashrae(
+  base_size = 11,
+  base_family = "",
+  base_line_size = base_size/22,
+  base_rect_size = base_size/22
+)
+
+theme_psychro_minimal(
+  base_size = 11,
+  base_family = "",
+  base_line_size = base_size/22,
+  base_rect_size = base_size/22
+)
 }
 \arguments{
 \item{base_size}{base font size, given in pts.}
@@ -59,6 +75,8 @@ Custom theme for psychrometric chart.
 }
 \examples{
 theme_psychro()
+theme_psychro_ashrae()
+theme_psychro_minimal()
 
 }
 \author{

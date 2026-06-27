@@ -81,6 +81,25 @@ ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
 
 <img src="man/figures/README-style-1.png" width="60%" style="display: block; margin: auto;" />
 
+### Presets
+
+`psychro_preset()` applies a named grid and theme combination for common
+chart styles.
+
+``` r
+ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+    psychro_preset("ashrae")
+```
+
+<img src="man/figures/README-preset-ashrae-1.png" width="100%" style="display: block; margin: auto;" />
+
+``` r
+ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+    psychro_preset("minimal")
+```
+
+<img src="man/figures/README-preset-minimal-1.png" width="100%" style="display: block; margin: auto;" />
+
 ### Grid
 
 ggpsychro renders psychrometric reference grids in `coord_psychro()`.
@@ -144,14 +163,18 @@ Working together with ggplot2 original geoms is as simple as changing
 `stat` to your variable name of interest.
 
 ``` r
-library(eplusr) # for reading EPW data
-epw <- read_epw(file.path(
-    eplus_config(9.6)$dir,
-    "WeatherData/USA_CO_Golden-NREL.724666_TMY3.epw"
-))
+weather <- data.frame(
+    month = rep(5:8, each = 80),
+    dry_bulb_temperature = rep(seq(12, 36, length.out = 80), 4) +
+        rep(c(-3, 0, 3, 6), each = 80),
+    relative_humidity = pmax(25, pmin(95,
+        rep(seq(85, 35, length.out = 80), 4) +
+            rep(c(5, 0, -5, -10), each = 80)
+    ))
+)
 
-ggpsychro(epw$data()[month %in% 5:8], tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-    geom_grid_relhum() +
+ggpsychro(weather, tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+    psychro_preset("minimal") +
     geom_point(
         aes(dry_bulb_temperature, relhum = relative_humidity),
         stat = "relhum", color = "#0f766e", alpha = 0.24, size = 0.5, shape = 16
