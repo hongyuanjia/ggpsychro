@@ -24,7 +24,8 @@ Suggests:
     covr,
     vdiffr
 License: MIT + file LICENSE
-URL: https://github.com/hongyuanjia/ggpsychro
+URL: https://hongyuanjia.github.io/ggpsychro/,
+    https://github.com/hongyuanjia/ggpsychro
 BugReports: https://github.com/hongyuanjia/ggpsychro/issues
 Encoding: UTF-8
 RoxygenNote: 7.3.3
