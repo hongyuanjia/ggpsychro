@@ -195,6 +195,48 @@ ggpsychro(tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
 
 <img src="man/figures/README-stat-2-1.png" width="60%" style="display: block; margin: auto;" />
 
+### Zones and process lines
+
+`geom_psychro_zone()` draws psychrometric regions from dry-bulb and
+humidity constraints, and `geom_psychro_process()` draws a process line
+from state points. Relative humidity inputs use percent values.
+
+``` r
+zones <- rbind(
+    data.frame(name = "comfort", tdb_min = 20, tdb_max = 26, relhum_min = 35, relhum_max = 60),
+    data.frame(name = "humid", tdb_min = 24, tdb_max = 32, relhum_min = 60, relhum_max = 85)
+)
+process <- data.frame(
+    dry_bulb_temperature = c(18, 23, 28, 31),
+    relative_humidity = c(70, 55, 45, 55)
+)
+
+ggpsychro(tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
+    psychro_preset("minimal") +
+    geom_psychro_zone(
+        aes(
+            tdb_min = tdb_min, tdb_max = tdb_max,
+            relhum_min = relhum_min, relhum_max = relhum_max,
+            fill = name
+        ),
+        data = zones,
+        type = "dbt-rh", alpha = 0.28, colour = NA
+    ) +
+    geom_psychro_process(
+        aes(tdb = dry_bulb_temperature, relhum = relative_humidity),
+        data = process,
+        colour = "#0f766e", linewidth = 1,
+        arrow = grid::arrow(length = grid::unit(0.08, "inches"))
+    ) +
+    stat_psychro_state(
+        aes(tdb = dry_bulb_temperature, relhum = relative_humidity),
+        data = process,
+        colour = "#0f766e", size = 2
+    )
+```
+
+<img src="man/figures/README-zones-process-1.png" width="100%" style="display: block; margin: auto;" />
+
 ## Author
 
 Hongyuan Jia
