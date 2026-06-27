@@ -69,7 +69,8 @@ ggpsychro <- function (data = NULL, mapping = aes(), tdb_lim = NULL, hum_lim = N
         altitude = altitude,
         tdb_lim = tdb_lim,
         hum_lim = hum_lim,
-        grids = default_psychro_grids()
+        grids = default_psychro_grids(),
+        grid_labels = list()
     )
 
     # set class
@@ -81,6 +82,7 @@ ggpsychro <- function (data = NULL, mapping = aes(), tdb_lim = NULL, hum_lim = N
         altitude = altitude, units = units, mollier = mollier
     )
     p$coordinates$grids <- p$psychro$grids
+    p$coordinates$grid_labels <- p$psychro$grid_labels
 
     # set default axis label
     p <- p + do.call(ggplot2::labs, default_labs(units = units, mollier = mollier))

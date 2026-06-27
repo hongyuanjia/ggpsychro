@@ -151,11 +151,11 @@ label_unit <- function (x, accuracy = NULL, scale = 1, type, units,
     suffix <- paste0(" ", get_unit(units, type))
     if (parse && suffix == " %") suffix <- paste0("'", suffix, "'")
 
+    fmt_big_mark <- big.mark
+    fmt_decimal_mark <- decimal.mark
     if (parse || need_parse(type)) {
         prefix <- paste0("'", prefix, " '*")
         suffix <- paste("*~", suffix)
-        big.mark <- paste0("*'", big.mark, "'*")
-        decimal.mark <- paste0("*'", decimal.mark, "'*")
     }
 
     function (x) {
@@ -164,8 +164,17 @@ label_unit <- function (x, accuracy = NULL, scale = 1, type, units,
         if (type == "enthalpy") x <- x / 1000.0
         num <- number(x, accuracy = accuracy, scale = scale,
             prefix = "", suffix = suffix,
-            big.mark = big.mark, decimal.mark = decimal.mark,
+            big.mark = fmt_big_mark, decimal.mark = fmt_decimal_mark,
             trim = trim, ...)
+
+        if (parse || need_parse(type)) {
+            if (nzchar(fmt_big_mark)) {
+                num <- gsub(fmt_big_mark, paste0("*'", fmt_big_mark, "'*"), num, fixed = TRUE)
+            }
+            if (nzchar(fmt_decimal_mark)) {
+                num <- gsub(fmt_decimal_mark, paste0("*'", fmt_decimal_mark, "'*"), num, fixed = TRUE)
+            }
+        }
 
         if (need_parse(type)) {
             num <- gsub("(\\d+)", "'\\1'", num, perl = TRUE)

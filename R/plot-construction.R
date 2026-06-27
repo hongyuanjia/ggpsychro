@@ -12,6 +12,11 @@ ggplot_add.CoordPsychro <- function(object, plot, object_name, ...) {
         object$grids <- merge_psychro_grids(object$grids)
         plot$psychro$grids <- object$grids
     }
+    if (is.null(object$grid_labels)) {
+        object$grid_labels <- plot$psychro$grid_labels
+    } else {
+        plot$psychro$grid_labels <- object$grid_labels
+    }
 
     # update plot meta data if necessary
     if (is.null(object$mollier)) {
@@ -87,9 +92,17 @@ add_psychro_grid <- function(object, plot) {
 
     plot$psychro$grids <- merge_psychro_grids(plot$psychro$grids)
     plot$psychro$grids[[object$type]] <- object$show
+    if (is.null(plot$psychro$grid_labels)) {
+        plot$psychro$grid_labels <- list()
+    }
+    plot$psychro$grid_labels[[object$type]] <- object$label
+    if (!object$show) {
+        plot$psychro$grid_labels[[object$type]]$show <- FALSE
+    }
 
     if (inherits(plot$coordinates, "CoordPsychro")) {
         plot$coordinates$grids <- plot$psychro$grids
+        plot$coordinates$grid_labels <- plot$psychro$grid_labels
     }
 
     theme_args <- psychro_grid_theme(object$type, object$style)
