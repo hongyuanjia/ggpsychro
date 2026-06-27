@@ -18,7 +18,8 @@ A list of ggplot additions.
 \description{
 \code{psychro_preset()} returns a list of ggplot additions that can be added to a
 \code{\link[=ggpsychro]{ggpsychro()}} plot. Presets make selected reference grids explicit, configure
-grid labels, and apply a matching psychrometric chart theme.
+grid labels, and apply a matching psychrometric chart theme. The \code{"ashrae"}
+and \code{"minimal"} presets are inspired by psychrochart's chart styles.
 }
 \examples{
 ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
