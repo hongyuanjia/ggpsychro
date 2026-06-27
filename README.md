@@ -163,17 +163,13 @@ Working together with ggplot2 original geoms is as simple as changing
 `stat` to your variable name of interest.
 
 ``` r
-weather <- data.frame(
-    month = rep(5:8, each = 80),
-    dry_bulb_temperature = rep(seq(12, 36, length.out = 80), 4) +
-        rep(c(-3, 0, 3, 6), each = 80),
-    relative_humidity = pmax(25, pmin(95,
-        rep(seq(85, 35, length.out = 80), 4) +
-            rep(c(5, 0, -5, -10), each = 80)
-    ))
+epw_file <- file.path(
+    eplusr::eplus_config(9.6)$dir,
+    "WeatherData/USA_CO_Golden-NREL.724666_TMY3.epw"
 )
+epw <- eplusr::read_epw(epw_file)
 
-ggpsychro(weather, tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+ggpsychro(epw$data()[month %in% 5:8], tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
     psychro_preset("minimal") +
     geom_point(
         aes(dry_bulb_temperature, relhum = relative_humidity),

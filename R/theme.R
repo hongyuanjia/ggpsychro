@@ -56,35 +56,35 @@ theme_psychro_ashrae <- function(base_size = 11, base_family = "",
         base_line_size = base_line_size, base_rect_size = base_rect_size
         ) %+replace%
     ggplot2::theme(
-         panel.border = ggplot2::element_blank(),
+         panel.border = ggplot2::element_rect(fill = NA, color = "black", linewidth = 0.6),
          panel.background = ggplot2::element_blank(),
-         axis.line.x = ggplot2::element_line(color = "black"),
-         axis.line.y = ggplot2::element_line(color = "black"),
-         axis.ticks = ggplot2::element_line(color = "black", linewidth = 0.3),
+         axis.line.x = ggplot2::element_line(color = "black", linewidth = 0.6),
+         axis.line.y = ggplot2::element_line(color = "black", linewidth = 0.6),
+         axis.ticks = ggplot2::element_line(color = "black", linewidth = 0.45),
          axis.text = ggplot2::element_text(color = "black"),
          axis.title = ggplot2::element_text(color = "black"),
          psychro.panel.background = element_polygon(fill = "white", color = NA),
          psychro.panel.mask = element_polygon(fill = "white", color = NA),
-         panel.grid.major.x = ggplot2::element_line(color = "gray35", linetype = 1, linewidth = 0.25),
-         panel.grid.minor.x = ggplot2::element_line(color = "gray65", linetype = 3, linewidth = 0.12),
-         panel.grid.major.y = ggplot2::element_line(color = "gray35", linetype = 1, linewidth = 0.25),
-         panel.grid.minor.y = ggplot2::element_line(color = "gray65", linetype = 3, linewidth = 0.12),
-         psychro.panel.grid.saturation = ggplot2::element_line(color = "black", linewidth = 0.7),
-         psychro.panel.grid.relhum = ggplot2::element_line(color = "gray20", linewidth = 0.3, linetype = "solid"),
-         psychro.panel.grid.major.relhum = ggplot2::element_line(color = "gray10", linewidth = 0.35, linetype = "solid"),
-         psychro.panel.grid.minor.relhum = ggplot2::element_line(color = "gray65", linewidth = 0.12, linetype = "dotted"),
-         psychro.panel.grid.wetbulb = ggplot2::element_line(color = "gray45", linewidth = 0.25, linetype = "dashed"),
-         psychro.panel.grid.major.wetbulb = ggplot2::element_line(color = "gray35", linewidth = 0.3, linetype = "dashed"),
-         psychro.panel.grid.minor.wetbulb = ggplot2::element_line(color = "gray65", linewidth = 0.12, linetype = "dashed"),
+         panel.grid.major.x = ggplot2::element_line(color = "black", linetype = 1, linewidth = 0.12),
+         panel.grid.minor.x = ggplot2::element_line(color = "black", linetype = 1, linewidth = 0.10),
+         panel.grid.major.y = ggplot2::element_line(color = "black", linetype = 1, linewidth = 0.12),
+         panel.grid.minor.y = ggplot2::element_line(color = "black", linetype = 1, linewidth = 0.10),
+         psychro.panel.grid.saturation = ggplot2::element_line(color = "black", linewidth = 0.9),
+         psychro.panel.grid.relhum = ggplot2::element_line(color = "black", linewidth = 0.35, linetype = "solid"),
+         psychro.panel.grid.major.relhum = ggplot2::element_line(color = "black", linewidth = 0.35, linetype = "solid"),
+         psychro.panel.grid.minor.relhum = ggplot2::element_blank(),
          psychro.panel.grid.vappres = ggplot2::element_blank(),
          psychro.panel.grid.major.vappres = ggplot2::element_blank(),
          psychro.panel.grid.minor.vappres = ggplot2::element_blank(),
-         psychro.panel.grid.specvol = ggplot2::element_line(color = "gray45", linewidth = 0.2, linetype = "dotdash"),
-         psychro.panel.grid.major.specvol = ggplot2::element_line(color = "gray35", linewidth = 0.25, linetype = "dotdash"),
-         psychro.panel.grid.minor.specvol = ggplot2::element_line(color = "gray68", linewidth = 0.1, linetype = "dotdash"),
-         psychro.panel.grid.enthalpy = ggplot2::element_line(color = "gray45", linewidth = 0.2, linetype = "longdash"),
-         psychro.panel.grid.major.enthalpy = ggplot2::element_line(color = "gray35", linewidth = 0.25, linetype = "longdash"),
-         psychro.panel.grid.minor.enthalpy = ggplot2::element_line(color = "gray68", linewidth = 0.1, linetype = "longdash")
+         psychro.panel.grid.wetbulb = ggplot2::element_line(color = "black", linewidth = 0.35, linetype = "dashed"),
+         psychro.panel.grid.major.wetbulb = ggplot2::element_line(color = "black", linewidth = 0.35, linetype = "dashed"),
+         psychro.panel.grid.minor.wetbulb = ggplot2::element_line(color = "black", linewidth = 0.18, linetype = "dashed"),
+         psychro.panel.grid.specvol = ggplot2::element_line(color = "black", linewidth = 0.18, linetype = "solid"),
+         psychro.panel.grid.major.specvol = ggplot2::element_line(color = "black", linewidth = 0.18, linetype = "solid"),
+         psychro.panel.grid.minor.specvol = ggplot2::element_line(color = "black", linewidth = 0.10, linetype = "solid"),
+         psychro.panel.grid.enthalpy = ggplot2::element_line(color = "black", linewidth = 0.25, linetype = "solid"),
+         psychro.panel.grid.major.enthalpy = ggplot2::element_line(color = "black", linewidth = 0.25, linetype = "solid"),
+         psychro.panel.grid.minor.enthalpy = ggplot2::element_line(color = "black", linewidth = 0.14, linetype = "solid")
     )
 }
 
@@ -163,23 +163,25 @@ psychro_preset <- function(name = c("ashrae", "minimal"), labels = TRUE) {
             ),
             scale_humratio_continuous(
                 breaks = psychro_regular_breaks(5),
-                minor_breaks = psychro_regular_breaks(1)
+                minor_breaks = psychro_regular_breaks(0.5)
             ),
             scale_relhum_continuous(
-                breaks = seq(10, 100, by = 10),
-                minor_breaks = seq(5, 100, by = 5)
+                breaks = seq(10, 90, by = 10),
+                minor_breaks = NULL
             ),
             scale_wetbulb_continuous(
-                breaks = psychro_regular_breaks(5),
-                minor_breaks = psychro_regular_breaks(1)
+                breaks = seq(0, 30, by = 5),
+                minor_breaks = seq(-10, 35, by = 1)
             ),
             scale_specvol_continuous(
-                breaks = psychro_regular_breaks(0.05),
-                minor_breaks = psychro_regular_breaks(0.025)
+                limits = c(0.78, 0.96),
+                breaks = seq(0.80, 0.95, by = 0.05),
+                minor_breaks = seq(0.78, 0.96, by = 0.01)
             ),
             scale_enthalpy_continuous(
-                breaks = psychro_regular_breaks(25000),
-                minor_breaks = psychro_regular_breaks(10000)
+                limits = c(10000, 130000),
+                breaks = seq(50000, 100000, by = 50000),
+                minor_breaks = seq(10000, 130000, by = 10000)
             ),
             geom_grid_relhum(label = labels, label.size = 3.1),
             geom_grid_wetbulb(label = labels, label_loc = 0.12, label.size = 2.8),

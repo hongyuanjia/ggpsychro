@@ -274,6 +274,7 @@ test_that("Psychrometric grid labels are rendered only for explicit helpers", {
 test_that("Psychrometric presets configure themes and grids", {
     expect_s3_class(theme_psychro_ashrae(), "theme")
     expect_s3_class(theme_psychro_minimal(), "theme")
+    expect_s3_class(theme_psychro_ashrae()$panel.border, "element_rect")
 
     expect_error(psychro_preset("invalid"), "arg")
     expect_error(psychro_preset("ashrae", labels = NA))
@@ -300,17 +301,33 @@ test_that("Psychrometric presets configure themes and grids", {
     )
     expect_equal(
         remove_na(panel_ashrae$y$get_breaks_minor()),
-        seq(0, 0.03, by = 0.001),
+        seq(0, 0.03, by = 0.0005),
         tolerance = 1e-8
     )
     expect_equal(
         remove_na(panel_ashrae$relhum$get_breaks()),
-        seq(0.1, 1, by = 0.1),
+        seq(0.1, 0.9, by = 0.1),
         tolerance = 1e-8
     )
-    expect_gt(
-        length(remove_na(panel_ashrae$wetbulb$get_breaks_minor())),
-        length(remove_na(panel_ashrae$wetbulb$get_breaks()))
+    expect_length(remove_na(panel_ashrae$relhum$get_breaks_minor()), 0L)
+    expect_equal(remove_na(panel_ashrae$wetbulb$get_breaks()), seq(0, 30, by = 5))
+    expect_equal(
+        remove_na(panel_ashrae$specvol$get_breaks()),
+        seq(0.80, 0.95, by = 0.05),
+        tolerance = 1e-8
+    )
+    expect_equal(
+        remove_na(panel_ashrae$specvol$get_breaks_minor()),
+        seq(0.78, 0.96, by = 0.01),
+        tolerance = 1e-8
+    )
+    expect_equal(
+        remove_na(panel_ashrae$enthalpy$get_breaks()),
+        c(50000, 100000)
+    )
+    expect_equal(
+        remove_na(panel_ashrae$enthalpy$get_breaks_minor()),
+        seq(10000, 130000, by = 10000)
     )
     expect_gt(count_textpath_shapes(p_ashrae), 1L)
 
