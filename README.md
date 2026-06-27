@@ -83,9 +83,10 @@ ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
 
 ### Grid
 
-ggpsychro renders psychrometric reference grids in `coord_psychro()`. It
-also provides thin ggplot-style helpers to control those grids
-explicitly:
+ggpsychro renders psychrometric reference grids in `coord_psychro()`.
+The default background grid is drawn without labels. The thin
+ggplot-style helpers can make individual grids explicit and label their
+major lines:
 
 | Geom                 | Type                 |
 |----------------------|----------------------|
@@ -109,13 +110,13 @@ ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
 Each grid comes with a corresponding `scale_*_continuous()` function for
 customizing breaks and labels. The `geom_grid_*()` helpers do not create
 data layers; they mark grids as visible or hidden and optionally
-override line style.
+override line and label style.
 
 ``` r
 ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-    geom_grid_relhum(linewidth = 0.8, color = "black") +
-    scale_relhum_continuous(minor_breaks = NULL) +
-    geom_grid_wetbulb(color = "black", linewidth = 0.6) +
+    geom_grid_relhum(linewidth = 0.8, color = "black", label.size = 5) +
+    scale_relhum_continuous(breaks = seq(25, 75, by = 25), minor_breaks = NULL) +
+    geom_grid_wetbulb(color = "black", linewidth = 0.6, label = FALSE) +
     scale_wetbulb_continuous(breaks = seq(5, 30, by = 5), minor_breaks = NULL) +
     geom_grid_vappres(show = FALSE) +
     scale_specvol_continuous(labels = NULL) +

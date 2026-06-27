@@ -24,6 +24,48 @@ valid_relhum_grid_breaks <- function(breaks) {
     breaks[breaks > 0 & breaks < 1]
 }
 
+psychro_grid_label_spec <- function(labels, type, breaks, scale, units) {
+    label <- labels[[type]]
+    if (!is.list(label) || !isTRUE(label$show) || !length(breaks)) {
+        return(NULL)
+    }
+
+    text <- psychro_grid_label_text(label$label, type, breaks, scale, units)
+    if (is.null(text) || !length(text)) return(NULL)
+
+    list(
+        show = TRUE,
+        labels = text,
+        label_loc = label$label_loc,
+        label_parse = label$label_parse,
+        style = label$style
+    )
+}
+
+psychro_grid_label_text <- function(label, type, breaks, scale, units) {
+    if (!isTRUE(label)) return(NULL)
+
+    if (is.null(scale$scale$labels)) return(NULL)
+
+    if (identical(type, "relhum") && is.waive(scale$scale$labels)) {
+        return(label_relhum(units = units)(breaks))
+    }
+
+    all_labels <- scale$get_labels()
+    if (is.null(all_labels)) return(NULL)
+
+    all_breaks <- scale$get_breaks()
+    loc <- match_psychro_breaks(breaks, all_breaks)
+    all_labels[loc]
+}
+
+match_psychro_breaks <- function(x, table, tolerance = 1e-8) {
+    vapply(x, function(value) {
+        match <- which(abs(table - value) <= tolerance)
+        if (length(match)) match[[1L]] else NA_integer_
+    }, integer(1))
+}
+
 #' @rdname ggpsychro-ggproto
 #' @format NULL
 #' @usage NULL
@@ -192,8 +234,10 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
 
         if (type != "wetbulb") {
             len <- length(tdb)
+            line_breaks <- breaks
             tdb <- rep(tdb, n)
             breaks <- rep(breaks, each = len)
+            group <- rep(seq_len(n), each = len)
         } else {
             # make sure wetbulb is lower than drybulb
             lst <- lapply(breaks, function(twb) tdb[tdb >= twb])
@@ -203,9 +247,12 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
             lst <- lapply(seq_along(lst), function(i) c(lst[[i]], breaks[[i]]))
 
             # only use the range
+            line_breaks <- breaks[not_empty]
             n <- length(breaks[not_empty])
+            if (n == 0L) return(NULL)
             tdb <- unlist(lapply(lst[not_empty], base::range), FALSE)
             breaks <- rep(breaks[not_empty], each = 2L)
+            group <- rep(seq_len(n), each = 2L)
             len <- 2L
         }
 
@@ -225,7 +272,10 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
         tdb <- rescale01(tdb, range_tdb)
         hum <- rescale01(hum, range_hum)
 
-        list(tdb = tdb, hum = hum, len = len, n = n)
+        list(
+            tdb = tdb, hum = hum, len = len, n = n,
+            breaks = line_breaks, value = breaks, group = group
+        )
     },
 
     render_bg = function(self, panel_params, theme) {
@@ -271,6 +321,9 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
         sat <- list(tdb = sat_tdb, hum = sat_hum, len = length(sat_tdb), n = 1L)
 
         # RELHUM GRID LINE
+        grid_labels <- self$grid_labels
+        if (is.null(grid_labels)) grid_labels <- list()
+
         bk_rh_major <- valid_relhum_grid_breaks(panel_params$relhum$get_breaks())
         bk_rh_minor <- setdiff(valid_relhum_grid_breaks(panel_params$relhum$get_breaks_minor()), bk_rh_major)
         rh_major <- if (psychro_grid_enabled(self$grids, "relhum")) {
@@ -320,6 +373,14 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
             self$trans_grid_vert(tdb, "enthalpy", bk_enth_minor, range_tdb, range_hum)
         }
 
+        labels <- list(
+            relhum = psychro_grid_label_spec(grid_labels, "relhum", bk_rh_major, panel_params$relhum, self$units),
+            wetbulb = psychro_grid_label_spec(grid_labels, "wetbulb", bk_twb_major, panel_params$wetbulb, self$units),
+            vappres = psychro_grid_label_spec(grid_labels, "vappres", bk_vap_major, panel_params$vappres, self$units),
+            specvol = psychro_grid_label_spec(grid_labels, "specvol", bk_vol_major, panel_params$specvol, self$units),
+            enthalpy = psychro_grid_label_spec(grid_labels, "enthalpy", bk_enth_major, panel_params$enthalpy, self$units)
+        )
+
         guide_grid_psychro(
             theme,
             panel_params[[self$pos_tdb()]]$break_positions_minor(),
@@ -328,7 +389,7 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
             panel_params[[self$pos_hum()]]$break_positions(),
             sat, rh_minor, rh_major, twb_minor, twb_major,
             vap_minor, vap_major, vol_minor, vol_major,
-            enth_minor, enth_major, self$mollier
+            enth_minor, enth_major, labels, self$mollier
         )
     }
 )

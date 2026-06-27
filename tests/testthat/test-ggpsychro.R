@@ -14,6 +14,13 @@ count_line_shapes <- function(plot) {
     }, logical(1)))
 }
 
+count_textpath_shapes <- function(plot) {
+    grobs <- collect_grobs(ggplot2::ggplotGrob(plot))
+    sum(vapply(grobs, function(grob) {
+        inherits(grob, "textpath")
+    }, logical(1)))
+}
+
 expect_trained_panel_ranges <- function(plot) {
     built <- ggplot2::ggplot_build(plot)
     panel <- built$layout$panel_params[[1L]]
@@ -43,7 +50,8 @@ test_that("Psychrometric chart creation", {
             altitude = 0,
             tdb_lim = NULL,
             hum_lim = NULL,
-            grids = default_psychro_grids()
+            grids = default_psychro_grids(),
+            grid_labels = list()
         )
     )
     expect_s3_class(p$coordinates, "CoordPsychro")
@@ -125,20 +133,31 @@ test_that("Relative humidity grid breaks use psychrolib fractions", {
 
 test_that("Psychrometric grid helpers update coord metadata", {
     p <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-        geom_grid_relhum(color = "red") +
+        geom_grid_relhum(color = "red", label.size = 5) +
         geom_grid_enthalpy()
 
     expect_length(p$layers, 0L)
     expect_true(p$psychro$grids$relhum)
     expect_true(p$psychro$grids$enthalpy)
+    expect_true(p$psychro$grid_labels$relhum$show)
+    expect_equal(p$psychro$grid_labels$relhum$label_loc, 0.95)
+    expect_equal(p$psychro$grid_labels$relhum$style$size, 5)
     expect_true(p$coordinates$grids$relhum)
     expect_true(p$coordinates$grids$enthalpy)
+    expect_equal(p$coordinates$grid_labels, p$psychro$grid_labels)
     expect_no_error(ggplot2::ggplot_build(p))
 
     p <- p + geom_grid_relhum(show = FALSE)
     expect_false(p$psychro$grids$relhum)
+    expect_false(p$psychro$grid_labels$relhum$show)
     expect_false(p$coordinates$grids$relhum)
     expect_no_error(ggplot2::ggplot_build(p))
+
+    p <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+        geom_grid_relhum(label.size = 5) +
+        geom_grid_relhum(label.size = 2, label.vjust = 0.8)
+    expect_equal(p$psychro$grid_labels$relhum$style$size, 2)
+    expect_equal(p$psychro$grid_labels$relhum$style$vjust, 0.8)
 })
 
 test_that("Psychrometric charts build with common ggplot features", {
@@ -164,7 +183,87 @@ test_that("Psychrometric charts build with common ggplot features", {
                 geom_grid_relhum() +
                 ggplot2::geom_point() +
                 ggplot2::facet_wrap(~ y > 7)
+            )
+    )
+
+    expect_no_error(
+        ggplot2::ggplotGrob(
+            ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+                geom_grid_relhum(label = FALSE) +
+                geom_grid_wetbulb(label_loc = NA) +
+                geom_grid_specvol() +
+                scale_specvol_continuous(labels = NULL)
         )
+    )
+})
+
+test_that("Psychrometric grid labels are rendered only for explicit helpers", {
+    expect_equal(
+        count_textpath_shapes(ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50))),
+        0L
+    )
+    expect_gt(
+        count_textpath_shapes(
+            ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+                geom_grid_relhum()
+        ),
+        0L
+    )
+    expect_equal(
+        count_textpath_shapes(
+            ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+                geom_grid_relhum(label = FALSE)
+        ),
+        0L
+    )
+    expect_equal(
+        count_textpath_shapes(
+            ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+                geom_grid_relhum(label_loc = NA)
+        ),
+        0L
+    )
+    expect_equal(
+        count_textpath_shapes(
+            ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+                geom_grid_specvol() +
+                scale_specvol_continuous(labels = NULL)
+        ),
+        0L
+    )
+
+    expect_gt(
+        count_textpath_shapes(
+            ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+                geom_grid_relhum() +
+                geom_grid_wetbulb() +
+                geom_grid_vappres() +
+                geom_grid_specvol() +
+                geom_grid_enthalpy()
+        ),
+        1L
+    )
+
+    vdiffr::expect_doppelganger(
+        "relative humidity grid labels",
+        ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+            geom_grid_relhum()
+    )
+
+    vdiffr::expect_doppelganger(
+        "combined grid labels",
+        ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+            geom_grid_relhum() +
+            geom_grid_wetbulb() +
+            geom_grid_vappres() +
+            geom_grid_specvol() +
+            geom_grid_enthalpy()
+    )
+
+    vdiffr::expect_doppelganger(
+        "mollier grid labels",
+        ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50), mollier = TRUE) +
+            geom_grid_enthalpy()
     )
 })
 

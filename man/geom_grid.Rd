@@ -8,22 +8,63 @@
 \alias{geom_grid_enthalpy}
 \title{Add psychrometric grid lines}
 \usage{
-geom_grid_relhum(..., show = TRUE)
+geom_grid_relhum(
+  ...,
+  show = TRUE,
+  label = TRUE,
+  label_loc = 0.95,
+  label_parse = FALSE
+)
 
-geom_grid_wetbulb(..., show = TRUE)
+geom_grid_wetbulb(
+  ...,
+  show = TRUE,
+  label = TRUE,
+  label_loc = 0.1,
+  label_parse = TRUE
+)
 
-geom_grid_vappres(..., show = TRUE)
+geom_grid_vappres(
+  ...,
+  show = TRUE,
+  label = TRUE,
+  label_loc = 0.5,
+  label_parse = FALSE
+)
 
-geom_grid_specvol(..., show = TRUE)
+geom_grid_specvol(
+  ...,
+  show = TRUE,
+  label = TRUE,
+  label_loc = 0.95,
+  label_parse = TRUE
+)
 
-geom_grid_enthalpy(..., show = TRUE)
+geom_grid_enthalpy(
+  ...,
+  show = TRUE,
+  label = TRUE,
+  label_loc = 0.95,
+  label_parse = TRUE
+)
 }
 \arguments{
 \item{...}{Line style settings passed to \code{\link[ggplot2:element]{ggplot2::element_line()}}, such as
-\code{colour}, \code{color}, \code{linewidth}, \code{size}, and \code{linetype}. Unused label
-arguments are accepted for compatibility and ignored.}
+\code{colour}, \code{color}, \code{linewidth}, \code{size}, and \code{linetype}. Label style
+settings can be supplied with \verb{label.*} names to keep them separate from
+line style settings, such as
+\code{label.colour}, \code{label.color}, \code{label.size}, \code{label.alpha},
+\code{label.family}, \code{label.fontface}, \code{label.lineheight}, and \code{label.vjust}.}
 
 \item{show}{A single logical value. If \code{FALSE}, hide the corresponding grid.}
+
+\item{label}{A single logical value. If \code{FALSE}, hide labels for the
+corresponding major grid lines.}
+
+\item{label_loc}{A single number in range \verb{[0, 1]} indicating the label
+position along each grid line. \code{NA} hides labels.}
+
+\item{label_parse}{If \code{TRUE}, labels are parsed as plotmath expressions.}
 }
 \description{
 These helpers provide ggplot-style controls for psychrometric reference
