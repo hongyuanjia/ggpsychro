@@ -103,5 +103,48 @@ ggpsychro(tdb_lim = c(10, 40), hum_lim = c(0, 30)) +
     )
 ```
 
+## Summarize observations as tiles
+
+Hourly weather and simulation outputs can be summarized as psychrometric tiles.
+`geom_psychro_tile()` bins observations on dry-bulb temperature and humidity
+ratio coordinates. It accepts either humidity ratio through `y` or relative
+humidity through `relhum`, and exposes `after_stat(hours)` for distribution
+plots.
+
+```{r tile-hours, fig.alt = "Psychrometric tile plot showing synthetic hourly observations binned by dry-bulb temperature and relative humidity."}
+weather$cooling_load <- pmax(0, weather$dry_bulb_temperature - 24) * 1.5
+
+ggpsychro(weather, tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
+    geom_grid_relhum() +
+    geom_psychro_tile(
+        aes(
+            dry_bulb_temperature,
+            relhum = relative_humidity,
+            fill = after_stat(hours)
+        ),
+        binwidth = c(2, 1)
+    ) +
+    scale_fill_gradient("Hours", low = "#dbeafe", high = "#1d4ed8")
+```
+
+The same bins can aggregate another metric with the `value` aesthetic and
+`fun`.
+
+```{r tile-value, fig.alt = "Psychrometric tile plot showing mean cooling load aggregated within dry-bulb and humidity-ratio bins."}
+ggpsychro(weather, tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
+    geom_grid_relhum() +
+    geom_psychro_tile(
+        aes(
+            dry_bulb_temperature,
+            relhum = relative_humidity,
+            value = cooling_load,
+            fill = after_stat(value)
+        ),
+        binwidth = c(4, 2),
+        fun = "mean"
+    ) +
+    scale_fill_gradient("Mean cooling load", low = "#fef3c7", high = "#b45309")
+```
+
 For state points, process lines, and comfort zones, see [Zones and
 processes](zones-and-processes.html).
