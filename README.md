@@ -68,12 +68,15 @@ ggpsychro() +
 By default, ggpsychro draws dry-bulb temperature and humidity ratio grid
 lines, the saturation curve, and the psychrometric reference grids.
 
-The style of the saturation line can be changed using ggplot2 theme
-elements.
+The style of the saturation line and the mask area can be changed using
+ggplot2 theme elements.
 
 ``` r
 ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-    theme(psychro.panel.grid.saturation = element_line(color = "black", linetype = 2))
+    theme(
+        psychro.panel.grid.saturation = element_line(color = "black", linetype = 2),
+        psychro.panel.mask = element_polygon(fill = "gray", color = NA)
+    )
 ```
 
 <img src="man/figures/README-style-1.png" width="60%" style="display: block; margin: auto;" />

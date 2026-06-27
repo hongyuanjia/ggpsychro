@@ -76,7 +76,7 @@ guide_grid_psychro <- function(theme, tdb.minor, tdb.major, hum.minor, hum.major
     grill <- grid::grobTree(
         ggplot2::element_render(theme, "panel.background"),
 
-        psychro_mask, psychro_panel,
+        psychro_panel,
 
         if (length(hum.minor)) {
             clip_grob(psychro_panel, grid_elem(hum.minor, "minor", nm_hum))
@@ -133,6 +133,8 @@ guide_grid_psychro <- function(theme, tdb.minor, tdb.major, hum.minor, hum.major
         if (length(enthalpy.major)) {
             clip_grob(psychro_panel, psy_grid_elem(enthalpy.major, "major", "enthalpy"))
         },
+
+        psychro_mask,
 
         if (length(saturation)) {
             ggplot2::element_render(
