@@ -1,8 +1,16 @@
 #' @importFrom ggplot2 ggplot_add
 #' @export
-ggplot_add.CoordPsychro <- function(object, plot, object_name) {
+ggplot_add.CoordPsychro <- function(object, plot, object_name, ...) {
     if (!is.ggpsychro(plot)) {
         return(NextMethod())
+    }
+
+    plot$psychro$grids <- merge_psychro_grids(plot$psychro$grids)
+    if (is.null(object$grids)) {
+        object$grids <- plot$psychro$grids
+    } else {
+        object$grids <- merge_psychro_grids(object$grids)
+        plot$psychro$grids <- object$grids
     }
 
     # update plot meta data if necessary
@@ -68,7 +76,47 @@ ggplot_add.CoordPsychro <- function(object, plot, object_name) {
 }
 
 #' @export
-ggplot_add.PsyScale <- function(object, plot, object_name) {
+ggplot_add.PsyGrid <- function(object, plot, object_name, ...) {
+    add_psychro_grid(object, plot)
+}
+
+add_psychro_grid <- function(object, plot) {
+    if (!is.ggpsychro(plot)) {
+        stop("`geom_grid_*()` helpers can only be added to a ggpsychro plot.", call. = FALSE)
+    }
+
+    plot$psychro$grids <- merge_psychro_grids(plot$psychro$grids)
+    plot$psychro$grids[[object$type]] <- object$show
+
+    if (inherits(plot$coordinates, "CoordPsychro")) {
+        plot$coordinates$grids <- plot$psychro$grids
+    }
+
+    theme_args <- psychro_grid_theme(object$type, object$style)
+    if (length(theme_args)) {
+        plot <- plot + do.call(ggplot2::theme, theme_args)
+    }
+
+    plot
+}
+
+local({
+    ggplot2_ns <- asNamespace("ggplot2")
+    if (exists("update_ggplot", envir = ggplot2_ns, inherits = FALSE) &&
+            exists("class_ggplot", envir = ggplot2_ns, inherits = FALSE)) {
+        update_ggplot <- get("update_ggplot", envir = ggplot2_ns)
+        class_ggplot <- get("class_ggplot", envir = ggplot2_ns)
+        S7::method(update_ggplot, list(S7::new_S3_class("PsyGrid"), class_ggplot)) <- function(object, plot, ...) {
+            add_psychro_grid(object, plot)
+        }
+    }
+})
+
+#' @importFrom S7 method new_S3_class
+NULL
+
+#' @export
+ggplot_add.PsyScale <- function(object, plot, object_name, ...) {
     # check if the trans is set as waiver()
     if (is.empty_trans(object$trans)) {
         # assign new trans

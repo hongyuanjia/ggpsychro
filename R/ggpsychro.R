@@ -63,11 +63,14 @@ ggpsychro <- function (data = NULL, mapping = aes(), tdb_lim = NULL, hum_lim = N
     p <- ggplot(data = data, mapping = mapping, environment = parent.frame())
 
     # store meta data
-    p$psychro$mollier <- mollier
-    p$psychro$units <- units
-    p$psychro$altitude <- altitude
-    p$psychro$tdb_lim <- tdb_lim
-    p$psychro$hum_lim <- hum_lim
+    p$psychro <- list(
+        mollier = mollier,
+        units = units,
+        altitude = altitude,
+        tdb_lim = tdb_lim,
+        hum_lim = hum_lim,
+        grids = default_psychro_grids()
+    )
 
     # set class
     class(p) <- c("ggpsychro", class(p))
@@ -77,9 +80,10 @@ ggpsychro <- function (data = NULL, mapping = aes(), tdb_lim = NULL, hum_lim = N
         tdb_lim = tdb_lim, hum_lim = hum_lim,
         altitude = altitude, units = units, mollier = mollier
     )
+    p$coordinates$grids <- p$psychro$grids
 
     # set default axis label
-    p$labels <- default_labs(units = units, mollier = mollier)
+    p <- p + do.call(ggplot2::labs, default_labs(units = units, mollier = mollier))
 
     p + theme_psychro()
 }

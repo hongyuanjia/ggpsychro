@@ -8,7 +8,7 @@
 #' @param saturation,rh.minor,rh.major,twb.minor,twb.major,vappres.minor,
 #'        vappres.major,specvol.minor,specvol.major,enthalpy.minor, enthalpy.major
 #'        A list of 4 elements, i.e. `tdb`, `hum`, `len`, and `n`.
-#' @param mollier A single logical value indicating weather a Mollier plot is
+#' @param mollier A single logical value indicating whether a Mollier plot is
 #'        desired
 #' @noRd
 guide_grid_psychro <- function(theme, tdb.minor, tdb.major, hum.minor, hum.major,

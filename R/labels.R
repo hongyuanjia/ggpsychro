@@ -19,7 +19,7 @@ default_labs <- function(units = "SI", mollier = FALSE) {
 #' Format numbers as main variables on the psychrometric chart.
 #'
 #' @param x A numeric vector
-#' @param units A single string indcating the unit system to use. Should be either
+#' @param units A single string indicating the unit system to use. Should be either
 #'        `"SI"` or `"IP"`
 #' @param parse If `TRUE`, the labels will be parsed into expressions and
 #'        displayed as described in `?plotmath`. Default: `FALSE`.

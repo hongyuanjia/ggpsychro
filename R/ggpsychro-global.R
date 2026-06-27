@@ -1,5 +1,6 @@
-# psychrolib package env
-psy_op <- get("PSYCHRO_OPT", envir = asNamespace("psychrolib"), inherits = FALSE)
+psychrolib_options <- function() {
+    get("PSYCHRO_OPT", envir = asNamespace("psychrolib"), inherits = FALSE)
+}
 
 GGPSY_OPT <- new.env(parent = emptyenv())
 # dry-bulb temp limit in Celsius [SI]
@@ -9,9 +10,9 @@ GGPSY_OPT$tdb_max <- 100.0
 GGPSY_OPT$hum_min <- 0.0
 GGPSY_OPT$hum_max <- 60.0
 # all known ggplot x aes
-GGPSY_OPT$x_aes <- getFromNamespace("ggplot_global", ns = asNamespace("ggplot2"))$x_aes
+GGPSY_OPT$x_aes <- utils::getFromNamespace("ggplot_global", ns = asNamespace("ggplot2"))$x_aes
 # all known ggplot y aes
-GGPSY_OPT$y_aes <- getFromNamespace("ggplot_global", ns = asNamespace("ggplot2"))$y_aes
+GGPSY_OPT$y_aes <- utils::getFromNamespace("ggplot_global", ns = asNamespace("ggplot2"))$y_aes
 GGPSY_OPT$tdb_aes <- sub("x(.)", "tdb_\\1", GGPSY_OPT$x_aes)
 GGPSY_OPT$tdb_aes <- sub("^x$", "tdb", GGPSY_OPT$tdb_aes)
 GGPSY_OPT$hum_aes <- sub("tdb", "hum", GGPSY_OPT$tdb_aes)

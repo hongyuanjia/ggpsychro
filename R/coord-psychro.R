@@ -25,6 +25,8 @@ coord_psychro <- function(tdb_lim = NULL, hum_lim = NULL,
 #' @export
 CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
     setup_params = function(self, data) {
+        self$grids <- merge_psychro_grids(self$grids)
+
         # all parameters will inherit from ggpsychro() if not specified during
         # the construction process
         assert_flag(self$mollier, .var.name = "mollier")
@@ -146,13 +148,13 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
         }
 
         c(
-            ggplot2:::view_scales_from_scale(scale_x, self$limits$x, self$expand),
-            ggplot2:::view_scales_from_scale(scale_y, self$limits$y, self$expand),
-            ggplot2:::view_scales_from_scale(scale_rh, NULL, self$expand),
-            ggplot2:::view_scales_from_scale(scale_wb, NULL, self$expand),
-            ggplot2:::view_scales_from_scale(scale_vp, NULL, self$expand),
-            ggplot2:::view_scales_from_scale(scale_sv, NULL, self$expand),
-            ggplot2:::view_scales_from_scale(scale_en, NULL, self$expand)
+            ggplot2_view_scales_from_scale(scale_x, self$limits$x, self$expand),
+            ggplot2_view_scales_from_scale(scale_y, self$limits$y, self$expand),
+            ggplot2_view_scales_from_scale(scale_rh, NULL, self$expand),
+            ggplot2_view_scales_from_scale(scale_wb, NULL, self$expand),
+            ggplot2_view_scales_from_scale(scale_vp, NULL, self$expand),
+            ggplot2_view_scales_from_scale(scale_sv, NULL, self$expand),
+            ggplot2_view_scales_from_scale(scale_en, NULL, self$expand)
         )
     },
 
@@ -258,32 +260,52 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
         # RELHUM GRID LINE
         bk_rh_major <- remove_na(panel_params$relhum$get_breaks())
         bk_rh_minor <- setdiff(remove_na(panel_params$relhum$get_breaks_minor()), bk_rh_major)
-        rh_major <- self$trans_grid_vert(tdb, "relhum", bk_rh_major, range_tdb, range_hum)
-        rh_minor <- self$trans_grid_vert(tdb, "relhum", bk_rh_minor, range_tdb, range_hum)
+        rh_major <- if (psychro_grid_enabled(self$grids, "relhum")) {
+            self$trans_grid_vert(tdb, "relhum", bk_rh_major, range_tdb, range_hum)
+        }
+        rh_minor <- if (psychro_grid_enabled(self$grids, "relhum")) {
+            self$trans_grid_vert(tdb, "relhum", bk_rh_minor, range_tdb, range_hum)
+        }
 
         # WETBULB GRID LINE
         bk_twb_major <- remove_na(panel_params$wetbulb$get_breaks())
         bk_twb_minor <- setdiff(remove_na(panel_params$wetbulb$get_breaks_minor()), bk_twb_major)
-        twb_major <- self$trans_grid_vert(tdb, "wetbulb", bk_twb_major, range_tdb, range_hum)
-        twb_minor <- self$trans_grid_vert(tdb, "wetbulb", bk_twb_minor, range_tdb, range_hum)
+        twb_major <- if (psychro_grid_enabled(self$grids, "wetbulb")) {
+            self$trans_grid_vert(tdb, "wetbulb", bk_twb_major, range_tdb, range_hum)
+        }
+        twb_minor <- if (psychro_grid_enabled(self$grids, "wetbulb")) {
+            self$trans_grid_vert(tdb, "wetbulb", bk_twb_minor, range_tdb, range_hum)
+        }
 
         # VAPPRES GRID LINE
         bk_vap_major <- remove_na(panel_params$vappres$get_breaks())
         bk_vap_minor <- setdiff(remove_na(panel_params$vappres$get_breaks_minor()), bk_vap_major)
-        vap_major <- self$trans_grid_vert(tdb, "vappres", bk_vap_major, range_tdb, range_hum)
-        vap_minor <- self$trans_grid_vert(tdb, "vappres", bk_vap_minor, range_tdb, range_hum)
+        vap_major <- if (psychro_grid_enabled(self$grids, "vappres")) {
+            self$trans_grid_vert(tdb, "vappres", bk_vap_major, range_tdb, range_hum)
+        }
+        vap_minor <- if (psychro_grid_enabled(self$grids, "vappres")) {
+            self$trans_grid_vert(tdb, "vappres", bk_vap_minor, range_tdb, range_hum)
+        }
 
         # SPECVOL GRID LINE
         bk_vol_major <- remove_na(panel_params$specvol$get_breaks())
         bk_vol_minor <- setdiff(remove_na(panel_params$specvol$get_breaks_minor()), bk_vol_major)
-        vol_major <- self$trans_grid_vert(tdb, "specvol", bk_vol_major, range_tdb, range_hum)
-        vol_minor <- self$trans_grid_vert(tdb, "specvol", bk_vol_minor, range_tdb, range_hum)
+        vol_major <- if (psychro_grid_enabled(self$grids, "specvol")) {
+            self$trans_grid_vert(tdb, "specvol", bk_vol_major, range_tdb, range_hum)
+        }
+        vol_minor <- if (psychro_grid_enabled(self$grids, "specvol")) {
+            self$trans_grid_vert(tdb, "specvol", bk_vol_minor, range_tdb, range_hum)
+        }
 
         # ENTHALPY GRID LINE
         bk_enth_major <- remove_na(panel_params$enthalpy$get_breaks())
         bk_enth_minor <- setdiff(remove_na(panel_params$enthalpy$get_breaks_minor()), bk_enth_major)
-        enth_major <- self$trans_grid_vert(tdb, "enthalpy", bk_enth_major, range_tdb, range_hum)
-        enth_minor <- self$trans_grid_vert(tdb, "enthalpy", bk_enth_minor, range_tdb, range_hum)
+        enth_major <- if (psychro_grid_enabled(self$grids, "enthalpy")) {
+            self$trans_grid_vert(tdb, "enthalpy", bk_enth_major, range_tdb, range_hum)
+        }
+        enth_minor <- if (psychro_grid_enabled(self$grids, "enthalpy")) {
+            self$trans_grid_vert(tdb, "enthalpy", bk_enth_minor, range_tdb, range_hum)
+        }
 
         guide_grid_psychro(
             theme,

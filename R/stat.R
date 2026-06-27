@@ -19,7 +19,7 @@
 #'
 #' All of stats above requires two additional aesthetics:
 #'
-#' * `units`: A single string indicating the units sytem to use. Should be
+#' * `units`: A single string indicating the unit system to use. Should be
 #'   either `"SI"` or `"IP" or `waiver()` which uses the value from the parent
 #'   plot. Default: `waiver()`
 #'

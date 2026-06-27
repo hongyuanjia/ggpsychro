@@ -2,15 +2,15 @@
 # the reverse of psychrolib::GetMoistAirVolume
 #' @importFrom psychrolib GetTRankineFromTFahrenheit GetTKelvinFromTCelsius isIP
 GetHumRatioFromAirVolume <- function (TDryBulb, AirVolume, Pressure) {
-        r_da <- get("R_DA_IP", envir = asNamespace("psychrolib"), inherits = FALSE)
     if (isIP()) {
+        r_da <- 53.35
         HumRatio <- (AirVolume * (144 * Pressure) / (r_da * GetTRankineFromTFahrenheit(TDryBulb)) - 1) / 1.607858
     } else {
-        r_da <- get("R_DA_IP", envir = asNamespace("psychrolib"), inherits = FALSE)
+        r_da <- 287.042
         HumRatio <- (AirVolume * Pressure / (r_da * GetTKelvinFromTCelsius(TDryBulb)) - 1) / 1.607858
     }
 
-    pmax(HumRatio, psy_op$MIN_HUM_RATIO)
+    pmax(HumRatio, psychrolib_options()$MIN_HUM_RATIO)
 }
 
 GetTDewPointFromHumRatioOnly <- function(HumRatio, Pressure) {

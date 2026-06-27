@@ -27,14 +27,14 @@ PsyLayout <- ggplot2::ggproto("PsyLayout", ggplot2::Layout,
         )
 
         # Added for ggpsychro
-        ind_panel <- seq_len(max(length(self$panel_scales_x), length(self$panel_scales_y)))
-        if (!length(ind_panel)) ind_panel <- 1L
-
-        self$panel_scales_rh <- lapply(ind_panel, function(i) rh_scale$clone())
-        self$panel_scales_wb <- lapply(ind_panel, function(i) wb_scale$clone())
-        self$panel_scales_vp <- lapply(ind_panel, function(i) vp_scale$clone())
-        self$panel_scales_sv <- lapply(ind_panel, function(i) sv_scale$clone())
-        self$panel_scales_en <- lapply(ind_panel, function(i) en_scale$clone())
+        n_panel <- max(length(self$panel_scales_x), length(self$panel_scales_y), 1L)
+        if (is.null(self$panel_scales_rh)) {
+            self$panel_scales_rh <- lapply(seq_len(n_panel), function(i) rh_scale$clone())
+            self$panel_scales_wb <- lapply(seq_len(n_panel), function(i) wb_scale$clone())
+            self$panel_scales_vp <- lapply(seq_len(n_panel), function(i) vp_scale$clone())
+            self$panel_scales_sv <- lapply(seq_len(n_panel), function(i) sv_scale$clone())
+            self$panel_scales_en <- lapply(seq_len(n_panel), function(i) en_scale$clone())
+        }
     },
 
     setup_panel_params = function(self) {
@@ -42,21 +42,37 @@ PsyLayout <- ggplot2::ggproto("PsyLayout", ggplot2::Layout,
         # scales is not elegant, but it is pragmatic
         self$coord$modify_scales(self$panel_scales_x, self$panel_scales_y)
 
-        scales_x <- self$panel_scales_x[self$layout$SCALE_X]
-        scales_y <- self$panel_scales_y[self$layout$SCALE_Y]
+        index <- match(unique(self$layout$COORD), self$layout$COORD)
+        order <- match(self$layout$COORD, self$layout$COORD[index])
+
+        scales_x <- self$panel_scales_x[self$layout$SCALE_X[index]]
+        scales_y <- self$panel_scales_y[self$layout$SCALE_Y[index]]
 
         # Added for ggpsychro
-        scales_rh <- self$panel_scales_rh[self$layout$SCALE_X]
-        scales_wb <- self$panel_scales_wb[self$layout$SCALE_X]
-        scales_vp <- self$panel_scales_vp[self$layout$SCALE_X]
-        scales_sv <- self$panel_scales_sv[self$layout$SCALE_X]
-        scales_en <- self$panel_scales_en[self$layout$SCALE_X]
+        scales_rh <- self$panel_scales_rh[self$layout$SCALE_X[index]]
+        scales_wb <- self$panel_scales_wb[self$layout$SCALE_X[index]]
+        scales_vp <- self$panel_scales_vp[self$layout$SCALE_X[index]]
+        scales_sv <- self$panel_scales_sv[self$layout$SCALE_X[index]]
+        scales_en <- self$panel_scales_en[self$layout$SCALE_X[index]]
 
         setup_panel_params <- function(scale_x, scale_y, scale_rh, scale_wb, scale_vp, scale_sv, scale_en) {
             self$coord$setup_panel_params(scale_x, scale_y, scale_rh, scale_wb, scale_vp, scale_sv, scale_en, params = self$coord_params)
         }
-        self$panel_params <- Map(setup_panel_params, scales_x, scales_y, scales_rh, scales_wb, scales_vp, scales_sv, scales_en)
+        panel_params <- Map(setup_panel_params, scales_x, scales_y, scales_rh, scales_wb, scales_vp, scales_sv, scales_en)[order]
+        self$panel_params <- self$facet$setup_panel_params(panel_params, self$coord)
 
+        invisible()
+    },
+
+    reset_scales = function(self) {
+        if (!self$facet$shrink) return()
+        lapply(self$panel_scales_x, function(s) s$reset())
+        lapply(self$panel_scales_y, function(s) s$reset())
+        lapply(self$panel_scales_rh, function(s) s$reset())
+        lapply(self$panel_scales_wb, function(s) s$reset())
+        lapply(self$panel_scales_vp, function(s) s$reset())
+        lapply(self$panel_scales_sv, function(s) s$reset())
+        lapply(self$panel_scales_en, function(s) s$reset())
         invisible()
     }
 )

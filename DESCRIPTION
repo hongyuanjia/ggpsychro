@@ -1,5 +1,5 @@
 Package: ggpsychro
-Title: A 'ggplot2' Extension for Making Pyschrometric Charts
+Title: A 'ggplot2' Extension for Making Psychrometric Charts
 Version: 0.0.0.9000
 Authors@R:
     person(given = "Hongyuan",
@@ -8,14 +8,15 @@ Authors@R:
            email = "hongyuan.jia@bears-berkeley.sg",
            comment = c(ORCID = "02-0075-8183"))
 Description:
-    A 'ggplot2' extension for making pyschrometric charts.
+    A 'ggplot2' extension for making psychrometric charts.
 Depends:
-    R (>= 3.2),
-    ggplot2 (>= 3.0.0)
+    R (>= 4.1),
+    ggplot2 (>= 4.0.0)
 Imports:
     gridGeometry,
     checkmate,
     psychrolib,
+    S7,
     scales (>= 1.1.0)
 Suggests:
     testthat (>= 3.0.0),
@@ -25,7 +26,7 @@ License: MIT + file LICENSE
 URL: https://github.com/hongyuanjia/ggpsychro
 BugReports: https://github.com/hongyuanjia/ggpsychro/issues
 Encoding: UTF-8
-RoxygenNote: 7.1.2
+RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
 Collate: 
     'ggpsychro-global.R'
@@ -34,6 +35,7 @@ Collate:
     'ggproto-classes.R'
     'ggpsychro-package.R'
     'ggpsychro.R'
+    'grid-layer.R'
     'guides-grid.R'
     'labels.R'
     'layer.R'

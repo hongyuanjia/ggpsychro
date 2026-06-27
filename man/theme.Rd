@@ -10,15 +10,23 @@
 theme_grey_psychro(
   base_size = 11,
   base_family = "",
+  header_family = NULL,
   base_line_size = base_size/22,
-  base_rect_size = base_size/22
+  base_rect_size = base_size/22,
+  ink = "black",
+  paper = "white",
+  accent = "#3366FF"
 )
 
 theme_gray_psychro(
   base_size = 11,
   base_family = "",
+  header_family = NULL,
   base_line_size = base_size/22,
-  base_rect_size = base_size/22
+  base_rect_size = base_size/22,
+  ink = "black",
+  paper = "white",
+  accent = "#3366FF"
 )
 
 theme_psychro(
@@ -33,9 +41,15 @@ theme_psychro(
 
 \item{base_family}{base font family}
 
+\item{header_family}{font family for titles and headers. The default, \code{NULL},
+uses theme inheritance to set the font. This setting affects axis titles,
+legend titles, the plot title and tag text.}
+
 \item{base_line_size}{base size for line elements}
 
 \item{base_rect_size}{base size for rect elements}
+
+\item{ink, paper, accent}{colour for foreground, background, and accented elements respectively.}
 }
 \value{
 A ggplot2 theme.

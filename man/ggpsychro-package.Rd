@@ -3,10 +3,9 @@
 \docType{package}
 \name{ggpsychro-package}
 \alias{ggpsychro-package}
-\alias{_PACKAGE}
-\title{ggpsychro: A 'ggplot2' Extension for Making Pyschrometric Charts}
+\title{ggpsychro: A 'ggplot2' Extension for Making Psychrometric Charts}
 \description{
-A 'ggplot2' extension for making pyschrometric charts.
+A 'ggplot2' extension for making psychrometric charts.
 }
 \seealso{
 Useful links:

@@ -19,13 +19,14 @@ NULL
 #'
 scale_drybulb_continuous <- function(name = waiver(), breaks = waiver(), minor_breaks = waiver(),
                                      n.breaks = NULL, labels = waiver(), limits = NULL,
-                                     expand = waiver(), trans = waiver(), guide = waiver(), ...) {
+                                     expand = waiver(), trans = waiver(), transform = waiver(),
+                                     guide = waiver(), ...) {
     # TODO: use mollier determine which aes should be used?
     psychro_continuous_scale(
         GGPSY_OPT$tdb_aes, "drybulb", identity, name = name,
         breaks = breaks, minor_breaks = minor_breaks, n.breaks = n.breaks,
-        labels = labels, limits = limits, expand = expand, trans = init_trans(trans),
-        guide = guide, position = NULL, super = ggplot2::ScaleContinuousPosition,
+        labels = labels, limits = limits, expand = expand, transform = init_transform(trans, transform),
+        guide = guide, position = "bottom", super = ggplot2::ScaleContinuousPosition,
         ...
     )
 }
@@ -34,12 +35,13 @@ scale_drybulb_continuous <- function(name = waiver(), breaks = waiver(), minor_b
 #' @export
 scale_humratio_continuous <- function(name = waiver(), breaks = waiver(), minor_breaks = waiver(),
                                       n.breaks = NULL, labels = waiver(), limits = NULL,
-                                      expand = waiver(), trans = waiver(), guide = waiver(), ...) {
+                                      expand = waiver(), trans = waiver(), transform = waiver(),
+                                      guide = waiver(), ...) {
     psychro_continuous_scale(
         GGPSY_OPT$hum_aes, "humratio", identity, name = name,
         breaks = breaks, minor_breaks = minor_breaks, n.breaks = n.breaks,
-        labels = labels, limits = limits, expand = expand, trans = init_trans(trans),
-        guide = guide, position = NULL, super = ggplot2::ScaleContinuousPosition,
+        labels = labels, limits = limits, expand = expand, transform = init_transform(trans, transform),
+        guide = guide, position = "left", super = ggplot2::ScaleContinuousPosition,
         ...
     )
 }
@@ -48,12 +50,13 @@ scale_humratio_continuous <- function(name = waiver(), breaks = waiver(), minor_
 #' @export
 scale_relhum_continuous <- function(name = waiver(), breaks = waiver(), minor_breaks = waiver(),
                                     n.breaks = NULL, labels = waiver(), limits = NULL,
-                                    expand = waiver(), trans = waiver(), guide = waiver(), ...) {
+                                    expand = waiver(), trans = waiver(), transform = waiver(),
+                                    guide = waiver(), ...) {
     # TODO: use the same logic as scale_x_continuous, e.g. ggplot_global$relhum
     psychro_continuous_scale(
         "relhum", "relhum", identity, name = name,
         breaks = breaks, minor_breaks = minor_breaks, n.breaks = n.breaks,
-        labels = labels, limits = limits, expand = expand, trans = init_trans(trans),
+        labels = labels, limits = limits, expand = expand, transform = init_transform(trans, transform),
         guide = guide, ...
     )
 }
@@ -62,11 +65,12 @@ scale_relhum_continuous <- function(name = waiver(), breaks = waiver(), minor_br
 #' @export
 scale_wetbulb_continuous <- function(name = waiver(), breaks = waiver(), minor_breaks = waiver(),
                                      n.breaks = NULL, labels = waiver(), limits = NULL,
-                                     expand = waiver(), trans = waiver(), guide = waiver(), ...) {
+                                     expand = waiver(), trans = waiver(), transform = waiver(),
+                                     guide = waiver(), ...) {
     psychro_continuous_scale(
         "wetbulb", "wetbulb", identity, name = name,
         breaks = breaks, minor_breaks = minor_breaks, n.breaks = n.breaks,
-        labels = labels, limits = limits, expand = expand, trans = init_trans(trans),
+        labels = labels, limits = limits, expand = expand, transform = init_transform(trans, transform),
         guide = guide, ...
     )
 }
@@ -75,11 +79,12 @@ scale_wetbulb_continuous <- function(name = waiver(), breaks = waiver(), minor_b
 #' @export
 scale_vappres_continuous <- function(name = waiver(), breaks = waiver(), minor_breaks = waiver(),
                                      n.breaks = NULL, labels = waiver(), limits = NULL,
-                                     expand = waiver(), trans = waiver(), guide = waiver(), ...) {
+                                     expand = waiver(), trans = waiver(), transform = waiver(),
+                                     guide = waiver(), ...) {
     psychro_continuous_scale(
         "vappres", "vappres", identity, name = name,
         breaks = breaks, minor_breaks = minor_breaks, n.breaks = n.breaks,
-        labels = labels, limits = limits, expand = expand, trans = init_trans(trans),
+        labels = labels, limits = limits, expand = expand, transform = init_transform(trans, transform),
         guide = guide, ...
     )
 }
@@ -88,11 +93,12 @@ scale_vappres_continuous <- function(name = waiver(), breaks = waiver(), minor_b
 #' @export
 scale_specvol_continuous <- function(name = waiver(), breaks = waiver(), minor_breaks = waiver(),
                                      n.breaks = NULL, labels = waiver(), limits = NULL,
-                                     expand = waiver(), trans = waiver(), guide = waiver(), ...) {
+                                     expand = waiver(), trans = waiver(), transform = waiver(),
+                                     guide = waiver(), ...) {
     psychro_continuous_scale(
         "specvol", "specvol", identity, name = name,
         breaks = breaks, minor_breaks = minor_breaks, n.breaks = n.breaks,
-        labels = labels, limits = limits, expand = expand, trans = init_trans(trans),
+        labels = labels, limits = limits, expand = expand, transform = init_transform(trans, transform),
         guide = guide, ...
     )
 }
@@ -101,23 +107,33 @@ scale_specvol_continuous <- function(name = waiver(), breaks = waiver(), minor_b
 #' @export
 scale_enthalpy_continuous <- function(name = waiver(), breaks = waiver(), minor_breaks = waiver(),
                                       n.breaks = NULL, labels = waiver(), limits = NULL,
-                                      expand = waiver(), trans = waiver(), guide = waiver(), ...) {
+                                      expand = waiver(), trans = waiver(), transform = waiver(),
+                                      guide = waiver(), ...) {
     psychro_continuous_scale(
         "enthalpy", "enthalpy", identity, name = name,
         breaks = breaks, minor_breaks = minor_breaks, n.breaks = n.breaks,
-        labels = labels, limits = limits, expand = expand, trans = init_trans(trans),
+        labels = labels, limits = limits, expand = expand, transform = init_transform(trans, transform),
         guide = guide, ...
     )
 }
 
-psychro_continuous_scale <- function(..., super = ggplot2::ScaleContinuous) {
-    scale <- continuous_scale(..., super = super)
+psychro_continuous_scale <- function(aesthetics, scale_name, palette, ..., super = ggplot2::ScaleContinuous) {
+    scale <- continuous_scale(aesthetics = aesthetics, palette = palette, ..., super = super)
+    scale$scale_name <- scale_name
     class(scale) <- c("PsyScale", class(scale))
     scale
 }
 
 init_trans <- function(trans = waiver()) {
     if (is.waive(trans)) empty_trans() else trans
+}
+
+init_transform <- function(trans = waiver(), transform = waiver()) {
+    if (!is.waive(transform)) {
+        transform
+    } else {
+        init_trans(trans)
+    }
 }
 
 # use stat to compute corresponding hum-ratio values

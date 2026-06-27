@@ -19,6 +19,7 @@ scale_drybulb_continuous(
   limits = NULL,
   expand = waiver(),
   trans = waiver(),
+  transform = waiver(),
   guide = waiver(),
   ...
 )
@@ -32,6 +33,7 @@ scale_humratio_continuous(
   limits = NULL,
   expand = waiver(),
   trans = waiver(),
+  transform = waiver(),
   guide = waiver(),
   ...
 )
@@ -45,6 +47,7 @@ scale_relhum_continuous(
   limits = NULL,
   expand = waiver(),
   trans = waiver(),
+  transform = waiver(),
   guide = waiver(),
   ...
 )
@@ -58,6 +61,7 @@ scale_wetbulb_continuous(
   limits = NULL,
   expand = waiver(),
   trans = waiver(),
+  transform = waiver(),
   guide = waiver(),
   ...
 )
@@ -71,6 +75,7 @@ scale_vappres_continuous(
   limits = NULL,
   expand = waiver(),
   trans = waiver(),
+  transform = waiver(),
   guide = waiver(),
   ...
 )
@@ -84,6 +89,7 @@ scale_specvol_continuous(
   limits = NULL,
   expand = waiver(),
   trans = waiver(),
+  transform = waiver(),
   guide = waiver(),
   ...
 )
@@ -97,6 +103,7 @@ scale_enthalpy_continuous(
   limits = NULL,
   expand = waiver(),
   trans = waiver(),
+  transform = waiver(),
   guide = waiver(),
   ...
 )
@@ -111,21 +118,24 @@ omitted.}
 \itemize{
 \item \code{NULL} for no breaks
 \item \code{waiver()} for the default breaks computed by the
-\link[scales:trans_new]{transformation object}
+\link[scales:new_transform]{transformation object}
 \item A numeric vector of positions
 \item A function that takes the limits as input and returns breaks
 as output (e.g., a function returned by \code{\link[scales:breaks_extended]{scales::extended_breaks()}}).
+Note that for position scales, limits are provided after scale expansion.
 Also accepts rlang \link[rlang:as_function]{lambda} function notation.
 }}
 
 \item{minor_breaks}{One of:
 \itemize{
 \item \code{NULL} for no minor breaks
-\item \code{waiver()} for the default breaks (one minor break between
-each major break)
+\item \code{waiver()} for the default breaks (none for discrete, one minor break
+between each major break for continuous)
 \item A numeric vector of positions
 \item A function that given the limits returns a vector of minor breaks. Also
-accepts rlang \link[rlang:as_function]{lambda} function notation.
+accepts rlang \link[rlang:as_function]{lambda} function notation. When
+the function has two arguments, it will be given the limits and major
+break positions.
 }}
 
 \item{n.breaks}{An integer guiding the number of major breaks. The algorithm
@@ -133,12 +143,15 @@ may choose a slightly different number to ensure nice break labels. Will
 only have an effect if \code{breaks = waiver()}. Use \code{NULL} to use the default
 number of breaks given by the transformation.}
 
-\item{labels}{One of:
+\item{labels}{One of the options below. Please note that when \code{labels} is a
+vector, it is highly recommended to also set the \code{breaks} argument as a
+vector to protect against unintended mismatches.
 \itemize{
 \item \code{NULL} for no labels
 \item \code{waiver()} for the default labels computed by the
 transformation object
 \item A character vector giving labels (must be same length as \code{breaks})
+\item An expression vector (must be the same length as breaks). See ?plotmath for details.
 \item A function that takes the breaks as input and returns labels
 as output. Also accepts rlang \link[rlang:as_function]{lambda} function
 notation.
@@ -165,6 +178,19 @@ expand the scale by 5\% on each side for continuous variables, and by
 0.6 units on each side for discrete variables.}
 
 \item{trans}{TODO: determined by \code{units}}
+
+\item{transform}{For continuous scales, the name of a transformation object
+or the object itself. Built-in transformations include "asn", "atanh",
+"boxcox", "date", "exp", "hms", "identity", "log", "log10", "log1p", "log2",
+"logit", "modulus", "probability", "probit", "pseudo_log", "reciprocal",
+"reverse", "sqrt" and "time".
+
+A transformation object bundles together a transform, its inverse,
+and methods for generating breaks and labels. Transformation objects
+are defined in the scales package, and are called \verb{transform_<name>}. If
+transformations require arguments, you can call them from the scales
+package, e.g. \code{\link[scales:transform_boxcox]{scales::transform_boxcox(p = 2)}}.
+You can create your own transformation with \code{\link[scales:new_transform]{scales::new_transform()}}.}
 
 \item{guide}{A function used to create a guide or its name. See
 \code{\link[ggplot2:guides]{guides()}} for more information.}

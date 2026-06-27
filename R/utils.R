@@ -28,14 +28,12 @@ new_data_frame <- function(x = list(), n = NULL) {
 with_units <- function (units, expr) {
     old <- psychrolib::GetUnitSystem()
     if (!is.na(old)) on.exit(psychrolib::SetUnitSystem(units), add = TRUE)
-    # old <- psy_op$UNITS
-    # psy_op$UNITS <- units
-    # on.exit(psy_op$UNITS <- old, add = TRUE)
     psychrolib::SetUnitSystem(units)
     force(expr)
 }
 
 with_no_hum_limit <- function (expr) {
+    psy_op <- psychrolib_options()
     old <- psy_op$MIN_HUM_RATIO
     psy_op$MIN_HUM_RATIO <- -Inf
     on.exit(psy_op$MIN_HUM_RATIO <- old, add = TRUE)
@@ -48,6 +46,22 @@ encode_units <- function (units) {
 
 decode_units <- function (code) {
     c("SI", "IP")[code]
+}
+
+get_units <- function(data) {
+    units <- unique(data$units)
+    if (length(units) != 1L) {
+        stop("`units` must resolve to a single unit system.", call. = FALSE)
+    }
+
+    if (is.factor(units)) {
+        units <- as.character(units)
+    }
+    if (is.character(units)) {
+        return(match.arg(units, c("SI", "IP")))
+    }
+
+    decode_units(as.integer(units))
 }
 
 # bidirectional conversion

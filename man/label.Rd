@@ -196,16 +196,19 @@ difference between adjacent values.
 Applied to rescaled data.}
 
 \item{scale}{A scaling factor: \code{x} will be multiplied by \code{scale} before
-formating. This is useful if the underlying data is very small or very
+formatting. This is useful if the underlying data is very small or very
 large.}
 
-\item{units}{A single string indcating the unit system to use. Should be either
+\item{units}{A single string indicating the unit system to use. Should be either
 \code{"SI"} or \code{"IP"}}
 
-\item{big.mark}{Character used between every 3 digits to separate thousands.}
+\item{big.mark}{Character used between every 3 digits to separate thousands.
+The default (\code{NULL}) retrieves the setting from the
+\link[scales:number_options]{number options}.}
 
 \item{decimal.mark}{The character to be used to indicate the numeric
-decimal point.}
+decimal point.  The default (\code{NULL}) retrieves the setting from the
+\link[scales:number_options]{number options}.}
 
 \item{trim}{Logical, if \code{FALSE}, values are right-justified to a common
 width (see \code{\link[base:format]{base::format()}}).}
@@ -214,16 +217,6 @@ width (see \code{\link[base:format]{base::format()}}).}
 displayed as described in \code{?plotmath}. Default: \code{FALSE}.}
 
 \item{...}{Other arguments passed on to \code{\link[base:format]{base::format()}}.}
-}
-\value{
-All \code{label_()} functions return a "labelling" function, i.e. a function that
-takes a vector \code{x} and returns a character vector of \code{length(x)} giving a
-label for each input value.
-
-Labelling functions are designed to be used with the \code{labels} argument of
-ggplot2 scales. The examples demonstrate their use with x scales, but
-they work similarly for all scales, including those that generate legends
-rather than axes.
 }
 \description{
 Format numbers as main variables on the psychrometric chart.
