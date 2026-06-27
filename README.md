@@ -55,6 +55,16 @@ ggpsychro(mollier = TRUE)
 
 <img src="man/figures/README-mollier-1.png" width="60%" style="display: block; margin: auto;" />
 
+The coordinate system can also be added explicitly with
+`coord_psychro()`.
+
+``` r
+ggpsychro() +
+    coord_psychro(tdb_lim = c(10, 35), hum_lim = c(0, 30), units = "SI")
+```
+
+<img src="man/figures/README-coord-1.png" width="60%" style="display: block; margin: auto;" />
+
 By default, ggpsychro draws dry-bulb temperature and humidity ratio grid
 lines, the saturation curve, and the psychrometric reference grids.
 
@@ -130,14 +140,16 @@ Working together with ggplot2 original geoms is as simple as changing
 `stat` to your variable name of interest.
 
 ``` r
-d <- data.frame(
-    dry_bulb_temperature = seq(10, 35, length.out = 200),
-    relative_humidity = seq(30, 90, length.out = 200)
-)
+library(eplusr) # for reading EPW data
+epw <- read_epw(file.path(
+    eplus_config(9.6)$dir,
+    "WeatherData/USA_CO_Golden-NREL.724666_TMY3.epw"
+))
 
-ggpsychro(d, tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+ggpsychro(epw$data()[month %in% 5:8], tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
     geom_grid_relhum() +
-    geom_point(aes(dry_bulb_temperature, relhum = relative_humidity), stat = "relhum", alpha = 0.4)
+    geom_point(aes(dry_bulb_temperature, relhum = relative_humidity), stat = "relhum", alpha = 0.1) +
+    facet_wrap(~month, labeller = as_labeller(function(x) paste0("Month: ", x)))
 ```
 
 <img src="man/figures/README-stat-1-1.png" width="60%" style="display: block; margin: auto;" />

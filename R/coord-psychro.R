@@ -19,6 +19,11 @@ coord_psychro <- function(tdb_lim = NULL, hum_lim = NULL,
     )
 }
 
+valid_relhum_grid_breaks <- function(breaks) {
+    breaks <- remove_na(breaks)
+    breaks[breaks > 0 & breaks < 1]
+}
+
 #' @rdname ggpsychro-ggproto
 #' @format NULL
 #' @usage NULL
@@ -266,12 +271,8 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
         sat <- list(tdb = sat_tdb, hum = sat_hum, len = length(sat_tdb), n = 1L)
 
         # RELHUM GRID LINE
-        valid_relhum_breaks <- function(breaks) {
-            breaks <- remove_na(breaks)
-            breaks[!is_oob(breaks, c(0, 1))]
-        }
-        bk_rh_major <- valid_relhum_breaks(panel_params$relhum$get_breaks())
-        bk_rh_minor <- setdiff(valid_relhum_breaks(panel_params$relhum$get_breaks_minor()), bk_rh_major)
+        bk_rh_major <- valid_relhum_grid_breaks(panel_params$relhum$get_breaks())
+        bk_rh_minor <- setdiff(valid_relhum_grid_breaks(panel_params$relhum$get_breaks_minor()), bk_rh_major)
         rh_major <- if (psychro_grid_enabled(self$grids, "relhum")) {
             self$trans_grid_vert(tdb, "relhum", bk_rh_major, range_tdb, range_hum)
         }

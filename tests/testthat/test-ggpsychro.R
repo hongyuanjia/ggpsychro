@@ -116,6 +116,11 @@ test_that("Relative humidity grid breaks use psychrolib fractions", {
     )
     breaks <- remove_na(built$layout$panel_params[[1L]]$relhum$get_breaks())
     expect_equal(breaks, c(0.25, 0.50, 0.75, 1.00), tolerance = 1e-8)
+
+    expect_equal(
+        valid_relhum_grid_breaks(c(NA, 0, 0.25, 0.50, 1.00, 1.25)),
+        c(0.25, 0.50)
+    )
 })
 
 test_that("Psychrometric grid helpers update coord metadata", {
