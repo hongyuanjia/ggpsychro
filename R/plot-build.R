@@ -195,7 +195,7 @@ setup_psychro_stat_params <- function(layers, psychro) {
     state_classes <- c("StatPsychroState", "StatPsychroZone")
     stat_classes <- c(
         "StatRelhum", "StatWetbulb", "StatVappres", "StatSpecvol",
-        "StatEnthalpy", state_classes
+        "StatEnthalpy", "StatPsychroBin", state_classes
     )
     pressure <- with_units(psychro$units, GetStandardAtmPressure(psychro$altitude))
 

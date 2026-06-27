@@ -50,6 +50,7 @@ Collate:
     'psychro-zone.R'
     'trans.R'
     'scale.R'
+    'stat-psychro-bin.R'
     'theme-elements.R'
     'theme.R'
     'zzz.R'

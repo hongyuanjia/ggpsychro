@@ -161,6 +161,7 @@ geoms:
 | `stat_vappres`  | Vapor pressure       |
 | `stat_specvol`  | Specific volume      |
 | `stat_enthalpy` | Enthalpy             |
+| `stat_psychro_bin` | Psychrometric tile bins |
 
 This makes it quick and easy to add new elements.
 
@@ -181,6 +182,51 @@ ggpsychro(epw$data()[month %in% 5:8], tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
         stat = "relhum", color = "#0f766e", alpha = 0.24, size = 0.5, shape = 16
     ) +
     facet_wrap(~month, labeller = as_labeller(function(x) paste0("Month: ", x)))
+```
+
+### Tile distributions
+
+Hourly weather and simulation outputs can be summarized as psychrometric tiles.
+`geom_psychro_tile()` accepts either humidity ratio (`y`) or relative humidity
+(`relhum`) and exposes `after_stat(hours)` for distribution plots. Tiles use a
+small default gap, partial transparency, and a tile-aware cell grid across the
+chart area so the bin system is visible even where no observations fall. Use
+`binwidth` and `boundary` to define the dry-bulb and humidity-ratio cells, and
+`gap`, `alpha`, `cell.grid.*`, `colour`, and `linewidth` to tune their
+appearance.
+
+```{r tile-hours, out.width = "80%", message = FALSE, warning = FALSE}
+hour <- seq(0, 2 * pi, length.out = 240)
+weather <- data.frame(
+    dry_bulb = 21 + 8 * sin(hour) + 2 * sin(2 * hour),
+    relative_humidity = 58 - 18 * sin(hour) + 6 * cos(3 * hour)
+)
+weather$cooling_load <- pmax(0, weather$dry_bulb - 24) * 1.5
+
+ggpsychro(weather, tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
+    geom_grid_relhum() +
+    geom_psychro_tile(
+        aes(dry_bulb, relhum = relative_humidity, fill = after_stat(hours)),
+        binwidth = c(1, 1)
+    ) +
+    scale_fill_gradient("Hours", low = "#dbeafe", high = "#1d4ed8")
+```
+
+The same bins can aggregate another metric with `value` and `fun`.
+
+```{r tile-value, out.width = "80%", message = FALSE, warning = FALSE}
+ggpsychro(weather, tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
+    geom_grid_relhum() +
+    geom_psychro_tile(
+        aes(
+            dry_bulb, relhum = relative_humidity,
+            value = cooling_load,
+            fill = after_stat(value)
+        ),
+        binwidth = c(2, 2),
+        fun = "mean"
+    ) +
+    scale_fill_gradient("Mean cooling load", low = "#fef3c7", high = "#b45309")
 ```
 
 ```{r stat-2}
