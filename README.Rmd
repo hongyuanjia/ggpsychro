@@ -147,7 +147,10 @@ epw <- read_epw(file.path(
 
 ggpsychro(epw$data()[month %in% 5:8], tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
     geom_grid_relhum() +
-    geom_point(aes(dry_bulb_temperature, relhum = relative_humidity), stat = "relhum", alpha = 0.1) +
+    geom_point(
+        aes(dry_bulb_temperature, relhum = relative_humidity),
+        stat = "relhum", color = "#0f766e", alpha = 0.24, size = 0.5, shape = 16
+    ) +
     facet_wrap(~month, labeller = as_labeller(function(x) paste0("Month: ", x)))
 ```
 

@@ -150,7 +150,9 @@ psychro_grid_label_style <- function(...) {
         params$label.colour <- params$label.color
     }
 
-    translate <- c(
+    # Convert user-facing label.* arguments to the style names used by the
+    # textpath rendering helper.
+    label_style_names <- c(
         label.colour = "colour",
         label.size = "size",
         label.alpha = "alpha",
@@ -167,8 +169,8 @@ psychro_grid_label_style <- function(...) {
         label.remove_long = "remove_long"
     )
 
-    keep <- intersect(names(translate), names(params))
-    stats::setNames(params[keep], unname(translate[keep]))
+    keep <- intersect(names(label_style_names), names(params))
+    stats::setNames(params[keep], unname(label_style_names[keep]))
 }
 
 psychro_grid_theme <- function(type, style) {
