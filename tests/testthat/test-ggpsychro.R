@@ -78,7 +78,7 @@ test_that("Psychrometric chart creation", {
 
     vdiffr::expect_doppelganger(
         "basic chart in IP units",
-        ggpsychro(tdb_lim = c(10, 30), hum_lim = c(10, 20), units = "IP", altitude = -10)
+        ggpsychro(tdb_lim = c(32, 122), hum_lim = c(0, 350), units = "IP")
     )
 
     vdiffr::expect_doppelganger(
