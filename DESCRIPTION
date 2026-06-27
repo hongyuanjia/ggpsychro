@@ -21,7 +21,6 @@ Imports:
     scales (>= 1.1.0)
 Suggests:
     testthat (>= 3.0.0),
-    covr,
     vdiffr
 License: MIT + file LICENSE
 URL: https://hongyuanjia.github.io/ggpsychro/,

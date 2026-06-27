@@ -5,8 +5,6 @@
 
 <!-- badges: start -->
 
-[![Codecov test
-coverage](https://codecov.io/gh/hongyuanjia/ggpsychro/branch/master/graph/badge.svg)](https://codecov.io/gh/hongyuanjia/ggpsychro?branch=master)
 [![CRAN
 status](https://www.r-pkg.org/badges/version/ggpsychro)](https://CRAN.R-project.org/package=ggpsychro)
 [![R-CMD-check](https://github.com/hongyuanjia/ggpsychro/workflows/R-CMD-check/badge.svg)](https://github.com/hongyuanjia/ggpsychro/actions)
