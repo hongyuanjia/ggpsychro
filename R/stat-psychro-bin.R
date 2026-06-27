@@ -16,17 +16,23 @@
 #' @param drop If `TRUE`, the default, omit empty bins.
 #' @param fun Summary function used when the `value` aesthetic is supplied.
 #'   One of `"sum"`, `"mean"`, `"median"`, `"min"`, or `"max"`.
+#' @param gap Relative gap between adjacent tiles. The default, `0.08`, draws
+#'   tiles at 92% of the bin width and height. Use `gap = 0` for full-size
+#'   tiles. Must be a single finite number greater than or equal to 0 and less
+#'   than 1.
 #'
 #' @details
 #' The stat accepts either `x` and `y` aesthetics, where `y` is humidity ratio
 #' in chart display units, or `x` and `relhum`, where `relhum` is relative
 #' humidity in percent. Relative humidity inputs inherit the plot unit system
-#' and pressure from [ggpsychro()].
+#' and pressure from [ggpsychro()]. Tiles default to a small gap and `alpha =
+#' 0.85` so psychrometric grid lines remain visible.
 #'
 #' @section Computed variables:
 #' * `count`: number of observations in each tile.
 #' * `hours`: same as `count`, named for hourly weather data.
 #' * `value`: aggregated `value` aesthetic when supplied.
+#' * `width`, `height`: tile dimensions after applying `gap`.
 #'
 #' @examples
 #' d <- data.frame(
@@ -55,15 +61,20 @@
 stat_psychro_bin <- function(mapping = NULL, data = NULL, geom = "tile",
                              position = "identity", ..., bins = 30,
                              binwidth = NULL, drop = TRUE, fun = "sum",
+                             gap = 0.08,
                              na.rm = FALSE, show.legend = NA,
                              inherit.aes = TRUE) {
+    if (identical(geom, "tile")) {
+        geom <- GeomPsychroTile
+    }
+
     psychro_layer(
         stat = StatPsychroBin, data = data, mapping = mapping, geom = geom,
         position = position, show.legend = show.legend,
         inherit.aes = inherit.aes,
         params = list(
             na.rm = na.rm, bins = bins, binwidth = binwidth,
-            drop = drop, fun = fun, ...
+            drop = drop, fun = fun, gap = gap, ...
         )
     )
 }
@@ -71,15 +82,29 @@ stat_psychro_bin <- function(mapping = NULL, data = NULL, geom = "tile",
 #' @rdname stat_psychro_bin
 #' @export
 geom_psychro_tile <- function(mapping = NULL, data = NULL, stat = "psychro_bin",
-                              position = "identity", ..., na.rm = FALSE,
+                              position = "identity", ..., gap = 0.08,
+                              na.rm = FALSE,
                               show.legend = NA, inherit.aes = TRUE) {
+    params <- list(na.rm = na.rm, ...)
+    if (identical(stat, "psychro_bin") || identical(stat, StatPsychroBin)) {
+        params$gap <- gap
+    }
+
     psychro_layer(
-        data = data, mapping = mapping, stat = stat, geom = ggplot2::GeomTile,
+        data = data, mapping = mapping, stat = stat, geom = GeomPsychroTile,
         position = position, show.legend = show.legend,
         inherit.aes = inherit.aes,
-        params = list(na.rm = na.rm, ...)
+        params = params
     )
 }
+
+GeomPsychroTile <- ggproto(
+    "GeomPsychroTile", ggplot2::GeomTile,
+    default_aes = utils::modifyList(
+        ggplot2::GeomTile$default_aes,
+        ggplot2::aes(alpha = 0.85)
+    )
+)
 
 #' @rdname ggpsychro-extensions
 #' @format NULL
@@ -95,13 +120,14 @@ StatPsychroBin <- ggproto(
     default_aes = ggplot2::aes(
         fill = ggplot2::after_stat(hours),
         width = ggplot2::after_stat(width),
-        height = ggplot2::after_stat(height)
+        height = ggplot2::after_stat(height),
+        alpha = 0.85
     ),
 
     dropped_aes = c("relhum", "value", "pres", "units"),
 
     extra_params = c(
-        "na.rm", "bins", "binwidth", "drop", "fun", "units", "pres"
+        "na.rm", "bins", "binwidth", "drop", "fun", "gap", "units", "pres"
     ),
 
     required_aes = c("x", "y|relhum"),
@@ -110,8 +136,9 @@ StatPsychroBin <- ggproto(
 
     compute_group = function(self, data, scales, bins = 30,
                              binwidth = NULL, drop = TRUE, fun = "sum",
-                             na.rm = FALSE) {
+                             gap = 0.08, na.rm = FALSE) {
         units <- get_units(data)
+        gap <- psychro_bin_gap(gap)
         data <- psychro_bin_humidity(data, units)
         data <- psychro_bin_drop_missing(data, na.rm = na.rm)
         if (!nrow(data)) {
@@ -144,12 +171,13 @@ StatPsychroBin <- ggproto(
         y_width <- diff(y_breaks)
         x_center <- x_breaks[-length(x_breaks)] + x_width / 2
         y_center <- y_breaks[-length(y_breaks)] + y_width / 2
+        tile_scale <- 1 - gap
 
         new_data_frame(list(
             x = x_center[grid$x_bin],
             y = y_center[grid$y_bin],
-            width = x_width[grid$x_bin],
-            height = y_width[grid$y_bin],
+            width = x_width[grid$x_bin] * tile_scale,
+            height = y_width[grid$y_bin] * tile_scale,
             count = as.numeric(counts[keep]),
             hours = as.numeric(counts[keep]),
             value = values[keep]
@@ -210,6 +238,15 @@ psychro_bin_bins <- function(bins) {
     }
 
     as.integer(rep(bins, length.out = 2L))
+}
+
+psychro_bin_gap <- function(gap) {
+    if (!is.numeric(gap) || length(gap) != 1L || !is.finite(gap) ||
+            gap < 0 || gap >= 1) {
+        stop("`gap` must be a single finite number in [0, 1).", call. = FALSE)
+    }
+
+    gap
 }
 
 psychro_bin_binwidth <- function(binwidth, units) {

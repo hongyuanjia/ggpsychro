@@ -15,6 +15,7 @@ stat_psychro_bin(
   binwidth = NULL,
   drop = TRUE,
   fun = "sum",
+  gap = 0.08,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -26,6 +27,7 @@ geom_psychro_tile(
   stat = "psychro_bin",
   position = "identity",
   ...,
+  gap = 0.08,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -120,6 +122,11 @@ directions.}
 \item{fun}{Summary function used when the \code{value} aesthetic is supplied.
 One of \code{"sum"}, \code{"mean"}, \code{"median"}, \code{"min"}, or \code{"max"}.}
 
+\item{gap}{Relative gap between adjacent tiles. The default, \code{0.08}, draws
+tiles at 92\% of the bin width and height. Use \code{gap = 0} for full-size
+tiles. Must be a single finite number greater than or equal to 0 and less
+than 1.}
+
 \item{na.rm}{If \code{FALSE}, the default, missing values are removed with
 a warning. If \code{TRUE}, missing values are silently removed.}
 
@@ -158,7 +165,7 @@ useful for weather-hour distributions and gridded simulation summaries.
 The stat accepts either \code{x} and \code{y} aesthetics, where \code{y} is humidity ratio
 in chart display units, or \code{x} and \code{relhum}, where \code{relhum} is relative
 humidity in percent. Relative humidity inputs inherit the plot unit system
-and pressure from \code{\link[=ggpsychro]{ggpsychro()}}.
+and pressure from \code{\link[=ggpsychro]{ggpsychro()}}. Tiles default to a small gap and \code{alpha = 0.85} so psychrometric grid lines remain visible.
 }
 \section{Computed variables}{
 
@@ -166,6 +173,7 @@ and pressure from \code{\link[=ggpsychro]{ggpsychro()}}.
 \item \code{count}: number of observations in each tile.
 \item \code{hours}: same as \code{count}, named for hourly weather data.
 \item \code{value}: aggregated \code{value} aesthetic when supplied.
+\item \code{width}, \code{height}: tile dimensions after applying \code{gap}.
 }
 }
 

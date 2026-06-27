@@ -184,7 +184,9 @@ ggpsychro(epw$data()[month %in% 5:8], tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
 
 Hourly weather and simulation outputs can be summarized as psychrometric tiles.
 `geom_psychro_tile()` accepts either humidity ratio (`y`) or relative humidity
-(`relhum`) and exposes `after_stat(hours)` for distribution plots.
+(`relhum`) and exposes `after_stat(hours)` for distribution plots. Tiles use a
+small default gap and partial transparency; use `gap`, `alpha`, `colour`, and
+`linewidth` to tune their appearance.
 
 ```{r tile-hours, out.width = "80%", message = FALSE, warning = FALSE}
 hour <- seq(0, 2 * pi, length.out = 240)
@@ -198,9 +200,7 @@ ggpsychro(weather, tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
     geom_grid_relhum() +
     geom_psychro_tile(
         aes(dry_bulb, relhum = relative_humidity, fill = after_stat(hours)),
-        binwidth = c(1, 1),
-        colour = "white",
-        linewidth = 0.15
+        binwidth = c(1, 1)
     ) +
     scale_fill_gradient("Hours", low = "#dbeafe", high = "#1d4ed8")
 ```
@@ -217,9 +217,7 @@ ggpsychro(weather, tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
             fill = after_stat(value)
         ),
         binwidth = c(2, 2),
-        fun = "mean",
-        colour = "white",
-        linewidth = 0.15
+        fun = "mean"
     ) +
     scale_fill_gradient("Mean cooling load", low = "#fef3c7", high = "#b45309")
 ```
