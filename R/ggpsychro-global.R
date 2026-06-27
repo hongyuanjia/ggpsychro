@@ -1,6 +1,6 @@
-# package options {{{
-# psychrolib package env
-psy_op <- get("PSYCHRO_OPT", envir = asNamespace("psychrolib"), inherits = FALSE)
+psychrolib_options <- function() {
+    get("PSYCHRO_OPT", envir = asNamespace("psychrolib"), inherits = FALSE)
+}
 
 GGPSY_OPT <- new.env(parent = emptyenv())
 # dry-bulb temp limit in Celsius [SI]
@@ -10,35 +10,13 @@ GGPSY_OPT$tdb_max <- 100.0
 GGPSY_OPT$hum_min <- 0.0
 GGPSY_OPT$hum_max <- 60.0
 # all known ggplot x aes
-GGPSY_OPT$x_aes <- c("x", "xmin", "xmax", "xend", "xintercept", "xmin_final",
-    "xmax_final", "xlower", "xmiddle", "xupper", "x0")
+GGPSY_OPT$x_aes <- utils::getFromNamespace("ggplot_global", ns = asNamespace("ggplot2"))$x_aes
 # all known ggplot y aes
-GGPSY_OPT$y_aes <- c("y", "ymin", "ymax", "yend", "yintercept", "ymin_final",
-    "ymax_final", "lower", "middle", "upper", "y0")
-GGPSY_OPT$ggplot_ver <- tryCatch(packageVersion("ggplot2"), error = function (e) 0.0)
-# }}}
+GGPSY_OPT$y_aes <- utils::getFromNamespace("ggplot_global", ns = asNamespace("ggplot2"))$y_aes
+GGPSY_OPT$tdb_aes <- sub("x(.)", "tdb_\\1", GGPSY_OPT$x_aes)
+GGPSY_OPT$tdb_aes <- sub("^x$", "tdb", GGPSY_OPT$tdb_aes)
+GGPSY_OPT$hum_aes <- sub("tdb", "hum", GGPSY_OPT$tdb_aes)
 
-# .layer_list {{{
-.layer_list <- c(
-    maskarea = "PsyLayerMaskArea",
-    linestat = "PsyLayerLineSat",
-    grid = "PsyLayerGrid"
-)
-# }}}
-
-# .geom_list {{{
-.geom_list <- c(
-    linesat = "GeomLineSat",
-    maskarea = "GeomMaskArea",
-    grid_relhum = "GeomGridRelHum",
-    grid_wetbulb = "GeomGridWetBulb",
-    grid_vappres = "GeomGridVapPres",
-    grid_specvol = "GeomGridSpecVol",
-    grid_enthalpy = "GeomGridEnthalpy"
-)
-# }}}
-
-# .unit_list {{{
 .unit_list <- list(
     SI = list(
         drybulb = "degree * C",
@@ -68,9 +46,7 @@ GGPSY_OPT$ggplot_ver <- tryCatch(packageVersion("ggplot2"), error = function (e)
         enthalpy = TRUE
     )
 )
-# }}}
 
-# get_tdb_limits {{{
 get_tdb_limits <- function (units) {
     if (units == "SI") {
         c(GGPSY_OPT$tdb_min, GGPSY_OPT$tdb_max)
@@ -78,9 +54,7 @@ get_tdb_limits <- function (units) {
         bid_conv(c(GGPSY_OPT$tdb_min, GGPSY_OPT$tdb_max), "F")
     }
 }
-# }}}
 
-# get_hum_limits {{{
 get_hum_limits <- function (units) {
     if (units == "SI") {
         c(GGPSY_OPT$hum_min, GGPSY_OPT$hum_max)
@@ -88,32 +62,10 @@ get_hum_limits <- function (units) {
         bid_conv(c(GGPSY_OPT$hum_min, GGPSY_OPT$hum_max), "Gr")
     }
 }
-# }}}
 
-# get_units {{{
-get_units <- function (data) {
-    u <- unique(data$units)
-
-    if (is.integer(u)) u <- decode_units(u)
-
-    if (length(u) > 1L || (!u %in% c("SI", "IP"))) {
-        stop("The system of units has to be either SI or IP.")
-    }
-
-    u
+default_psychro_limits <- function(units) {
+    list(
+        tdb = if (units == "SI") c(0, 50) else bid_conv(c(0, 50), "F"),
+        hum = if (units == "SI") c(0, 50) else bid_conv(c(0, 50), "Gr")
+    )
 }
-# }}}
-
-# get_pres {{{
-get_pres <- function (data) {
-    # check pressure
-    pres <- unique(data$pres)
-
-    if (length(pres) > 1L) {
-        warning(sprintf("Multiple atmosphere pressure value found. Only the first one will be used (%.f).", pres))
-        pres <- pres[[1L]]
-    }
-
-    pres
-}
-# }}}

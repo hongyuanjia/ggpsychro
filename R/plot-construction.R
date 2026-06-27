@@ -1,59 +1,139 @@
 #' @importFrom ggplot2 ggplot_add
 #' @export
-# ggplot_add.PsyLayer{{{
-ggplot_add.PsyLayer <- function (object, plot, object_name) {
+ggplot_add.CoordPsychro <- function(object, plot, object_name, ...) {
     if (!is.ggpsychro(plot)) {
-        names(object$mapping)
-        if ( is.waive(object$aes_params$units) ||
-            (is.null(object$aes_params$units) && !"units" %in% names(object$mapping))) {
-            abort_unit_waiver(object_name)
-        }
         return(NextMethod())
     }
 
-    meta <- plot$psychro
-
-    if (is.ggpsychro(plot)) {
-        object <- add_default_meta(object, meta$units, meta$pressure)
-    }
-    NextMethod()
-}
-# }}}
-
-#' @importFrom ggplot2 ggplot_add
-#' @export
-# ggplot_add.PsyScale {{{
-ggplot_add.PsyScale <- function (object, plot, object_name) {
-    # check if the trans is set with units being waiver()
-    if (is.empty_trans(object$trans)) {
-        if (!is.ggpsychro(plot)) abort_unit_waiver(object_name)
-        # assign new trans
-        object$trans <- get_trans_by_aes(object$scale_name)(units = plot$psychro$units)
+    plot$psychro$grids <- merge_psychro_grids(plot$psychro$grids)
+    if (is.null(object$grids)) {
+        object$grids <- plot$psychro$grids
+    } else {
+        object$grids <- merge_psychro_grids(object$grids)
+        plot$psychro$grids <- object$grids
     }
 
-    NextMethod()
-}
-# }}}
-
-# add_default_meta {{{
-add_default_meta <- function (object, units, pressure) {
-    types <- paste(c("geom", "stat", "aes"), "params", sep = "_")
-
-    for (type in types) {
-        # add if not exists
-        if (is.null(object[[type]])) {
-            object[[type]] <- list(units = units, pres = pressure)
+    # update plot meta data if necessary
+    if (is.null(object$mollier)) {
+        object$mollier <- plot$psychro$mollier
+    } else if (object$mollier != plot$psychro$mollier) {
+        if (!plot$psychro$mollier) {
+            message("Chart type has been reset to Mollier Chart.")
         } else {
-            if (is.waive(object[[type]]$units) || is.null(object[[type]]$units)) {
-                object[[type]]$units <- units
-            }
+            message("Chart type has been reset to Psychrometric Chart.")
+        }
+        plot$psychro$mollier <- object$mollier
+    }
 
-            if (is.waive(object[[type]]$pres) || is.null(object[[type]]$pres)) {
-                object[[type]]$pres <- pressure
-            }
+    if (is.null(object$units)) {
+        object$units <- plot$psychro$units
+    } else if (object$units != plot$psychro$units) {
+        message(sprintf("Unit system has been reset from '%s' to '%s'.", plot$psychro$units, object$units))
+        plot$psychro$units <- object$units
+    }
+
+    if (is.null(object$altitude)) {
+        object$altitude <- plot$psychro$altitude
+    } else if (object$altitude != plot$psychro$altitude) {
+        u <- if (object$units == "SI") "m" else "ft"
+        message(sprintf(
+            "Altitude has been reset from '%s %s' to '%s %s'.",
+            plot$psychro$altitude, u, object$altitude, u
+        ))
+        plot$psychro$altitude <- object$altitude
+    }
+
+    if (is.null(object$limits$tdb)) {
+        object$limits$tdb <- plot$psychro$tdb_lim
+    } else if (!identical(object$limits$tdb, plot$psychro$tdb_lim)) {
+        if (!is.null(plot$psychro$tdb_lim)) {
+            u <- if (object$units == "SI") "\u00B0C" else "\u00B0F"
+            message(sprintf(
+                "Dry-bulb temperature limits has been reset from '[%s] %s' to '[%s] %s'.",
+                paste(plot$psychro$tdb_lim, collapse = ", "), u,
+                paste(object$limits$tdb, collapse = ", "), u
+            ))
+        }
+        plot$psychro$tdb_lim <- object$limits$tdb
+    }
+
+    if (is.null(object$limits$hum)) {
+        object$limits$hum <- plot$psychro$hum_lim
+    } else if (!identical(object$limits$hum, plot$psychro$hum_lim)) {
+        if (!is.null(plot$psychro$hum_lim)) {
+            u <- if (object$units == "SI") "g/kg" else "gr/lb"
+            message(sprintf(
+                "Humidity ratio limits has been reset from '[%s] %s' to '[%s] %s'.",
+                paste(plot$psychro$hum_lim, collapse = ", "), u,
+                paste(object$limits$hum, collapse = ", "), u
+            ))
+        }
+        plot$psychro$hum_lim <- object$limits$hum
+    }
+
+    plot$coordinates <- object
+    plot
+}
+
+#' @export
+ggplot_add.PsyGrid <- function(object, plot, object_name, ...) {
+    add_psychro_grid(object, plot)
+}
+
+add_psychro_grid <- function(object, plot) {
+    if (!is.ggpsychro(plot)) {
+        stop("`geom_grid_*()` helpers can only be added to a ggpsychro plot.", call. = FALSE)
+    }
+
+    plot$psychro$grids <- merge_psychro_grids(plot$psychro$grids)
+    plot$psychro$grids[[object$type]] <- object$show
+
+    if (inherits(plot$coordinates, "CoordPsychro")) {
+        plot$coordinates$grids <- plot$psychro$grids
+    }
+
+    theme_args <- psychro_grid_theme(object$type, object$style)
+    if (length(theme_args)) {
+        plot <- plot + do.call(ggplot2::theme, theme_args)
+    }
+
+    plot
+}
+
+local({
+    ggplot2_ns <- asNamespace("ggplot2")
+    if (exists("update_ggplot", envir = ggplot2_ns, inherits = FALSE) &&
+            exists("class_ggplot", envir = ggplot2_ns, inherits = FALSE)) {
+        update_ggplot <- get("update_ggplot", envir = ggplot2_ns)
+        class_ggplot <- get("class_ggplot", envir = ggplot2_ns)
+        S7::method(update_ggplot, list(S7::new_S3_class("PsyGrid"), class_ggplot)) <- function(object, plot, ...) {
+            add_psychro_grid(object, plot)
+        }
+    }
+})
+
+#' @importFrom S7 method new_S3_class
+NULL
+
+#' @export
+ggplot_add.PsyScale <- function(object, plot, object_name, ...) {
+    # check if the trans is set as waiver()
+    if (is.empty_trans(object$trans)) {
+        # assign new trans
+        trans <- get(paste0(object$scale_name, "_trans"), envir = asNamespace("ggpsychro"))
+        object$trans <- trans(units = plot$psychro$units)
+        if (is.numeric(object$limits)) {
+            object$limits <- object$trans$transform(object$limits)
         }
     }
 
-    object
+    if (identical(object$scale_name, "drybulb")) {
+        object$aesthetics <- if (plot$psychro$mollier) GGPSY_OPT$y_aes else GGPSY_OPT$x_aes
+    }
+
+    if (identical(object$scale_name, "humratio")) {
+        object$aesthetics <- if (plot$psychro$mollier) GGPSY_OPT$x_aes else GGPSY_OPT$y_aes
+    }
+
+    NextMethod()
 }
-# }}}

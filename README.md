@@ -5,14 +5,11 @@
 
 <!-- badges: start -->
 
-[![AppVeyor build
-status](https://ci.appveyor.com/api/projects/status/github/hongyuanjia/ggpsychro?branch=master&svg=true)](https://ci.appveyor.com/project/hongyuanjia/ggpsychro)
-[![Travis build
-status](https://travis-ci.com/hongyuanjia/ggpsychro.svg?branch=master)](https://travis-ci.com/hongyuanjia/ggpsychro)
 [![Codecov test
 coverage](https://codecov.io/gh/hongyuanjia/ggpsychro/branch/master/graph/badge.svg)](https://codecov.io/gh/hongyuanjia/ggpsychro?branch=master)
 [![CRAN
 status](https://www.r-pkg.org/badges/version/ggpsychro)](https://CRAN.R-project.org/package=ggpsychro)
+[![R-CMD-check](https://github.com/hongyuanjia/ggpsychro/workflows/R-CMD-check/badge.svg)](https://github.com/hongyuanjia/ggpsychro/actions)
 <!-- badges: end -->
 
 > ‘ggplot2’ extension for making psychrometric charts.
@@ -41,8 +38,8 @@ remotes::install_github("hongyuanjia/ggpsychro")
 
 Similar with ggplot2, the creation of a psychrometric chart using
 ggpsychro starts with function `ggpsychro()`. You can specify the range
-of dry-bulb temperature and humidity ratio using `tab_lim` and `hum_lim`
-and the unit system using `units`
+of dry-bulb temperature and humidity ratio using `tdb_lim` and `hum_lim`
+and the unit system using `units`.
 
 ``` r
 ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50), units = "IP")
@@ -58,33 +55,48 @@ ggpsychro(mollier = TRUE)
 
 <img src="man/figures/README-mollier-1.png" width="60%" style="display: block; margin: auto;" />
 
-By default, only dry-bulb temperature, humidity ratio and the saturation
-line are plotted.
-
-The style of the saturation and area above it can be further styled
-using `sat_style` and `mask_style`.
+The coordinate system can also be added explicitly with
+`coord_psychro()`.
 
 ``` r
-ggpsychro(mask_style = list(fill = "gray"), sat_style = list(color = "black", linetype = 2))
+ggpsychro() +
+    coord_psychro(tdb_lim = c(10, 35), hum_lim = c(0, 30), units = "SI")
+```
+
+<img src="man/figures/README-coord-1.png" width="60%" style="display: block; margin: auto;" />
+
+By default, ggpsychro draws dry-bulb temperature and humidity ratio grid
+lines, the saturation curve, and the psychrometric reference grids.
+
+The style of the saturation line and the mask area can be changed using
+ggplot2 theme elements.
+
+``` r
+ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+    theme(
+        psychro.panel.grid.saturation = element_line(color = "black", linetype = 2),
+        psychro.panel.mask = element_polygon(fill = "gray", color = NA)
+    )
 ```
 
 <img src="man/figures/README-style-1.png" width="60%" style="display: block; margin: auto;" />
 
 ### Grid
 
-ggpsychro introduces new ggplot geoms to add 5 more grids onto the base
-plot:
+ggpsychro renders psychrometric reference grids in `coord_psychro()`. It
+also provides thin ggplot-style helpers to control those grids
+explicitly:
 
 | Geom                 | Type                 |
-| -------------------- | -------------------- |
+|----------------------|----------------------|
 | `geom_grid_relhum`   | Relative humidity    |
 | `geom_grid_wetbulb`  | Wet-bulb temperature |
-| `geom_grid_vappres`  | Vaper pressure       |
+| `geom_grid_vappres`  | Vapor pressure       |
 | `geom_grid_specvol`  | Specific volume      |
 | `geom_grid_enthalpy` | Enthalpy             |
 
 ``` r
-ggpsychro() +
+ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
     geom_grid_relhum() +
     geom_grid_wetbulb() +
     geom_grid_vappres() +
@@ -94,19 +106,19 @@ ggpsychro() +
 
 <img src="man/figures/README-grid-1.png" width="100%" style="display: block; margin: auto;" />
 
-Each of the new geom come along with a corresponding `scale_*` which can
-be used to further customize the breaks of each grid
+Each grid comes with a corresponding `scale_*_continuous()` function for
+customizing breaks and labels. The `geom_grid_*()` helpers do not create
+data layers; they mark grids as visible or hidden and optionally
+override line style.
 
 ``` r
-ggpsychro() +
-    geom_grid_relhum(alpha = 1.0, label.alpha = 1.0, label.size = 6, label.fontface = 2) +
-    scale_relhum(minor_breaks = NULL) +
-    geom_grid_wetbulb(size = 1.0, color = "black", alpha = 1.0, label_loc = NA) +
-    scale_wetbulb(breaks = seq(25, 30, by = 5), minor_breaks = NULL) +
-    geom_grid_vappres(label.size = 5) +
-    scale_vappres(breaks = seq(6000, 7000, by = 500), limits = c(6000, 7000)) +
-    geom_grid_specvol() +
-    scale_specvol(labels = NULL) +
+ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+    geom_grid_relhum(linewidth = 0.8, color = "black") +
+    scale_relhum_continuous(minor_breaks = NULL) +
+    geom_grid_wetbulb(color = "black", linewidth = 0.6) +
+    scale_wetbulb_continuous(breaks = seq(5, 30, by = 5), minor_breaks = NULL) +
+    geom_grid_vappres(show = FALSE) +
+    scale_specvol_continuous(labels = NULL) +
     geom_grid_enthalpy()
 ```
 
@@ -115,29 +127,32 @@ ggpsychro() +
 ### Stat
 
 ggpsychro provides 5 new ggplot stats to use together with other common
-ggplot2 geoms::
+ggplot2 geoms:
 
 | Stat            | Type                 |
-| --------------- | -------------------- |
+|-----------------|----------------------|
 | `stat_relhum`   | Relative humidity    |
 | `stat_wetbulb`  | Wet-bulb temperature |
-| `stat_vappres`  | Vaper pressure       |
+| `stat_vappres`  | Vapor pressure       |
 | `stat_specvol`  | Specific volume      |
 | `stat_enthalpy` | Enthalpy             |
 
-This makes it quick easy to add new elements.
+This makes it quick and easy to add new elements.
 
-Working together with ggplot2 orignal geoms is as simple as change
+Working together with ggplot2 original geoms is as simple as changing
 `stat` to your variable name of interest.
 
 ``` r
 library(eplusr) # for reading EPW data
-epw <- read_epw(file.path(eplus_config(8.8)$dir, "WeatherData/USA_CO_Golden-NREL.724666_TMY3.epw"))
+epw <- read_epw(file.path(
+    eplus_config(9.6)$dir,
+    "WeatherData/USA_CO_Golden-NREL.724666_TMY3.epw"
+))
 
-ggpsychro(epw$data()[month %in% 5:8]) +
+ggpsychro(epw$data()[month %in% 5:8], tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
     geom_grid_relhum() +
-    geom_point(aes(dry_bulb_temperature, relhum = relative_humidity/100), stat = "relhum", alpha = 0.1) +
-    facet_wrap(~month, labeller = as_labeller(function (x) paste0("Month: ", x)))
+    geom_point(aes(dry_bulb_temperature, relhum = relative_humidity), stat = "relhum", alpha = 0.1) +
+    facet_wrap(~month, labeller = as_labeller(function(x) paste0("Month: ", x)))
 ```
 
 <img src="man/figures/README-stat-1-1.png" width="60%" style="display: block; margin: auto;" />
@@ -160,7 +175,7 @@ Hongyuan Jia
 
 The project is released under the terms of MIT License.
 
-Copyright © 2019-2020 Hongyuan Jia
+Copyright © 2019-2026 Hongyuan Jia
 
 ## Contribute
 

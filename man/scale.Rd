@@ -3,20 +3,24 @@
 \name{scale_drybulb_continuous}
 \alias{scale_drybulb_continuous}
 \alias{scale_humratio_continuous}
-\alias{scale_relhum}
-\alias{scale_wetbulb}
-\alias{scale_vappres}
-\alias{scale_specvol}
-\alias{scale_enthalpy}
+\alias{scale_relhum_continuous}
+\alias{scale_wetbulb_continuous}
+\alias{scale_vappres_continuous}
+\alias{scale_specvol_continuous}
+\alias{scale_enthalpy_continuous}
 \title{Transformation object for psychrometric chart}
 \usage{
 scale_drybulb_continuous(
   name = waiver(),
   breaks = waiver(),
   minor_breaks = waiver(),
+  n.breaks = NULL,
   labels = waiver(),
   limits = NULL,
-  units = waiver(),
+  expand = waiver(),
+  trans = waiver(),
+  transform = waiver(),
+  guide = waiver(),
   ...
 )
 
@@ -24,53 +28,83 @@ scale_humratio_continuous(
   name = waiver(),
   breaks = waiver(),
   minor_breaks = waiver(),
+  n.breaks = NULL,
   labels = waiver(),
   limits = NULL,
-  units = waiver(),
+  expand = waiver(),
+  trans = waiver(),
+  transform = waiver(),
+  guide = waiver(),
   ...
 )
 
-scale_relhum(
+scale_relhum_continuous(
+  name = waiver(),
   breaks = waiver(),
   minor_breaks = waiver(),
+  n.breaks = NULL,
   labels = waiver(),
-  units = waiver(),
+  limits = NULL,
+  expand = waiver(),
+  trans = waiver(),
+  transform = waiver(),
+  guide = waiver(),
   ...
 )
 
-scale_wetbulb(
+scale_wetbulb_continuous(
+  name = waiver(),
   breaks = waiver(),
   minor_breaks = waiver(),
+  n.breaks = NULL,
   labels = waiver(),
   limits = NULL,
-  units = waiver(),
+  expand = waiver(),
+  trans = waiver(),
+  transform = waiver(),
+  guide = waiver(),
   ...
 )
 
-scale_vappres(
+scale_vappres_continuous(
+  name = waiver(),
   breaks = waiver(),
   minor_breaks = waiver(),
+  n.breaks = NULL,
   labels = waiver(),
   limits = NULL,
-  units = waiver(),
+  expand = waiver(),
+  trans = waiver(),
+  transform = waiver(),
+  guide = waiver(),
   ...
 )
 
-scale_specvol(
+scale_specvol_continuous(
+  name = waiver(),
   breaks = waiver(),
   minor_breaks = waiver(),
+  n.breaks = NULL,
   labels = waiver(),
   limits = NULL,
-  units = waiver(),
+  expand = waiver(),
+  trans = waiver(),
+  transform = waiver(),
+  guide = waiver(),
   ...
 )
 
-scale_enthalpy(
+scale_enthalpy_continuous(
+  name = waiver(),
   breaks = waiver(),
   minor_breaks = waiver(),
+  n.breaks = NULL,
   labels = waiver(),
   limits = NULL,
-  units = waiver(),
+  expand = waiver(),
+  trans = waiver(),
+  transform = waiver(),
+  guide = waiver(),
   ...
 )
 }
@@ -84,29 +118,43 @@ omitted.}
 \itemize{
 \item \code{NULL} for no breaks
 \item \code{waiver()} for the default breaks computed by the
-\link[scales:trans_new]{transformation object}
+\link[scales:new_transform]{transformation object}
 \item A numeric vector of positions
 \item A function that takes the limits as input and returns breaks
-as output (e.g., a function returned by \code{\link[scales:breaks_extended]{scales::extended_breaks()}})
+as output (e.g., a function returned by \code{\link[scales:breaks_extended]{scales::extended_breaks()}}).
+Note that for position scales, limits are provided after scale expansion.
+Also accepts rlang \link[rlang:as_function]{lambda} function notation.
 }}
 
 \item{minor_breaks}{One of:
 \itemize{
 \item \code{NULL} for no minor breaks
-\item \code{waiver()} for the default breaks (one minor break between
-each major break)
+\item \code{waiver()} for the default breaks (none for discrete, one minor break
+between each major break for continuous)
 \item A numeric vector of positions
-\item A function that given the limits returns a vector of minor breaks.
+\item A function that given the limits returns a vector of minor breaks. Also
+accepts rlang \link[rlang:as_function]{lambda} function notation. When
+the function has two arguments, it will be given the limits and major
+break positions.
 }}
 
-\item{labels}{One of:
+\item{n.breaks}{An integer guiding the number of major breaks. The algorithm
+may choose a slightly different number to ensure nice break labels. Will
+only have an effect if \code{breaks = waiver()}. Use \code{NULL} to use the default
+number of breaks given by the transformation.}
+
+\item{labels}{One of the options below. Please note that when \code{labels} is a
+vector, it is highly recommended to also set the \code{breaks} argument as a
+vector to protect against unintended mismatches.
 \itemize{
 \item \code{NULL} for no labels
 \item \code{waiver()} for the default labels computed by the
 transformation object
 \item A character vector giving labels (must be same length as \code{breaks})
+\item An expression vector (must be the same length as breaks). See ?plotmath for details.
 \item A function that takes the breaks as input and returns labels
-as output
+as output. Also accepts rlang \link[rlang:as_function]{lambda} function
+notation.
 }}
 
 \item{limits}{One of:
@@ -115,17 +163,37 @@ as output
 \item A numeric vector of length two providing limits of the scale.
 Use \code{NA} to refer to the existing minimum or maximum
 \item A function that accepts the existing (automatic) limits and returns
-new limits
+new limits. Also accepts rlang \link[rlang:as_function]{lambda} function
+notation.
 Note that setting limits on positional scales will \strong{remove} data outside of the limits.
 If the purpose is to zoom, use the limit argument in the coordinate system
 (see \code{\link[ggplot2:coord_cartesian]{coord_cartesian()}}).
 }}
 
-\item{units}{A string indicating the system of units chosen. Should be:
-\itemize{
-\item \code{waiver()} for using the parent plot units set in \code{\link[=ggpsychro]{ggpsychro()}}
-\item Either \code{"SI"} or \code{"IP"}
-}}
+\item{expand}{For position scales, a vector of range expansion constants used to add some
+padding around the data to ensure that they are placed some distance
+away from the axes. Use the convenience function \code{\link[ggplot2:expansion]{expansion()}}
+to generate the values for the \code{expand} argument. The defaults are to
+expand the scale by 5\% on each side for continuous variables, and by
+0.6 units on each side for discrete variables.}
+
+\item{trans}{TODO: determined by \code{units}}
+
+\item{transform}{For continuous scales, the name of a transformation object
+or the object itself. Built-in transformations include "asn", "atanh",
+"boxcox", "date", "exp", "hms", "identity", "log", "log10", "log1p", "log2",
+"logit", "modulus", "probability", "probit", "pseudo_log", "reciprocal",
+"reverse", "sqrt" and "time".
+
+A transformation object bundles together a transform, its inverse,
+and methods for generating breaks and labels. Transformation objects
+are defined in the scales package, and are called \verb{transform_<name>}. If
+transformations require arguments, you can call them from the scales
+package, e.g. \code{\link[scales:transform_boxcox]{scales::transform_boxcox(p = 2)}}.
+You can create your own transformation with \code{\link[scales:new_transform]{scales::new_transform()}}.}
+
+\item{guide}{A function used to create a guide or its name. See
+\code{\link[ggplot2:guides]{guides()}} for more information.}
 
 \item{...}{Other arguments passed on to \verb{scale_(x|y)_continuous()}}
 }
@@ -133,14 +201,9 @@ If the purpose is to zoom, use the limit argument in the coordinate system
 Transformation object for psychrometric chart
 }
 \examples{
-ggpsychro() +
-    geom_grid_relhum() +
-    scale_relhum(minor_breaks = NULL) +
-    geom_grid_wetbulb() +
-    scale_wetbulb(breaks = seq(25, 30, by = 5), minor_breaks = NULL) +
-    geom_grid_vappres() +
-    scale_vappres(breaks = seq(6000, 7000, by = 500), limits = c(6000, 7000)) +
-    geom_grid_specvol() +
-    scale_specvol(labels = NULL)
+ggpsychro(tdb_lim = c(0, 35), hum_lim = c(0, 50)) +
+    scale_relhum_continuous(n.breaks = 8) +
+    scale_wetbulb_continuous(breaks = seq(25, 30, by = 5), minor_breaks = NULL) +
+    scale_vappres_continuous(breaks = seq(6000, 7000, by = 500), limits = c(6000, 7000))
 
 }
