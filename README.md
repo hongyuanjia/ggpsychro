@@ -132,10 +132,10 @@ Working together with ggplot2 original geoms is as simple as changing
 ``` r
 d <- data.frame(
     dry_bulb_temperature = seq(10, 35, length.out = 200),
-    relative_humidity = seq(0.3, 0.9, length.out = 200)
+    relative_humidity = seq(30, 90, length.out = 200)
 )
 
-ggpsychro(d, tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+ggpsychro(d, tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
     geom_grid_relhum() +
     geom_point(aes(dry_bulb_temperature, relhum = relative_humidity), stat = "relhum", alpha = 0.4)
 ```

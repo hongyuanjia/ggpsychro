@@ -20,15 +20,15 @@ coord_psychro(
 temperature limits. Should be in range
 \verb{[-50, 100]} degree_C [SI] or
 \verb{[-58, 212]} degree_F [IP].
-If \code{NULL}, no grid lines will be plotted when no data and aesthetics
-are added, just like normal ggplot behaviour. Default: \code{NULL}.}
+If \code{NULL}, trained data ranges will be used when available, otherwise
+a default display range will be used. Default: \code{NULL}.}
 
 \item{hum_lim}{A numeric vector of length-2 indicating the humidity ratio
 limits. Should be in range
 \verb{[0, 60]} g_H20 kg_Air-1 [SI] or
 \verb{[0, 350]} gr_H20 lb_Air-1 [IP].
-If \code{NULL}, no grid lines will be plotted when no data and aesthetics
-are added, just like normal ggplot behaviour. Default: \code{NULL}.}
+If \code{NULL}, trained data ranges will be used when available, otherwise
+a default display range will be used. Default: \code{NULL}.}
 
 \item{altitude}{A single number of altitude in m [SI] or ft [IP]. Default:
 \code{0}.}

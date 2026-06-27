@@ -81,52 +81,60 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
     setup_panel_params = function(self, scale_x, scale_y,
                                   scale_rh, scale_wb, scale_vp, scale_sv, scale_en,
                                   params = list()) {
-        # when training tdb and hum, the range should be shrinked based on
-        # dewpoint and corresponding hum ratio
-        if (self$mollier) {
-            lim_tdb <- scale_y$range$range
-            lim_hum <- scale_x$range$range
-        } else {
-            lim_tdb <- scale_x$range$range
-            lim_hum <- scale_y$range$range
+        default_limits <- default_psychro_limits(self$units)
+        default_x <- if (self$mollier) default_limits$hum else default_limits$tdb
+        default_y <- if (self$mollier) default_limits$tdb else default_limits$hum
+
+        empty_range <- function(range) {
+            is.null(range) || length(range) == 0L || anyNA(range)
+        }
+        choose_range <- function(scale, limit, default) {
+            if (!is.null(limit)) {
+                return(scale$transform(limit))
+            }
+            if (!empty_range(scale$range$range)) {
+                return(scale$range$range)
+            }
+            scale$transform(default)
         }
 
-        if (!is.null(self$limits$x) && !is.null(self$limits$y)) {
-            lim_x <- scale_x$transform(self$limits$x)
-            lim_y <- scale_y$transform(self$limits$y)
+        # When training tdb and hum, the range should be shrunk based on
+        # dewpoint and corresponding hum ratio. Missing limits are filled with
+        # display defaults so empty psychrometric charts still render.
+        lim_x <- choose_range(scale_x, self$limits$x, default_x)
+        lim_y <- choose_range(scale_y, self$limits$y, default_y)
 
-            if (self$mollier) {
-                lim_tdb <- lim_y
-                lim_hum <- lim_x
-            } else {
-                lim_tdb <- lim_x
-                lim_hum <- lim_y
-            }
+        if (self$mollier) {
+            lim_tdb <- lim_y
+            lim_hum <- lim_x
+        } else {
+            lim_tdb <- lim_x
+            lim_hum <- lim_y
+        }
 
-            tdp <- with_units(self$units,
-                psychrolib::GetTDewPointFromHumRatio(lim_tdb[1L], lim_hum[1L], self$pressure)
-            )
-            lim_tdb <- c(max(lim_tdb[1L], tdp), lim_tdb[2L])
+        tdp <- with_units(self$units,
+            psychrolib::GetTDewPointFromHumRatio(lim_tdb[1L], lim_hum[1L], self$pressure)
+        )
+        lim_tdb <- c(max(lim_tdb[1L], tdp), lim_tdb[2L])
 
-            hum <- with_units(self$units,
-                psychrolib::GetHumRatioFromTDewPoint(lim_tdb[2L], self$pressure)
-            )
-            lim_hum <- c(lim_hum[1L], min(lim_hum[2L], hum))
+        hum <- with_units(self$units,
+            psychrolib::GetHumRatioFromTDewPoint(lim_tdb[2L], self$pressure)
+        )
+        lim_hum <- c(lim_hum[1L], min(lim_hum[2L], hum))
 
-            if (self$mollier) {
-                lim_x <- lim_hum
-                lim_y <- lim_tdb
-            } else {
-                lim_x <- lim_tdb
-                lim_y <- lim_hum
-            }
+        if (self$mollier) {
+            lim_x <- lim_hum
+            lim_y <- lim_tdb
+        } else {
+            lim_x <- lim_tdb
+            lim_y <- lim_hum
+        }
 
-            if (scale_x$is_empty()) {
-                scale_x$train(lim_x)
-            }
-            if (scale_y$is_empty()) {
-                scale_y$train(lim_y)
-            }
+        if (scale_x$is_empty()) {
+            scale_x$train(lim_x)
+        }
+        if (scale_y$is_empty()) {
+            scale_y$train(lim_y)
         }
 
         if (!is.null(lim_tdb) && !is.null(lim_hum)) {

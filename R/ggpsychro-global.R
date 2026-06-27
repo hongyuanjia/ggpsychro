@@ -62,3 +62,10 @@ get_hum_limits <- function (units) {
         bid_conv(c(GGPSY_OPT$hum_min, GGPSY_OPT$hum_max), "Gr")
     }
 }
+
+default_psychro_limits <- function(units) {
+    list(
+        tdb = if (units == "SI") c(0, 50) else bid_conv(c(0, 50), "F"),
+        hum = if (units == "SI") c(0, 50) else bid_conv(c(0, 50), "Gr")
+    )
+}
