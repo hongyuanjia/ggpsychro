@@ -112,24 +112,31 @@ helper.</p>
 </h2>
 <p>Create reusable model objects with <code>comfort_model_*()</code>
 helpers. SET overlays default to the <code>"set"</code> metric, while
-adaptive models default to <code>"acceptability"</code>. For non-PMV
-metrics, contours and zones are often easier to read than a full-panel
-filled overlay because the metric can vary smoothly across almost the
-entire valid air region.</p>
+adaptive models default to <code>"acceptability"</code>. For continuous
+metrics such as SET, use filled bands with contours so the field remains
+visible without losing the level boundaries.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">set_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/comfort_model_pmv.html">comfort_model_set</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">20</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/psychro_preset.html">psychro_preset</a></span><span class="op">(</span><span class="st">"minimal"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/geom_comfort_overlay.html">geom_comfort_overlay</a></span><span class="op">(</span></span>
+<span>        model <span class="op">=</span> <span class="va">set_model</span>,</span>
+<span>        metric <span class="op">=</span> <span class="st">"set"</span>,</span>
+<span>        levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">14</span>, <span class="fl">32</span>, by <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
+<span>        n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">70</span>, <span class="fl">42</span><span class="op">)</span>,</span>
+<span>        alpha <span class="op">=</span> <span class="fl">0.32</span></span>
+<span>    <span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu">scale_fill_viridis_c</span><span class="op">(</span><span class="st">"SET (deg C)"</span>, option <span class="op">=</span> <span class="st">"C"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/geom_comfort_overlay.html">geom_comfort_contour</a></span><span class="op">(</span></span>
 <span>        model <span class="op">=</span> <span class="va">set_model</span>,</span>
 <span>        metric <span class="op">=</span> <span class="st">"set"</span>,</span>
-<span>        breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">22</span>, <span class="fl">30</span>, by <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
+<span>        breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">18</span>, <span class="fl">30</span>, by <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
 <span>        n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">70</span>, <span class="fl">42</span><span class="op">)</span>,</span>
-<span>        colour <span class="op">=</span> <span class="st">"#4A4A4A"</span>,</span>
+<span>        colour <span class="op">=</span> <span class="st">"#2F2F2F"</span>,</span>
 <span>        linewidth <span class="op">=</span> <span class="fl">0.7</span></span>
 <span>    <span class="op">)</span></span></code></pre></div>
-<p><img src="comfort-overlays_files/figure-html/set-contours-1.png" class="r-plt" alt="Psychrometric chart with SET contour lines." width="100%" style="display: block; margin: auto;"></p>
+<p><img src="comfort-overlays_files/figure-html/set-overlay-1.png" class="r-plt" alt="Psychrometric chart with filled SET bands and SET contour lines." width="100%" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">adaptive_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/comfort_model_pmv.html">comfort_model_adaptive</a></span><span class="op">(</span>t_running <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span>
 <span></span>
@@ -143,6 +150,12 @@ entire valid air region.</p>
 <span>        linewidth <span class="op">=</span> <span class="fl">0.7</span></span>
 <span>    <span class="op">)</span></span></code></pre></div>
 <p><img src="comfort-overlays_files/figure-html/adaptive-zone-1.png" class="r-plt" alt="Psychrometric chart with an adaptive comfort acceptability zone." width="100%" style="display: block; margin: auto;"></p>
+<p>Adaptive comfort zones are temperature bands rather than
+humidity-dependent fields. In the example above,
+<code>t_running = 20</code> gives an ASHRAE 55 80% acceptability
+interval from 20.5 to 27.5 degrees C; because <code>tr</code> defaults
+to <code>tdb</code>, the zone appears as a vertical band clipped to the
+current chart limits.</p>
 </div>
 <div class="section level2">
 <h2 id="state-metrics">State metrics<a class="anchor" aria-label="anchor" href="#state-metrics"></a>

@@ -60,9 +60,9 @@ bands.](comfort-overlays_files/figure-html/en15251-zone-1.png)
 
 Create reusable model objects with `comfort_model_*()` helpers. SET
 overlays default to the `"set"` metric, while adaptive models default to
-`"acceptability"`. For non-PMV metrics, contours and zones are often
-easier to read than a full-panel filled overlay because the metric can
-vary smoothly across almost the entire valid air region.
+`"acceptability"`. For continuous metrics such as SET, use filled bands
+with contours so the field remains visible without losing the level
+boundaries.
 
 ``` r
 
@@ -70,18 +70,26 @@ set_model <- comfort_model_set()
 
 ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
     psychro_preset("minimal") +
+    geom_comfort_overlay(
+        model = set_model,
+        metric = "set",
+        levels = seq(14, 32, by = 2),
+        n = c(70, 42),
+        alpha = 0.32
+    ) +
+    scale_fill_viridis_c("SET (deg C)", option = "C") +
     geom_comfort_contour(
         model = set_model,
         metric = "set",
-        breaks = seq(22, 30, by = 2),
+        breaks = seq(18, 30, by = 2),
         n = c(70, 42),
-        colour = "#4A4A4A",
+        colour = "#2F2F2F",
         linewidth = 0.7
     )
 ```
 
-![Psychrometric chart with SET contour
-lines.](comfort-overlays_files/figure-html/set-contours-1.png)
+![Psychrometric chart with filled SET bands and SET contour
+lines.](comfort-overlays_files/figure-html/set-overlay-1.png)
 
 ``` r
 
@@ -100,6 +108,12 @@ ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
 
 ![Psychrometric chart with an adaptive comfort acceptability
 zone.](comfort-overlays_files/figure-html/adaptive-zone-1.png)
+
+Adaptive comfort zones are temperature bands rather than
+humidity-dependent fields. In the example above, `t_running = 20` gives
+an ASHRAE 55 80% acceptability interval from 20.5 to 27.5 degrees C;
+because `tr` defaults to `tdb`, the zone appears as a vertical band
+clipped to the current chart limits.
 
 ## State metrics
 
