@@ -64,6 +64,17 @@
 <p>‘ggplot2’ extension for making psychrometric charts.</p>
 </blockquote>
 <div class="section level2">
+<h2 id="features">Features<a class="anchor" aria-label="anchor" href="#features"></a>
+</h2>
+<ul>
+<li>ggplot2-native psychrometric charts with SI/IP units and Mollier orientation.</li>
+<li>Preset grid and style helpers for common psychrometric chart layouts.</li>
+<li>Psychrometric stats for relative humidity, wet-bulb temperature, vapor pressure, specific volume, enthalpy, and humidity ratio.</li>
+<li>State points, process lines, and filled operating zones for HVAC workflows.</li>
+<li>Thermal comfort overlays for PMV, SET, adaptive comfort, and PMV-based ASHRAE 55 / EN 15251 comfort zones.</li>
+</ul>
+</div>
+<div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <!-- You can install the released version of ggpsychro from [CRAN](https://CRAN.R-project.org) with: -->
@@ -83,37 +94,28 @@
 <code class="sourceCode R"><span><span class="fu"><a href="reference/ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">50</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="reference/psychro_preset.html">psychro_preset</a></span><span class="op">(</span><span class="st">"minimal"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-ggpsychro-1.png" alt="Minimal psychrometric chart with dry-bulb temperature, humidity ratio, and reference grids." width="60%" style="display: block; margin: auto;"></p>
-<p>State points and process lines can be supplied with dry-bulb temperature plus one psychrometric property, such as relative humidity.</p>
+<p>Comfort overlays can be added as regular layers. The PMV overlay combines root-traced filled bands, PMV isolines, and text labels on the same psychrometric chart.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">process</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>    dry_bulb_temperature <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">18</span>, <span class="fl">23</span>, <span class="fl">28</span>, <span class="fl">31</span><span class="op">)</span>,</span>
-<span>    relative_humidity <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">70</span>, <span class="fl">55</span>, <span class="fl">45</span>, <span class="fl">55</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="reference/ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">40</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">25</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">40</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">24</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="reference/psychro_preset.html">psychro_preset</a></span><span class="op">(</span><span class="st">"minimal"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="reference/psychro_state.html">geom_psychro_process</a></span><span class="op">(</span></span>
-<span>        <span class="fu">aes</span><span class="op">(</span>tdb <span class="op">=</span> <span class="va">dry_bulb_temperature</span>, relhum <span class="op">=</span> <span class="va">relative_humidity</span><span class="op">)</span>,</span>
-<span>        data <span class="op">=</span> <span class="va">process</span>,</span>
-<span>        colour <span class="op">=</span> <span class="st">"#0f766e"</span>, linewidth <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>        arrow <span class="op">=</span> <span class="fu">grid</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/grid/arrow.html" class="external-link">arrow</a></span><span class="op">(</span>length <span class="op">=</span> <span class="fu">grid</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/grid/unit.html" class="external-link">unit</a></span><span class="op">(</span><span class="fl">0.08</span>, <span class="st">"inches"</span><span class="op">)</span><span class="op">)</span></span>
-<span>    <span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="reference/psychro_state.html">stat_psychro_state</a></span><span class="op">(</span></span>
-<span>        <span class="fu">aes</span><span class="op">(</span>tdb <span class="op">=</span> <span class="va">dry_bulb_temperature</span>, relhum <span class="op">=</span> <span class="va">relative_humidity</span><span class="op">)</span>,</span>
-<span>        data <span class="op">=</span> <span class="va">process</span>,</span>
-<span>        colour <span class="op">=</span> <span class="st">"#0f766e"</span>, size <span class="op">=</span> <span class="fl">2</span></span>
-<span>    <span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-psychro-process-1.png" alt="Psychrometric process line with four state points on a minimal chart." width="75%" style="display: block; margin: auto;"></p>
+<span>    <span class="fu"><a href="reference/geom_comfort_overlay.html">geom_comfort_overlay</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">70</span>, <span class="fl">48</span><span class="op">)</span>, gap <span class="op">=</span> <span class="fl">0</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="reference/scale_fill_comfort_pmv.html">scale_fill_comfort_pmv</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"PMV"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="reference/geom_comfort_overlay.html">geom_comfort_pmv_lines</a></span><span class="op">(</span>levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">3</span>, <span class="fl">3</span>, by <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span>, n <span class="op">=</span> <span class="fl">140</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-comfort-overlay-1.png" alt="Psychrometric chart with a PMV comfort overlay, filled blue-white-red PMV bands, and labelled PMV contour lines." width="75%" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level2">
 <h2 id="learn-more">Learn more<a class="anchor" aria-label="anchor" href="#learn-more"></a>
 </h2>
 <p>The longer examples live on the pkgdown site:</p>
 <ul>
-<li><a href="https://hongyuanjia.github.io/ggpsychro/articles/ggpsychro.html">Get started</a></li>
-<li><a href="https://hongyuanjia.github.io/ggpsychro/articles/grids-and-styles.html">Chart grids and styles</a></li>
-<li><a href="https://hongyuanjia.github.io/ggpsychro/articles/plotting-data.html">Plotting psychrometric data</a></li>
-<li><a href="https://hongyuanjia.github.io/ggpsychro/articles/zones-and-processes.html">Zones and processes</a></li>
+<li>
+<a href="https://hongyuanjia.github.io/ggpsychro/articles/ggpsychro.html">Get started</a> - build basic charts, choose limits and units, use Mollier orientation, and add ggplot layers.</li>
+<li>
+<a href="https://hongyuanjia.github.io/ggpsychro/articles/grids-and-styles.html">Chart grids and styles</a> - tune dry-bulb, humidity-ratio, relative-humidity, wet-bulb, enthalpy, and specific-volume grid guides.</li>
+<li>
+<a href="https://hongyuanjia.github.io/ggpsychro/articles/plotting-data.html">Plotting psychrometric data</a> - plot points, bins, and overlays from weather or measured state data.</li>
+<li>
+<a href="https://hongyuanjia.github.io/ggpsychro/articles/zones-and-processes.html">Zones and processes</a> - draw comfort regions, operating limits, state points, and HVAC process lines.</li>
 </ul>
 </div>
 <div class="section level2">

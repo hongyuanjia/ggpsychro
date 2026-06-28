@@ -2,6 +2,18 @@
 
 > ‘ggplot2’ extension for making psychrometric charts.
 
+## Features
+
+- ggplot2-native psychrometric charts with SI/IP units and Mollier
+  orientation.
+- Preset grid and style helpers for common psychrometric chart layouts.
+- Psychrometric stats for relative humidity, wet-bulb temperature, vapor
+  pressure, specific volume, enthalpy, and humidity ratio.
+- State points, process lines, and filled operating zones for HVAC
+  workflows.
+- Thermal comfort overlays for PMV, SET, adaptive comfort, and PMV-based
+  ASHRAE 55 / EN 15251 comfort zones.
+
 ## Installation
 
 You can install the development version from
@@ -29,46 +41,42 @@ ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
 ![Minimal psychrometric chart with dry-bulb temperature, humidity ratio,
 and reference grids.](reference/figures/README-ggpsychro-1.png)
 
-State points and process lines can be supplied with dry-bulb temperature
-plus one psychrometric property, such as relative humidity.
+Comfort overlays can be added as regular layers. The PMV overlay
+combines root-traced filled bands, PMV isolines, and text labels on the
+same psychrometric chart.
 
 ``` r
 
-process <- data.frame(
-    dry_bulb_temperature = c(18, 23, 28, 31),
-    relative_humidity = c(70, 55, 45, 55)
-)
-
-ggpsychro(tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
+ggpsychro(tdb_lim = c(5, 40), hum_lim = c(0, 24)) +
     psychro_preset("minimal") +
-    geom_psychro_process(
-        aes(tdb = dry_bulb_temperature, relhum = relative_humidity),
-        data = process,
-        colour = "#0f766e", linewidth = 1,
-        arrow = grid::arrow(length = grid::unit(0.08, "inches"))
-    ) +
-    stat_psychro_state(
-        aes(tdb = dry_bulb_temperature, relhum = relative_humidity),
-        data = process,
-        colour = "#0f766e", size = 2
-    )
+    geom_comfort_overlay(n = c(70, 48), gap = 0) +
+    scale_fill_comfort_pmv(name = "PMV") +
+    geom_comfort_pmv_lines(levels = seq(-3, 3, by = 0.5), n = 140)
 ```
 
-![Psychrometric process line with four state points on a minimal
-chart.](reference/figures/README-psychro-process-1.png)
+![Psychrometric chart with a PMV comfort overlay, filled blue-white-red
+PMV bands, and labelled PMV contour
+lines.](reference/figures/README-comfort-overlay-1.png)
 
 ## Learn more
 
 The longer examples live on the pkgdown site:
 
 - [Get
-  started](https://hongyuanjia.github.io/ggpsychro/articles/ggpsychro.html)
+  started](https://hongyuanjia.github.io/ggpsychro/articles/ggpsychro.html) -
+  build basic charts, choose limits and units, use Mollier orientation,
+  and add ggplot layers.
 - [Chart grids and
-  styles](https://hongyuanjia.github.io/ggpsychro/articles/grids-and-styles.html)
+  styles](https://hongyuanjia.github.io/ggpsychro/articles/grids-and-styles.html) -
+  tune dry-bulb, humidity-ratio, relative-humidity, wet-bulb, enthalpy,
+  and specific-volume grid guides.
 - [Plotting psychrometric
-  data](https://hongyuanjia.github.io/ggpsychro/articles/plotting-data.html)
+  data](https://hongyuanjia.github.io/ggpsychro/articles/plotting-data.html) -
+  plot points, bins, and overlays from weather or measured state data.
 - [Zones and
-  processes](https://hongyuanjia.github.io/ggpsychro/articles/zones-and-processes.html)
+  processes](https://hongyuanjia.github.io/ggpsychro/articles/zones-and-processes.html) -
+  draw comfort regions, operating limits, state points, and HVAC process
+  lines.
 
 ## Author
 
@@ -91,10 +99,28 @@ contributing to this project, you agree to abide by its terms.
 
 ## All functions
 
+- [`comfort_model_pmv()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_model_pmv.md)
+  [`comfort_model_set()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_model_pmv.md)
+  [`comfort_model_adaptive()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_model_pmv.md)
+  : Comfort model objects
+- [`comfort_pmv()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_pmv.md)
+  [`comfort_set()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_pmv.md)
+  [`comfort_adaptive()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_pmv.md)
+  : Thermal comfort calculations
+- [`comfort_standard_ashrae55_2017()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_standard_ashrae55_2017.md)
+  [`comfort_standard_en15251_2007()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_standard_ashrae55_2017.md)
+  : PMV-based comfort standards
 - [`coord_psychro()`](https://hongyuanjia.github.io/ggpsychro/reference/coord_psychro.md)
   : Psychrometric coordinates
 - [`element_polygon()`](https://hongyuanjia.github.io/ggpsychro/reference/element_polygon.md)
   : Polygon theme element for psychrometric chart panels
+- [`geom_comfort_overlay()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
+  [`geom_comfort_contour()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
+  [`geom_comfort_zone()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
+  [`geom_comfort_pmv_lines()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
+  [`geom_comfort_standard_zone()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
+  [`stat_comfort_state()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
+  : Comfort overlays for psychrometric charts
 - [`geom_grid_relhum()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_grid.md)
   [`geom_grid_wetbulb()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_grid.md)
   [`geom_grid_vappres()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_grid.md)
@@ -136,6 +162,8 @@ contributing to this project, you agree to abide by its terms.
   [`scale_specvol_continuous()`](https://hongyuanjia.github.io/ggpsychro/reference/scale.md)
   [`scale_enthalpy_continuous()`](https://hongyuanjia.github.io/ggpsychro/reference/scale.md)
   : Transformation object for psychrometric chart
+- [`scale_fill_comfort_pmv()`](https://hongyuanjia.github.io/ggpsychro/reference/scale_fill_comfort_pmv.md)
+  : Comfort PMV fill scale
 - [`stat_relhum()`](https://hongyuanjia.github.io/ggpsychro/reference/stat.md)
   [`stat_wetbulb()`](https://hongyuanjia.github.io/ggpsychro/reference/stat.md)
   [`stat_vappres()`](https://hongyuanjia.github.io/ggpsychro/reference/stat.md)

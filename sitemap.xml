@@ -14,9 +14,13 @@
 <url><loc>https://hongyuanjia.github.io/ggpsychro/authors.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/index.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/news/index.html</loc></url>
+<url><loc>https://hongyuanjia.github.io/ggpsychro/reference/comfort_model_pmv.html</loc></url>
+<url><loc>https://hongyuanjia.github.io/ggpsychro/reference/comfort_pmv.html</loc></url>
+<url><loc>https://hongyuanjia.github.io/ggpsychro/reference/comfort_standard_ashrae55_2017.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/coord_psychro.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/demo_scale.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/element_polygon.html</loc></url>
+<url><loc>https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/geom_grid.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro-extensions.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro-ggproto.html</loc></url>
@@ -29,6 +33,7 @@
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/psychro_state.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/psychro_zone.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/scale.html</loc></url>
+<url><loc>https://hongyuanjia.github.io/ggpsychro/reference/scale_fill_comfort_pmv.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/stat.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/stat_psychro_bin.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/theme.html</loc></url>

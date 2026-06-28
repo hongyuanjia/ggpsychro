@@ -977,7 +977,7 @@ theme_psychro_minimal()
 #>   ..@ size         : NULL
 #>   ..@ hjust        : NULL
 #>   ..@ vjust        : NULL
-#>   ..@ angle        : NULL
+#>   ..@ angle        : num 90
 #>   ..@ lineheight   : NULL
 #>   ..@ margin       : NULL
 #>   ..@ debug        : NULL

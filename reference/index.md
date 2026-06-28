@@ -2,10 +2,28 @@
 
 ## All functions
 
+- [`comfort_model_pmv()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_model_pmv.md)
+  [`comfort_model_set()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_model_pmv.md)
+  [`comfort_model_adaptive()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_model_pmv.md)
+  : Comfort model objects
+- [`comfort_pmv()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_pmv.md)
+  [`comfort_set()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_pmv.md)
+  [`comfort_adaptive()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_pmv.md)
+  : Thermal comfort calculations
+- [`comfort_standard_ashrae55_2017()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_standard_ashrae55_2017.md)
+  [`comfort_standard_en15251_2007()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_standard_ashrae55_2017.md)
+  : PMV-based comfort standards
 - [`coord_psychro()`](https://hongyuanjia.github.io/ggpsychro/reference/coord_psychro.md)
   : Psychrometric coordinates
 - [`element_polygon()`](https://hongyuanjia.github.io/ggpsychro/reference/element_polygon.md)
   : Polygon theme element for psychrometric chart panels
+- [`geom_comfort_overlay()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
+  [`geom_comfort_contour()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
+  [`geom_comfort_zone()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
+  [`geom_comfort_pmv_lines()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
+  [`geom_comfort_standard_zone()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
+  [`stat_comfort_state()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
+  : Comfort overlays for psychrometric charts
 - [`geom_grid_relhum()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_grid.md)
   [`geom_grid_wetbulb()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_grid.md)
   [`geom_grid_vappres()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_grid.md)
@@ -47,6 +65,8 @@
   [`scale_specvol_continuous()`](https://hongyuanjia.github.io/ggpsychro/reference/scale.md)
   [`scale_enthalpy_continuous()`](https://hongyuanjia.github.io/ggpsychro/reference/scale.md)
   : Transformation object for psychrometric chart
+- [`scale_fill_comfort_pmv()`](https://hongyuanjia.github.io/ggpsychro/reference/scale_fill_comfort_pmv.md)
+  : Comfort PMV fill scale
 - [`stat_relhum()`](https://hongyuanjia.github.io/ggpsychro/reference/stat.md)
   [`stat_wetbulb()`](https://hongyuanjia.github.io/ggpsychro/reference/stat.md)
   [`stat_vappres()`](https://hongyuanjia.github.io/ggpsychro/reference/stat.md)
