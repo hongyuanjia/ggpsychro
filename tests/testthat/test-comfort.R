@@ -75,7 +75,11 @@ test_that("comfort calculations handle IP units and input limits", {
 
     expect_true(is.na(comfort_pmv(5, rh = 50)$pmv[[1L]]))
     expect_true(is.na(comfort_set(5, rh = 50)$set[[1L]]))
+    expect_true(is.na(comfort_pmv(25, rh = -10)$pmv[[1L]]))
+    expect_true(is.na(comfort_set(25, rh = 150)$set[[1L]]))
     expect_true(is.na(comfort_adaptive(25, t_running = 5)$tmp_cmf[[1L]]))
+    expect_true(is.na(comfort_adaptive(25, t_running = 20, v = -0.1,
+        standard = "en16798")$acceptability[[1L]]))
     expect_true(is.na(comfort_pmv(c(25, NA), rh = 50)$pmv[[2L]]))
 })
 
@@ -83,6 +87,7 @@ test_that("comfort model objects validate inputs", {
     expect_s3_class(comfort_model_pmv(), "PsyComfortModel")
     expect_s3_class(comfort_model_set(), "PsyComfortModel")
     expect_s3_class(comfort_model_adaptive(t_running = 20), "PsyComfortModel")
+    expect_error(comfort_model_pmv(model = "bad"))
     expect_error(comfort_model_type(list()), "comfort_model")
     expect_error(comfort_model_adaptive(t_running = 20, standard = "bad"))
 })
@@ -263,6 +268,8 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
     axis_vjust <- comfort_pmv_axis_label_text_vjust(ggplot2::waiver())
     expect_s3_class(axis_vjust, "unit")
     expect_equal(as.numeric(axis_vjust), 3.5)
+    axis_large_vjust <- comfort_pmv_axis_label_text_vjust(ggplot2::waiver(), 6)
+    expect_gt(as.numeric(axis_large_vjust), as.numeric(axis_vjust))
 
     axis_labels <- comfort_pmv_axis_label_data(
         comfort_model_pmv(), c(-1, 0, 1), 80, "SI", pressure,
@@ -275,23 +282,6 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
     expect_equal(unique(axis_labels$hjust), 0.985)
     expect_equal(unique(axis_labels$vjust), 0.5)
 
-    trimmed <- comfort_pmv_curve_data(
-        comfort_model_pmv(), c(-1, 0, 1), 80, "SI", pressure,
-        FALSE, c(15, 30), c(0, 20), label = "none",
-        trim_axis_hjust = comfort_pmv_line_trim_hjust(0.015)
-    )
-    expect_gt(min(trimmed$humratio), 0)
-
-    pmv_axis <- comfort_pmv_curve_data(
-        comfort_model_pmv(), c(-1, 0, 1), 80, "SI", pressure,
-        FALSE, c(15, 30), c(0, 20), label = "axis"
-    )
-    expect_equal(unique(pmv_axis$vjust), 0.5)
-    pmv_axis_custom <- comfort_pmv_curve_data(
-        comfort_model_pmv(), c(-1, 0, 1), 80, "SI", pressure,
-        FALSE, c(15, 30), c(0, 20), label = "axis", label_vjust = 1.2
-    )
-    expect_equal(unique(pmv_axis_custom$vjust), 1.2)
     pmv_boundary <- comfort_pmv_curve_data(
         comfort_model_pmv(), c(-0.5, 0.5), 80, "SI", pressure,
         FALSE, c(15, 30), c(0, 20), label = "boundary"
@@ -312,6 +302,20 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
     expect_gt(nrow(ashrae[[1L]]), 0L)
     expect_gt(length(unique(round(ashrae[[2L]]$x[ashrae[[2L]]$level == -0.5], 4))), 1L)
     expect_true("COMFORT" %in% unique(unlist(lapply(ashrae, `[[`, "label"))))
+
+    ashrae_alpha <- ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+            geom_comfort_standard_zone(comfort_standard_ashrae55_2017(), n = 90,
+                alpha = 0.2)
+    )$data
+    expect_equal(unique(ashrae_alpha[[1L]]$alpha), 0.2)
+    expect_error(
+        ggplot2::ggplot_build(
+            ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+                geom_comfort_standard_zone(alpha = NA_real_)
+        ),
+        "alpha"
+    )
 
     en <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
@@ -384,6 +388,10 @@ test_that("Marsh-style comfort overlays have visual regressions", {
 
 test_that("comfort layer internals are not exported", {
     expect_false(any(grepl("^StatComfort", getNamespaceExports("ggpsychro"))))
+    rd <- testthat::test_path("..", "..", "man", "ggpsychro-extensions.Rd")
+    if (file.exists(rd)) {
+        expect_false(any(grepl("StatComfort", readLines(rd, warn = FALSE))))
+    }
 })
 
 test_that("comfort zones and state stats build model-specific fields", {

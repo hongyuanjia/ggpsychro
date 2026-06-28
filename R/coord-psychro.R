@@ -311,32 +311,10 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
         limits <- scale$trans$inverse(panel_params[[self$pos_tdb()]]$continuous_range)
         tdb <- scale$trans$breaks(limits, 100L)
 
-        # calculate corresponding hum ratio at saturation
-        hum <- with_units(self$units, psychrolib::GetHumRatioFromRelHum(tdb, 1.0, self$pressure))
-
-        # SATURATION LINE
-        # remove points that are above the max hum ratio
-        sat_tdb <- tdb[hum <= range_hum[2L]]
-        sat_hum <- hum[hum <= range_hum[2L]]
-        # make sure line extend to the end of the panel
-        sat_tdb <- c(
-            if (range_hum[1L] > 0.0) {
-                with_units(self$units, GetTDewPointFromHumRatioOnly(range_hum[1L], self$pressure))
-            },
-            sat_tdb,
-            if (range_hum[2L] > 0.0) {
-                sat_tdb_max <- with_units(self$units, GetTDewPointFromHumRatioOnly(range_hum[2L], self$pressure))
-                sat_tdb_max[(sat_app_end <- sat_tdb_max > max(sat_tdb))]
-            }
-        )
-        sat_hum <- c(
-            if(range_hum[1L] > 0.0) range_hum[1L],
-            sat_hum,
-            if (range_hum[2L] > 0.0) range_hum[2L][sat_app_end]
-        )
-        sat_tdb <- rescale01(sat_tdb, range_tdb)
-        sat_hum <- rescale01(sat_hum, range_hum)
-        sat <- list(tdb = sat_tdb, hum = sat_hum, len = length(sat_tdb), n = 1L)
+        sat <- psychro_coord_saturation(self, panel_params)
+        if (is.null(sat)) {
+            return(ggplot2::ggproto_parent(CoordCartesian, self)$render_bg(panel_params, theme))
+        }
 
         # RELHUM GRID LINE
         grid_labels <- self$grid_labels

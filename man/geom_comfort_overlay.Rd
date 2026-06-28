@@ -201,7 +201,8 @@ breaks. Ignored for \code{method = "tile"}.}
 
 \item{alpha}{Overlay transparency. Defaults to \code{0.55} so psychrometric
 chart grid and relative-humidity curves remain visible beneath the
-comfort overlay.}
+comfort overlay. For \code{\link[=geom_comfort_standard_zone]{geom_comfort_standard_zone()}}, an \code{alpha} supplied
+through \code{...} overrides the standard-specific defaults.}
 
 \item{na.rm}{If \code{FALSE}, the default, missing values are removed with
 a warning. If \code{TRUE}, missing values are silently removed.}
