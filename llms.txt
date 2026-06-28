@@ -13,8 +13,8 @@
   pressure, specific volume, enthalpy, and humidity ratio.
 - State points, process lines, and filled operating zones for HVAC
   workflows.
-- Thermal comfort overlays for PMV, SET, adaptive comfort, and PMV-based
-  ASHRAE 55 / EN 15251 comfort zones.
+- Thermal comfort overlays for PMV, SET, adaptive comfort, labelled
+  comfort contours, and PMV-based ASHRAE 55 / EN 15251 comfort zones.
 
 ## Installation
 
@@ -77,8 +77,8 @@ The longer examples live on the pkgdown site:
   plot points, bins, and overlays from weather or measured state data.
 - [Comfort
   overlays](https://hongyuanjia.github.io/ggpsychro/articles/comfort-overlays.html) -
-  draw PMV, SET, adaptive comfort, and PMV-based standard comfort
-  overlays.
+  draw PMV bands and curves, labelled SET contours, adaptive comfort
+  zones, and PMV-based standard comfort overlays.
 - [Zones and
   processes](https://hongyuanjia.github.io/ggpsychro/articles/zones-and-processes.html) -
   draw manual comfort regions, operating limits, state points, and HVAC

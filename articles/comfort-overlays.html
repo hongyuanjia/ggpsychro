@@ -113,8 +113,11 @@ helper.</p>
 <p>Create reusable model objects with <code>comfort_model_*()</code>
 helpers. SET overlays default to the <code>"set"</code> metric, while
 adaptive models default to <code>"acceptability"</code>. For continuous
-metrics such as SET, use filled bands with contours so the field remains
-visible without losing the level boundaries.</p>
+metrics such as SET, use filled bands with labelled contours so the
+field remains visible without losing the level boundaries.
+<code>geom_comfort_contour(label = TRUE)</code> draws the contour and
+its inline level label as one layer, leaving a gap in the contour where
+the label is placed.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">set_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/comfort_model_pmv.html">comfort_model_set</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
@@ -131,12 +134,14 @@ visible without losing the level boundaries.</p>
 <span>    <span class="fu"><a href="../reference/geom_comfort_overlay.html">geom_comfort_contour</a></span><span class="op">(</span></span>
 <span>        model <span class="op">=</span> <span class="va">set_model</span>,</span>
 <span>        metric <span class="op">=</span> <span class="st">"set"</span>,</span>
-<span>        breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">18</span>, <span class="fl">30</span>, by <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
+<span>        breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">22</span>, <span class="fl">30</span>, by <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
 <span>        n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">70</span>, <span class="fl">42</span><span class="op">)</span>,</span>
+<span>        label <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>        label_size <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>        colour <span class="op">=</span> <span class="st">"#2F2F2F"</span>,</span>
 <span>        linewidth <span class="op">=</span> <span class="fl">0.7</span></span>
 <span>    <span class="op">)</span></span></code></pre></div>
-<p><img src="comfort-overlays_files/figure-html/set-overlay-1.png" class="r-plt" alt="Psychrometric chart with filled SET bands and SET contour lines." width="100%" style="display: block; margin: auto;"></p>
+<p><img src="comfort-overlays_files/figure-html/set-overlay-1.png" class="r-plt" alt="Psychrometric chart with filled SET bands and labelled SET contour lines." width="100%" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">adaptive_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/comfort_model_pmv.html">comfort_model_adaptive</a></span><span class="op">(</span>t_running <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span>
 <span></span>
@@ -151,11 +156,12 @@ visible without losing the level boundaries.</p>
 <span>    <span class="op">)</span></span></code></pre></div>
 <p><img src="comfort-overlays_files/figure-html/adaptive-zone-1.png" class="r-plt" alt="Psychrometric chart with an adaptive comfort acceptability zone." width="100%" style="display: block; margin: auto;"></p>
 <p>Adaptive comfort zones are temperature bands rather than
-humidity-dependent fields. In the example above,
-<code>t_running = 20</code> gives an ASHRAE 55 80% acceptability
+humidity-dependent fields, so a filled adaptive zone is expected to look
+like a vertical band instead of a curved humidity field. In the example
+above, <code>t_running = 20</code> gives an ASHRAE 55 80% acceptability
 interval from 20.5 to 27.5 degrees C; because <code>tr</code> defaults
-to <code>tdb</code>, the zone appears as a vertical band clipped to the
-current chart limits.</p>
+to <code>tdb</code>, the zone is clipped only by the current chart
+limits and saturation boundary.</p>
 </div>
 <div class="section level2">
 <h2 id="state-metrics">State metrics<a class="anchor" aria-label="anchor" href="#state-metrics"></a>

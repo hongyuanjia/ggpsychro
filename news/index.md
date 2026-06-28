@@ -2,6 +2,9 @@
 
 ## ggpsychro 0.0.0.9000
 
+- Added optional contour labels to
+  [`geom_comfort_contour()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md).
+  ([\#26](https://github.com/hongyuanjia/ggpsychro/issues/26))
 - Clarified SET and adaptive comfort overlay examples in the comfort
   overlays article.
   ([\#25](https://github.com/hongyuanjia/ggpsychro/issues/25))

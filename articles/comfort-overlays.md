@@ -61,8 +61,10 @@ bands.](comfort-overlays_files/figure-html/en15251-zone-1.png)
 Create reusable model objects with `comfort_model_*()` helpers. SET
 overlays default to the `"set"` metric, while adaptive models default to
 `"acceptability"`. For continuous metrics such as SET, use filled bands
-with contours so the field remains visible without losing the level
-boundaries.
+with labelled contours so the field remains visible without losing the
+level boundaries. `geom_comfort_contour(label = TRUE)` draws the contour
+and its inline level label as one layer, leaving a gap in the contour
+where the label is placed.
 
 ``` r
 
@@ -81,14 +83,16 @@ ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
     geom_comfort_contour(
         model = set_model,
         metric = "set",
-        breaks = seq(18, 30, by = 2),
+        breaks = seq(22, 30, by = 2),
         n = c(70, 42),
+        label = TRUE,
+        label_size = 3,
         colour = "#2F2F2F",
         linewidth = 0.7
     )
 ```
 
-![Psychrometric chart with filled SET bands and SET contour
+![Psychrometric chart with filled SET bands and labelled SET contour
 lines.](comfort-overlays_files/figure-html/set-overlay-1.png)
 
 ``` r
@@ -110,10 +114,11 @@ ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
 zone.](comfort-overlays_files/figure-html/adaptive-zone-1.png)
 
 Adaptive comfort zones are temperature bands rather than
-humidity-dependent fields. In the example above, `t_running = 20` gives
-an ASHRAE 55 80% acceptability interval from 20.5 to 27.5 degrees C;
-because `tr` defaults to `tdb`, the zone appears as a vertical band
-clipped to the current chart limits.
+humidity-dependent fields, so a filled adaptive zone is expected to look
+like a vertical band instead of a curved humidity field. In the example
+above, `t_running = 20` gives an ASHRAE 55 80% acceptability interval
+from 20.5 to 27.5 degrees C; because `tr` defaults to `tdb`, the zone is
+clipped only by the current chart limits and saturation boundary.
 
 ## State metrics
 
