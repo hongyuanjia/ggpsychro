@@ -223,6 +223,41 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
     )$data[[1L]]
     expect_gt(nrow(contour), 0L)
     expect_true(all(contour$level %in% c(-1, 0, 1)))
+
+    contour_labelled <- ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+            geom_comfort_contour(
+                model = comfort_model_set(),
+                metric = "set",
+                breaks = c(22, 24, 26),
+                n = c(32, 20),
+                label = TRUE
+            )
+    )$data
+    expect_equal(length(contour_labelled), 1L)
+    expect_true(all(c("22", "24", "26") %in% contour_labelled[[1L]]$label))
+    expect_true(all(c("label", "level", "value") %in% names(contour_labelled[[1L]])))
+
+    pmv_labelled <- ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+            geom_comfort_contour(
+                breaks = c(-1, 0, 1),
+                n = c(32, 20),
+                label = TRUE
+            )
+    )$data[[1L]]
+    expect_true(all(c("-1.0", "0.0", "+1.0") %in% pmv_labelled$label))
+
+    expect_error(
+        ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+            geom_comfort_contour(label = NA),
+        "label"
+    )
+    expect_error(
+        ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+            geom_comfort_contour(label = TRUE, label_size = -1),
+        "label_size"
+    )
 })
 
 test_that("PMV root-traced curves solve requested levels", {
@@ -460,6 +495,10 @@ test_that("comfort overlays build in Mollier coordinates", {
         model = comfort_model_set(), metric = "set", breaks = c(22, 24, 26),
         n = c(32, 20)
     ))
+    expect_mollier_comfort(base + geom_comfort_contour(
+        model = comfort_model_set(), metric = "set", breaks = c(22, 24, 26),
+        n = c(32, 20), label = TRUE
+    ))
 
     expect_mollier_comfort(base + geom_comfort_pmv_lines(
         levels = c(-1, 0, 1), n = 60
@@ -487,6 +526,8 @@ test_that("Marsh-style comfort overlays have visual regressions", {
         psychro_preset("minimal")
     pmv_base <- ggpsychro(tdb_lim = c(5, 40), hum_lim = c(0, 24)) +
         psychro_preset("minimal")
+    set_base <- ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+        psychro_preset("minimal")
 
     vdiffr::expect_doppelganger(
         "comfort pmv marsh lines",
@@ -506,6 +547,16 @@ test_that("Marsh-style comfort overlays have visual regressions", {
         "comfort en15251 2007 pmv zones",
         base +
             geom_comfort_standard_zone(comfort_standard_en15251_2007(), n = 140)
+    )
+
+    vdiffr::expect_doppelganger(
+        "comfort set contour labels",
+        set_base +
+            geom_comfort_contour(
+                model = comfort_model_set(), metric = "set",
+                breaks = c(22, 24, 26), n = c(70, 42),
+                label = TRUE, colour = "#4A4A4A", linewidth = 0.7
+            )
     )
 })
 
@@ -532,6 +583,16 @@ test_that("Mollier comfort overlays have visual regressions", {
                 model = comfort_model_set(), metric = "set",
                 breaks = c(22, 24, 26), n = c(40, 24),
                 colour = "#4A4A4A"
+            )
+    )
+
+    vdiffr::expect_doppelganger(
+        "comfort mollier set contour labels",
+        base +
+            geom_comfort_contour(
+                model = comfort_model_set(), metric = "set",
+                breaks = c(22, 24, 26), n = c(70, 42),
+                label = TRUE, colour = "#4A4A4A", linewidth = 0.7
             )
     )
 

@@ -290,6 +290,9 @@ comfort_standard_en15251_2007 <- function(breaks = c(-0.7, -0.2, 0.2, 0.7)) {
 #' @param breaks Contour break values.
 #' @param contour_method Contour drawing method. `"auto"` uses root-traced
 #'   curves for PMV and isobands for other metrics.
+#' @param label A single logical value. If `TRUE`, label contour lines with
+#'   their level values.
+#' @param label_size Text size for contour labels. Defaults to `2.8`.
 #' @param range Comfort value interval for PMV and SET zones.
 #' @param standard A PMV-based comfort standard object.
 #'
@@ -350,17 +353,39 @@ geom_comfort_contour <- function(mapping = NULL, data = NULL,
                                  metric = "pmv", breaks = NULL,
                                  n = NULL,
                                  contour_method = c("auto", "root", "isoband"),
+                                 label = FALSE, label_size = NULL,
                                  na.rm = FALSE,
                                  show.legend = NA, inherit.aes = TRUE) {
     contour_method <- match.arg(contour_method)
+    assert_flag(label)
+    if (!is.null(label_size)) {
+        assert_number(label_size, lower = 0, .var.name = "label_size")
+    }
+
+    params <- list(
+        na.rm = na.rm, model = model, metric = metric,
+        breaks = breaks, n = n, contour_method = contour_method, ...
+    )
+
+    if (!isTRUE(label)) {
+        params$label_path <- FALSE
+        return(psychro_layer(
+            stat = stat, data = comfort_layer_data(data), mapping = mapping, geom = "path",
+            position = position, show.legend = show.legend,
+            inherit.aes = inherit.aes,
+            params = params
+        ))
+    }
+
+    label_params <- comfort_contour_label_params(params, label_size)
+    label_params$label_path <- TRUE
     psychro_layer(
-        stat = stat, data = comfort_layer_data(data), mapping = mapping, geom = "path",
+        stat = stat, data = comfort_layer_data(data),
+        mapping = comfort_contour_label_mapping(mapping),
+        geom = geomtextpath::GeomTextpath,
         position = position, show.legend = show.legend,
         inherit.aes = inherit.aes,
-        params = list(
-            na.rm = na.rm, model = model, metric = metric,
-            breaks = breaks, n = n, contour_method = contour_method, ...
-        )
+        params = label_params
     )
 }
 
@@ -727,19 +752,21 @@ StatComfortContour <- ggplot2::ggproto(
 
     extra_params = c(
         "na.rm", "model", "metric", "breaks", "n", "contour_method",
-        "units", "pres", "mollier", "tdb_lim", "hum_lim"
+        "label_path", "units", "pres", "mollier", "tdb_lim", "hum_lim"
     ),
 
     compute_panel = function(self, data, scales, model = comfort_model_pmv(),
                              metric = "pmv", breaks = NULL,
-                             n = NULL, contour_method = "auto", units, pres,
+                             n = NULL, contour_method = "auto",
+                             label_path = FALSE, units, pres,
                              mollier = FALSE, tdb_lim = NULL, hum_lim = NULL,
                              na.rm = FALSE) {
         units <- comfort_stat_units(data, units)
         pres <- comfort_stat_pressure(data, pres)
         comfort_contour_data(
             model, metric, breaks, comfort_default_n(model, n), units, pres,
-            mollier, tdb_lim, hum_lim, contour_method = contour_method
+            mollier, tdb_lim, hum_lim, contour_method = contour_method,
+            label_path = label_path
         )
     }
 )
@@ -2396,7 +2423,8 @@ comfort_grid_boundary_values <- function(model, metric, units, pres,
 
 comfort_contour_data <- function(model, metric, breaks, n, units, pres,
                                  mollier, tdb_lim, hum_lim,
-                                 contour_method = c("auto", "root", "isoband")) {
+                                 contour_method = c("auto", "root", "isoband"),
+                                 label_path = FALSE) {
     contour_method <- match.arg(contour_method)
     metric <- comfort_model_metric(model, metric)
     if (contour_method == "auto") {
@@ -2414,10 +2442,15 @@ comfort_contour_data <- function(model, metric, breaks, n, units, pres,
         if (is.null(breaks)) {
             breaks <- comfort_contour_breaks("pmv", numeric())
         }
-        return(comfort_pmv_curve_data(
+        out <- comfort_pmv_curve_data(
             model, breaks, n[[1L]], units, pres, mollier, tdb_lim, hum_lim,
             label = "none"
-        ))
+        )
+        out <- comfort_add_contour_labels(out)
+        if (isTRUE(label_path)) {
+            out <- comfort_orient_contour_label_paths(out)
+        }
+        return(out)
     }
 
     m <- comfort_grid_matrix(
@@ -2436,14 +2469,96 @@ comfort_contour_data <- function(model, metric, breaks, n, units, pres,
     lines <- isoband::isolines(
         x = m$tdb, y = m$humratio, z = t(z), levels = breaks
     )
-    comfort_isoband_data(lines, breaks, breaks, m$metric, mollier, geom = "path")
+    out <- comfort_isoband_data(lines, breaks, breaks, m$metric, mollier, geom = "path")
+    out <- comfort_add_contour_labels(out)
+    if (isTRUE(label_path)) {
+        out <- comfort_orient_contour_label_paths(out)
+    }
+    out
 }
 
 comfort_empty_contour <- function() {
     new_data_frame(list(
         tdb = numeric(), humratio = numeric(), x = numeric(), y = numeric(),
-        level = numeric(), group = character(), metric = character()
+        level = numeric(), value = numeric(), group = character(),
+        label = character(), metric = character()
     ))
+}
+
+comfort_add_contour_labels <- function(data) {
+    if (!nrow(data)) {
+        return(data)
+    }
+    data$value <- data$level
+    data$label <- comfort_format_contour_level(data$level, data$metric)
+    data
+}
+
+comfort_orient_contour_label_paths <- function(data) {
+    if (!nrow(data) || !"group" %in% names(data)) {
+        return(data)
+    }
+
+    x_scale <- diff(range(data$x, finite = TRUE))
+    y_scale <- diff(range(data$y, finite = TRUE))
+    if (!is.finite(x_scale) || x_scale <= 0) {
+        x_scale <- 1
+    }
+    if (!is.finite(y_scale) || y_scale <= 0) {
+        y_scale <- 1
+    }
+
+    groups <- split(seq_len(nrow(data)), data$group)
+    out <- lapply(groups, function(i) {
+        group_data <- data[i, , drop = FALSE]
+        if (nrow(group_data) < 2L) {
+            return(group_data)
+        }
+
+        dx <- (group_data$x[[nrow(group_data)]] - group_data$x[[1L]]) / x_scale
+        dy <- (group_data$y[[nrow(group_data)]] - group_data$y[[1L]]) / y_scale
+        if (!is.finite(dx)) {
+            dx <- 0
+        }
+        if (!is.finite(dy)) {
+            dy <- 0
+        }
+
+        reverse <- if (abs(dy) >= abs(dx)) dy < 0 else dx < 0
+        if (isTRUE(reverse)) {
+            group_data <- group_data[rev(seq_len(nrow(group_data))), , drop = FALSE]
+        }
+        group_data
+    })
+
+    out <- do.call(rbind, out)
+    row.names(out) <- NULL
+    out
+}
+
+comfort_format_contour_level <- function(level, metric) {
+    metric <- rep(metric, length.out = length(level))
+    out <- scales::number(level, accuracy = NULL, trim = TRUE)
+    pmv <- metric == "pmv"
+    out[pmv] <- comfort_format_pmv_level(level[pmv])
+    out
+}
+
+comfort_contour_label_mapping <- function(mapping) {
+    out <- mapping %||% ggplot2::aes()
+    label_mapping <- ggplot2::aes(label = ggplot2::after_stat(label))
+    out$label <- label_mapping$label
+    out
+}
+
+comfort_contour_label_params <- function(params, label_size = NULL) {
+    params$size <- label_size %||% params$size %||% 2.8
+    params$text_only <- FALSE
+    params$upright <- FALSE
+    params$remove_long <- TRUE
+    params$gap <- TRUE
+    params$padding <- params$padding %||% grid::unit(1, "pt")
+    params
 }
 
 comfort_contour_breaks <- function(metric, z) {
