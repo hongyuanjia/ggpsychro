@@ -6,7 +6,8 @@ PsyLayout <- ggplot2::ggproto("PsyLayout", ggplot2::Layout,
     panel_scales_sv = NULL,
     panel_scales_en = NULL,
 
-    train_position = function(self, data, x_scale, y_scale, rh_scale, wb_scale, vp_scale, sv_scale, en_scale) {
+    train_position = function(self, data, x_scale, y_scale, rh_scale, wb_scale, vp_scale,
+                              sv_scale, en_scale) {
         # Initialise scales if needed, and possible.
         layout <- self$layout
         if (is.null(self$panel_scales_x)) {
@@ -55,10 +56,17 @@ PsyLayout <- ggplot2::ggproto("PsyLayout", ggplot2::Layout,
         scales_sv <- self$panel_scales_sv[self$layout$SCALE_X[index]]
         scales_en <- self$panel_scales_en[self$layout$SCALE_X[index]]
 
-        setup_panel_params <- function(scale_x, scale_y, scale_rh, scale_wb, scale_vp, scale_sv, scale_en) {
-            self$coord$setup_panel_params(scale_x, scale_y, scale_rh, scale_wb, scale_vp, scale_sv, scale_en, params = self$coord_params)
+        setup_panel_params <- function(scale_x, scale_y, scale_rh, scale_wb, scale_vp,
+                                       scale_sv, scale_en) {
+            self$coord$setup_panel_params(
+                scale_x, scale_y, scale_rh, scale_wb, scale_vp, scale_sv,
+                scale_en, params = self$coord_params
+            )
         }
-        panel_params <- Map(setup_panel_params, scales_x, scales_y, scales_rh, scales_wb, scales_vp, scales_sv, scales_en)[order]
+        panel_params <- Map(
+            setup_panel_params, scales_x, scales_y, scales_rh, scales_wb,
+            scales_vp, scales_sv, scales_en
+        )[order]
         self$panel_params <- self$facet$setup_panel_params(panel_params, self$coord)
 
         invisible()

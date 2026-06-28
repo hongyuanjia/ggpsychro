@@ -70,7 +70,8 @@ ggpsychro <- function (data = NULL, mapping = aes(), tdb_lim = NULL, hum_lim = N
         tdb_lim = tdb_lim,
         hum_lim = hum_lim,
         grids = default_psychro_grids(),
-        grid_labels = list()
+        grid_labels = list(),
+        protractor = default_psychro_protractor()
     )
 
     # set class
@@ -83,6 +84,7 @@ ggpsychro <- function (data = NULL, mapping = aes(), tdb_lim = NULL, hum_lim = N
     )
     p$coordinates$grids <- p$psychro$grids
     p$coordinates$grid_labels <- p$psychro$grid_labels
+    p$coordinates$protractor <- p$psychro$protractor
 
     # set default axis label
     p <- p + do.call(ggplot2::labs, default_labs(units = units, mollier = mollier))

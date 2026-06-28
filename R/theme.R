@@ -49,7 +49,9 @@ theme_psychro <- function(base_size = 11, base_family = "",
          psychro.panel.grid.wetbulb = ggplot2::element_line(color = grDevices::rgb(0.498, 0.875, 1.0, 1.0), linewidth = 0.2),
          psychro.panel.grid.vappres = ggplot2::element_line(color = "gray60", linewidth = 0.2),
          psychro.panel.grid.specvol = ggplot2::element_line(color = grDevices::rgb(0.0, 0.502, 0.337, 1.0), linewidth = 0.2, linetype = "longdash"),
-         psychro.panel.grid.enthalpy = ggplot2::element_line(color = grDevices::rgb(0.251, 0.0, 0.502, 1.0), linewidth = 0.2)
+         psychro.panel.grid.enthalpy = ggplot2::element_line(color = grDevices::rgb(0.251, 0.0, 0.502, 1.0), linewidth = 0.2),
+         psychro.panel.protractor = ggplot2::element_line(color = "black", linewidth = 0.3),
+         psychro.panel.protractor.text = ggplot2::element_text(color = "black", size = 1.9)
     )
 }
 
@@ -91,7 +93,9 @@ theme_psychro_ashrae <- function(base_size = 11, base_family = "",
          psychro.panel.grid.minor.specvol = ggplot2::element_line(color = "black", linewidth = 0.10, linetype = "solid"),
          psychro.panel.grid.enthalpy = ggplot2::element_line(color = "black", linewidth = 0.25, linetype = "solid"),
          psychro.panel.grid.major.enthalpy = ggplot2::element_line(color = "black", linewidth = 0.25, linetype = "solid"),
-         psychro.panel.grid.minor.enthalpy = ggplot2::element_line(color = "black", linewidth = 0.14, linetype = "solid")
+         psychro.panel.grid.minor.enthalpy = ggplot2::element_line(color = "black", linewidth = 0.14, linetype = "solid"),
+         psychro.panel.protractor = ggplot2::element_line(color = "black", linewidth = 0.25),
+         psychro.panel.protractor.text = ggplot2::element_text(color = "black", size = 1.9)
     )
 }
 
@@ -139,7 +143,9 @@ theme_psychro_minimal <- function(base_size = 11, base_family = "",
          psychro.panel.grid.minor.specvol = ggplot2::element_blank(),
          psychro.panel.grid.enthalpy = ggplot2::element_line(color = grDevices::rgb(0.251, 0, 0.502), linewidth = 0.5, linetype = "solid"),
          psychro.panel.grid.major.enthalpy = ggplot2::element_line(color = grDevices::rgb(0.251, 0, 0.502), linewidth = 0.5, linetype = "solid"),
-         psychro.panel.grid.minor.enthalpy = ggplot2::element_blank()
+         psychro.panel.grid.minor.enthalpy = ggplot2::element_blank(),
+         psychro.panel.protractor = ggplot2::element_line(color = "black", linewidth = 0.25),
+         psychro.panel.protractor.text = ggplot2::element_text(color = "black", size = 1.9)
     )
 }
 

@@ -23,6 +23,8 @@
         psychro.panel.grid.enthalpy       = ggplot2::element_line(),
         psychro.panel.grid.major.enthalpy = ggplot2::element_line(),
         psychro.panel.grid.minor.enthalpy = ggplot2::element_line(),
+        psychro.panel.protractor          = ggplot2::element_line(),
+        psychro.panel.protractor.text     = ggplot2::element_text(),
 
         element_tree = list(
             psychro.panel.mask                = ggplot2::el_def("element_polygon"),
@@ -43,7 +45,9 @@
             psychro.panel.grid.minor.specvol  = ggplot2::el_def("element_line", "psychro.panel.grid.specvol"),
             psychro.panel.grid.enthalpy       = ggplot2::el_def("element_line", "psychro.panel.grid"),
             psychro.panel.grid.major.enthalpy = ggplot2::el_def("element_line", "psychro.panel.grid.enthalpy"),
-            psychro.panel.grid.minor.enthalpy = ggplot2::el_def("element_line", "psychro.panel.grid.enthalpy")
+            psychro.panel.grid.minor.enthalpy = ggplot2::el_def("element_line", "psychro.panel.grid.enthalpy"),
+            psychro.panel.protractor          = ggplot2::el_def("element_line", "psychro.panel.grid"),
+            psychro.panel.protractor.text     = ggplot2::el_def("element_text", "text")
         )
     )
 

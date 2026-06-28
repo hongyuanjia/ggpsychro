@@ -77,6 +77,188 @@ geom_grid_enthalpy <- function(..., show = TRUE, label = TRUE, label_loc = 0.95,
         label_loc = label_loc, label_parse = label_parse)
 }
 
+#' Add a psychrometric protractor
+#'
+#' `geom_psychro_protractor()` adds a heat-moisture ratio and sensible heat
+#' ratio reference protractor to the mask area of a [ggpsychro()] plot. The
+#' orientation is determined by the parent chart: regular psychrometric charts
+#' place the protractor in the upper-left mask area, while Mollier charts rotate
+#' the same protractor geometry into the lower-right mask area.
+#' `guide_psychro_protractor()` configures the protractor ticks and labels.
+#'
+#' @param ... Line style settings passed to [ggplot2::element_line()], such as
+#'   `colour`, `color`, `linewidth`, `size`, and `linetype`. Label style
+#'   settings can be supplied with `label.*` names, such as `label.colour`,
+#'   `label.color`, `label.size`, `label.alpha`, `label.family`, and
+#'   `label.fontface`.
+#' @param show A single logical value. If `FALSE`, hide the protractor.
+#' @param label A single logical value. If `FALSE`, hide protractor labels.
+#' @param annotation A single logical value, character vector, or expression
+#'   vector. If `FALSE`, hide the helper formula text. Character and expression
+#'   vectors must have length 2 and are used as the helper formula labels.
+#' @param scale A single positive number for overall protractor scaling. It
+#'   multiplies `radius`, protractor line width, and label text size; `margin`
+#'   is not scaled.
+#' @param radius A single number in panel coordinates controlling the
+#'   protractor radius.
+#' @param margin A single number or length-2 numeric vector in panel
+#'   coordinates controlling the distance from the mask-area edge. When length
+#'   2, the values are horizontal and vertical margins, respectively.
+#' @param guide A protractor guide created by [guide_psychro_protractor()].
+#' @param shr_breaks,shr_minor_breaks Numeric vectors controlling the labelled
+#'   and unlabelled ticks for the sensible heat ratio axis. Use `NULL` to hide
+#'   that tick tier.
+#' @param ratio_breaks,ratio_minor_breaks Numeric vectors controlling the
+#'   labelled and unlabelled ticks for the heat-moisture-ratio axis
+#'   (`dh/dW`). Use `waiver()` for the ASHRAE-style defaults, or `NULL` to hide
+#'   that tick tier.
+#' @param shr_labels,ratio_labels A character vector, expression vector,
+#'   function, `NULL`, or `waiver()` controlling labels for the corresponding
+#'   major breaks. `waiver()` uses the default numeric labels, and `NULL` hides
+#'   the labels.
+#' @param check_overlap A single logical value. If `TRUE`, overlapping
+#'   protractor labels are dropped by the grid text grob.
+#'
+#' @return A ggplot addition.
+#' @export
+#'
+#' @examples
+#' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+#'     geom_psychro_protractor()
+#'
+#' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30), mollier = TRUE) +
+#'     geom_psychro_protractor()
+geom_psychro_protractor <- function(..., show = TRUE, label = TRUE, annotation = TRUE,
+                                    scale = 1, radius = 0.24, margin = 0.08,
+                                    guide = guide_psychro_protractor()) {
+    assert_flag(show)
+    assert_flag(label)
+    validate_psychro_protractor_annotation(annotation)
+    assert_number(scale, lower = 0, .var.name = "scale")
+    if (scale <= 0) {
+        stop("`scale` must be a positive number.", call. = FALSE)
+    }
+    assert_number(radius, lower = 0.02, upper = 0.5)
+    assert_numeric(
+        margin, lower = 0, upper = 0.5, any.missing = FALSE,
+        min.len = 1L, max.len = 2L, .var.name = "margin"
+    )
+    validate_psychro_protractor_guide(guide)
+
+    structure(
+        list(
+            show = show,
+            label = label,
+            annotation = annotation,
+            scale = scale,
+            radius = radius,
+            margin = margin,
+            guide = guide,
+            style = psychro_grid_style(...),
+            label_style = psychro_grid_label_style(...)
+        ),
+        class = "PsyProtractor"
+    )
+}
+
+#' @rdname geom_psychro_protractor
+#' @export
+guide_psychro_protractor <- function(shr_breaks = waiver(),
+                                     shr_minor_breaks = waiver(),
+                                     shr_labels = waiver(),
+                                     ratio_breaks = waiver(),
+                                     ratio_minor_breaks = waiver(),
+                                     ratio_labels = waiver(),
+                                     check_overlap = TRUE) {
+    validate_psychro_protractor_breaks(shr_breaks, "shr_breaks")
+    validate_psychro_protractor_breaks(shr_minor_breaks, "shr_minor_breaks")
+    validate_psychro_protractor_breaks(ratio_breaks, "ratio_breaks")
+    validate_psychro_protractor_breaks(ratio_minor_breaks, "ratio_minor_breaks")
+    validate_psychro_protractor_labels(shr_labels, "shr_labels")
+    validate_psychro_protractor_labels(ratio_labels, "ratio_labels")
+    validate_psychro_protractor_break_labels(shr_breaks, shr_labels, "shr_breaks", "shr_labels")
+    validate_psychro_protractor_break_labels(ratio_breaks, ratio_labels, "ratio_breaks", "ratio_labels")
+    assert_flag(check_overlap)
+
+    structure(
+        list(
+            shr_breaks = shr_breaks,
+            shr_minor_breaks = shr_minor_breaks,
+            shr_labels = shr_labels,
+            ratio_breaks = ratio_breaks,
+            ratio_minor_breaks = ratio_minor_breaks,
+            ratio_labels = ratio_labels,
+            check_overlap = check_overlap
+        ),
+        class = "PsyProtractorGuide"
+    )
+}
+
+validate_psychro_protractor_guide <- function(guide) {
+    if (inherits(guide, "PsyProtractorGuide")) {
+        return(invisible(guide))
+    }
+    stop("`guide` must be created by `guide_psychro_protractor()`.", call. = FALSE)
+}
+
+validate_psychro_protractor_annotation <- function(annotation) {
+    if (is.logical(annotation) && length(annotation) == 1L && !is.na(annotation)) {
+        return(invisible(annotation))
+    }
+    if (is.character(annotation) && length(annotation) == 2L && !anyNA(annotation)) {
+        return(invisible(annotation))
+    }
+    if (is.expression(annotation) && length(annotation) == 2L) {
+        return(invisible(annotation))
+    }
+    stop(
+        "`annotation` must be either a single `TRUE`/`FALSE` value, a character vector of length 2, or an expression vector of length 2.",
+        call. = FALSE
+    )
+}
+
+validate_psychro_protractor_breaks <- function(breaks, arg) {
+    if (is.waive(breaks) || is.null(breaks)) {
+        return(invisible(breaks))
+    }
+    assert_numeric(breaks, any.missing = FALSE, .var.name = arg)
+}
+
+validate_psychro_protractor_labels <- function(labels, arg) {
+    if (is.waive(labels) || is.null(labels) || is.function(labels)) {
+        return(invisible(labels))
+    }
+    if (is.character(labels) && !anyNA(labels)) {
+        return(invisible(labels))
+    }
+    if (is.expression(labels)) {
+        return(invisible(labels))
+    }
+    stop(
+        sprintf("`%s` must be a character vector, expression vector, function, NULL, or waiver().", arg),
+        call. = FALSE
+    )
+}
+
+validate_psychro_protractor_break_labels <- function(breaks, labels, breaks_arg, labels_arg) {
+    if (is.waive(labels) || is.null(labels) || is.function(labels)) {
+        return(invisible(NULL))
+    }
+    if (is.waive(breaks)) {
+        stop(
+            sprintf("`%s` requires explicit `%s` unless it is a function, NULL, or waiver().", labels_arg, breaks_arg),
+            call. = FALSE
+        )
+    }
+    if (length(breaks) != length(labels)) {
+        stop(
+            sprintf("`%s` must have the same length as `%s`.", labels_arg, breaks_arg),
+            call. = FALSE
+        )
+    }
+    invisible(NULL)
+}
+
 psychro_grid_layer <- function(type, ..., show = TRUE, label = TRUE,
                                label_loc = NULL, label_parse = FALSE) {
     assert_choice(type, names(default_psychro_grids()))
