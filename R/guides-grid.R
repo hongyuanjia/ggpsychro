@@ -27,16 +27,8 @@ guide_grid_psychro <- function(theme, tdb.minor, tdb.major, hum.minor, hum.major
             y = panel_y
         )
 
-        psychro_mask <- ggplot2::element_render(
-            theme, "psychro.panel.mask",
-            x = c(saturation$hum, 1.0, saturation$hum[1L]),
-            y = c(saturation$tdb, 0.0, 0.0)
-        )
-
         nm_tdb <- "y"
         nm_hum <- "x"
-        nm_x <- "hum"
-        nm_y <- "tdb"
     } else {
         panel_x <- c(0.0, 0.0,                saturation$tdb, 1.0, 1.0)
         panel_y <- c(0.0, saturation$hum[1L], saturation$hum, 1.0, 0.0)
@@ -46,16 +38,8 @@ guide_grid_psychro <- function(theme, tdb.minor, tdb.major, hum.minor, hum.major
             y = panel_y
         )
 
-        psychro_mask <- ggplot2::element_render(
-            theme, "psychro.panel.mask",
-            x = c(0.0, rev(saturation$tdb), 0.0),
-            y = c(1.0, rev(saturation$hum), saturation$hum[1L])
-        )
-
         nm_tdb <- "x"
         nm_hum <- "y"
-        nm_x <- "tdb"
-        nm_y <- "hum"
     }
 
     grid_elem <- function(x, type, var) {
@@ -164,15 +148,6 @@ guide_grid_psychro <- function(theme, tdb.minor, tdb.major, hum.minor, hum.major
 
         if (length(enthalpy.major)) {
             psy_grid_label(enthalpy.major, "enthalpy")
-        },
-
-        psychro_mask,
-
-        if (length(saturation)) {
-            ggplot2::element_render(
-                theme, "psychro.panel.grid.saturation",
-                x = saturation[[nm_x]], y = saturation[[nm_y]]
-            )
         }
     )
 

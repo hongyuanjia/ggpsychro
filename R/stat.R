@@ -1,3 +1,6 @@
+#' @include ggproto-classes.R
+NULL
+
 #' Calculate psychrometric properties of moist air
 #'
 #' @details

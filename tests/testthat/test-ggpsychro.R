@@ -275,6 +275,10 @@ test_that("Psychrometric presets configure themes and grids", {
     expect_s3_class(theme_psychro_ashrae(), "theme")
     expect_s3_class(theme_psychro_minimal(), "theme")
     expect_s3_class(theme_psychro_ashrae()$panel.border, "element_rect")
+    expect_equal(
+        ggplot2::calc_element("axis.title.y", theme_psychro_minimal())$angle,
+        90
+    )
 
     expect_error(psychro_preset("invalid"), "arg")
     expect_error(psychro_preset("ashrae", labels = NA))

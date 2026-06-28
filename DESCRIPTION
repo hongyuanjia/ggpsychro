@@ -15,6 +15,7 @@ Depends:
 Imports:
     gridGeometry,
     geomtextpath,
+    isoband,
     checkmate,
     psychrolib,
     S7,
@@ -32,8 +33,14 @@ Roxygen: list(markdown = TRUE)
 Collate: 
     'ggpsychro-global.R'
     'aaa-.R'
-    'coord-psychro.R'
     'ggproto-classes.R'
+    'stat.R'
+    'utils.R'
+    'stat-psychro-bin.R'
+    'psychro-extra.R'
+    'psychro-state.R'
+    'comfort.R'
+    'coord-psychro.R'
     'ggpsychro-package.R'
     'ggpsychro.R'
     'grid-layer.R'
@@ -43,14 +50,9 @@ Collate:
     'layout.R'
     'plot-build.R'
     'plot-construction.R'
-    'psychro-extra.R'
-    'utils.R'
-    'stat.R'
-    'psychro-state.R'
     'psychro-zone.R'
     'trans.R'
     'scale.R'
-    'stat-psychro-bin.R'
     'theme-elements.R'
     'theme.R'
     'zzz.R'

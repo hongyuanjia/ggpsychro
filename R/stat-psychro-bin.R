@@ -1,3 +1,6 @@
+#' @include utils.R ggproto-classes.R stat.R
+NULL
+
 #' Bin data on psychrometric chart coordinates
 #'
 #' `stat_psychro_bin()` bins observations on dry-bulb temperature and humidity

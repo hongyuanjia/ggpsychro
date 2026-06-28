@@ -27,7 +27,7 @@ new_data_frame <- function(x = list(), n = NULL) {
 
 with_units <- function (units, expr) {
     old <- psychrolib::GetUnitSystem()
-    if (!is.na(old)) on.exit(psychrolib::SetUnitSystem(units), add = TRUE)
+    if (!is.na(old)) on.exit(psychrolib::SetUnitSystem(old), add = TRUE)
     psychrolib::SetUnitSystem(units)
     force(expr)
 }

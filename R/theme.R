@@ -114,7 +114,10 @@ theme_psychro_minimal <- function(base_size = 11, base_family = "",
          axis.text.x = ggplot2::element_text(color = grDevices::rgb(0.855, 0.145, 0.114)),
          axis.text.y = ggplot2::element_text(color = grDevices::rgb(0, 0.125, 0.376)),
          axis.title.x = ggplot2::element_text(color = grDevices::rgb(0.855, 0.145, 0.114)),
-         axis.title.y = ggplot2::element_text(color = grDevices::rgb(0, 0.125, 0.376)),
+         axis.title.y = ggplot2::element_text(
+             color = grDevices::rgb(0, 0.125, 0.376),
+             angle = 90
+         ),
          psychro.panel.background = element_polygon(fill = "white", color = NA),
          psychro.panel.mask = element_polygon(fill = "white", color = NA),
          panel.grid.major.x = ggplot2::element_line(color = grDevices::rgb(0.855, 0.145, 0.114), linetype = "dotted", linewidth = 0.20),
