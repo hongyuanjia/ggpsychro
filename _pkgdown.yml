@@ -14,6 +14,7 @@ articles:
   contents:
   - articles/grids-and-styles
   - articles/plotting-data
+  - articles/comfort-overlays
   - articles/zones-and-processes
 
 navbar:
