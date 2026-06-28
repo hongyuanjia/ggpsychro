@@ -1,5 +1,7 @@
 # ggpsychro 0.0.0.9000
 
+* Added README acknowledgements for external psychrometric-chart references and
+  refined SET/adaptive comfort overlay examples. (#23)
 * Added README and pkgdown documentation for comfort overlays and the
   psychrometric protractor. (#22)
 * Added an ASHRAE-style psychrometric protractor for sensible heat ratio and
