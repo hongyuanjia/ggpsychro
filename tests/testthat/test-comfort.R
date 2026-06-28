@@ -763,6 +763,10 @@ test_that("Marsh-style comfort overlays have visual regressions", {
         psychro_preset("minimal")
     set_base <- ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
         psychro_preset("minimal")
+    heat_base <- ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
+        psychro_preset("minimal")
+    givoni_base <- ggpsychro(tdb_lim = c(-10, 50), hum_lim = c(0, 35)) +
+        psychro_preset("minimal")
 
     vdiffr::expect_doppelganger(
         "comfort pmv marsh lines",
@@ -791,6 +795,43 @@ test_that("Marsh-style comfort overlays have visual regressions", {
                 model = comfort_model_set(), metric = "set",
                 breaks = c(22, 24, 26), n = c(70, 42),
                 label = TRUE, colour = "#4A4A4A", linewidth = 0.7
+            )
+    )
+
+    vdiffr::expect_doppelganger(
+        "comfort heat index overlay",
+        heat_base +
+            geom_comfort_heat_index(n = c(64, 40), alpha = 0.5)
+    )
+
+    vdiffr::expect_doppelganger(
+        "comfort givoni bioclimatic zones",
+        givoni_base +
+            geom_comfort_givoni(
+                comfort_strategy_givoni(mean_outdoor = 22),
+                alpha = 0.45
+            )
+    )
+
+    vdiffr::expect_doppelganger(
+        "comfort givoni styled zones",
+        givoni_base +
+            geom_comfort_givoni(
+                comfort_strategy_givoni(mean_outdoor = 22),
+                zone_style = list(
+                    comfort = element_comfort_zone(
+                        fill = "#66D27A", colour = "#1F5F2D", alpha = 0.35
+                    ),
+                    natural_ventilation = element_comfort_zone(
+                        fill = "#B6E3FF", colour = "#2F6FB0", alpha = 0.25
+                    ),
+                    winter = element_comfort_zone(
+                        colour = "#A14D00", linetype = "dashed"
+                    ),
+                    air_conditioning = element_comfort_zone(
+                        colour = "#8B1E3F", linewidth = 1.2
+                    )
+                )
             )
     )
 })
