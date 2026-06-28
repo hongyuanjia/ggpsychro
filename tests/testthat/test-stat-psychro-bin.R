@@ -394,3 +394,23 @@ test_that("psychrometric tile distribution is stable", {
             ggplot2::scale_fill_gradient(low = "#dbeafe", high = "#1d4ed8")
     )
 })
+
+test_that("psychrometric tile crossing saturation is visually clipped", {
+    d <- data.frame(dry_bulb = 9.5, humidity_ratio = 7)
+
+    vdiffr::expect_doppelganger(
+        "psychro tile clipped at saturation",
+        ggpsychro(d, tdb_lim = c(0, 20), hum_lim = c(0, 15)) +
+            geom_psychro_tile(
+                ggplot2::aes(
+                    dry_bulb, humidity_ratio,
+                    fill = ggplot2::after_stat(hours)
+                ),
+                binwidth = c(4, 2),
+                gap = 0,
+                colour = "#f97316",
+                linewidth = 0.4
+            ) +
+            ggplot2::scale_fill_gradient(low = "#fed7aa", high = "#c2410c")
+    )
+})
