@@ -169,8 +169,11 @@ give the stat as \code{"count"}.
 }}
 
 \item{cell.grid}{If \code{TRUE}, the default, draw a tile-local grid across the
-chart area using the current x/y scale major and minor breaks. If scale
-breaks are unavailable, the grid falls back to the computed bin spacing.}
+chart area. The grid uses the current x/y scale major and minor breaks by
+default. If \code{binwidth} is finer than, and aligned with, those scale breaks,
+the cell grid uses the finer bin spacing while preserving the existing x/y
+breaks as grid lines. If scale breaks are unavailable, the grid falls back
+to the computed bin spacing.}
 
 \item{cell.grid.colour, cell.grid.linewidth, cell.grid.linetype, cell.grid.alpha}{Appearance of the tile-local cell grid. The default, \code{\link[ggplot2:waiver]{ggplot2::waiver()}},
 inherits from the current \code{panel.grid.*.x} and \code{panel.grid.*.y} theme
@@ -190,8 +193,8 @@ the saturation line in psychrometric coordinates. When \code{binwidth} is used,
 each tile represents one dry-bulb and humidity-ratio cell aligned to
 \code{boundary}. The optional cell grid follows the chart's x/y breaks so it stays
 aligned with the visible dry-bulb and humidity-ratio grid. Choose a
-\code{binwidth} compatible with those breaks when tile edges should sit exactly on
-the cell grid.
+\code{binwidth} that evenly subdivides those breaks when a denser Marsh-style cell
+grid should still coincide with the existing x/y grid.
 }
 \section{Computed variables}{
 

@@ -25,8 +25,11 @@
 #'   tiles. Must be a single finite number greater than or equal to 0 and less
 #'   than 1.
 #' @param cell.grid If `TRUE`, the default, draw a tile-local grid across the
-#'   chart area using the current x/y scale major and minor breaks. If scale
-#'   breaks are unavailable, the grid falls back to the computed bin spacing.
+#'   chart area. The grid uses the current x/y scale major and minor breaks by
+#'   default. If `binwidth` is finer than, and aligned with, those scale breaks,
+#'   the cell grid uses the finer bin spacing while preserving the existing x/y
+#'   breaks as grid lines. If scale breaks are unavailable, the grid falls back
+#'   to the computed bin spacing.
 #' @param cell.grid.colour,cell.grid.linewidth,cell.grid.linetype,cell.grid.alpha
 #'   Appearance of the tile-local cell grid. The default, [ggplot2::waiver()],
 #'   inherits from the current `panel.grid.*.x` and `panel.grid.*.y` theme
@@ -42,8 +45,8 @@
 #' each tile represents one dry-bulb and humidity-ratio cell aligned to
 #' `boundary`. The optional cell grid follows the chart's x/y breaks so it stays
 #' aligned with the visible dry-bulb and humidity-ratio grid. Choose a
-#' `binwidth` compatible with those breaks when tile edges should sit exactly on
-#' the cell grid.
+#' `binwidth` that evenly subdivides those breaks when a denser Marsh-style cell
+#' grid should still coincide with the existing x/y grid.
 #'
 #' @section Computed variables:
 #' * `count`: number of observations in each tile.
@@ -638,8 +641,8 @@ psychro_tile_cell_segments <- function(data, panel_params, coord) {
 
     x_spacing <- psychro_tile_cell_spacing(data$cell_xmin, data$cell_xmax)
     y_spacing <- psychro_tile_cell_spacing(data$cell_ymin, data$cell_ymax)
-    x_breaks <- psychro_tile_panel_grid_breaks(panel_params, "x")
-    y_breaks <- psychro_tile_panel_grid_breaks(panel_params, "y")
+    x_breaks <- psychro_tile_cell_grid_breaks(panel_params, "x", x_spacing)
+    y_breaks <- psychro_tile_cell_grid_breaks(panel_params, "y", y_spacing)
     if ((!nrow(x_breaks) && is.null(x_spacing)) ||
         (!nrow(y_breaks) && is.null(y_spacing))) {
         return(new_data_frame(list(
@@ -684,6 +687,65 @@ psychro_tile_panel_grid_breaks <- function(panel_params, axis,
         rep("minor", length(minor)),
         rep("major", length(major))
     ))
+}
+
+psychro_tile_cell_grid_breaks <- function(panel_params, axis, spacing,
+                                          tolerance = 1e-8) {
+    breaks <- psychro_tile_panel_grid_breaks(panel_params, axis)
+    if (is.null(spacing)) {
+        return(breaks)
+    }
+
+    ranges <- psychro_tile_panel_ranges(panel_params)[[axis]]
+    if (!nrow(breaks)) {
+        return(psychro_tile_spacing_breaks(
+            ranges, spacing$width, spacing$anchor
+        ))
+    }
+
+    values <- unique(breaks$value)
+    if (length(values) < 2L) {
+        return(psychro_tile_merge_breaks(
+            psychro_tile_grid_breaks(ranges, spacing$width, min(values)),
+            breaks
+        ))
+    }
+
+    step <- min(diff(sort(values)), na.rm = TRUE)
+    if (!is.finite(step) || spacing$width >= step - tolerance) {
+        return(breaks)
+    }
+
+    anchor <- min(values)
+    if (!psychro_tile_breaks_are_aligned(values, spacing$width, anchor)) {
+        return(breaks)
+    }
+
+    psychro_tile_merge_breaks(
+        psychro_tile_grid_breaks(ranges, spacing$width, anchor),
+        breaks
+    )
+}
+
+psychro_tile_breaks_are_aligned <- function(values, width, anchor,
+                                            tolerance = 1e-8) {
+    steps <- (values - anchor) / width
+    all(abs(steps - round(steps)) <= tolerance)
+}
+
+psychro_tile_merge_breaks <- function(values, existing) {
+    out <- psychro_tile_break_data(values, rep("minor", length(values)))
+    if (!nrow(out) || !nrow(existing)) {
+        return(out)
+    }
+
+    out_key <- round(out$value, 12L)
+    existing_key <- round(existing$value, 12L)
+    minor <- match(existing_key[existing$type == "minor"], out_key)
+    major <- match(existing_key[existing$type == "major"], out_key)
+    out$type[minor[!is.na(minor)]] <- "minor"
+    out$type[major[!is.na(major)]] <- "major"
+    out
 }
 
 psychro_tile_break_values <- function(x) {

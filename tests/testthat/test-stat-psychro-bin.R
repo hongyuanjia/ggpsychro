@@ -217,6 +217,42 @@ test_that("psychrometric tile cell grid covers the chart area", {
     expect_true(all(horizontal$xend == built$layout$panel_params[[1L]]$x.range[[2L]]))
 })
 
+test_that("psychrometric tile cell grid can subdivide x and y axis breaks", {
+    d <- data.frame(
+        dry_bulb = c(20.1, 20.8, 22.1),
+        humidity_ratio = c(8.1, 8.5, 8.2)
+    )
+
+    built <- ggplot2::ggplot_build(
+        ggpsychro(d, tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
+            geom_psychro_tile(
+                ggplot2::aes(dry_bulb, humidity_ratio),
+                binwidth = c(1.25, 2.5)
+            )
+    )
+
+    segments <- psychro_tile_cell_segments(
+        built$data[[1L]],
+        built$layout$panel_params[[1L]],
+        built$layout$coord
+    )
+    vertical <- segments[segments$x == segments$xend, , drop = FALSE]
+    horizontal <- segments[segments$y == segments$yend, , drop = FALSE]
+    axis_x <- psychro_tile_panel_grid_breaks(
+        built$layout$panel_params[[1L]], "x"
+    )
+    axis_y <- psychro_tile_panel_grid_breaks(
+        built$layout$panel_params[[1L]], "y"
+    )
+
+    expect_gt(length(unique(vertical$x)), nrow(axis_x))
+    expect_gt(length(unique(horizontal$y)), nrow(axis_y))
+    expect_true(all(round(axis_x$value, 10L) %in% round(vertical$x, 10L)))
+    expect_true(all(round(axis_y$value, 10L) %in% round(horizontal$y, 10L)))
+    expect_equal(min(diff(sort(unique(vertical$x)))), 1.25, tolerance = 1e-8)
+    expect_equal(min(diff(sort(unique(horizontal$y)))), 0.0025, tolerance = 1e-8)
+})
+
 test_that("psychrometric tile cell grid inherits x and y grid theme styles", {
     d <- data.frame(
         dry_bulb = c(20.1, 20.8, 22.1),
@@ -480,7 +516,7 @@ test_that("psychrometric tile distribution is stable", {
         ggpsychro(d, tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
             geom_psychro_tile(
                 ggplot2::aes(dry_bulb, relhum = relative_humidity),
-                binwidth = c(2.5, 5)
+                binwidth = c(1.25, 2.5)
             ) +
             ggplot2::scale_fill_gradient(low = "#dbeafe", high = "#1d4ed8")
     )
