@@ -527,6 +527,8 @@ test_that("Marsh-style comfort overlays have visual regressions", {
         psychro_preset("minimal")
     pmv_base <- ggpsychro(tdb_lim = c(5, 40), hum_lim = c(0, 24)) +
         psychro_preset("minimal")
+    set_base <- ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+        psychro_preset("minimal")
 
     vdiffr::expect_doppelganger(
         "comfort pmv marsh lines",
@@ -546,6 +548,16 @@ test_that("Marsh-style comfort overlays have visual regressions", {
         "comfort en15251 2007 pmv zones",
         base +
             geom_comfort_standard_zone(comfort_standard_en15251_2007(), n = 140)
+    )
+
+    vdiffr::expect_doppelganger(
+        "comfort set contour labels",
+        set_base +
+            geom_comfort_contour(
+                model = comfort_model_set(), metric = "set",
+                breaks = c(22, 24, 26), n = c(70, 42),
+                label = TRUE, colour = "#4A4A4A", linewidth = 0.7
+            )
     )
 })
 
@@ -572,6 +584,16 @@ test_that("Mollier comfort overlays have visual regressions", {
                 model = comfort_model_set(), metric = "set",
                 breaks = c(22, 24, 26), n = c(40, 24),
                 colour = "#4A4A4A"
+            )
+    )
+
+    vdiffr::expect_doppelganger(
+        "comfort mollier set contour labels",
+        base +
+            geom_comfort_contour(
+                model = comfort_model_set(), metric = "set",
+                breaks = c(22, 24, 26), n = c(70, 42),
+                label = TRUE, colour = "#4A4A4A", linewidth = 0.7
             )
     )
 
