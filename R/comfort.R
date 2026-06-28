@@ -288,6 +288,9 @@ comfort_standard_en15251_2007 <- function(breaks = c(-0.7, -0.2, 0.2, 0.7)) {
 #' @param levels Number of filled contour bands, or a numeric vector of band
 #'   breaks. Ignored for `method = "tile"`.
 #' @param gap Relative gap between generated tiles for `method = "tile"`.
+#' @param alpha Overlay transparency. Defaults to `0.55` so psychrometric
+#'   chart grid and relative-humidity curves remain visible beneath the
+#'   comfort overlay.
 #' @param breaks Contour break values.
 #' @param contour_method Contour drawing method. `"auto"` uses root-traced
 #'   curves for PMV and isobands for other metrics.
@@ -301,7 +304,7 @@ geom_comfort_overlay <- function(mapping = NULL, data = NULL,
                                  model = comfort_model_pmv(),
                                  metric = NULL, n = NULL,
                                  method = c("auto", "rootband", "isoband", "tile"),
-                                 levels = NULL, gap = 0,
+                                 levels = NULL, gap = 0, alpha = 0.55,
                                  na.rm = FALSE, show.legend = NA,
                                  inherit.aes = TRUE) {
     method <- match.arg(method)
@@ -321,7 +324,10 @@ geom_comfort_overlay <- function(mapping = NULL, data = NULL,
         )
     }
     geom <- if (method == "tile") GeomComfortTile else "polygon"
-    params <- list(na.rm = na.rm, model = model, metric = metric, n = n, ...)
+    params <- list(
+        na.rm = na.rm, model = model, metric = metric, n = n,
+        alpha = alpha, ...
+    )
     if (method %in% c("rootband", "isoband")) {
         params$levels <- levels
         if (is.null(params$colour)) {
@@ -389,8 +395,9 @@ geom_comfort_zone <- function(mapping = NULL, data = NULL,
 #' @param label_sensation If `TRUE`, label integer PMV curves with thermal
 #'   sensation text.
 #' @param label_axis If `TRUE`, label each PMV curve near the x-axis.
-#' @param axis_label_hjust,axis_label_vjust Offset from the x-axis and
-#'   perpendicular adjustment for PMV numeric labels near the x-axis.
+#' @param axis_label_hjust,axis_label_vjust Position adjustment for PMV numeric
+#'   labels near the x-axis. By default, [ggplot2::waiver()] computes a shared
+#'   baseline above the x-axis and offsets labels above their PMV lines.
 #' @param sensation_label_hjust,sensation_label_vjust Position and vertical
 #'   adjustment for thermal sensation labels.
 #' @param axis_label_size,sensation_label_size Text size for PMV numeric and
@@ -403,8 +410,8 @@ geom_comfort_pmv_lines <- function(mapping = NULL, data = NULL,
                                    levels = seq(-3, 3, by = 0.5),
                                    n = 360, label_sensation = TRUE,
                                    label_axis = TRUE,
-                                   axis_label_hjust = 0.015,
-                                   axis_label_vjust = 1.25,
+                                   axis_label_hjust = ggplot2::waiver(),
+                                   axis_label_vjust = ggplot2::waiver(),
                                    sensation_label_hjust = 0.5,
                                    sensation_label_vjust = 0.5,
                                    axis_label_size = NULL,
@@ -427,9 +434,6 @@ geom_comfort_pmv_lines <- function(mapping = NULL, data = NULL,
     params$model <- model
     params$levels <- levels
     params$n <- n
-    if (isTRUE(label_axis)) {
-        params$trim_axis_hjust <- comfort_pmv_line_trim_hjust(axis_label_hjust)
-    }
 
     if (is.null(params$colour) && is.null(params$color)) {
         params$colour <- "#4A4A4A"
@@ -488,9 +492,7 @@ geom_comfort_pmv_lines <- function(mapping = NULL, data = NULL,
         layers[[length(layers) + 1L]] <- psychro_layer(
             stat = StatComfortPmvAxisLabel, data = comfort_layer_data(data),
             mapping = ggplot2::aes(
-                label = ggplot2::after_stat(label),
-                hjust = ggplot2::after_stat(hjust),
-                vjust = ggplot2::after_stat(vjust)
+                label = ggplot2::after_stat(label)
             ),
             geom = geomtextpath::GeomTextpath, position = position,
             show.legend = FALSE,
@@ -498,6 +500,8 @@ geom_comfort_pmv_lines <- function(mapping = NULL, data = NULL,
             params = utils::modifyList(axis_params, list(
                 axis_label_hjust = axis_label_hjust,
                 axis_label_vjust = axis_label_vjust,
+                hjust = comfort_pmv_axis_label_text_hjust(axis_label_hjust),
+                vjust = comfort_pmv_axis_label_text_vjust(axis_label_vjust),
                 text_only = TRUE, upright = FALSE,
                 remove_long = FALSE
             ))
@@ -809,8 +813,8 @@ StatComfortPmvAxisLabel <- ggplot2::ggproto(
 
     compute_panel = function(self, data, scales, model = comfort_model_pmv(),
                              levels = seq(-3, 3, by = 0.5), n = 360,
-                             axis_label_hjust = 0.015,
-                             axis_label_vjust = 1.25,
+                             axis_label_hjust = ggplot2::waiver(),
+                             axis_label_vjust = ggplot2::waiver(),
                              units, pres, mollier = FALSE,
                              tdb_lim = NULL, hum_lim = NULL,
                              na.rm = FALSE) {
@@ -1578,8 +1582,8 @@ comfort_pmv_line_trim_hjust <- function(axis_label_hjust) {
 
 comfort_pmv_axis_label_data <- function(model, levels, n, units, pres,
                                         mollier, tdb_lim, hum_lim,
-                                        axis_label_hjust = 0.015,
-                                        axis_label_vjust = 1.25) {
+                                        axis_label_hjust = ggplot2::waiver(),
+                                        axis_label_vjust = ggplot2::waiver()) {
     levels <- comfort_check_breaks(levels, "`levels`", n_min = 1L)
     n <- comfort_pmv_curve_n(n)
     lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
@@ -1613,7 +1617,7 @@ comfort_pmv_axis_label_data <- function(model, levels, n, units, pres,
             group = i,
             label = comfort_format_pmv_level(levels[[i]]),
             hjust = comfort_pmv_axis_label_text_hjust(axis_label_hjust),
-            vjust = axis_label_vjust,
+            vjust = 0.5,
             metric = "pmv"
         ))
     }
@@ -1662,17 +1666,40 @@ comfort_pmv_axis_label_segment <- function(curve, label_start, label_end) {
 }
 
 comfort_pmv_axis_label_text_hjust <- function(axis_label_hjust) {
-    if (is.numeric(axis_label_hjust) && length(axis_label_hjust)) {
-        return(max(0, min(0.2, axis_label_hjust[[1L]])))
+    if (comfort_is_waiver(axis_label_hjust)) {
+        return(0.95)
     }
-    0.015
+    if (is.numeric(axis_label_hjust) && length(axis_label_hjust)) {
+        return(1 - max(0, min(0.2, axis_label_hjust[[1L]])))
+    }
+    0.95
+}
+
+comfort_pmv_axis_label_text_vjust <- function(axis_label_vjust) {
+    if (comfort_is_waiver(axis_label_vjust)) {
+        return(grid::unit(3.5, "pt"))
+    }
+    if (grid::is.unit(axis_label_vjust)) {
+        return(axis_label_vjust)
+    }
+    if (is.numeric(axis_label_vjust) && length(axis_label_vjust)) {
+        return(axis_label_vjust[[1L]])
+    }
+    0.5
 }
 
 comfort_pmv_axis_label_offset <- function(axis_label_hjust) {
+    if (comfort_is_waiver(axis_label_hjust)) {
+        return(0.025)
+    }
     if (is.numeric(axis_label_hjust) && length(axis_label_hjust)) {
         return(max(0, min(0.08, axis_label_hjust[[1L]])))
     }
-    0.015
+    0.025
+}
+
+comfort_is_waiver <- function(x) {
+    inherits(x, "waiver")
 }
 
 comfort_pmv_curve_trim_humratio <- function(data, trim_humratio) {

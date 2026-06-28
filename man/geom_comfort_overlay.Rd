@@ -21,6 +21,7 @@ geom_comfort_overlay(
   method = c("auto", "rootband", "isoband", "tile"),
   levels = NULL,
   gap = 0,
+  alpha = 0.55,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -68,8 +69,8 @@ geom_comfort_pmv_lines(
   n = 360,
   label_sensation = TRUE,
   label_axis = TRUE,
-  axis_label_hjust = 0.015,
-  axis_label_vjust = 1.25,
+  axis_label_hjust = ggplot2::waiver(),
+  axis_label_vjust = ggplot2::waiver(),
   sensation_label_hjust = 0.5,
   sensation_label_vjust = 0.5,
   axis_label_size = NULL,
@@ -198,6 +199,10 @@ breaks. Ignored for \code{method = "tile"}.}
 
 \item{gap}{Relative gap between generated tiles for \code{method = "tile"}.}
 
+\item{alpha}{Overlay transparency. Defaults to \code{0.55} so psychrometric
+chart grid and relative-humidity curves remain visible beneath the
+comfort overlay.}
+
 \item{na.rm}{If \code{FALSE}, the default, missing values are removed with
 a warning. If \code{TRUE}, missing values are silently removed.}
 
@@ -226,8 +231,9 @@ sensation text.}
 
 \item{label_axis}{If \code{TRUE}, label each PMV curve near the x-axis.}
 
-\item{axis_label_hjust, axis_label_vjust}{Offset from the x-axis and
-perpendicular adjustment for PMV numeric labels near the x-axis.}
+\item{axis_label_hjust, axis_label_vjust}{Position adjustment for PMV numeric
+labels near the x-axis. By default, \code{\link[ggplot2:waiver]{ggplot2::waiver()}} computes a shared
+baseline above the x-axis and offsets labels above their PMV lines.}
 
 \item{sensation_label_hjust, sensation_label_vjust}{Position and vertical
 adjustment for thermal sensation labels.}

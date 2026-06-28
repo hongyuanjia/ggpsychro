@@ -98,11 +98,18 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
     expect_true(all(overlay$y >= 0))
     expect_true(all(c("level_low", "level_high", "edge_level") %in% names(overlay)))
     expect_false("width" %in% names(overlay))
+    expect_equal(unique(overlay$alpha), 0.55)
     overlay_breaks <- sort(unique(c(
         overlay$level_low[is.finite(overlay$level_low)],
         overlay$level_high[is.finite(overlay$level_high)]
     )))
     expect_true(all(abs(diff(overlay_breaks) - 0.25) < 1e-8))
+
+    overlay_alpha <- ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+            geom_comfort_overlay(n = c(24, 16), alpha = 0.35)
+    )$data[[1L]]
+    expect_equal(unique(overlay_alpha$alpha), 0.35)
 
     isoband <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
@@ -167,10 +174,11 @@ test_that("PMV root-traced curves solve requested levels", {
     expect_true(all(reaches_saturation[sat_exists]))
 
     labels <- comfort_pmv_curve_data(
-        comfort_model_pmv(), c(-1, 0, 1), 80, "SI", pressure,
-        FALSE, c(15, 30), c(0, 20), label = "sensation"
+        comfort_model_pmv(), -3:3, 120, "SI", pressure,
+        FALSE, c(5, 40), c(0, 24), label = "sensation"
     )
-    expect_true(all(c("SLIGHTLY COOL", "NEUTRAL", "SLIGHTLY WARM") %in%
+    expect_true(all(c("COLD", "COOL", "SLIGHTLY COOL", "NEUTRAL",
+        "SLIGHTLY WARM", "WARM", "HOT") %in%
         unique(labels$label)))
     expect_equal(unique(labels$linetype[labels$level == 0]), "dashed")
     expect_equal(unique(labels$vjust), 0.5)
@@ -213,6 +221,17 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
     axis_y <- vapply(split(pmv_lines[[2L]]$y, pmv_lines[[2L]]$group),
         min, numeric(1L))
     expect_equal(length(unique(round(axis_y, 6))), 1L)
+    expect_gt(min(axis_y), 0.0003)
+
+    axis_default <- comfort_pmv_axis_label_data(
+        comfort_model_pmv(), c(-1, 0, 1), 80, "SI", pressure,
+        FALSE, c(15, 30), c(0, 20)
+    )
+    expect_equal(unique(axis_default$hjust), 0.95)
+    expect_equal(unique(axis_default$vjust), 0.5)
+    axis_vjust <- comfort_pmv_axis_label_text_vjust(ggplot2::waiver())
+    expect_s3_class(axis_vjust, "unit")
+    expect_equal(as.numeric(axis_vjust), 3.5)
 
     axis_labels <- comfort_pmv_axis_label_data(
         comfort_model_pmv(), c(-1, 0, 1), 80, "SI", pressure,
@@ -222,8 +241,8 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
     axis_hum <- vapply(split(axis_labels$humratio, axis_labels$group),
         min, numeric(1L))
     expect_equal(length(unique(round(axis_hum, 8))), 1L)
-    expect_equal(unique(axis_labels$hjust), 0.015)
-    expect_equal(unique(axis_labels$vjust), 1.25)
+    expect_equal(unique(axis_labels$hjust), 0.985)
+    expect_equal(unique(axis_labels$vjust), 0.5)
 
     trimmed <- comfort_pmv_curve_data(
         comfort_model_pmv(), c(-1, 0, 1), 80, "SI", pressure,
@@ -308,13 +327,15 @@ test_that("Marsh-style comfort overlays have visual regressions", {
 
     base <- ggpsychro(tdb_lim = c(5, 35), hum_lim = c(0, 24)) +
         psychro_preset("minimal")
+    pmv_base <- ggpsychro(tdb_lim = c(5, 40), hum_lim = c(0, 24)) +
+        psychro_preset("minimal")
 
     vdiffr::expect_doppelganger(
         "comfort pmv marsh lines",
-        base +
+        pmv_base +
             geom_comfort_overlay(n = c(70, 48), gap = 0) +
             scale_fill_comfort_pmv() +
-            geom_comfort_pmv_lines(levels = seq(-2, 2, by = 0.5), n = 140)
+            geom_comfort_pmv_lines(levels = seq(-3, 3, by = 0.5), n = 140)
     )
 
     vdiffr::expect_doppelganger(
