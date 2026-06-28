@@ -95,6 +95,25 @@ The longer examples live on the pkgdown site:
   draw manual comfort regions, operating limits, state points, and HVAC
   process lines.
 
+## Acknowledgements
+
+ggpsychro’s recent chart-layout and higher-level layer work was informed
+by two excellent psychrometric chart projects:
+
+- [psychrochart](https://github.com/azogue/psychrochart), especially its
+  preset-oriented chart configuration, labelled reference grids, zone
+  support, and export-focused chart composition.
+- Andrew Marsh’s [Psychrometric
+  Chart](https://drajmarsh.bitbucket.io/psychro-chart2d.html),
+  especially its interactive psychrometric workflows, weather/data
+  overlays, comfort display ideas, and import/export-oriented chart
+  interactions.
+
+ggpsychro does not vendor code from those projects. The implementation
+remains R/ggplot2-native, with psychrometric property calculations
+delegated to [PsychroLib](https://github.com/psychrometrics/psychrolib)
+where appropriate.
+
 ## Author
 
 Hongyuan Jia
