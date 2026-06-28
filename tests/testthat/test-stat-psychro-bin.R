@@ -211,6 +211,34 @@ test_that("psychrometric tile cell grid covers the chart area", {
     expect_true(all(horizontal$xend == built$layout$panel_params[[1L]]$x.range[[2L]]))
 })
 
+test_that("psychrometric tile bodies are clipped to saturation", {
+    d <- data.frame(dry_bulb = 9.5, humidity_ratio = 7)
+    plot <- ggpsychro(d, tdb_lim = c(0, 20), hum_lim = c(0, 15)) +
+        geom_psychro_tile(
+            ggplot2::aes(dry_bulb, humidity_ratio),
+            binwidth = c(4, 2),
+            gap = 0
+        )
+    built <- ggplot2::ggplot_build(plot)
+    tile <- built$data[[1L]]
+    polygons <- psychro_tile_polygon_data(tile, built$layout$coord, n = 32)
+    saturation <- psychro_saturation_humratio(
+        polygons$x,
+        built$layout$coord$units,
+        built$layout$coord$pressure
+    )
+
+    expect_gt(nrow(polygons), 4L)
+    expect_true(all(polygons$y <= saturation + 1e-8))
+    expect_equal(min(polygons$y), tile$ymin, tolerance = 1e-8)
+    expect_lte(max(polygons$y), tile$ymax + 1e-8)
+    expect_true(any(
+        polygons$y > tile$ymin + 1e-8 &
+            polygons$y < tile$ymax - 1e-8
+    ))
+    expect_no_error(ggplot2::ggplotGrob(plot))
+})
+
 test_that("psychrometric tile gap is validated", {
     d <- data.frame(dry_bulb = 20.1, humidity_ratio = 8.1)
     p <- function(gap) {

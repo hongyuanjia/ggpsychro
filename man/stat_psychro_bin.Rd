@@ -182,7 +182,8 @@ useful for weather-hour distributions and gridded simulation summaries.
 The stat accepts either \code{x} and \code{y} aesthetics, where \code{y} is humidity ratio
 in chart display units, or \code{x} and \code{relhum}, where \code{relhum} is relative
 humidity in percent. Relative humidity inputs inherit the plot unit system
-and pressure from \code{\link[=ggpsychro]{ggpsychro()}}. Tiles default to a small gap and \code{alpha = 0.85} so psychrometric grid lines remain visible. When \code{binwidth} is used,
+and pressure from \code{\link[=ggpsychro]{ggpsychro()}}. Tiles default to a small gap and \code{alpha = 0.85} so psychrometric grid lines remain visible. Tile bodies are clipped to
+the saturation line in psychrometric coordinates. When \code{binwidth} is used,
 each tile represents one dry-bulb and humidity-ratio cell aligned to
 \code{boundary}; the optional cell grid redraws those bin boundaries across the
 chart area.
