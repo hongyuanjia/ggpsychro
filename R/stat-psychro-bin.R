@@ -25,11 +25,12 @@
 #'   tiles. Must be a single finite number greater than or equal to 0 and less
 #'   than 1.
 #' @param cell.grid If `TRUE`, the default, draw a tile-local grid across the
-#'   chart area using the computed psychrometric bin spacing.
+#'   chart area using the current x/y scale major and minor breaks. If scale
+#'   breaks are unavailable, the grid falls back to the computed bin spacing.
 #' @param cell.grid.colour,cell.grid.linewidth,cell.grid.linetype,cell.grid.alpha
 #'   Appearance of the tile-local cell grid. The default, [ggplot2::waiver()],
-#'   inherits from the current `panel.grid.major.x` and `panel.grid.major.y`
-#'   theme elements. Explicit values override the inherited theme style.
+#'   inherits from the current `panel.grid.*.x` and `panel.grid.*.y` theme
+#'   elements. Explicit values override the inherited theme style.
 #'
 #' @details
 #' The stat accepts either `x` and `y` aesthetics, where `y` is humidity ratio
@@ -39,8 +40,10 @@
 #' 0.85` so psychrometric grid lines remain visible. Tile bodies are clipped to
 #' the saturation line in psychrometric coordinates. When `binwidth` is used,
 #' each tile represents one dry-bulb and humidity-ratio cell aligned to
-#' `boundary`; the optional cell grid redraws those bin boundaries across the
-#' chart area.
+#' `boundary`. The optional cell grid follows the chart's x/y breaks so it stays
+#' aligned with the visible dry-bulb and humidity-ratio grid. Choose a
+#' `binwidth` compatible with those breaks when tile edges should sit exactly on
+#' the cell grid.
 #'
 #' @section Computed variables:
 #' * `count`: number of observations in each tile.
@@ -557,38 +560,34 @@ psychro_tile_cell_grid_data <- function(data, panel_params, coord, theme,
     }
 
     theme <- theme %||% coord$psychro_theme %||% ggplot2::theme_get()
-    x_style <- psychro_tile_cell_grid_style(
-        theme, "x", colour, linewidth, linetype, alpha
-    )
-    y_style <- psychro_tile_cell_grid_style(
-        theme, "y", colour, linewidth, linetype, alpha
-    )
-
-    is_vertical <- segments$x == segments$xend
-    is_horizontal <- segments$y == segments$yend
-    keep <- (is_vertical & x_style$visible) | (is_horizontal & y_style$visible)
+    styles <- lapply(seq_len(nrow(segments)), function(i) {
+        psychro_tile_cell_grid_style(
+            theme, segments$axis[[i]], segments$grid_type[[i]],
+            colour, linewidth, linetype, alpha
+        )
+    })
+    keep <- vapply(styles, `[[`, logical(1L), "visible")
     segments <- segments[keep, , drop = FALSE]
     if (!nrow(segments)) {
         return(segments)
     }
+    styles <- styles[keep]
 
-    is_vertical <- is_vertical[keep]
-    segments$colour <- ifelse(is_vertical, x_style$colour, y_style$colour)
-    segments$linewidth <- ifelse(
-        is_vertical, x_style$linewidth, y_style$linewidth
+    segments$colour <- vapply(styles, `[[`, character(1L), "colour")
+    segments$linewidth <- vapply(styles, `[[`, numeric(1L), "linewidth")
+    segments$linetype <- unlist(
+        lapply(styles, `[[`, "linetype"),
+        use.names = FALSE
     )
-    segments$linetype <- ifelse(
-        is_vertical, x_style$linetype, y_style$linetype
-    )
-    segments$alpha <- ifelse(is_vertical, x_style$alpha, y_style$alpha)
+    segments$alpha <- vapply(styles, `[[`, numeric(1L), "alpha")
     segments$group <- seq_len(nrow(segments))
     segments
 }
 
-psychro_tile_cell_grid_style <- function(theme, axis, colour, linewidth,
+psychro_tile_cell_grid_style <- function(theme, axis, type, colour, linewidth,
                                          linetype, alpha) {
     element <- ggplot2::calc_element(
-        paste("panel.grid.major", axis, sep = "."),
+        paste("panel.grid", type, axis, sep = "."),
         theme
     )
     has_override <- !is.waive(colour) || !is.waive(linewidth) ||
@@ -639,17 +638,66 @@ psychro_tile_cell_segments <- function(data, panel_params, coord) {
 
     x_spacing <- psychro_tile_cell_spacing(data$cell_xmin, data$cell_xmax)
     y_spacing <- psychro_tile_cell_spacing(data$cell_ymin, data$cell_ymax)
-    if (is.null(x_spacing) || is.null(y_spacing)) {
+    x_breaks <- psychro_tile_panel_grid_breaks(panel_params, "x")
+    y_breaks <- psychro_tile_panel_grid_breaks(panel_params, "y")
+    if ((!nrow(x_breaks) && is.null(x_spacing)) ||
+        (!nrow(y_breaks) && is.null(y_spacing))) {
         return(new_data_frame(list(
             x = numeric(), y = numeric(), xend = numeric(), yend = numeric()
         )))
     }
 
     ranges <- psychro_tile_panel_ranges(panel_params)
-    x_breaks <- psychro_tile_grid_breaks(ranges$x, x_spacing$width, x_spacing$anchor)
-    y_breaks <- psychro_tile_grid_breaks(ranges$y, y_spacing$width, y_spacing$anchor)
+    if (!nrow(x_breaks)) {
+        x_breaks <- psychro_tile_spacing_breaks(
+            ranges$x, x_spacing$width, x_spacing$anchor
+        )
+    }
+    if (!nrow(y_breaks)) {
+        y_breaks <- psychro_tile_spacing_breaks(
+            ranges$y, y_spacing$width, y_spacing$anchor
+        )
+    }
 
     psychro_tile_chart_segments(x_breaks, y_breaks, ranges$x, ranges$y, coord)
+}
+
+psychro_tile_panel_grid_breaks <- function(panel_params, axis,
+                                           tolerance = 1e-8) {
+    scale <- panel_params[[axis]]
+    if (is.null(scale)) {
+        return(psychro_tile_break_data(numeric(), character()))
+    }
+
+    ranges <- psychro_tile_panel_ranges(panel_params)[[axis]]
+    major <- psychro_tile_break_values(scale$breaks)
+    minor <- psychro_tile_break_values(scale$minor_breaks)
+    major <- major[major >= ranges[[1L]] - tolerance &
+        major <= ranges[[2L]] + tolerance]
+    minor <- minor[minor >= ranges[[1L]] - tolerance &
+        minor <= ranges[[2L]] + tolerance]
+
+    major_key <- round(major, 12L)
+    minor <- minor[!round(minor, 12L) %in% major_key]
+
+    psychro_tile_break_data(c(minor, major), c(
+        rep("minor", length(minor)),
+        rep("major", length(major))
+    ))
+}
+
+psychro_tile_break_values <- function(x) {
+    x <- unlist(x, use.names = FALSE)
+    x[is.finite(x)]
+}
+
+psychro_tile_break_data <- function(value, type) {
+    if (!length(value)) {
+        return(new_data_frame(list(value = numeric(), type = character())))
+    }
+
+    order <- order(value)
+    new_data_frame(list(value = value[order], type = type[order]))
 }
 
 psychro_tile_cell_spacing <- function(lower, upper, tolerance = 1e-8) {
@@ -687,9 +735,14 @@ psychro_tile_grid_breaks <- function(range, width, anchor, tolerance = 1e-8) {
     seq(lower, upper, by = width)
 }
 
+psychro_tile_spacing_breaks <- function(range, width, anchor) {
+    breaks <- psychro_tile_grid_breaks(range, width, anchor)
+    psychro_tile_break_data(breaks, rep("major", length(breaks)))
+}
+
 psychro_tile_chart_segments <- function(x_breaks, y_breaks, x_range, y_range,
                                         coord) {
-    if (!length(x_breaks) && !length(y_breaks)) {
+    if (!nrow(x_breaks) && !nrow(y_breaks)) {
         return(new_data_frame(list(
             x = numeric(), y = numeric(), xend = numeric(), yend = numeric()
         )))
@@ -701,29 +754,33 @@ psychro_tile_chart_segments <- function(x_breaks, y_breaks, x_range, y_range,
 
     x_sat <- with_units(
         coord$units,
-        psychrolib::GetHumRatioFromRelHum(x_breaks, 1.0, coord$pressure)
+        psychrolib::GetHumRatioFromRelHum(x_breaks$value, 1.0, coord$pressure)
     )
     vertical <- new_data_frame(list(
-        x = x_breaks,
+        x = x_breaks$value,
         y = y_range[[1L]],
-        xend = x_breaks,
-        yend = pmin(y_range[[2L]], x_sat)
+        xend = x_breaks$value,
+        yend = pmin(y_range[[2L]], x_sat),
+        axis = "x",
+        grid_type = x_breaks$type
     ))
     vertical <- vertical[vertical$yend >= vertical$y, , drop = FALSE]
 
-    y_dew <- rep(x_range[[1L]], length(y_breaks))
-    positive <- y_breaks > 0
+    y_dew <- rep(x_range[[1L]], nrow(y_breaks))
+    positive <- y_breaks$value > 0
     if (any(positive)) {
         y_dew[positive] <- with_units(
             coord$units,
-            GetTDewPointFromHumRatioOnly(y_breaks[positive], coord$pressure)
+            GetTDewPointFromHumRatioOnly(y_breaks$value[positive], coord$pressure)
         )
     }
     horizontal <- new_data_frame(list(
         x = pmax(x_range[[1L]], y_dew),
-        y = y_breaks,
+        y = y_breaks$value,
         xend = x_range[[2L]],
-        yend = y_breaks
+        yend = y_breaks$value,
+        axis = "y",
+        grid_type = y_breaks$type
     ))
     horizontal <- horizontal[horizontal$x <= horizontal$xend, , drop = FALSE]
 
@@ -732,16 +789,20 @@ psychro_tile_chart_segments <- function(x_breaks, y_breaks, x_range, y_range,
 
 psychro_tile_rectangular_segments <- function(x_breaks, y_breaks, x_range, y_range) {
     vertical <- new_data_frame(list(
-        x = x_breaks,
+        x = x_breaks$value,
         y = y_range[[1L]],
-        xend = x_breaks,
-        yend = y_range[[2L]]
+        xend = x_breaks$value,
+        yend = y_range[[2L]],
+        axis = "x",
+        grid_type = x_breaks$type
     ))
     horizontal <- new_data_frame(list(
         x = x_range[[1L]],
-        y = y_breaks,
+        y = y_breaks$value,
         xend = x_range[[2L]],
-        yend = y_breaks
+        yend = y_breaks$value,
+        axis = "y",
+        grid_type = y_breaks$type
     ))
 
     unique(rbind(vertical, horizontal))

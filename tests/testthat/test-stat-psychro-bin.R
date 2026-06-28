@@ -200,12 +200,18 @@ test_that("psychrometric tile cell grid covers the chart area", {
     )
     vertical <- segments[segments$x == segments$xend, , drop = FALSE]
     horizontal <- segments[segments$y == segments$yend, , drop = FALSE]
+    expected_x <- psychro_tile_panel_grid_breaks(
+        built$layout$panel_params[[1L]], "x"
+    )
+    expected_y <- psychro_tile_panel_grid_breaks(
+        built$layout$panel_params[[1L]], "y"
+    )
 
     expect_gt(nrow(segments), nrow(built$data[[1L]]) * 4L)
-    expect_equal(min(vertical$x), 10, tolerance = 1e-8)
-    expect_equal(max(vertical$x), 34, tolerance = 1e-8)
-    expect_equal(min(horizontal$y), 0, tolerance = 1e-8)
-    expect_equal(max(horizontal$y), 0.02, tolerance = 1e-8)
+    expect_equal(sort(unique(vertical$x)), expected_x$value, tolerance = 1e-8)
+    expect_equal(sort(unique(horizontal$y)), expected_y$value, tolerance = 1e-8)
+    expect_true(all(c("major", "minor") %in% vertical$grid_type))
+    expect_true(all(c("major", "minor") %in% horizontal$grid_type))
     expect_true(all(vertical$yend <= built$layout$panel_params[[1L]]$y.range[[2L]]))
     expect_true(any(vertical$yend < built$layout$panel_params[[1L]]$y.range[[2L]]))
     expect_true(all(horizontal$xend == built$layout$panel_params[[1L]]$x.range[[2L]]))
@@ -264,7 +270,10 @@ test_that("psychrometric tile cell grid inherits x and y grid theme styles", {
             defaults,
             list(
                 theme = theme_psychro() +
-                    ggplot2::theme(panel.grid.major.x = ggplot2::element_blank())
+                    ggplot2::theme(
+                        panel.grid.major.x = ggplot2::element_blank(),
+                        panel.grid.minor.x = ggplot2::element_blank()
+                    )
             )
         )
     )
@@ -280,7 +289,10 @@ test_that("psychrometric tile cell grid inherits x and y grid theme styles", {
             ),
             list(
                 theme = theme_psychro() +
-                    ggplot2::theme(panel.grid.major.x = ggplot2::element_blank())
+                    ggplot2::theme(
+                        panel.grid.major.x = ggplot2::element_blank(),
+                        panel.grid.minor.x = ggplot2::element_blank()
+                    )
             )
         )
     )
@@ -468,7 +480,7 @@ test_that("psychrometric tile distribution is stable", {
         ggpsychro(d, tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
             geom_psychro_tile(
                 ggplot2::aes(dry_bulb, relhum = relative_humidity),
-                binwidth = c(2, 2)
+                binwidth = c(2.5, 5)
             ) +
             ggplot2::scale_fill_gradient(low = "#dbeafe", high = "#1d4ed8")
     )
@@ -485,7 +497,7 @@ test_that("psychrometric tile crossing saturation is visually clipped", {
                     dry_bulb, humidity_ratio,
                     fill = ggplot2::after_stat(hours)
                 ),
-                binwidth = c(4, 2),
+                binwidth = c(2.5, 2.5),
                 gap = 0,
                 colour = "#f97316",
                 linewidth = 0.4
