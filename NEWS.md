@@ -1,5 +1,6 @@
 # ggpsychro 0.0.0.9000
 
+* Added optional contour labels to `geom_comfort_contour()`. (#26)
 * Clarified SET and adaptive comfort overlay examples in the comfort overlays
   article. (#25)
 * Added README acknowledgements for external psychrometric-chart references and
