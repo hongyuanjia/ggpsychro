@@ -4,6 +4,7 @@
 \alias{comfort_model_pmv}
 \alias{comfort_model_set}
 \alias{comfort_model_adaptive}
+\alias{comfort_model_heat_index}
 \title{Comfort model objects}
 \usage{
 comfort_model_pmv(
@@ -36,6 +37,12 @@ comfort_model_adaptive(
   v = 0.1,
   standard = c("ashrae55", "en16798"),
   category = NULL,
+  limit_inputs = TRUE,
+  round_output = FALSE
+)
+
+comfort_model_heat_index(
+  solar_exposure = 0,
   limit_inputs = TRUE,
   round_output = FALSE
 )
@@ -72,6 +79,8 @@ unrounded values by default so contours and zones remain smooth.}
 \item{standard}{Adaptive comfort standard.}
 
 \item{category}{Adaptive comfort category.}
+
+\item{solar_exposure}{Relative solar exposure for heat index, from 0 to 1.}
 }
 \value{
 A comfort model object.

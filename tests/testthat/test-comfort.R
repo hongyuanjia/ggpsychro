@@ -107,6 +107,27 @@ test_that("comfort adaptive models match fixed pythermalcomfort oracle values", 
     expect_true(en$acceptability[[1L]])
 })
 
+test_that("comfort heat index matches Marsh and NOAA-style expected behavior", {
+    hi <- comfort_heat_index(90, rh = 70, units = "IP")
+    expect_equal(hi$heat_index, 105.9, tolerance = 0.05)
+    expect_equal(hi$category, "danger")
+    expect_equal(hi$category_id, 3)
+
+    low <- comfort_heat_index(40, rh = 50, units = "IP")
+    expect_equal(low$heat_index, 40)
+    expect_equal(low$category, "none")
+
+    exposed <- comfort_heat_index(90, rh = 70, solar_exposure = 1, units = "IP")
+    expect_equal(exposed$heat_index - hi$heat_index, 8, tolerance = 0.05)
+
+    si <- comfort_heat_index(get_c_from_f(90), rh = 70, round_output = FALSE)
+    ip <- comfort_heat_index(90, rh = 70, units = "IP", round_output = FALSE)
+    expect_equal(get_f_from_c(si$heat_index), ip$heat_index, tolerance = 1e-8)
+
+    expect_true(is.na(comfort_heat_index(90, rh = 150, units = "IP")$heat_index))
+    expect_error(comfort_model_heat_index(solar_exposure = 2), "solar_exposure")
+})
+
 test_that("comfort calculations handle IP units and input limits", {
     si <- comfort_pmv(25, tr = 25, vr = 0.1, rh = 50, met = 1.4, clo = 0.5)
     ip <- comfort_pmv(77, tr = 77, vr = 0.3281, rh = 50, met = 1.4, clo = 0.5,
@@ -134,6 +155,7 @@ test_that("comfort model objects validate inputs", {
     expect_s3_class(comfort_model_pmv(), "PsyComfortModel")
     expect_s3_class(comfort_model_set(), "PsyComfortModel")
     expect_s3_class(comfort_model_adaptive(t_running = 20), "PsyComfortModel")
+    expect_s3_class(comfort_model_heat_index(), "PsyComfortModel")
     expect_error(comfort_model_pmv(model = "bad"))
     expect_error(comfort_model_type(list()), "comfort_model")
     expect_error(comfort_model_adaptive(t_running = 20, standard = "bad"))
@@ -194,6 +216,26 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
     )$data[[1L]]
     expect_gt(nrow(adaptive_overlay), 0L)
     expect_equal(unique(adaptive_overlay$alpha), 0.55)
+
+    heat_overlay <- ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
+            geom_comfort_overlay(
+                model = comfort_model_heat_index(), n = c(32, 24)
+            )
+    )$data[[1L]]
+    expect_gt(nrow(heat_overlay), 0L)
+    expect_true("heat_index" %in% unique(heat_overlay$metric))
+    expect_equal(unique(heat_overlay$alpha), 0.55)
+
+    heat_index <- ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
+            geom_comfort_heat_index(n = c(32, 24), alpha = 0.4)
+    )$data
+    expect_equal(length(heat_index), 6L)
+    expect_true(all(vapply(heat_index[1:4], nrow, integer(1L)) > 0L))
+    expect_equal(unique(heat_index[[1L]]$alpha), 0.4)
+    expect_true(all(c("CAUTION", "EXTREME CAUTION", "DANGER",
+        "EXTREME DANGER") %in% unique(heat_index[[6L]]$label)))
 
     tile_alpha <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
@@ -257,6 +299,182 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
             geom_comfort_contour(label = TRUE, label_size = -1),
         "label_size"
+    )
+
+    heat_contour <- ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
+            geom_comfort_contour(
+                model = comfort_model_heat_index(), n = c(32, 24)
+            )
+    )$data[[1L]]
+    expect_true(all(sort(unique(round(heat_contour$level, 6))) %in%
+        round(comfort_heat_index_thresholds("SI"), 6)))
+})
+
+test_that("Givoni strategy zones build and stay below saturation", {
+    pressure <- with_units("SI", psychrolib::GetStandardAtmPressure(0))
+    expect_s3_class(comfort_strategy_givoni(), "PsyComfortGivoniStrategy")
+    expect_error(comfort_strategy_givoni(mean_outdoor = NA), "mean_outdoor")
+    expect_s3_class(element_comfort_zone(), "PsyComfortZoneElement")
+
+    cool <- comfort_givoni_zone_data(
+        comfort_strategy_givoni(mean_outdoor = 15), "comfort", "SI",
+        pressure, FALSE, c(0, 45), c(0, 35)
+    )
+    warm <- comfort_givoni_zone_data(
+        comfort_strategy_givoni(mean_outdoor = 25), "comfort", "SI",
+        pressure, FALSE, c(0, 45), c(0, 35)
+    )
+    expect_gt(mean(warm$tdb), mean(cool$tdb))
+
+    zones <- comfort_givoni_zone_data(
+        comfort_strategy_givoni(), NULL, "SI", pressure,
+        FALSE, c(0, 50), c(0, 35)
+    )
+    drawable_zones <- comfort_givoni_zone_specs()
+    drawable_zones <- drawable_zones$zone[drawable_zones$draw_zone]
+    expect_true(all(drawable_zones %in% unique(zones$zone)))
+    expect_false(any(c("air_conditioning_dehumidification", "humidification") %in%
+        unique(zones$zone)))
+    sat <- psychro_saturation_humratio(zones$tdb, "SI", pressure)
+    expect_true(all(zones$humratio <= sat + 1e-8))
+
+    built <- ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 35)) +
+            geom_comfort_givoni(alpha = 0.35)
+    )$data
+    expect_equal(length(built), 14L)
+    comfort_layer <- which(vapply(built, function(x) {
+        "zone" %in% names(x) && any(x$zone == "comfort")
+    }, logical(1L)))[[1L]]
+    expect_equal(unique(built[[comfort_layer]]$alpha), 0.2)
+    path_label_layer <- length(built) - 2L
+    expect_true("NATURAL VENTILATION" %in%
+        unique(built[[path_label_layer]]$label))
+    expect_true("MASS COOLING" %in% unique(built[[path_label_layer]]$label))
+    expect_true("AIR-CONDITIONING" %in%
+        unique(built[[path_label_layer]]$label))
+    label_layer <- length(built) - 1L
+    expect_true("COMFORT\nZONE" %in% unique(built[[label_layer]]$label))
+    expect_true("HEATING" %in% unique(built[[label_layer]]$label))
+    expect_true("AIR-CONDITIONING &\nDEHUMIDIFICATION" %in%
+        unique(built[[label_layer]]$label))
+    expect_true(any(grepl("\u00b0C", built[[length(built)]]$label,
+        fixed = TRUE)))
+
+    path_labels <- comfort_givoni_label_data(
+        comfort_strategy_givoni(), "path", "SI", pressure,
+        FALSE, c(0, 50), c(0, 35)
+    )
+    expect_equal(
+        unique(path_labels$vjust[path_labels$zone == "natural_ventilation"]),
+        1.8
+    )
+    top_to_bottom <- c(
+        "internal_gains", "passive_solar_heating", "active_solar_heating",
+        "mass_cooling", "mass_cooling_night_ventilation", "winter",
+        "air_conditioning"
+    )
+    for (zone in top_to_bottom) {
+        zone_data <- path_labels[path_labels$zone == zone, , drop = FALSE]
+        expect_gt(zone_data$humratio[[1L]], zone_data$humratio[[nrow(zone_data)]])
+    }
+
+    point_labels <- comfort_givoni_label_data(
+        comfort_strategy_givoni(), "point", "SI", pressure,
+        FALSE, c(0, 50), c(0, 35)
+    )
+    heating_label <- point_labels[point_labels$zone == "heating", ,
+        drop = FALSE]
+    expect_equal(heating_label$angle, 270)
+    heating_sat <- comfort_givoni_humratio(heating_label$tdb, 100, pressure)
+    expect_equal(heating_label$humratio, heating_sat / 2, tolerance = 1e-8)
+
+    air_label <- path_labels[path_labels$zone == "air_conditioning", ,
+        drop = FALSE]
+    expect_lt(unique(air_label$tdb), 50)
+    expect_gt(unique(air_label$tdb), 45)
+
+    mean_line <- comfort_givoni_mean_outdoor_data(
+        comfort_strategy_givoni(mean_outdoor = 17.5), "SI", pressure,
+        FALSE, c(-10, 50), c(0, 35)
+    )
+    mean_label <- comfort_givoni_mean_outdoor_label_data(
+        comfort_strategy_givoni(mean_outdoor = 17.5), "SI", pressure,
+        FALSE, c(-10, 50), c(0, 35)
+    )
+    mean_sat <- comfort_givoni_humratio(17.5, 100, pressure)
+    expect_gt(max(mean_line$humratio), mean_sat)
+    expect_gt(mean_label$humratio[[1L]], mean_sat)
+    expect_equal(mean_label$angle[[1L]], 270)
+    expect_equal(mean_label$vjust[[1L]], -0.25)
+
+    with_pmv <- ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 35)) +
+            geom_comfort_givoni(alpha = 0.35, show_pmv = TRUE)
+    )$data
+    expect_gt(length(with_pmv), length(built))
+})
+
+test_that("Givoni zone styles can be overridden per zone", {
+    styled <- ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 35)) +
+            geom_comfort_givoni(
+                zone_style = list(
+                    comfort = element_comfort_zone(
+                        fill = "#00AA55", colour = "#123456",
+                        linewidth = 1.4, alpha = 0.4
+                    ),
+                    winter = ggplot2::element_polygon(
+                        colour = "#AA0000", linetype = "dotdash",
+                        linewidth = 1.2
+                    ),
+                    natural_ventilation = list(
+                        fill = "#99CCFF", colour = "#0033AA"
+                    )
+                )
+            )
+    )$data
+
+    comfort_layer <- which(vapply(styled, function(x) {
+        "zone" %in% names(x) && any(x$zone == "comfort")
+    }, logical(1L)))[[1L]]
+    expect_equal(unique(styled[[comfort_layer]]$fill), "#00AA55")
+    expect_equal(unique(styled[[comfort_layer]]$colour), "#123456")
+    expect_equal(unique(styled[[comfort_layer]]$linewidth), 1.4)
+    expect_equal(unique(styled[[comfort_layer]]$alpha), 0.4)
+
+    winter_layer <- which(vapply(styled, function(x) {
+        "zone" %in% names(x) && any(x$zone == "winter")
+    }, logical(1L)))[[1L]]
+    expect_equal(unique(styled[[winter_layer]]$colour), "#AA0000")
+    expect_equal(unique(styled[[winter_layer]]$linetype), "dotdash")
+    expect_equal(unique(styled[[winter_layer]]$linewidth), 1.2)
+
+    natural_layer <- which(vapply(styled, function(x) {
+        "zone" %in% names(x) && any(x$zone == "natural_ventilation")
+    }, logical(1L)))[[1L]]
+    expect_equal(unique(styled[[natural_layer]]$fill), "#99CCFF")
+    expect_equal(unique(styled[[natural_layer]]$colour), "#0033AA")
+    expect_equal(unique(styled[[natural_layer]]$alpha), 0.2)
+
+    expect_error(
+        ggplot2::ggplot_build(
+            ggpsychro() +
+                geom_comfort_givoni(
+                    zone_style = list(not_a_zone = element_comfort_zone())
+                )
+        ),
+        "Unknown Givoni zone"
+    )
+    expect_error(
+        ggplot2::ggplot_build(
+            ggpsychro() +
+                geom_comfort_givoni(
+                    zone_style = list(comfort = list(stroke_color = "red"))
+                )
+        ),
+        "Unknown comfort zone style field"
     )
 })
 
@@ -455,6 +673,18 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
     )
     expect_gt(nrow(ip_overlay$data[[1L]]), 0L)
     expect_gt(length(unique(ip_overlay$data[[1L]]$fill)), 1L)
+
+    ip_heat <- ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(70, 115), hum_lim = c(0, 220), units = "IP") +
+            geom_comfort_heat_index(n = c(32, 20))
+    )
+    expect_true(all(vapply(ip_heat$data[1:4], nrow, integer(1L)) > 0L))
+
+    ip_givoni <- ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(40, 115), hum_lim = c(0, 220), units = "IP") +
+            geom_comfort_givoni(comfort_strategy_givoni(66.2, units = "IP"))
+    )
+    expect_gte(length(ip_givoni$data), 13L)
 })
 
 test_that("comfort overlays build in Mollier coordinates", {
@@ -487,6 +717,10 @@ test_that("comfort overlays build in Mollier coordinates", {
     expect_mollier_comfort(base + geom_comfort_overlay(
         model = comfort_model_adaptive(t_running = 20), n = c(24, 16)
     ))
+    expect_mollier_comfort(base + geom_comfort_overlay(
+        model = comfort_model_heat_index(), n = c(32, 20)
+    ))
+    expect_mollier_comfort(base + geom_comfort_heat_index(n = c(32, 20)))
 
     expect_mollier_comfort(base + geom_comfort_contour(
         breaks = c(-1, 0, 1), n = c(32, 20)
@@ -509,6 +743,7 @@ test_that("comfort overlays build in Mollier coordinates", {
     expect_mollier_comfort(base + geom_comfort_standard_zone(
         comfort_standard_en15251_2007(), n = 60
     ))
+    expect_mollier_comfort(base + geom_comfort_givoni())
 
     expect_mollier_comfort(base + geom_comfort_zone(n = c(60, 40)))
     expect_mollier_comfort(base + geom_comfort_zone(
@@ -527,6 +762,10 @@ test_that("Marsh-style comfort overlays have visual regressions", {
     pmv_base <- ggpsychro(tdb_lim = c(5, 40), hum_lim = c(0, 24)) +
         psychro_preset("minimal")
     set_base <- ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+        psychro_preset("minimal")
+    heat_base <- ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
+        psychro_preset("minimal")
+    givoni_base <- ggpsychro(tdb_lim = c(-10, 50), hum_lim = c(0, 35)) +
         psychro_preset("minimal")
 
     vdiffr::expect_doppelganger(
@@ -556,6 +795,43 @@ test_that("Marsh-style comfort overlays have visual regressions", {
                 model = comfort_model_set(), metric = "set",
                 breaks = c(22, 24, 26), n = c(70, 42),
                 label = TRUE, colour = "#4A4A4A", linewidth = 0.7
+            )
+    )
+
+    vdiffr::expect_doppelganger(
+        "comfort heat index overlay",
+        heat_base +
+            geom_comfort_heat_index(n = c(64, 40), alpha = 0.5)
+    )
+
+    vdiffr::expect_doppelganger(
+        "comfort givoni bioclimatic zones",
+        givoni_base +
+            geom_comfort_givoni(
+                comfort_strategy_givoni(mean_outdoor = 22),
+                alpha = 0.45
+            )
+    )
+
+    vdiffr::expect_doppelganger(
+        "comfort givoni styled zones",
+        givoni_base +
+            geom_comfort_givoni(
+                comfort_strategy_givoni(mean_outdoor = 22),
+                zone_style = list(
+                    comfort = element_comfort_zone(
+                        fill = "#66D27A", colour = "#1F5F2D", alpha = 0.35
+                    ),
+                    natural_ventilation = element_comfort_zone(
+                        fill = "#B6E3FF", colour = "#2F6FB0", alpha = 0.25
+                    ),
+                    winter = element_comfort_zone(
+                        colour = "#A14D00", linetype = "dashed"
+                    ),
+                    air_conditioning = element_comfort_zone(
+                        colour = "#8B1E3F", linewidth = 1.2
+                    )
+                )
             )
     )
 })

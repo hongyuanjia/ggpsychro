@@ -90,6 +90,25 @@ ggplot_add.PsyGrid <- function(object, plot, object_name, ...) {
     add_psychro_grid(object, plot)
 }
 
+#' @export
+ggplot_add.PsyComfortForeground <- function(object, plot, object_name, ...) {
+    add_psychro_comfort_foreground(object, plot)
+}
+
+add_psychro_comfort_foreground <- function(object, plot) {
+    if (!is.ggpsychro(plot)) {
+        stop(
+            "`geom_comfort_givoni()` foreground markers can only be added ",
+            "to a ggpsychro plot.",
+            call. = FALSE
+        )
+    }
+    plot$coordinates$comfort_foreground <- c(
+        plot$coordinates$comfort_foreground, list(object)
+    )
+    plot
+}
+
 add_psychro_grid <- function(object, plot) {
     if (!is.ggpsychro(plot)) {
         stop("`geom_grid_*()` helpers can only be added to a ggpsychro plot.", call. = FALSE)
@@ -148,6 +167,9 @@ local({
         }
         S7::method(update_ggplot, list(S7::new_S3_class("PsyProtractor"), class_ggplot)) <- function(object, plot, ...) {
             add_psychro_protractor(object, plot)
+        }
+        S7::method(update_ggplot, list(S7::new_S3_class("PsyComfortForeground"), class_ggplot)) <- function(object, plot, ...) {
+            add_psychro_comfort_foreground(object, plot)
         }
     }
 })

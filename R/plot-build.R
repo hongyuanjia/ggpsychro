@@ -200,6 +200,10 @@ setup_psychro_stat_params <- function(layers, psychro) {
         "StatComfortBand", "StatComfortGrid", "StatComfortContour",
         "StatComfortPmvCurve", "StatComfortPmvAxisLabel",
         "StatComfortPmvRootBand",
+        "StatComfortHeatIndexZone", "StatComfortHeatIndexContour",
+        "StatComfortHeatIndexLabel", "StatComfortGivoniZone",
+        "StatComfortGivoniLabel", "StatComfortGivoniMeanOutdoor",
+        "StatComfortGivoniMeanOutdoorLabel",
         "StatComfortZone"
     )
     chart_classes <- c(state_classes, panel_classes)
