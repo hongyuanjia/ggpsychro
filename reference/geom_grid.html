@@ -125,6 +125,31 @@ position along each grid line. <code>NA</code> hides labels.</p></dd>
 
 </dl></div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">50</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">geom_grid_relhum</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">geom_grid_wetbulb</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">geom_grid_enthalpy</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="geom_grid-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">50</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">geom_grid_relhum</span><span class="op">(</span>color <span class="op">=</span> <span class="st">"black"</span>, linewidth <span class="op">=</span> <span class="fl">0.6</span>, label.size <span class="op">=</span> <span class="fl">4</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="scale.html">scale_relhum_continuous</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">25</span>, <span class="fl">75</span>, by <span class="op">=</span> <span class="fl">25</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        minor_breaks <span class="op">=</span> <span class="cn">NULL</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">geom_grid_wetbulb</span><span class="op">(</span>color <span class="op">=</span> <span class="st">"black"</span>, label <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="scale.html">scale_wetbulb_continuous</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">30</span>, by <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        minor_breaks <span class="op">=</span> <span class="cn">NULL</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">geom_grid_vappres</span><span class="op">(</span>show <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">geom_grid_specvol</span><span class="op">(</span>label_loc <span class="op">=</span> <span class="fl">0.90</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">geom_grid_enthalpy</span><span class="op">(</span>label.size <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="geom_grid-2.png" alt="" width="700" height="433"></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

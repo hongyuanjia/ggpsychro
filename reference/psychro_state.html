@@ -197,6 +197,38 @@ give the geom as <code>"point"</code>.</p></li>
 units: g/kg in SI and gr/lb in IP.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">process</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    state <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"outdoor"</span>, <span class="st">"mixed"</span>, <span class="st">"supply"</span>, <span class="st">"room"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    tdb <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">18</span>, <span class="fl">23</span>, <span class="fl">28</span>, <span class="fl">31</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    relhum <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">70</span>, <span class="fl">55</span>, <span class="fl">45</span>, <span class="fl">55</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Draw state points. Map exactly one psychrometric property with tdb.</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">40</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">25</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">stat_psychro_state</span><span class="op">(</span></span></span>
+<span class="r-in"><span>        <span class="fu">aes</span><span class="op">(</span>tdb <span class="op">=</span> <span class="va">tdb</span>, relhum <span class="op">=</span> <span class="va">relhum</span>, colour <span class="op">=</span> <span class="va">state</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        data <span class="op">=</span> <span class="va">process</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-plt img"><img src="psychro_state-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Draw the same states as a process line.</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">40</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">25</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">geom_psychro_process</span><span class="op">(</span></span></span>
+<span class="r-in"><span>        <span class="fu">aes</span><span class="op">(</span>tdb <span class="op">=</span> <span class="va">tdb</span>, relhum <span class="op">=</span> <span class="va">relhum</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        data <span class="op">=</span> <span class="va">process</span>,</span></span>
+<span class="r-in"><span>        linewidth <span class="op">=</span> <span class="fl">1</span>,</span></span>
+<span class="r-in"><span>        arrow <span class="op">=</span> <span class="fu">grid</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/grid/arrow.html" class="external-link">arrow</a></span><span class="op">(</span>length <span class="op">=</span> <span class="fu">grid</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/grid/unit.html" class="external-link">unit</a></span><span class="op">(</span><span class="fl">0.08</span>, <span class="st">"inches"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">stat_psychro_state</span><span class="op">(</span></span></span>
+<span class="r-in"><span>        <span class="fu">aes</span><span class="op">(</span>tdb <span class="op">=</span> <span class="va">tdb</span>, relhum <span class="op">=</span> <span class="va">relhum</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        data <span class="op">=</span> <span class="va">process</span>,</span></span>
+<span class="r-in"><span>        size <span class="op">=</span> <span class="fl">2</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-plt img"><img src="psychro_state-2.png" alt="" width="700" height="433"></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

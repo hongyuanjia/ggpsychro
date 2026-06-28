@@ -124,6 +124,30 @@ legend, the plot title, or the plot margins.</p></dd>
 
 </dl></div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">coord_psychro</span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">35</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">25</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="coord_psychro-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>units <span class="op">=</span> <span class="st">"IP"</span>, altitude <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">coord_psychro</span><span class="op">(</span></span></span>
+<span class="r-in"><span>        tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">50</span>, <span class="fl">100</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">140</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        units <span class="op">=</span> <span class="st">"IP"</span>,</span></span>
+<span class="r-in"><span>        altitude <span class="op">=</span> <span class="fl">1000</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-plt img"><img src="coord_psychro-2.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>mollier <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">coord_psychro</span><span class="op">(</span></span></span>
+<span class="r-in"><span>        tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">50</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">30</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        mollier <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-plt img"><img src="coord_psychro-3.png" alt="" width="700" height="433"></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

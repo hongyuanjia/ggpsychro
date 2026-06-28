@@ -182,3 +182,35 @@ The `tdb` aesthetic is required. Exactly one of `humratio`, `relhum`,
 
 `relhum` is supplied in percent. `humratio` is supplied in chart display
 units: g/kg in SI and gr/lb in IP.
+
+## Examples
+
+``` r
+process <- data.frame(
+    state = c("outdoor", "mixed", "supply", "room"),
+    tdb = c(18, 23, 28, 31),
+    relhum = c(70, 55, 45, 55)
+)
+
+# Draw state points. Map exactly one psychrometric property with tdb.
+ggpsychro(tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
+    stat_psychro_state(
+        aes(tdb = tdb, relhum = relhum, colour = state),
+        data = process
+    )
+
+
+# Draw the same states as a process line.
+ggpsychro(tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
+    geom_psychro_process(
+        aes(tdb = tdb, relhum = relhum),
+        data = process,
+        linewidth = 1,
+        arrow = grid::arrow(length = grid::unit(0.08, "inches"))
+    ) +
+    stat_psychro_state(
+        aes(tdb = tdb, relhum = relhum),
+        data = process,
+        size = 2
+    )
+```

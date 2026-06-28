@@ -78,3 +78,28 @@ geom_grid_enthalpy(
 - label_parse:
 
   If `TRUE`, labels are parsed as plotmath expressions.
+
+## Examples
+
+``` r
+ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+    geom_grid_relhum() +
+    geom_grid_wetbulb() +
+    geom_grid_enthalpy()
+
+
+ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+    geom_grid_relhum(color = "black", linewidth = 0.6, label.size = 4) +
+    scale_relhum_continuous(
+        breaks = seq(25, 75, by = 25),
+        minor_breaks = NULL
+    ) +
+    geom_grid_wetbulb(color = "black", label = FALSE) +
+    scale_wetbulb_continuous(
+        breaks = seq(10, 30, by = 10),
+        minor_breaks = NULL
+    ) +
+    geom_grid_vappres(show = FALSE) +
+    geom_grid_specvol(label_loc = 0.90) +
+    geom_grid_enthalpy(label.size = 4)
+```

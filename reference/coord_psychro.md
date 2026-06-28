@@ -76,3 +76,27 @@ coord_psychro(
   are set via `xlim` and `ylim` and some data points fall outside those
   limits, then those data points may show up in places such as the axes,
   the legend, the plot title, or the plot margins.
+
+## Examples
+
+``` r
+ggpsychro() +
+    coord_psychro(tdb_lim = c(10, 35), hum_lim = c(0, 25))
+
+
+ggpsychro(units = "IP", altitude = 1000) +
+    coord_psychro(
+        tdb_lim = c(50, 100),
+        hum_lim = c(0, 140),
+        units = "IP",
+        altitude = 1000
+    )
+
+
+ggpsychro(mollier = TRUE) +
+    coord_psychro(
+        tdb_lim = c(0, 50),
+        hum_lim = c(0, 30),
+        mollier = TRUE
+    )
+```

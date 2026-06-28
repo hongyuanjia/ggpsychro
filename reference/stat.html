@@ -220,7 +220,8 @@ enthalpy in Btu lb-1 [IP] or J kg-1</p></li>
 calculate the corresponding humidity ratio and replace the <code>y</code> aesthetic
 values in each group.</p>
 <p>All of stats above requires two additional aesthetics:</p><ul><li><p><code>units</code>: A single string indicating the unit system to use. Should be
-either <code>"SI"</code> or <code>"IP" or </code>waiver()<code>which uses the value from the parent plot. Default:</code>waiver()`</p></li>
+either <code>"SI"</code> or <code>"IP"</code>, or <code>waiver()</code> which uses the value from the
+parent plot. Default: <code>waiver()</code></p></li>
 <li><p><code>pres</code>: A single number indicating the atmosphere pressure in Pa [SI] or
 Psi [IP]. If <code>waiver()</code>, the pressure calculated from the parent plot's
 altitude value will be used. Default: <code>waiver()</code></p></li>
@@ -228,6 +229,53 @@ altitude value will be used. Default: <code>waiver()</code></p></li>
 argument, both <code>units</code> and <code>pres</code> have to be specified.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">states</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    tdb <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">18</span>, <span class="fl">22</span>, <span class="fl">26</span>, <span class="fl">30</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    relhum <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">70</span>, <span class="fl">55</span>, <span class="fl">45</span>, <span class="fl">35</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">35</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">25</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">stat_relhum</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">tdb</span>, relhum <span class="op">=</span> <span class="va">relhum</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">states</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="stat-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># The stats can also be used from ordinary ggplot2 geoms.</span></span></span>
+<span class="r-in"><span><span class="va">wetbulb_line</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>tdb <span class="op">=</span> <span class="fl">18</span><span class="op">:</span><span class="fl">30</span>, wetbulb <span class="op">=</span> <span class="fl">16</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">35</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">25</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="geom_grid.html">geom_grid_wetbulb</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">geom_line</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">tdb</span>, wetbulb <span class="op">=</span> <span class="va">wetbulb</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        data <span class="op">=</span> <span class="va">wetbulb_line</span>, stat <span class="op">=</span> <span class="st">"wetbulb"</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="stat-2.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">vapour_pressure</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    tdb <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">12</span>, <span class="fl">18</span>, <span class="fl">24</span>, <span class="fl">30</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    vappres <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">900</span>, <span class="fl">1200</span>, <span class="fl">1800</span>, <span class="fl">2400</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">35</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">25</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">stat_vappres</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">tdb</span>, vappres <span class="op">=</span> <span class="va">vappres</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        data <span class="op">=</span> <span class="va">vapour_pressure</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="stat-3.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">specific_volume</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    tdb <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">25</span>, <span class="fl">30</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    specvol <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.84</span>, <span class="fl">0.86</span>, <span class="fl">0.88</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">35</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">25</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">stat_specvol</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">tdb</span>, specvol <span class="op">=</span> <span class="va">specvol</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        data <span class="op">=</span> <span class="va">specific_volume</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="stat-4.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">enthalpy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    tdb <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">18</span>, <span class="fl">24</span>, <span class="fl">30</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    enthalpy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">35000</span>, <span class="fl">50000</span>, <span class="fl">65000</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">35</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">25</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">stat_enthalpy</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">tdb</span>, enthalpy <span class="op">=</span> <span class="va">enthalpy</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">enthalpy</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="stat-5.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

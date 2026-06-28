@@ -213,8 +213,8 @@ humidity ratio and replace the `y` aesthetic values in each group.
 All of stats above requires two additional aesthetics:
 
 - `units`: A single string indicating the unit system to use. Should be
-  either `"SI"` or
-  `"IP" or `waiver()`which uses the value from the parent plot. Default:`waiver()\`
+  either `"SI"` or `"IP"`, or `waiver()` which uses the value from the
+  parent plot. Default: `waiver()`
 
 - `pres`: A single number indicating the atmosphere pressure in Pa
   \[SI\] or Psi \[IP\]. If `waiver()`, the pressure calculated from the
@@ -222,3 +222,50 @@ All of stats above requires two additional aesthetics:
 
 However, when these stats are used inside a ggplot `geom_*` as the
 `stat` argument, both `units` and `pres` have to be specified.
+
+## Examples
+
+``` r
+states <- data.frame(
+    tdb = c(18, 22, 26, 30),
+    relhum = c(70, 55, 45, 35)
+)
+
+ggpsychro(tdb_lim = c(10, 35), hum_lim = c(0, 25)) +
+    stat_relhum(aes(x = tdb, relhum = relhum), data = states)
+
+
+# The stats can also be used from ordinary ggplot2 geoms.
+wetbulb_line <- data.frame(tdb = 18:30, wetbulb = 16)
+ggpsychro(tdb_lim = c(10, 35), hum_lim = c(0, 25)) +
+    geom_grid_wetbulb() +
+    geom_line(aes(x = tdb, wetbulb = wetbulb),
+        data = wetbulb_line, stat = "wetbulb")
+
+
+vapour_pressure <- data.frame(
+    tdb = c(12, 18, 24, 30),
+    vappres = c(900, 1200, 1800, 2400)
+)
+ggpsychro(tdb_lim = c(10, 35), hum_lim = c(0, 25)) +
+    stat_vappres(aes(x = tdb, vappres = vappres),
+        data = vapour_pressure)
+
+
+specific_volume <- data.frame(
+    tdb = c(20, 25, 30),
+    specvol = c(0.84, 0.86, 0.88)
+)
+ggpsychro(tdb_lim = c(10, 35), hum_lim = c(0, 25)) +
+    stat_specvol(aes(x = tdb, specvol = specvol),
+        data = specific_volume)
+
+
+enthalpy <- data.frame(
+    tdb = c(18, 24, 30),
+    enthalpy = c(35000, 50000, 65000)
+)
+ggpsychro(tdb_lim = c(10, 35), hum_lim = c(0, 25)) +
+    stat_enthalpy(aes(x = tdb, enthalpy = enthalpy), data = enthalpy)
+
+```

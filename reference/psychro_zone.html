@@ -211,6 +211,93 @@ give the geom as <code>"point"</code>.</p></li>
 chart display units: g/kg in SI and gr/lb in IP.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">comfort</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    name <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cool"</span>, <span class="st">"warm"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    tdb_min <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">24</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    tdb_max <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">26</span>, <span class="fl">32</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    relhum_min <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">35</span>, <span class="fl">45</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    relhum_max <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">60</span>, <span class="fl">75</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">40</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">25</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">geom_psychro_zone</span><span class="op">(</span></span></span>
+<span class="r-in"><span>        <span class="fu">aes</span><span class="op">(</span>tdb_min <span class="op">=</span> <span class="va">tdb_min</span>, tdb_max <span class="op">=</span> <span class="va">tdb_max</span>,</span></span>
+<span class="r-in"><span>            relhum_min <span class="op">=</span> <span class="va">relhum_min</span>, relhum_max <span class="op">=</span> <span class="va">relhum_max</span>,</span></span>
+<span class="r-in"><span>            fill <span class="op">=</span> <span class="va">name</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        data <span class="op">=</span> <span class="va">comfort</span>,</span></span>
+<span class="r-in"><span>        type <span class="op">=</span> <span class="st">"dbt-rh"</span>,</span></span>
+<span class="r-in"><span>        alpha <span class="op">=</span> <span class="fl">0.28</span>,</span></span>
+<span class="r-in"><span>        colour <span class="op">=</span> <span class="cn">NA</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-plt img"><img src="psychro_zone-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Dry-bulb range with humidity-ratio limits.</span></span></span>
+<span class="r-in"><span><span class="va">humidity_cap</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    tdb_min <span class="op">=</span> <span class="fl">10</span>,</span></span>
+<span class="r-in"><span>    tdb_max <span class="op">=</span> <span class="fl">34</span>,</span></span>
+<span class="r-in"><span>    humratio_min <span class="op">=</span> <span class="fl">4</span>,</span></span>
+<span class="r-in"><span>    humratio_max <span class="op">=</span> <span class="fl">12</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">40</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">25</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">geom_psychro_zone</span><span class="op">(</span></span></span>
+<span class="r-in"><span>        <span class="fu">aes</span><span class="op">(</span>tdb_min <span class="op">=</span> <span class="va">tdb_min</span>, tdb_max <span class="op">=</span> <span class="va">tdb_max</span>,</span></span>
+<span class="r-in"><span>            humratio_min <span class="op">=</span> <span class="va">humratio_min</span>, humratio_max <span class="op">=</span> <span class="va">humratio_max</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        data <span class="op">=</span> <span class="va">humidity_cap</span>,</span></span>
+<span class="r-in"><span>        type <span class="op">=</span> <span class="st">"dbt-wmax"</span>,</span></span>
+<span class="r-in"><span>        alpha <span class="op">=</span> <span class="fl">0.25</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-plt img"><img src="psychro_zone-2.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Property-bounded zones.</span></span></span>
+<span class="r-in"><span><span class="va">enthalpy_zone</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    enthalpy_min <span class="op">=</span> <span class="fl">40000</span>,</span></span>
+<span class="r-in"><span>    enthalpy_max <span class="op">=</span> <span class="fl">65000</span>,</span></span>
+<span class="r-in"><span>    relhum_min <span class="op">=</span> <span class="fl">30</span>,</span></span>
+<span class="r-in"><span>    relhum_max <span class="op">=</span> <span class="fl">80</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">40</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">25</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">geom_psychro_zone</span><span class="op">(</span></span></span>
+<span class="r-in"><span>        <span class="fu">aes</span><span class="op">(</span>enthalpy_min <span class="op">=</span> <span class="va">enthalpy_min</span>, enthalpy_max <span class="op">=</span> <span class="va">enthalpy_max</span>,</span></span>
+<span class="r-in"><span>            relhum_min <span class="op">=</span> <span class="va">relhum_min</span>, relhum_max <span class="op">=</span> <span class="va">relhum_max</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        data <span class="op">=</span> <span class="va">enthalpy_zone</span>,</span></span>
+<span class="r-in"><span>        type <span class="op">=</span> <span class="st">"enthalpy-rh"</span>,</span></span>
+<span class="r-in"><span>        alpha <span class="op">=</span> <span class="fl">0.25</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-plt img"><img src="psychro_zone-3.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">volume_zone</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    specvol_min <span class="op">=</span> <span class="fl">0.84</span>,</span></span>
+<span class="r-in"><span>    specvol_max <span class="op">=</span> <span class="fl">0.90</span>,</span></span>
+<span class="r-in"><span>    relhum_min <span class="op">=</span> <span class="fl">30</span>,</span></span>
+<span class="r-in"><span>    relhum_max <span class="op">=</span> <span class="fl">90</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">40</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">25</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">geom_psychro_zone</span><span class="op">(</span></span></span>
+<span class="r-in"><span>        <span class="fu">aes</span><span class="op">(</span>specvol_min <span class="op">=</span> <span class="va">specvol_min</span>, specvol_max <span class="op">=</span> <span class="va">specvol_max</span>,</span></span>
+<span class="r-in"><span>            relhum_min <span class="op">=</span> <span class="va">relhum_min</span>, relhum_max <span class="op">=</span> <span class="va">relhum_max</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        data <span class="op">=</span> <span class="va">volume_zone</span>,</span></span>
+<span class="r-in"><span>        type <span class="op">=</span> <span class="st">"specvol-rh"</span>,</span></span>
+<span class="r-in"><span>        alpha <span class="op">=</span> <span class="fl">0.25</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-plt img"><img src="psychro_zone-4.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Draw an already-specified polygon in chart display units.</span></span></span>
+<span class="r-in"><span><span class="va">polygon_zone</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    tdb <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">26</span>, <span class="fl">28</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    humratio <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">6</span>, <span class="fl">8</span>, <span class="fl">6</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">40</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">25</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">geom_psychro_zone</span><span class="op">(</span></span></span>
+<span class="r-in"><span>        <span class="fu">aes</span><span class="op">(</span>tdb <span class="op">=</span> <span class="va">tdb</span>, humratio <span class="op">=</span> <span class="va">humratio</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        data <span class="op">=</span> <span class="va">polygon_zone</span>,</span></span>
+<span class="r-in"><span>        type <span class="op">=</span> <span class="st">"xy-points"</span>,</span></span>
+<span class="r-in"><span>        alpha <span class="op">=</span> <span class="fl">0.25</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-plt img"><img src="psychro_zone-5.png" alt="" width="700" height="433"></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
