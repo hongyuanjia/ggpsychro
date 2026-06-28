@@ -192,10 +192,16 @@ scales_add_default<- function (plot) {
 }
 
 setup_psychro_stat_params <- function(layers, psychro) {
-    state_classes <- c("StatPsychroState", "StatPsychroZone")
+    state_classes <- c("StatPsychroState", "StatPsychroZone", "StatComfortState")
+    panel_classes <- c(
+        "StatComfortBand", "StatComfortGrid", "StatComfortContour",
+        "StatComfortPmvCurve", "StatComfortPmvRootBand",
+        "StatComfortPmvBand", "StatComfortZone"
+    )
+    chart_classes <- c(state_classes, panel_classes)
     stat_classes <- c(
         "StatRelhum", "StatWetbulb", "StatVappres", "StatSpecvol",
-        "StatEnthalpy", "StatPsychroBin", state_classes
+        "StatEnthalpy", "StatPsychroBin", chart_classes
     )
     pressure <- with_units(psychro$units, GetStandardAtmPressure(psychro$altitude))
 
@@ -210,12 +216,20 @@ setup_psychro_stat_params <- function(layers, psychro) {
         if (is.null(layer$stat_params$pres) || is.waive(layer$stat_params$pres)) {
             layer$stat_params$pres <- pressure
         }
-        if (any(vapply(state_classes, inherits, logical(1L), x = layer$stat))) {
+        if (any(vapply(chart_classes, inherits, logical(1L), x = layer$stat))) {
             if (is.null(layer$stat_params$mollier) || is.waive(layer$stat_params$mollier)) {
                 layer$stat_params$mollier <- psychro$mollier
             }
+        }
+        if (any(vapply(c("StatPsychroState", "StatPsychroZone", panel_classes),
+                inherits, logical(1L), x = layer$stat))) {
             if (is.null(layer$stat_params$tdb_lim) || is.waive(layer$stat_params$tdb_lim)) {
                 layer$stat_params$tdb_lim <- psychro$tdb_lim
+            }
+        }
+        if (any(vapply(panel_classes, inherits, logical(1L), x = layer$stat))) {
+            if (is.null(layer$stat_params$hum_lim) || is.waive(layer$stat_params$hum_lim)) {
+                layer$stat_params$hum_lim <- psychro$hum_lim
             }
         }
 

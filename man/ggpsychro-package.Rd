@@ -10,6 +10,7 @@ A 'ggplot2' extension for making psychrometric charts.
 \seealso{
 Useful links:
 \itemize{
+  \item \url{https://hongyuanjia.github.io/ggpsychro/}
   \item \url{https://github.com/hongyuanjia/ggpsychro}
   \item Report bugs at \url{https://github.com/hongyuanjia/ggpsychro/issues}
 }

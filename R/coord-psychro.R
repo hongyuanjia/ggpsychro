@@ -409,5 +409,87 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
             vap_minor, vap_major, vol_minor, vol_major,
             enth_minor, enth_major, labels, self$mollier
         )
+    },
+
+    render_fg = function(self, panel_params, theme) {
+        sat <- psychro_coord_saturation(self, panel_params)
+        border <- ggplot2::ggproto_parent(CoordCartesian, self)$render_fg(
+            panel_params, theme
+        )
+        if (is.null(sat)) {
+            return(border)
+        }
+
+        if (self$mollier) {
+            mask_x <- c(sat$hum, 1.0, sat$hum[1L])
+            mask_y <- c(sat$tdb, 0.0, 0.0)
+            line_x <- sat$hum
+            line_y <- sat$tdb
+        } else {
+            mask_x <- c(0.0, rev(sat$tdb), 0.0)
+            mask_y <- c(1.0, rev(sat$hum), sat$hum[1L])
+            line_x <- sat$tdb
+            line_y <- sat$hum
+        }
+
+        grid::grobTree(
+            ggplot2::element_render(
+                theme, "psychro.panel.mask",
+                x = mask_x, y = mask_y
+            ),
+            ggplot2::element_render(
+                theme, "psychro.panel.grid.saturation",
+                x = line_x, y = line_y
+            ),
+            border
+        )
     }
 )
+
+psychro_coord_saturation <- function(coord, panel_params) {
+    range_tdb <- coord$range_tdb(panel_params)
+    range_hum <- coord$range_hum(panel_params)
+
+    scale <- panel_params[[coord$pos_tdb()]]$scale
+    limits <- scale$trans$inverse(panel_params[[coord$pos_tdb()]]$continuous_range)
+    tdb <- scale$trans$breaks(limits, 100L)
+    hum <- with_units(
+        coord$units,
+        psychrolib::GetHumRatioFromRelHum(tdb, 1.0, coord$pressure)
+    )
+
+    sat_tdb <- tdb[hum <= range_hum[2L]]
+    sat_hum <- hum[hum <= range_hum[2L]]
+    if (!length(sat_tdb)) {
+        return(NULL)
+    }
+
+    sat_app_end <- FALSE
+    sat_tdb <- c(
+        if (range_hum[1L] > 0.0) {
+            with_units(coord$units, GetTDewPointFromHumRatioOnly(
+                range_hum[1L], coord$pressure
+            ))
+        },
+        sat_tdb,
+        if (range_hum[2L] > 0.0) {
+            sat_tdb_max <- with_units(coord$units, GetTDewPointFromHumRatioOnly(
+                range_hum[2L], coord$pressure
+            ))
+            sat_app_end <- sat_tdb_max > max(sat_tdb)
+            sat_tdb_max[sat_app_end]
+        }
+    )
+    sat_hum <- c(
+        if (range_hum[1L] > 0.0) range_hum[1L],
+        sat_hum,
+        if (range_hum[2L] > 0.0) range_hum[2L][sat_app_end]
+    )
+
+    list(
+        tdb = rescale01(sat_tdb, range_tdb),
+        hum = rescale01(sat_hum, range_hum),
+        len = length(sat_tdb),
+        n = 1L
+    )
+}
