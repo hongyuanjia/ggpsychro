@@ -17,6 +17,33 @@ NULL
 #' @inheritParams ggplot2::layer
 #' @inheritParams ggplot2::geom_path
 #' @rdname psychro_state
+#' @examples
+#' process <- data.frame(
+#'     state = c("outdoor", "mixed", "supply", "room"),
+#'     tdb = c(18, 23, 28, 31),
+#'     relhum = c(70, 55, 45, 55)
+#' )
+#'
+#' # Draw state points. Map exactly one psychrometric property with tdb.
+#' ggpsychro(tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
+#'     stat_psychro_state(
+#'         aes(tdb = tdb, relhum = relhum, colour = state),
+#'         data = process
+#'     )
+#'
+#' # Draw the same states as a process line.
+#' ggpsychro(tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
+#'     geom_psychro_process(
+#'         aes(tdb = tdb, relhum = relhum),
+#'         data = process,
+#'         linewidth = 1,
+#'         arrow = grid::arrow(length = grid::unit(0.08, "inches"))
+#'     ) +
+#'     stat_psychro_state(
+#'         aes(tdb = tdb, relhum = relhum),
+#'         data = process,
+#'         size = 2
+#'     )
 #' @export
 geom_psychro_process <- function(mapping = NULL, data = NULL, stat = "psychro_state",
                                  position = "identity", ..., na.rm = FALSE,

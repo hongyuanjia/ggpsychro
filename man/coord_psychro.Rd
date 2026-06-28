@@ -64,3 +64,22 @@ legend, the plot title, or the plot margins.}
 \description{
 Psychrometric coordinates
 }
+\examples{
+ggpsychro() +
+    coord_psychro(tdb_lim = c(10, 35), hum_lim = c(0, 25))
+
+ggpsychro(units = "IP", altitude = 1000) +
+    coord_psychro(
+        tdb_lim = c(50, 100),
+        hum_lim = c(0, 140),
+        units = "IP",
+        altitude = 1000
+    )
+
+ggpsychro(mollier = TRUE) +
+    coord_psychro(
+        tdb_lim = c(0, 50),
+        hum_lim = c(0, 30),
+        mollier = TRUE
+    )
+}

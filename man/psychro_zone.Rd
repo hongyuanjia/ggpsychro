@@ -158,3 +158,83 @@ Supported zone types are:
 \code{relhum} values are supplied in percent. \code{humratio} values are supplied in
 chart display units: g/kg in SI and gr/lb in IP.
 }
+\examples{
+comfort <- data.frame(
+    name = c("cool", "warm"),
+    tdb_min = c(20, 24),
+    tdb_max = c(26, 32),
+    relhum_min = c(35, 45),
+    relhum_max = c(60, 75)
+)
+
+ggpsychro(tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
+    geom_psychro_zone(
+        aes(tdb_min = tdb_min, tdb_max = tdb_max,
+            relhum_min = relhum_min, relhum_max = relhum_max,
+            fill = name),
+        data = comfort,
+        type = "dbt-rh",
+        alpha = 0.28,
+        colour = NA
+    )
+
+# Dry-bulb range with humidity-ratio limits.
+humidity_cap <- data.frame(
+    tdb_min = 10,
+    tdb_max = 34,
+    humratio_min = 4,
+    humratio_max = 12
+)
+ggpsychro(tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
+    geom_psychro_zone(
+        aes(tdb_min = tdb_min, tdb_max = tdb_max,
+            humratio_min = humratio_min, humratio_max = humratio_max),
+        data = humidity_cap,
+        type = "dbt-wmax",
+        alpha = 0.25
+    )
+
+# Property-bounded zones.
+enthalpy_zone <- data.frame(
+    enthalpy_min = 40000,
+    enthalpy_max = 65000,
+    relhum_min = 30,
+    relhum_max = 80
+)
+ggpsychro(tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
+    geom_psychro_zone(
+        aes(enthalpy_min = enthalpy_min, enthalpy_max = enthalpy_max,
+            relhum_min = relhum_min, relhum_max = relhum_max),
+        data = enthalpy_zone,
+        type = "enthalpy-rh",
+        alpha = 0.25
+    )
+
+volume_zone <- data.frame(
+    specvol_min = 0.84,
+    specvol_max = 0.90,
+    relhum_min = 30,
+    relhum_max = 90
+)
+ggpsychro(tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
+    geom_psychro_zone(
+        aes(specvol_min = specvol_min, specvol_max = specvol_max,
+            relhum_min = relhum_min, relhum_max = relhum_max),
+        data = volume_zone,
+        type = "specvol-rh",
+        alpha = 0.25
+    )
+
+# Draw an already-specified polygon in chart display units.
+polygon_zone <- data.frame(
+    tdb = c(20, 26, 28),
+    humratio = c(6, 8, 6)
+)
+ggpsychro(tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
+    geom_psychro_zone(
+        aes(tdb = tdb, humratio = humratio),
+        data = polygon_zone,
+        type = "xy-points",
+        alpha = 0.25
+    )
+}
