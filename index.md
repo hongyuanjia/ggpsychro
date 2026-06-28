@@ -1,0 +1,88 @@
+# ggpsychro
+
+> ‘ggplot2’ extension for making psychrometric charts.
+
+## Installation
+
+You can install the development version from
+[GitHub](https://github.com/) with:
+
+``` r
+
+# install.packages("remotes")
+remotes::install_github("hongyuanjia/ggpsychro")
+```
+
+## Example
+
+The creation of a psychrometric chart starts with
+[`ggpsychro()`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro.md).
+The result is a ggplot object, so grids, stats, geoms, scales, and
+themes can be added with the same `+` workflow used by ggplot2.
+
+``` r
+
+ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+    psychro_preset("minimal")
+```
+
+![Minimal psychrometric chart with dry-bulb temperature, humidity ratio,
+and reference grids.](reference/figures/README-ggpsychro-1.png)
+
+State points and process lines can be supplied with dry-bulb temperature
+plus one psychrometric property, such as relative humidity.
+
+``` r
+
+process <- data.frame(
+    dry_bulb_temperature = c(18, 23, 28, 31),
+    relative_humidity = c(70, 55, 45, 55)
+)
+
+ggpsychro(tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
+    psychro_preset("minimal") +
+    geom_psychro_process(
+        aes(tdb = dry_bulb_temperature, relhum = relative_humidity),
+        data = process,
+        colour = "#0f766e", linewidth = 1,
+        arrow = grid::arrow(length = grid::unit(0.08, "inches"))
+    ) +
+    stat_psychro_state(
+        aes(tdb = dry_bulb_temperature, relhum = relative_humidity),
+        data = process,
+        colour = "#0f766e", size = 2
+    )
+```
+
+![Psychrometric process line with four state points on a minimal
+chart.](reference/figures/README-psychro-process-1.png)
+
+## Learn more
+
+The longer examples live on the pkgdown site:
+
+- [Get
+  started](https://hongyuanjia.github.io/ggpsychro/articles/ggpsychro.html)
+- [Chart grids and
+  styles](https://hongyuanjia.github.io/ggpsychro/articles/grids-and-styles.html)
+- [Plotting psychrometric
+  data](https://hongyuanjia.github.io/ggpsychro/articles/plotting-data.html)
+- [Zones and
+  processes](https://hongyuanjia.github.io/ggpsychro/articles/zones-and-processes.html)
+
+## Author
+
+Hongyuan Jia
+
+## License
+
+The project is released under the terms of MIT License.
+
+Copyright © 2019-2026 Hongyuan Jia
+
+## Contribute
+
+Please note that the ‘ggpsychro’ project is released with a [Contributor
+Code of
+Conduct](https://hongyuanjia.github.io/ggpsychro/CODE_OF_CONDUCT.md). By
+contributing to this project, you agree to abide by its terms.
