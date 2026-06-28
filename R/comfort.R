@@ -13,6 +13,7 @@ NULL
 #' @param vr Relative air speed for PMV.
 #' @param v Air speed for SET and adaptive comfort.
 #' @param rh Relative humidity in percent.
+#' @param solar_exposure Relative solar exposure for heat index, from 0 to 1.
 #' @param met Metabolic rate in met.
 #' @param clo Clothing insulation in clo.
 #' @param wme External work in met.
@@ -27,6 +28,7 @@ NULL
 #' comfort_pmv(25, rh = 50, met = 1.4, clo = 0.5)
 #' comfort_set(25, rh = 50)
 #' comfort_adaptive(25, t_running = 20)
+#' comfort_heat_index(32, rh = 70)
 #'
 #' @export
 comfort_pmv <- function(tdb, tr = tdb, vr = 0.1, rh, met = 1.2,
@@ -161,6 +163,42 @@ comfort_adaptive <- function(tdb, tr = tdb, t_running, v = 0.1,
     out
 }
 
+#' @rdname comfort_pmv
+#' @export
+comfort_heat_index <- function(tdb, rh, solar_exposure = 0,
+                               units = c("SI", "IP"),
+                               limit_inputs = TRUE,
+                               round_output = TRUE) {
+    units <- match.arg(units)
+    x <- comfort_recycle(
+        tdb = tdb, rh = rh, solar_exposure = solar_exposure
+    )
+
+    tdb_si <- comfort_to_si_temp(x$tdb, units)
+    tdb_f <- get_f_from_c(tdb_si)
+    exposure <- pmin(pmax(x$solar_exposure, 0), 1)
+    heat_index_f <- comfort_heat_index_f(tdb_f, x$rh, exposure)
+
+    if (isTRUE(limit_inputs)) {
+        valid <- comfort_between(tdb_si, -50, 100) &
+            comfort_between(x$rh, 0, 100) &
+            is.finite(exposure)
+        heat_index_f[!valid] <- NA_real_
+    }
+
+    category <- comfort_heat_index_category(heat_index_f)
+    heat_index <- if (units == "IP") heat_index_f else get_c_from_f(heat_index_f)
+    if (isTRUE(round_output)) {
+        heat_index <- round(heat_index, 1L)
+    }
+
+    new_data_frame(list(
+        heat_index = heat_index,
+        category = category$category,
+        category_id = category$category_id
+    ))
+}
+
 #' Comfort model objects
 #'
 #' Model objects capture the fixed inputs used by comfort layers. They can be
@@ -219,6 +257,24 @@ comfort_model_adaptive <- function(t_running, tr = NULL, v = 0.1,
     )
 }
 
+#' @rdname comfort_model_pmv
+#' @export
+comfort_model_heat_index <- function(solar_exposure = 0,
+                                     limit_inputs = TRUE,
+                                     round_output = FALSE) {
+    solar_exposure <- as.numeric(solar_exposure)
+    if (length(solar_exposure) != 1L || !is.finite(solar_exposure) ||
+            solar_exposure < 0 || solar_exposure > 1) {
+        stop("`solar_exposure` must be a single finite value from 0 to 1.",
+            call. = FALSE)
+    }
+    comfort_model(
+        "heat_index",
+        list(solar_exposure = solar_exposure, limit_inputs = limit_inputs,
+             round_output = round_output)
+    )
+}
+
 #' PMV-based comfort standards
 #'
 #' These helpers describe static PMV-based comfort zones. They are distinct from
@@ -259,6 +315,34 @@ comfort_standard_en15251_2007 <- function(breaks = c(-0.7, -0.2, 0.2, 0.7)) {
     )
 }
 
+#' Givoni bioclimatic strategy
+#'
+#' `comfort_strategy_givoni()` stores the fixed inputs used by
+#' `geom_comfort_givoni()`. The strategy geometry follows Marsh's Givoni
+#' Bioclimatic Chart overlay: the mean outdoor temperature shifts the base
+#' comfort zone, and zones are drawn in dry-bulb/relative-humidity space before
+#' conversion to humidity ratio.
+#'
+#' @param mean_outdoor Mean outdoor temperature.
+#' @param units Unit system for `mean_outdoor`, `"SI"` or `"IP"`.
+#'
+#' @return A Givoni comfort strategy object.
+#'
+#' @export
+comfort_strategy_givoni <- function(mean_outdoor = 19,
+                                    units = c("SI", "IP")) {
+    units <- match.arg(units)
+    mean_outdoor <- as.numeric(mean_outdoor)
+    if (length(mean_outdoor) != 1L || !is.finite(mean_outdoor)) {
+        stop("`mean_outdoor` must be a single finite temperature.",
+            call. = FALSE)
+    }
+    structure(
+        list(mean_outdoor = mean_outdoor, units = units),
+        class = c("PsyComfortGivoniStrategy", "list")
+    )
+}
+
 #' Comfort overlays for psychrometric charts
 #'
 #' `geom_comfort_overlay()` samples a psychrometric panel on a dry-bulb by
@@ -295,6 +379,13 @@ comfort_standard_en15251_2007 <- function(breaks = c(-0.7, -0.2, 0.2, 0.7)) {
 #' @param label_size Text size for contour labels. Defaults to `2.8`.
 #' @param range Comfort value interval for PMV and SET zones.
 #' @param standard A PMV-based comfort standard object.
+#' @param show_labels If `TRUE`, draw overlay labels.
+#' @param strategy A Givoni bioclimatic strategy object.
+#' @param show_pmv If `TRUE`, draw the PMV comfort background under the Givoni
+#'   strategy outlines.
+#' @param pmv_model PMV model used when `show_pmv = TRUE`.
+#' @param zone_alpha Alpha for the filled Givoni comfort zone. Other Givoni
+#'   strategy regions are drawn as outlines.
 #'
 #' @export
 geom_comfort_overlay <- function(mapping = NULL, data = NULL,
@@ -346,11 +437,84 @@ geom_comfort_overlay <- function(mapping = NULL, data = NULL,
 
 #' @rdname geom_comfort_overlay
 #' @export
+geom_comfort_heat_index <- function(mapping = NULL, data = NULL,
+                                    position = "identity", ...,
+                                    model = comfort_model_heat_index(),
+                                    n = c(160, 100), alpha = 0.55,
+                                    show_labels = TRUE,
+                                    na.rm = FALSE, show.legend = NA,
+                                    inherit.aes = TRUE) {
+    label <- angle <- NULL
+    layer_mapping <- comfort_computed_xy_mapping(mapping)
+    params <- list(...)
+    zone_specs <- comfort_heat_index_zone_specs()
+    layers <- vector("list", length(zone_specs))
+    for (i in seq_along(zone_specs)) {
+        spec <- zone_specs[[i]]
+        zone_params <- utils::modifyList(params, list(
+            na.rm = na.rm, model = model, n = n, category_id = spec$id,
+            alpha = alpha, fill = spec$fill, colour = NA
+        ))
+        layers[[i]] <- psychro_layer(
+            stat = StatComfortHeatIndexZone, data = comfort_layer_data(data),
+            mapping = layer_mapping, geom = "polygon", position = position,
+            show.legend = show.legend, inherit.aes = inherit.aes,
+            params = zone_params
+        )
+    }
+
+    line_params <- params
+    if (is.null(line_params$colour) && is.null(line_params$color)) {
+        line_params$colour <- "#4A4A4A"
+    }
+    if (is.null(line_params$linewidth)) {
+        line_params$linewidth <- 0.45
+    }
+    layers[[length(layers) + 1L]] <- psychro_layer(
+        stat = StatComfortHeatIndexContour, data = comfort_layer_data(data),
+        mapping = layer_mapping, geom = "path", position = position,
+        show.legend = FALSE, inherit.aes = inherit.aes,
+        params = utils::modifyList(line_params, list(
+            na.rm = na.rm, model = model, n = n
+        ))
+    )
+
+    if (isTRUE(show_labels)) {
+        text_params <- params
+        if (is.null(text_params$colour) && is.null(text_params$color)) {
+            text_params$colour <- "#444444"
+        }
+        if (is.null(text_params$fontface)) {
+            text_params$fontface <- "bold"
+        }
+        if (is.null(text_params$size)) {
+            text_params$size <- 3
+        }
+        layers[[length(layers) + 1L]] <- psychro_layer(
+            stat = StatComfortHeatIndexLabel,
+            data = comfort_layer_data(data),
+            mapping = comfort_computed_xy_mapping(ggplot2::aes(
+                label = ggplot2::after_stat(label),
+                angle = ggplot2::after_stat(angle)
+            )),
+            geom = "text", position = position,
+            show.legend = FALSE, inherit.aes = FALSE,
+            params = utils::modifyList(text_params, list(
+                na.rm = na.rm, model = model, n = n
+            ))
+        )
+    }
+
+    layers
+}
+
+#' @rdname geom_comfort_overlay
+#' @export
 geom_comfort_contour <- function(mapping = NULL, data = NULL,
                                  stat = StatComfortContour,
                                  position = "identity", ...,
                                  model = comfort_model_pmv(),
-                                 metric = "pmv", breaks = NULL,
+                                 metric = NULL, breaks = NULL,
                                  n = NULL,
                                  contour_method = c("auto", "root", "isoband"),
                                  label = FALSE, label_size = NULL,
@@ -630,6 +794,182 @@ geom_comfort_standard_zone <- function(standard = comfort_standard_ashrae55_2017
 
 #' @rdname geom_comfort_overlay
 #' @export
+geom_comfort_givoni <- function(strategy = comfort_strategy_givoni(),
+                                mapping = NULL, data = NULL,
+                                position = "identity", ...,
+                                alpha = 0.55, show_labels = TRUE,
+                                show_pmv = FALSE,
+                                pmv_model = comfort_model_pmv(),
+                                zone_alpha = 0.2,
+                                na.rm = FALSE, show.legend = NA,
+                                inherit.aes = TRUE) {
+    label <- angle <- NULL
+    strategy <- comfort_check_givoni_strategy(strategy)
+    layer_mapping <- comfort_computed_xy_mapping(mapping)
+    params <- list(...)
+    zone_specs <- comfort_givoni_zone_specs()
+    zone_specs <- zone_specs[zone_specs$draw_zone, , drop = FALSE]
+    layers <- list()
+    if (isTRUE(show_pmv)) {
+        layers[[length(layers) + 1L]] <- geom_comfort_overlay(
+            data = data,
+            model = pmv_model,
+            alpha = alpha,
+            method = "rootband",
+            na.rm = na.rm,
+            show.legend = FALSE,
+            inherit.aes = FALSE
+        )
+        layers[[length(layers) + 1L]] <- scale_fill_comfort_pmv(guide = "none")
+    }
+    for (i in seq_len(nrow(zone_specs))) {
+        spec <- zone_specs[i, , drop = FALSE]
+        zone_is_filled <- isTRUE(spec$filled[[1L]])
+        zone_geom <- if (zone_is_filled) "polygon" else "path"
+        zone_params <- utils::modifyList(params, list(
+            na.rm = na.rm, strategy = strategy, zone = spec$zone[[1L]],
+            colour = "#444444",
+            linetype = spec$linetype[[1L]],
+            alpha = if (zone_is_filled) zone_alpha else 1
+        ))
+        if (zone_is_filled) {
+            zone_params$fill <- spec$fill[[1L]]
+        }
+        if (is.null(zone_params$linewidth)) {
+            zone_params$linewidth <- 0.9
+        }
+        layers[[length(layers) + 1L]] <- psychro_layer(
+            stat = StatComfortGivoniZone, data = comfort_layer_data(data),
+            mapping = layer_mapping, geom = zone_geom, position = position,
+            show.legend = show.legend, inherit.aes = inherit.aes,
+            params = zone_params
+        )
+    }
+
+    mean_params <- params
+    if (is.null(mean_params$colour) && is.null(mean_params$color)) {
+        mean_params$colour <- "#444444"
+    }
+    if (is.null(mean_params$linewidth)) {
+        mean_params$linewidth <- 0.8
+    }
+    layers[[length(layers) + 1L]] <- psychro_layer(
+        stat = StatComfortGivoniMeanOutdoor,
+        data = comfort_layer_data(data), mapping = layer_mapping,
+        geom = "path", position = position, show.legend = FALSE,
+        inherit.aes = inherit.aes,
+        params = utils::modifyList(mean_params, list(
+            na.rm = na.rm, strategy = strategy, linetype = "dotted"
+        ))
+    )
+
+    if (isTRUE(show_labels)) {
+        label_params <- params
+        if (is.null(label_params$colour) && is.null(label_params$color)) {
+            label_params$colour <- "#444444"
+        }
+        if (is.null(label_params$fontface)) {
+            label_params$fontface <- "bold"
+        }
+        if (is.null(label_params$size)) {
+            label_params$size <- 2.7
+        }
+        layers[[length(layers) + 1L]] <- psychro_layer(
+            stat = StatComfortGivoniLabel,
+            data = comfort_layer_data(data),
+            mapping = comfort_computed_xy_mapping(ggplot2::aes(
+                label = ggplot2::after_stat(label),
+                hjust = ggplot2::after_stat(hjust),
+                vjust = ggplot2::after_stat(vjust)
+            )),
+            geom = geomtextpath::GeomTextpath, position = position,
+            show.legend = FALSE, inherit.aes = FALSE,
+            params = utils::modifyList(label_params, list(
+                na.rm = na.rm, strategy = strategy, label_type = "path",
+                text_only = TRUE, upright = FALSE, remove_long = FALSE
+            ))
+        )
+        layers[[length(layers) + 1L]] <- psychro_layer(
+            stat = StatComfortGivoniLabel,
+            data = comfort_layer_data(data),
+            mapping = comfort_computed_xy_mapping(ggplot2::aes(
+                label = ggplot2::after_stat(label),
+                angle = ggplot2::after_stat(angle)
+            )),
+            geom = "text", position = position,
+            show.legend = FALSE, inherit.aes = FALSE,
+            params = utils::modifyList(label_params, list(
+                na.rm = na.rm, strategy = strategy, label_type = "point"
+            ))
+        )
+        mean_label_params <- params
+        if (is.null(mean_label_params$colour) &&
+                is.null(mean_label_params$color)) {
+            mean_label_params$colour <- "#444444"
+        }
+        if (is.null(mean_label_params$fontface)) {
+            mean_label_params$fontface <- "bold"
+        }
+        if (is.null(mean_label_params$size)) {
+            mean_label_params$size <- 2.7
+        }
+        layers[[length(layers) + 1L]] <- psychro_layer(
+            stat = StatComfortGivoniMeanOutdoorLabel,
+            data = comfort_layer_data(data),
+            mapping = comfort_computed_xy_mapping(ggplot2::aes(
+                label = ggplot2::after_stat(label),
+                angle = ggplot2::after_stat(angle),
+                hjust = ggplot2::after_stat(hjust),
+                vjust = ggplot2::after_stat(vjust)
+            )),
+            geom = "text", position = position,
+            show.legend = FALSE, inherit.aes = FALSE,
+            params = utils::modifyList(mean_label_params, list(
+                na.rm = na.rm, strategy = strategy
+            ))
+        )
+    }
+    layers[[length(layers) + 1L]] <- comfort_givoni_foreground_marker(
+        strategy = strategy,
+        show_label = isTRUE(show_labels),
+        colour = mean_params$colour %||% mean_params$color %||% "#444444",
+        linewidth = mean_params$linewidth %||% 0.8,
+        linetype = "dotted",
+        label_size = if (exists("mean_label_params", inherits = FALSE)) {
+            mean_label_params$size %||% 2.7
+        } else {
+            2.7
+        },
+        fontface = if (exists("mean_label_params", inherits = FALSE)) {
+            mean_label_params$fontface %||% "bold"
+        } else {
+            "bold"
+        }
+    )
+
+    layers
+}
+
+comfort_givoni_foreground_marker <- function(strategy, show_label, colour,
+                                             linewidth, linetype, label_size,
+                                             fontface) {
+    structure(
+        list(
+            type = "givoni_mean_outdoor",
+            strategy = strategy,
+            show_label = show_label,
+            colour = colour,
+            linewidth = linewidth,
+            linetype = linetype,
+            label_size = label_size,
+            fontface = fontface
+        ),
+        class = "PsyComfortForeground"
+    )
+}
+
+#' @rdname geom_comfort_overlay
+#' @export
 stat_comfort_state <- function(mapping = NULL, data = NULL, geom = "point",
                                position = "identity", ...,
                                model = comfort_model_pmv(), na.rm = FALSE,
@@ -756,7 +1096,7 @@ StatComfortContour <- ggplot2::ggproto(
     ),
 
     compute_panel = function(self, data, scales, model = comfort_model_pmv(),
-                             metric = "pmv", breaks = NULL,
+                             metric = NULL, breaks = NULL,
                              n = NULL, contour_method = "auto",
                              label_path = FALSE, units, pres,
                              mollier = FALSE, tdb_lim = NULL, hum_lim = NULL,
@@ -911,6 +1251,222 @@ StatComfortZone <- ggplot2::ggproto(
 )
 
 #' @noRd
+StatComfortHeatIndexZone <- ggplot2::ggproto(
+    "StatComfortHeatIndexZone", ggplot2::Stat,
+
+    setup_data = function(self, data, params) {
+        init_stat_data(data, params)
+    },
+
+    default_aes = ggplot2::aes(
+    ),
+
+    dropped_aes = c("pres", "units"),
+
+    extra_params = c(
+        "na.rm", "model", "n", "category_id", "units", "pres",
+        "mollier", "tdb_lim", "hum_lim"
+    ),
+
+    compute_panel = function(self, data, scales,
+                             model = comfort_model_heat_index(),
+                             n = c(160, 100), category_id = 1L,
+                             units, pres, mollier = FALSE,
+                             tdb_lim = NULL, hum_lim = NULL,
+                             na.rm = FALSE) {
+        units <- comfort_stat_units(data, units)
+        pres <- comfort_stat_pressure(data, pres)
+        comfort_heat_index_zone_data(
+            model, category_id, comfort_grid_n(n), units, pres,
+            mollier, tdb_lim, hum_lim
+        )
+    }
+)
+
+#' @noRd
+StatComfortHeatIndexContour <- ggplot2::ggproto(
+    "StatComfortHeatIndexContour", ggplot2::Stat,
+
+    setup_data = function(self, data, params) {
+        init_stat_data(data, params)
+    },
+
+    default_aes = ggplot2::aes(),
+
+    dropped_aes = c("pres", "units"),
+
+    extra_params = c(
+        "na.rm", "model", "n", "units", "pres",
+        "mollier", "tdb_lim", "hum_lim"
+    ),
+
+    compute_panel = function(self, data, scales,
+                             model = comfort_model_heat_index(),
+                             n = c(160, 100), units, pres, mollier = FALSE,
+                             tdb_lim = NULL, hum_lim = NULL,
+                             na.rm = FALSE) {
+        units <- comfort_stat_units(data, units)
+        pres <- comfort_stat_pressure(data, pres)
+        comfort_contour_data(
+            model, "heat_index", comfort_heat_index_thresholds(units),
+            comfort_grid_n(n), units, pres, mollier, tdb_lim, hum_lim,
+            contour_method = "isoband"
+        )
+    }
+)
+
+#' @noRd
+StatComfortHeatIndexLabel <- ggplot2::ggproto(
+    "StatComfortHeatIndexLabel", ggplot2::Stat,
+
+    setup_data = function(self, data, params) {
+        init_stat_data(data, params)
+    },
+
+    default_aes = ggplot2::aes(),
+
+    dropped_aes = c("pres", "units"),
+
+    extra_params = c(
+        "na.rm", "model", "n", "units", "pres",
+        "mollier", "tdb_lim", "hum_lim"
+    ),
+
+    compute_panel = function(self, data, scales,
+                             model = comfort_model_heat_index(),
+                             n = c(160, 100), units, pres, mollier = FALSE,
+                             tdb_lim = NULL, hum_lim = NULL,
+                             na.rm = FALSE) {
+        units <- comfort_stat_units(data, units)
+        pres <- comfort_stat_pressure(data, pres)
+        comfort_heat_index_label_data(
+            model, comfort_grid_n(n), units, pres, mollier, tdb_lim, hum_lim
+        )
+    }
+)
+
+#' @noRd
+StatComfortGivoniZone <- ggplot2::ggproto(
+    "StatComfortGivoniZone", ggplot2::Stat,
+
+    setup_data = function(self, data, params) {
+        init_stat_data(data, params)
+    },
+
+    default_aes = ggplot2::aes(),
+
+    dropped_aes = c("pres", "units"),
+
+    extra_params = c(
+        "na.rm", "strategy", "zone", "units", "pres", "mollier",
+        "tdb_lim", "hum_lim"
+    ),
+
+    compute_panel = function(self, data, scales,
+                             strategy = comfort_strategy_givoni(),
+                             zone = NULL, units, pres, mollier = FALSE,
+                             tdb_lim = NULL, hum_lim = NULL,
+                             na.rm = FALSE) {
+        units <- comfort_stat_units(data, units)
+        pres <- comfort_stat_pressure(data, pres)
+        comfort_givoni_zone_data(
+            strategy, zone, units, pres, mollier, tdb_lim, hum_lim
+        )
+    }
+)
+
+#' @noRd
+StatComfortGivoniLabel <- ggplot2::ggproto(
+    "StatComfortGivoniLabel", ggplot2::Stat,
+
+    setup_data = function(self, data, params) {
+        init_stat_data(data, params)
+    },
+
+    default_aes = ggplot2::aes(),
+
+    dropped_aes = c("pres", "units"),
+
+    extra_params = c(
+        "na.rm", "strategy", "label_type", "units", "pres", "mollier",
+        "tdb_lim", "hum_lim"
+    ),
+
+    compute_panel = function(self, data, scales,
+                             strategy = comfort_strategy_givoni(),
+                             label_type = "point",
+                             units, pres, mollier = FALSE,
+                             tdb_lim = NULL, hum_lim = NULL,
+                             na.rm = FALSE) {
+        units <- comfort_stat_units(data, units)
+        pres <- comfort_stat_pressure(data, pres)
+        comfort_givoni_label_data(
+            strategy, label_type, units, pres, mollier, tdb_lim, hum_lim
+        )
+    }
+)
+
+#' @noRd
+StatComfortGivoniMeanOutdoor <- ggplot2::ggproto(
+    "StatComfortGivoniMeanOutdoor", ggplot2::Stat,
+
+    setup_data = function(self, data, params) {
+        init_stat_data(data, params)
+    },
+
+    default_aes = ggplot2::aes(),
+
+    dropped_aes = c("pres", "units"),
+
+    extra_params = c(
+        "na.rm", "strategy", "units", "pres", "mollier",
+        "tdb_lim", "hum_lim"
+    ),
+
+    compute_panel = function(self, data, scales,
+                             strategy = comfort_strategy_givoni(),
+                             units, pres, mollier = FALSE,
+                             tdb_lim = NULL, hum_lim = NULL,
+                             na.rm = FALSE) {
+        units <- comfort_stat_units(data, units)
+        pres <- comfort_stat_pressure(data, pres)
+        comfort_givoni_mean_outdoor_data(
+            strategy, units, pres, mollier, tdb_lim, hum_lim
+        )
+    }
+)
+
+#' @noRd
+StatComfortGivoniMeanOutdoorLabel <- ggplot2::ggproto(
+    "StatComfortGivoniMeanOutdoorLabel", ggplot2::Stat,
+
+    setup_data = function(self, data, params) {
+        init_stat_data(data, params)
+    },
+
+    default_aes = ggplot2::aes(),
+
+    dropped_aes = c("pres", "units"),
+
+    extra_params = c(
+        "na.rm", "strategy", "units", "pres", "mollier",
+        "tdb_lim", "hum_lim"
+    ),
+
+    compute_panel = function(self, data, scales,
+                             strategy = comfort_strategy_givoni(),
+                             units, pres, mollier = FALSE,
+                             tdb_lim = NULL, hum_lim = NULL,
+                             na.rm = FALSE) {
+        units <- comfort_stat_units(data, units)
+        pres <- comfort_stat_pressure(data, pres)
+        comfort_givoni_mean_outdoor_label_data(
+            strategy, units, pres, mollier, tdb_lim, hum_lim
+        )
+    }
+)
+
+#' @noRd
 StatComfortState <- ggplot2::ggproto(
     "StatComfortState", ggplot2::Stat,
 
@@ -954,7 +1510,7 @@ comfort_model_type <- function(model) {
 
 comfort_check_model <- function(model) {
     if (!inherits(model, "PsyComfortModel") ||
-            !model$type %in% c("pmv", "set", "adaptive")) {
+            !model$type %in% c("pmv", "set", "adaptive", "heat_index")) {
         stop("`model` must be created by comfort_model_*().", call. = FALSE)
     }
     invisible(model)
@@ -987,6 +1543,15 @@ comfort_check_standard <- function(standard) {
     standard
 }
 
+comfort_check_givoni_strategy <- function(strategy) {
+    if (!inherits(strategy, "PsyComfortGivoniStrategy")) {
+        stop("`strategy` must be created by comfort_strategy_givoni().",
+            call. = FALSE)
+    }
+    strategy$units <- match.arg(strategy$units, c("SI", "IP"))
+    strategy
+}
+
 comfort_check_breaks <- function(x, name, n_min = 2L) {
     x <- sort(unique(as.numeric(x)))
     if (length(x) < n_min || any(!is.finite(x))) {
@@ -1001,6 +1566,18 @@ comfort_layer_data <- function(data) {
         return(new_data_frame(list(.comfort = 1), n = 1L))
     }
     data
+}
+
+comfort_computed_xy_mapping <- function(mapping = NULL) {
+    x <- y <- NULL
+    xy <- ggplot2::aes(
+        x = ggplot2::after_stat(x),
+        y = ggplot2::after_stat(y)
+    )
+    if (is.null(mapping)) {
+        return(xy)
+    }
+    utils::modifyList(mapping, xy)
 }
 
 comfort_recycle <- function(...) {
@@ -1284,6 +1861,159 @@ comfort_p_sat_torr <- function(tdb) {
     exp(18.6686 - 4030.183 / (tdb + 235))
 }
 
+comfort_heat_index_f <- function(tdb_f, rh, solar_exposure) {
+    hi <- tdb_f
+    valid <- is.finite(tdb_f) & is.finite(rh) & is.finite(solar_exposure)
+    warm <- valid & tdb_f > 40
+    if (any(warm)) {
+        simple <- 0.5 * (
+            tdb_f[warm] + (61 + 1.2 * (tdb_f[warm] - 68) + 0.094 * rh[warm])
+        )
+        idx <- which(warm)
+        hi[idx] <- simple
+
+        roth <- idx[simple > 79]
+        if (length(roth)) {
+            t <- tdb_f[roth]
+            r <- rh[roth]
+            value <- 2.04901523 * t - 42.379 + 10.14333127 * r -
+                0.22475541 * t * r - 0.00683783 * t^2 -
+                0.05481717 * r^2 + 0.00122874 * t^2 * r +
+                0.00085282 * t * r^2 - 0.00000199 * t^2 * r^2
+
+            low_rh <- r <= 13 & t >= 80 & t <= 112
+            if (any(low_rh)) {
+                value[low_rh] <- value[low_rh] -
+                    (13 - r[low_rh]) / 4 *
+                    sqrt((17 - abs(t[low_rh] - 95)) / 17)
+            }
+            high_rh <- r > 85 & t >= 80 & t <= 87
+            if (any(high_rh)) {
+                value[high_rh] <- value[high_rh] +
+                    (r[high_rh] - 85) / 10 * ((87 - t[high_rh]) / 5)
+            }
+            hi[roth] <- value
+        }
+    }
+
+    hi[valid] <- hi[valid] + 8 * solar_exposure[valid]
+    hi[!valid] <- NA_real_
+    hi
+}
+
+comfort_heat_index_thresholds <- function(units) {
+    units <- match.arg(units, c("SI", "IP"))
+    if (units == "IP") {
+        c(80, 90, 103, 125)
+    } else {
+        get_c_from_f(c(80, 90, 103, 125))
+    }
+}
+
+comfort_heat_index_category <- function(heat_index_f) {
+    labels <- c(
+        "none", "caution", "extreme caution", "danger", "extreme danger"
+    )
+    id <- findInterval(heat_index_f, c(80, 90, 103, 125))
+    id[!is.finite(heat_index_f)] <- NA_integer_
+    category <- labels[id + 1L]
+    category[is.na(id)] <- NA_character_
+    new_data_frame(list(category = category, category_id = id))
+}
+
+comfort_heat_index_zone_specs <- function() {
+    list(
+        list(id = 1L, label = "CAUTION", fill = "#FFE66D"),
+        list(id = 2L, label = "EXTREME CAUTION", fill = "#FFB347"),
+        list(id = 3L, label = "DANGER", fill = "#FF7043"),
+        list(id = 4L, label = "EXTREME DANGER", fill = "#D73027")
+    )
+}
+
+comfort_heat_index_zone_data <- function(model, category_id, n, units, pres,
+                                         mollier, tdb_lim, hum_lim) {
+    thresholds <- comfort_heat_index_thresholds(units)
+    if (!category_id %in% seq_along(thresholds)) {
+        return(comfort_empty_band())
+    }
+
+    m <- comfort_grid_matrix(
+        model, "heat_index", n, units, pres, tdb_lim, hum_lim,
+        at = "nodes", boundary = "saturation"
+    )
+    z_range <- range(m$value, finite = TRUE)
+    if (!all(is.finite(z_range))) {
+        return(comfort_empty_band())
+    }
+
+    low <- thresholds[[category_id]]
+    high <- if (category_id < length(thresholds)) {
+        thresholds[[category_id + 1L]]
+    } else {
+        max(z_range[[2L]], low) + max(1, abs(low)) * 1e-6
+    }
+    if (high <= low || z_range[[2L]] < low) {
+        return(comfort_empty_band())
+    }
+    high <- min(high, z_range[[2L]] + max(1, abs(z_range[[2L]])) * 1e-6)
+
+    bands <- isoband::isobands(
+        x = m$tdb, y = m$humratio, z = t(m$value),
+        levels_low = low, levels_high = high
+    )
+    out <- comfort_isoband_data(
+        bands, low, high, m$metric, mollier, geom = "polygon"
+    )
+    if (nrow(out)) {
+        out$category_id <- category_id
+        out$category <- comfort_heat_index_zone_specs()[[category_id]]$label
+    }
+    out
+}
+
+comfort_heat_index_label_data <- function(model, n, units, pres, mollier,
+                                          tdb_lim, hum_lim) {
+    m <- comfort_grid_matrix(
+        model, "heat_index", n, units, pres, tdb_lim, hum_lim,
+        at = "centers", boundary = "saturation"
+    )
+    specs <- comfort_heat_index_zone_specs()
+    thresholds <- comfort_heat_index_thresholds(units)
+    labels <- vector("list", length(specs))
+    values <- as.vector(m$value)
+    grid <- expand.grid(tdb = m$tdb, humratio = m$humratio)
+    for (i in seq_along(specs)) {
+        low <- thresholds[[i]]
+        high <- if (i < length(thresholds)) thresholds[[i + 1L]] else Inf
+        target <- if (is.finite(high)) (low + high) / 2 else low + 4
+        keep <- is.finite(values) & values >= low & values < high
+        if (!any(keep)) {
+            next
+        }
+        idx <- which(keep)[which.min(abs(values[keep] - target))]
+        labels[[i]] <- new_data_frame(list(
+            tdb = grid$tdb[[idx]],
+            humratio = grid$humratio[[idx]],
+            label = specs[[i]]$label,
+            category_id = specs[[i]]$id,
+            category = specs[[i]]$label,
+            angle = 0,
+            group = i
+        ))
+    }
+    labels <- labels[!vapply(labels, is.null, logical(1L))]
+    if (!length(labels)) {
+        return(new_data_frame(list(
+            tdb = numeric(), humratio = numeric(), x = numeric(), y = numeric(),
+            label = character(), category_id = integer(), category = character(),
+            angle = numeric(), group = integer()
+        )))
+    }
+    out <- do.call(rbind, labels)
+    row.names(out) <- NULL
+    psychro_output_xy(out, out$tdb, out$humratio, mollier)
+}
+
 comfort_adaptive_ashrae <- function(tdb, tr, t_running, v, category,
                                     limit_inputs, round_output) {
     category <- comfort_adaptive_category(category, c("80", "90"), "80")
@@ -1427,7 +2157,8 @@ comfort_default_n <- function(model, n = NULL) {
     switch(comfort_model_type(model),
         pmv = c(360L, 220L),
         set = c(80L, 50L),
-        adaptive = c(240L, 160L)
+        adaptive = c(240L, 160L),
+        heat_index = c(160L, 100L)
     )
 }
 
@@ -2357,7 +3088,7 @@ comfort_band_data <- function(model, metric, levels, n, units, pres, mollier,
         model, metric, n, units, pres, tdb_lim, hum_lim,
         at = "nodes", boundary = "saturation"
     )
-    breaks <- comfort_band_breaks(m$metric, m$value, levels)
+    breaks <- comfort_band_breaks(m$metric, m$value, levels, units)
     if (length(breaks) < 2L) {
         return(comfort_empty_band())
     }
@@ -2440,7 +3171,7 @@ comfort_contour_data <- function(model, metric, breaks, n, units, pres,
                 call. = FALSE)
         }
         if (is.null(breaks)) {
-            breaks <- comfort_contour_breaks("pmv", numeric())
+        breaks <- comfort_contour_breaks("pmv", numeric(), units)
         }
         out <- comfort_pmv_curve_data(
             model, breaks, n[[1L]], units, pres, mollier, tdb_lim, hum_lim,
@@ -2459,7 +3190,7 @@ comfort_contour_data <- function(model, metric, breaks, n, units, pres,
     )
     z <- m$value
     if (is.null(breaks)) {
-        breaks <- comfort_contour_breaks(m$metric, z)
+        breaks <- comfort_contour_breaks(m$metric, z, units)
     }
     breaks <- breaks[is.finite(breaks)]
     if (!length(breaks)) {
@@ -2561,14 +3292,17 @@ comfort_contour_label_params <- function(params, label_size = NULL) {
     params
 }
 
-comfort_contour_breaks <- function(metric, z) {
+comfort_contour_breaks <- function(metric, z, units = "SI") {
     if (metric == "pmv") {
         return(seq(-3, 3, by = 0.5))
+    }
+    if (metric == "heat_index") {
+        return(comfort_heat_index_thresholds(units))
     }
     pretty(range(z, finite = TRUE), n = 8)
 }
 
-comfort_band_breaks <- function(metric, z, levels = NULL) {
+comfort_band_breaks <- function(metric, z, levels = NULL, units = "SI") {
     if (identical(metric, "acceptability") && is.null(levels)) {
         return(c(-0.5, 0.5, 1.5))
     }
@@ -2576,6 +3310,22 @@ comfort_band_breaks <- function(metric, z, levels = NULL) {
     if (!is.null(levels) && length(levels) > 1L) {
         breaks <- sort(unique(as.numeric(levels)))
         return(breaks[is.finite(breaks)])
+    }
+
+    if (identical(metric, "heat_index") && is.null(levels)) {
+        z_range <- range(z, finite = TRUE)
+        if (!all(is.finite(z_range))) {
+            return(numeric())
+        }
+        eps <- max(1, abs(z_range)) * 1e-9
+        breaks <- c(
+            z_range[[1L]] - eps,
+            comfort_heat_index_thresholds(units),
+            z_range[[2L]] + eps
+        )
+        breaks <- sort(unique(breaks[breaks > z_range[[1L]] - 2 * eps &
+            breaks < z_range[[2L]] + 2 * eps]))
+        return(breaks)
     }
 
     n <- if (is.null(levels)) 64L else as.integer(levels[[1L]])
@@ -2652,7 +3402,7 @@ comfort_zone_data <- function(model, metric, range, n, gap, units, pres,
     }
 
     metric <- comfort_model_metric(model, metric)
-    range <- comfort_zone_range(model, metric, range)
+    range <- comfort_zone_range(model, metric, range, units)
     if (comfort_model_type(model) == "pmv" && metric == "pmv") {
         return(comfort_pmv_band_data(
             model, range, n[[1L]], units, pres, mollier, tdb_lim, hum_lim
@@ -2662,7 +3412,7 @@ comfort_zone_data <- function(model, metric, range, n, gap, units, pres,
         tdb_lim, hum_lim)
 }
 
-comfort_zone_range <- function(model, metric, range) {
+comfort_zone_range <- function(model, metric, range, units = "SI") {
     if (!is.null(range)) {
         if (!is.numeric(range) || length(range) != 2L ||
                 any(!is.finite(range)) || range[[1L]] >= range[[2L]]) {
@@ -2673,6 +3423,7 @@ comfort_zone_range <- function(model, metric, range) {
     switch(metric,
         pmv = c(-0.5, 0.5),
         set = c(22.2, 25.6),
+        heat_index = comfort_heat_index_thresholds(units)[c(1L, 2L)],
         stop("A comfort `range` is required for this metric.", call. = FALSE)
     )
 }
@@ -2712,6 +3463,514 @@ comfort_zone_adaptive <- function(model, units, mollier, tdb_lim, hum_lim) {
     psychro_output_xy(out, out$tdb, out$humratio, mollier)
 }
 
+comfort_givoni_base_temp <- function(strategy) {
+    mean_outdoor_si <- comfort_to_si_temp(strategy$mean_outdoor, strategy$units)
+    round(17.6 + 0.31 * mean_outdoor_si - 3.5, 1L)
+}
+
+comfort_givoni_zone_specs <- function() {
+    new_data_frame(list(
+        zone = c(
+            "comfort", "natural_ventilation", "internal_gains",
+            "passive_solar_heating", "active_solar_heating",
+            "evaporative_cooling", "mass_cooling",
+            "mass_cooling_night_ventilation", "winter",
+            "air_conditioning", "air_conditioning_dehumidification",
+            "humidification"
+        ),
+        label = c(
+            "COMFORT\nZONE", "NATURAL VENTILATION", "INTERNAL\nGAINS",
+            "PASSIVE SOLAR\nHEATING", "ACTIVE\nSOLAR\nHEATING",
+            "EVAPORATIVE COOLING", "MASS COOLING",
+            "MASS COOLING &\nNIGHT VENTILATION", "WINTER",
+            "AIR-CONDITIONING", "AIR-CONDITIONING &\nDEHUMIDIFICATION",
+            "HUMIDIFICATION"
+        ),
+        fill = c(
+            "#5BD96A", rep(NA_character_, 11L)
+        ),
+        linetype = c(
+            "solid", "solid", "solid", "solid", "solid", "solid",
+            "solid", "solid", "dashed", "longdash", "longdash", "solid"
+        ),
+        filled = c(TRUE, rep(FALSE, 11L)),
+        draw_zone = c(
+            TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
+            FALSE, FALSE
+        )
+    ))
+}
+
+comfort_givoni_empty_zone <- function() {
+    new_data_frame(list(
+        tdb = numeric(), humratio = numeric(), x = numeric(), y = numeric(),
+        zone = character(), label = character(), group = integer(),
+        subgroup = integer()
+    ))
+}
+
+comfort_givoni_empty_label <- function() {
+    new_data_frame(list(
+        tdb = numeric(), humratio = numeric(), x = numeric(), y = numeric(),
+        zone = character(), label = character(), angle = numeric(),
+        hjust = numeric(), vjust = numeric(), group = integer()
+    ))
+}
+
+comfort_givoni_humratio <- function(tdb_si, rh, pressure_pa) {
+    with_units("SI", psychrolib::GetHumRatioFromRelHum(tdb_si, rh / 100, pressure_pa))
+}
+
+comfort_givoni_hum_gkg <- function(tdb_si, rh, pressure_pa) {
+    comfort_givoni_humratio(tdb_si, rh, pressure_pa) * 1000
+}
+
+comfort_givoni_point <- function(tdb_si, hum_gkg) {
+    new_data_frame(list(tdb_si = tdb_si, humratio = hum_gkg / 1000))
+}
+
+comfort_givoni_rh_path <- function(t0, rh0, t1, rh1, pressure_pa,
+                                   max_gkg = Inf, n = NULL) {
+    if (is.null(n)) {
+        n <- max(8L, ceiling(abs(t1 - t0) * 4L) + 1L)
+    }
+    tdb <- seq(t0, t1, length.out = n)
+    rh <- seq(rh0, rh1, length.out = n)
+    hum_gkg <- pmin(
+        comfort_givoni_hum_gkg(tdb, rh, pressure_pa),
+        max_gkg
+    )
+    new_data_frame(list(tdb_si = tdb, humratio = hum_gkg / 1000))
+}
+
+comfort_givoni_polygon <- function(zone, base, pressure_pa, tdb_max_si,
+                                   hum_min_gkg) {
+    if (zone %in% c("air_conditioning_dehumidification", "humidification")) {
+        return(comfort_givoni_point(numeric(), numeric()))
+    }
+    hum20 <- function(tdb) comfort_givoni_hum_gkg(tdb, 20, pressure_pa)
+    hum30 <- function(tdb) comfort_givoni_hum_gkg(tdb, 30, pressure_pa)
+    hum50 <- function(tdb) comfort_givoni_hum_gkg(tdb, 50, pressure_pa)
+    hum80 <- function(tdb) comfort_givoni_hum_gkg(tdb, 80, pressure_pa)
+    hum100 <- function(tdb) comfort_givoni_hum_gkg(tdb, 100, pressure_pa)
+    max_comfort_gkg <- min(16, hum80(base + 5))
+    bottom20 <- hum20(base)
+    evap_left <- base + 2.4528 * (bottom20 - hum_min_gkg)
+    right_air <- max(tdb_max_si, base + 25.5)
+
+    parts <- switch(zone,
+        comfort = list(
+            comfort_givoni_rh_path(base, 80, base + 5, 80, pressure_pa, 16),
+            comfort_givoni_point(base + 7, min(max_comfort_gkg, hum50(base + 7))),
+            comfort_givoni_point(base + 7, hum20(base + 7)),
+            comfort_givoni_rh_path(base + 7, 20, base, 20, pressure_pa),
+            comfort_givoni_point(base, hum80(base))
+        ),
+        natural_ventilation = list(
+            comfort_givoni_rh_path(base, 100, base + 7, 100, pressure_pa),
+            comfort_givoni_point(base + 12, hum50(base + 12)),
+            comfort_givoni_point(base + 12, hum20(base + 12)),
+            comfort_givoni_rh_path(base + 12, 20, base, 20, pressure_pa),
+            comfort_givoni_point(base, hum100(base))
+        ),
+        internal_gains = list(
+            comfort_givoni_rh_path(base - 2.5, 20, base - 7, 20, pressure_pa),
+            comfort_givoni_point(base - 7.5, hum20(base - 7.5)),
+            comfort_givoni_point(base - 7.5, min(hum80(base - 7.5), 16)),
+            comfort_givoni_rh_path(base - 7.5, 80, base - 2.5, 80,
+                pressure_pa, 16)
+        ),
+        passive_solar_heating = list(
+            comfort_givoni_point(base + 3.5, 0),
+            comfort_givoni_point(base - 12, 0),
+            comfort_givoni_point(base - 12, hum100(base - 12)),
+            comfort_givoni_rh_path(base - 12, 100, base - 1, 100, pressure_pa)
+        ),
+        active_solar_heating = list(
+            comfort_givoni_point(base - 13, 0),
+            comfort_givoni_point(base - 16, 0),
+            comfort_givoni_point(base - 16, hum100(base - 16)),
+            comfort_givoni_rh_path(base - 16, 100, base - 13, 100, pressure_pa)
+        ),
+        evaporative_cooling = list(
+            comfort_givoni_point(base + 5, max_comfort_gkg),
+            comfort_givoni_point(base + 16, min(max_comfort_gkg, hum30(base + 16))),
+            comfort_givoni_point(base + 19, min(max_comfort_gkg, hum20(base + 19))),
+            comfort_givoni_point(base + 21, min(max_comfort_gkg,
+                comfort_givoni_hum_gkg(base + 21, 10, pressure_pa))),
+            comfort_givoni_point(base + 21, 0),
+            comfort_givoni_point(evap_left, 0),
+            comfort_givoni_point(base, bottom20)
+        ),
+        mass_cooling = list(
+            comfort_givoni_point(base + 5, max_comfort_gkg),
+            comfort_givoni_point(base + 13, max_comfort_gkg),
+            comfort_givoni_point(base + 17, min(max_comfort_gkg, hum30(base + 17))),
+            comfort_givoni_point(base + 17, min(max_comfort_gkg, hum20(base))),
+            comfort_givoni_point(base, min(max_comfort_gkg, hum20(base)))
+        ),
+        mass_cooling_night_ventilation = list(
+            comfort_givoni_point(base + 13, max_comfort_gkg),
+            comfort_givoni_point(base + 20, max_comfort_gkg),
+            comfort_givoni_point(base + 24, min(max_comfort_gkg, hum20(base + 24))),
+            comfort_givoni_point(base + 24, min(max_comfort_gkg, hum20(base))),
+            comfort_givoni_point(base, min(max_comfort_gkg, hum20(base)))
+        ),
+        winter = list(
+            comfort_givoni_rh_path(base - 0.5, 20, base - 2, 20, pressure_pa),
+            comfort_givoni_point(base - 2, hum20(base - 2)),
+            comfort_givoni_point(base - 2, min(hum80(base - 2), 16)),
+            comfort_givoni_rh_path(base - 2, 80, base - 0.5, 80,
+                pressure_pa, 16)
+        ),
+        air_conditioning = list(
+            comfort_givoni_point(base + 20, max_comfort_gkg),
+            comfort_givoni_point(right_air, max_comfort_gkg),
+            comfort_givoni_point(right_air, 0),
+            comfort_givoni_point(base + 21, 0)
+        ),
+        air_conditioning_dehumidification = list(
+            comfort_givoni_point(base + 20, max_comfort_gkg),
+            comfort_givoni_point(right_air, max_comfort_gkg),
+            comfort_givoni_point(right_air, 30),
+            comfort_givoni_point(base + 20, 30)
+        ),
+        humidification = list(
+            comfort_givoni_point(base - 12, 0),
+            comfort_givoni_point(base, 0),
+            comfort_givoni_point(base, hum20(base)),
+            comfort_givoni_point(base - 12, hum20(base - 12))
+        ),
+        stop("Unknown Givoni zone: ", zone, call. = FALSE)
+    )
+
+    out <- do.call(rbind, parts)
+    row.names(out) <- NULL
+    out
+}
+
+comfort_givoni_zone_data <- function(strategy, zone, units, pres, mollier,
+                                     tdb_lim, hum_lim) {
+    strategy <- comfort_check_givoni_strategy(strategy)
+    specs <- comfort_givoni_zone_specs()
+    if (is.null(zone)) {
+        zone <- specs$zone[specs$draw_zone]
+    }
+    zone <- match.arg(zone, specs$zone, several.ok = TRUE)
+    lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
+    pressure_pa <- comfort_pressure_pa(pres, units)
+    base <- comfort_givoni_base_temp(strategy)
+    tdb_max_si <- comfort_to_si_temp(lim$tdb[[2L]], units)
+    hum_min_gkg <- narrow_hum(lim$hum[[1L]], units) * 1000
+
+    pieces <- vector("list", length(zone))
+    for (i in seq_along(zone)) {
+        poly <- comfort_givoni_polygon(zone[[i]], base, pressure_pa,
+            tdb_max_si, hum_min_gkg)
+        if (!nrow(poly)) {
+            next
+        }
+        spec <- specs[match(zone[[i]], specs$zone), , drop = FALSE]
+        pieces[[i]] <- new_data_frame(list(
+            tdb = comfort_from_si_temp(poly$tdb_si, units),
+            humratio = poly$humratio,
+            zone = spec$zone,
+            label = spec$label,
+            group = i,
+            subgroup = 1L
+        ))
+    }
+    pieces <- pieces[!vapply(pieces, is.null, logical(1L))]
+    if (!length(pieces)) {
+        return(comfort_givoni_empty_zone())
+    }
+    out <- do.call(rbind, pieces)
+    row.names(out) <- NULL
+    out <- comfort_givoni_clip_humratio(out, lim$hum, units)
+    psychro_output_xy(out, out$tdb, out$humratio, mollier)
+}
+
+comfort_givoni_label_path_entry <- function(zone, label, path,
+                                            hjust = 0.5, vjust = 0.5,
+                                            group = 1L) {
+    if (!nrow(path)) {
+        return(comfort_givoni_empty_label())
+    }
+    new_data_frame(list(
+        tdb_si = path$tdb_si,
+        humratio = path$humratio,
+        zone = zone,
+        label = label,
+        angle = NA_real_,
+        hjust = hjust,
+        vjust = vjust,
+        group = group
+    ))
+}
+
+comfort_givoni_label_path_specs <- function(base, pressure_pa, tdb_max_si,
+                                            hum_min_gkg) {
+    max_comfort_gkg <- min(16,
+        comfort_givoni_hum_gkg(base + 5, 80, pressure_pa)
+    )
+    hum20 <- function(tdb) comfort_givoni_hum_gkg(tdb, 20, pressure_pa)
+    hum30 <- function(tdb) comfort_givoni_hum_gkg(tdb, 30, pressure_pa)
+    hum80 <- function(tdb) comfort_givoni_hum_gkg(tdb, 80, pressure_pa)
+    hum100 <- function(tdb) comfort_givoni_hum_gkg(tdb, 100, pressure_pa)
+    evap_left <- base + 2.4528 * (hum20(base) - hum_min_gkg)
+    right_air <- max(tdb_max_si, base + 25.5)
+    air_label_x <- min(right_air - 1.0, tdb_max_si - 0.8)
+    air_label_x <- max(air_label_x, base + 21)
+
+    paths <- list(
+        comfort_givoni_label_path_entry(
+            "natural_ventilation", "NATURAL VENTILATION",
+            comfort_givoni_rh_path(base, 100, base + 7, 100, pressure_pa),
+            hjust = 0.5, vjust = 1.8, group = 1L
+        ),
+        comfort_givoni_label_path_entry(
+            "internal_gains", "INTERNAL GAINS",
+            rbind(
+                comfort_givoni_point(base - 7.5,
+                    min(hum80(base - 7.5), 16)),
+                comfort_givoni_point(base - 7.5, hum20(base - 7.5))
+            ),
+            hjust = 0.5, vjust = -0.25, group = 2L
+        ),
+        comfort_givoni_label_path_entry(
+            "passive_solar_heating", "PASSIVE SOLAR",
+            rbind(
+                comfort_givoni_point(base - 12, hum100(base - 12)),
+                comfort_givoni_point(base - 12, 0)
+            ),
+            hjust = 0.5, vjust = -0.25, group = 3L
+        ),
+        comfort_givoni_label_path_entry(
+            "active_solar_heating", "ACTIVE SOLAR",
+            rbind(
+                comfort_givoni_point(base - 16, hum100(base - 16)),
+                comfort_givoni_point(base - 16, 0)
+            ),
+            hjust = 0.5, vjust = -0.25, group = 4L
+        ),
+        comfort_givoni_label_path_entry(
+            "evaporative_cooling", "EVAPORATIVE COOLING",
+            rbind(
+                comfort_givoni_point(evap_left, 0),
+                comfort_givoni_point(base + 21, 0)
+            ),
+            hjust = 0.68, vjust = -0.35, group = 5L
+        ),
+        comfort_givoni_label_path_entry(
+            "mass_cooling", "MASS COOLING",
+            rbind(
+                comfort_givoni_point(base + 17,
+                    min(max_comfort_gkg, hum30(base + 17))),
+                comfort_givoni_point(base + 17,
+                    min(max_comfort_gkg, hum20(base)))
+            ),
+            hjust = 0.48, vjust = -0.25, group = 6L
+        ),
+        comfort_givoni_label_path_entry(
+            "mass_cooling_night_ventilation",
+            "MASS COOLING &\nNIGHT VENTILATION",
+            rbind(
+                comfort_givoni_point(base + 24,
+                    min(max_comfort_gkg, hum20(base + 24))),
+                comfort_givoni_point(base + 24,
+                    min(max_comfort_gkg, hum20(base)))
+            ),
+            hjust = 0.5, vjust = -0.25, group = 7L
+        ),
+        comfort_givoni_label_path_entry(
+            "winter", "WINTER",
+            rbind(
+                comfort_givoni_point(base - 2, min(hum80(base - 2), 16)),
+                comfort_givoni_point(base - 2, hum20(base - 2))
+            ),
+            hjust = 0.5, vjust = -0.25, group = 8L
+        ),
+        comfort_givoni_label_path_entry(
+            "air_conditioning", "AIR-CONDITIONING",
+            rbind(
+                comfort_givoni_point(air_label_x, max_comfort_gkg),
+                comfort_givoni_point(air_label_x, 0)
+            ),
+            hjust = 0.5, vjust = -0.25, group = 9L
+        ),
+        comfort_givoni_label_path_entry(
+            "humidification", "HUMIDIFICATION",
+            rbind(
+                comfort_givoni_point(base - 12, 0),
+                comfort_givoni_point(base, 0)
+            ),
+            hjust = 0.5, vjust = -0.35, group = 10L
+        )
+    )
+    out <- do.call(rbind, paths)
+    row.names(out) <- NULL
+    out
+}
+
+comfort_givoni_label_point_specs <- function(base, pressure_pa, tdb_max_si,
+                                             hum_min_gkg = 0) {
+    max_comfort_gkg <- min(16,
+        comfort_givoni_hum_gkg(base + 5, 80, pressure_pa)
+    )
+    heating_x <- base - 18
+    heating_hum_gkg <- mean(c(
+        hum_min_gkg,
+        comfort_givoni_hum_gkg(heating_x, 100, pressure_pa)
+    ))
+    new_data_frame(list(
+        zone = c(
+            "comfort", "heating", "air_conditioning_dehumidification"
+        ),
+        label = c(
+            "COMFORT\nZONE", "HEATING",
+            "AIR-CONDITIONING &\nDEHUMIDIFICATION"
+        ),
+        tdb_si = c(
+            base + 3.5, base - 18, base + 19
+        ),
+        hum_gkg = c(
+            max_comfort_gkg * 0.55, heating_hum_gkg, max_comfort_gkg + 6
+        ),
+        angle = c(0, 270, 0),
+        hjust = c(0.5, 0.5, 0.5),
+        vjust = c(0.5, 0.5, 0.5)
+    ))
+}
+
+comfort_givoni_label_data <- function(strategy, label_type, units, pres,
+                                      mollier, tdb_lim, hum_lim) {
+    label_type <- match.arg(label_type, c("path", "point"))
+    strategy <- comfort_check_givoni_strategy(strategy)
+    lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
+    pressure_pa <- comfort_pressure_pa(pres, units)
+    base <- comfort_givoni_base_temp(strategy)
+    tdb_max_si <- comfort_to_si_temp(lim$tdb[[2L]], units)
+    hum_min_gkg <- narrow_hum(lim$hum[[1L]], units) * 1000
+
+    if (label_type == "path") {
+        labels <- comfort_givoni_label_path_specs(
+            base, pressure_pa, tdb_max_si, hum_min_gkg
+        )
+        out <- new_data_frame(list(
+            tdb = comfort_from_si_temp(labels$tdb_si, units),
+            humratio = labels$humratio,
+            zone = labels$zone,
+            label = labels$label,
+            angle = labels$angle,
+            hjust = labels$hjust,
+            vjust = labels$vjust,
+            group = labels$group
+        ))
+        out <- comfort_givoni_clip_humratio(out, lim$hum, units)
+        return(psychro_output_xy(out, out$tdb, out$humratio, mollier))
+    }
+
+    labels <- comfort_givoni_label_point_specs(
+        base, pressure_pa, tdb_max_si, hum_min_gkg
+    )
+    out <- new_data_frame(list(
+        tdb = comfort_from_si_temp(labels$tdb_si, units),
+        humratio = labels$hum_gkg / 1000,
+        zone = labels$zone,
+        label = labels$label,
+        angle = labels$angle,
+        hjust = labels$hjust,
+        vjust = labels$vjust,
+        group = seq_len(nrow(labels))
+    ))
+    out <- comfort_givoni_clip_humratio(out, lim$hum, units)
+    psychro_output_xy(out, out$tdb, out$humratio, mollier)
+}
+
+comfort_givoni_clip_humratio <- function(data, hum_lim, units) {
+    hum_lim <- narrow_hum(hum_lim, units)
+    data$humratio <- pmin(pmax(data$humratio, hum_lim[[1L]]), hum_lim[[2L]])
+    data
+}
+
+comfort_givoni_mean_outdoor_label_angle <- function(mollier) {
+    if (isTRUE(mollier)) 0 else 270
+}
+
+comfort_givoni_mean_outdoor_label_vjust <- function(mollier) {
+    if (isTRUE(mollier)) 1.25 else -0.25
+}
+
+comfort_givoni_mean_outdoor_marker <- function(mean_si, pressure_pa,
+                                               hum_lim_narrow) {
+    hum_sat <- comfort_givoni_humratio(mean_si, 100, pressure_pa)
+    if (!is.finite(hum_sat)) {
+        return(NULL)
+    }
+    hum_extension <- max(0.0015, diff(hum_lim_narrow) * 0.08)
+    hum_top <- min(hum_lim_narrow[[2L]], hum_sat + hum_extension)
+    if (!is.finite(hum_top) || hum_top <= hum_lim_narrow[[1L]]) {
+        return(NULL)
+    }
+    hum_label <- min(hum_top, hum_sat + hum_extension * 0.65)
+    hum_label <- pmax(hum_lim_narrow[[1L]], hum_label)
+
+    list(saturation = hum_sat, top = hum_top, label = hum_label)
+}
+
+comfort_givoni_mean_outdoor_data <- function(strategy, units, pres, mollier,
+                                             tdb_lim, hum_lim) {
+    strategy <- comfort_check_givoni_strategy(strategy)
+    lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
+    pressure_pa <- comfort_pressure_pa(pres, units)
+    mean_si <- comfort_to_si_temp(strategy$mean_outdoor, strategy$units)
+    hum_lim_narrow <- narrow_hum(lim$hum, units)
+    marker <- comfort_givoni_mean_outdoor_marker(
+        mean_si, pressure_pa, hum_lim_narrow
+    )
+    if (is.null(marker)) {
+        return(comfort_empty_contour())
+    }
+    out <- new_data_frame(list(
+        tdb = comfort_from_si_temp(c(mean_si, mean_si), units),
+        humratio = c(hum_lim_narrow[[1L]], marker$top),
+        level = mean_si,
+        group = 1L,
+        metric = "givoni_mean_outdoor"
+    ))
+    psychro_output_xy(out, out$tdb, out$humratio, mollier)
+}
+
+comfort_givoni_mean_outdoor_label_data <- function(strategy, units, pres,
+                                                   mollier, tdb_lim,
+                                                   hum_lim) {
+    strategy <- comfort_check_givoni_strategy(strategy)
+    lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
+    pressure_pa <- comfort_pressure_pa(pres, units)
+    mean_si <- comfort_to_si_temp(strategy$mean_outdoor, strategy$units)
+    hum_lim_narrow <- narrow_hum(lim$hum, units)
+    marker <- comfort_givoni_mean_outdoor_marker(
+        mean_si, pressure_pa, hum_lim_narrow
+    )
+    if (is.null(marker)) {
+        return(comfort_givoni_empty_label())
+    }
+
+    label_temp <- comfort_from_si_temp(mean_si, units)
+    unit_label <- if (units == "IP") "\u00b0F" else "\u00b0C"
+    out <- new_data_frame(list(
+        tdb = comfort_from_si_temp(mean_si, units),
+        humratio = marker$label,
+        zone = "mean_outdoor",
+        label = sprintf("%.1f %s", label_temp, unit_label),
+        angle = comfort_givoni_mean_outdoor_label_angle(mollier),
+        hjust = 0.5,
+        vjust = comfort_givoni_mean_outdoor_label_vjust(mollier),
+        group = 1L
+    ))
+    psychro_output_xy(out, out$tdb, out$humratio, mollier)
+}
+
 comfort_model_metric <- function(model, metric = NULL) {
     comfort_check_model(model)
     if (!is.null(metric)) {
@@ -2720,7 +3979,8 @@ comfort_model_metric <- function(model, metric = NULL) {
     switch(model$type,
         pmv = "pmv",
         set = "set",
-        adaptive = "acceptability"
+        adaptive = "acceptability",
+        heat_index = "heat_index"
     )
 }
 
@@ -2760,6 +4020,11 @@ comfort_apply_model <- function(model, tdb, rh, units, pres) {
             tdb = tdb, tr = tr, t_running = p$t_running, v = p$v,
             standard = p$standard, category = p$category, units = units,
             limit_inputs = p$limit_inputs, round_output = p$round_output
+        ),
+        heat_index = comfort_heat_index(
+            tdb = tdb, rh = rh, solar_exposure = p$solar_exposure,
+            units = units, limit_inputs = p$limit_inputs,
+            round_output = p$round_output
         )
     )
 }

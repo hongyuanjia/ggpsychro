@@ -2,10 +2,12 @@
 % Please edit documentation in R/comfort.R
 \name{geom_comfort_overlay}
 \alias{geom_comfort_overlay}
+\alias{geom_comfort_heat_index}
 \alias{geom_comfort_contour}
 \alias{geom_comfort_zone}
 \alias{geom_comfort_pmv_lines}
 \alias{geom_comfort_standard_zone}
+\alias{geom_comfort_givoni}
 \alias{stat_comfort_state}
 \title{Comfort overlays for psychrometric charts}
 \usage{
@@ -27,6 +29,20 @@ geom_comfort_overlay(
   inherit.aes = TRUE
 )
 
+geom_comfort_heat_index(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  model = comfort_model_heat_index(),
+  n = c(160, 100),
+  alpha = 0.55,
+  show_labels = TRUE,
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
+
 geom_comfort_contour(
   mapping = NULL,
   data = NULL,
@@ -34,7 +50,7 @@ geom_comfort_contour(
   position = "identity",
   ...,
   model = comfort_model_pmv(),
-  metric = "pmv",
+  metric = NULL,
   breaks = NULL,
   n = NULL,
   contour_method = c("auto", "root", "isoband"),
@@ -91,6 +107,22 @@ geom_comfort_standard_zone(
   ...,
   model = comfort_model_pmv(),
   n = 360,
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
+
+geom_comfort_givoni(
+  strategy = comfort_strategy_givoni(),
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  alpha = 0.55,
+  show_labels = TRUE,
+  show_pmv = FALSE,
+  pmv_model = comfort_model_pmv(),
+  zone_alpha = 0.2,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -222,6 +254,8 @@ rather than combining with them. This is most useful for helper functions
 that define both data and aesthetics and shouldn't inherit behaviour from
 the default plot specification, e.g. \code{\link[ggplot2:annotation_borders]{annotation_borders()}}.}
 
+\item{show_labels}{If \code{TRUE}, draw overlay labels.}
+
 \item{breaks}{Contour break values.}
 
 \item{contour_method}{Contour drawing method. \code{"auto"} uses root-traced
@@ -252,6 +286,16 @@ thermal sensation labels.}
 \item{padding}{Gap padding around labels, passed as a grid unit.}
 
 \item{standard}{A PMV-based comfort standard object.}
+
+\item{strategy}{A Givoni bioclimatic strategy object.}
+
+\item{show_pmv}{If \code{TRUE}, draw the PMV comfort background under the Givoni
+strategy outlines.}
+
+\item{pmv_model}{PMV model used when \code{show_pmv = TRUE}.}
+
+\item{zone_alpha}{Alpha for the filled Givoni comfort zone. Other Givoni
+strategy regions are drawn as outlines.}
 
 \item{geom}{The geometric object to use to display the data for this layer.
 When using a \verb{stat_*()} function to construct a layer, the \code{geom} argument

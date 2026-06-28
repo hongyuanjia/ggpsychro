@@ -4,6 +4,7 @@
 \alias{comfort_pmv}
 \alias{comfort_set}
 \alias{comfort_adaptive}
+\alias{comfort_heat_index}
 \title{Thermal comfort calculations}
 \usage{
 comfort_pmv(
@@ -46,6 +47,15 @@ comfort_adaptive(
   limit_inputs = TRUE,
   round_output = TRUE
 )
+
+comfort_heat_index(
+  tdb,
+  rh,
+  solar_exposure = 0,
+  units = c("SI", "IP"),
+  limit_inputs = TRUE,
+  round_output = TRUE
+)
 }
 \arguments{
 \item{tdb}{Dry-bulb air temperature.}
@@ -84,6 +94,8 @@ are returned as \code{NA}.}
 
 \item{category}{Comfort category. For ASHRAE 55 use \code{"80"} or \code{"90"}; for
 EN 16798 use \code{"I"}, \code{"II"}, or \code{"III"}.}
+
+\item{solar_exposure}{Relative solar exposure for heat index, from 0 to 1.}
 }
 \value{
 A data frame with model outputs.
@@ -98,5 +110,6 @@ and ft/s.
 comfort_pmv(25, rh = 50, met = 1.4, clo = 0.5)
 comfort_set(25, rh = 50)
 comfort_adaptive(25, t_running = 20)
+comfort_heat_index(32, rh = 70)
 
 }

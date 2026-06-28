@@ -430,10 +430,99 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
                 theme, "psychro.panel.grid.saturation",
                 x = line_x, y = line_y
             ),
+            psychro_coord_extra_fg(self, panel_params, theme),
             border
         )
     }
 )
+
+psychro_coord_extra_fg <- function(coord, panel_params, theme) {
+    foreground <- coord$comfort_foreground
+    if (!length(foreground)) {
+        return(grid::nullGrob())
+    }
+
+    grobs <- lapply(foreground, function(spec) {
+        switch(spec$type,
+            givoni_mean_outdoor = psychro_coord_givoni_mean_outdoor_grob(
+                coord, panel_params, spec
+            ),
+            grid::nullGrob()
+        )
+    })
+    do.call(grid::grobTree, grobs)
+}
+
+psychro_coord_givoni_mean_outdoor_grob <- function(coord, panel_params, spec) {
+    range_tdb <- coord$range_tdb(panel_params)
+    range_hum <- coord$range_hum(panel_params)
+    mean_si <- comfort_to_si_temp(spec$strategy$mean_outdoor,
+        spec$strategy$units)
+    tdb <- comfort_from_si_temp(mean_si, coord$units)
+    if (!is.finite(tdb) || tdb < range_tdb[[1L]] || tdb > range_tdb[[2L]]) {
+        return(grid::nullGrob())
+    }
+
+    hum_sat <- with_units(coord$units,
+        psychrolib::GetHumRatioFromRelHum(tdb, 1, coord$pressure)
+    )
+    if (!is.finite(hum_sat) || hum_sat >= range_hum[[2L]]) {
+        return(grid::nullGrob())
+    }
+    hum_extension <- max(diff(range_hum) * 0.08, diff(range_hum) / 25)
+    hum_top <- min(range_hum[[2L]], hum_sat + hum_extension)
+    if (!is.finite(hum_top) || hum_top <= hum_sat) {
+        return(grid::nullGrob())
+    }
+    hum_label <- min(hum_top, hum_sat + (hum_top - hum_sat) * 0.65)
+
+    if (coord$mollier) {
+        line_x <- rescale01(c(hum_sat, hum_top), range_hum)
+        line_y <- rep(rescale01(tdb, range_tdb), 2L)
+        label_x <- rescale01(hum_label, range_hum)
+        label_y <- line_y[[1L]]
+        label_rot <- comfort_givoni_mean_outdoor_label_angle(TRUE)
+        label_vjust <- comfort_givoni_mean_outdoor_label_vjust(TRUE)
+    } else {
+        line_x <- rep(rescale01(tdb, range_tdb), 2L)
+        line_y <- rescale01(c(hum_sat, hum_top), range_hum)
+        label_x <- line_x[[1L]]
+        label_y <- rescale01(hum_label, range_hum)
+        label_rot <- comfort_givoni_mean_outdoor_label_angle(FALSE)
+        label_vjust <- comfort_givoni_mean_outdoor_label_vjust(FALSE)
+    }
+
+    label_temp <- comfort_from_si_temp(mean_si, coord$units)
+    unit_label <- if (coord$units == "IP") "\u00b0F" else "\u00b0C"
+    label <- sprintf("%.1f %s", label_temp, unit_label)
+    colour <- spec$colour %||% "#444444"
+    linewidth <- spec$linewidth %||% 0.8
+    label_size <- spec$label_size %||% 2.7
+
+    grid::grobTree(
+        grid::linesGrob(
+            x = line_x, y = line_y,
+            gp = grid::gpar(
+                col = colour,
+                lwd = linewidth * ggplot2::.pt,
+                lty = spec$linetype %||% "dotted"
+            )
+        ),
+        if (isTRUE(spec$show_label)) {
+            grid::textGrob(
+                label, x = label_x, y = label_y, rot = label_rot,
+                hjust = 0.5, vjust = label_vjust,
+                gp = grid::gpar(
+                    col = colour,
+                    fontsize = label_size * ggplot2::.pt,
+                    fontface = spec$fontface %||% "bold"
+                )
+            )
+        } else {
+            grid::nullGrob()
+        }
+    )
+}
 
 psychro_coord_saturation <- function(coord, panel_params) {
     range_tdb <- coord$range_tdb(panel_params)
