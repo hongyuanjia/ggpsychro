@@ -69,3 +69,17 @@ default_psychro_limits <- function(units) {
         hum = if (units == "SI") c(0, 50) else bid_conv(c(0, 50), "Gr")
     )
 }
+
+default_psychro_protractor <- function() {
+    list(
+        show = FALSE,
+        label = TRUE,
+        annotation = TRUE,
+        scale = 1,
+        radius = 0.24,
+        margin = 0.08,
+        guide = guide_psychro_protractor(),
+        style = list(),
+        label_style = list()
+    )
+}

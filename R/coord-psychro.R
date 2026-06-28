@@ -77,6 +77,12 @@ psychro_grid_label_text <- function(label, type, breaks, scale, units) {
     all_labels[loc]
 }
 
+psychro_format_shr_labels <- function(x) {
+    labels <- sprintf("%.1f", x)
+    labels[abs(x) <= 1e-8] <- "0"
+    labels
+}
+
 match_psychro_breaks <- function(x, table, tolerance = 1e-8) {
     vapply(x, function(value) {
         match <- which(abs(table - value) <= tolerance)
@@ -219,7 +225,6 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
             scale_sv$train(lim_sv)
             scale_en$train(lim_en)
         }
-
         c(
             ggplot2_view_scales_from_scale(scale_x, self$limits$x, self$expand),
             ggplot2_view_scales_from_scale(scale_y, self$limits$y, self$expand),
@@ -397,6 +402,8 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
         if (is.null(sat)) {
             return(border)
         }
+        range_tdb <- self$range_tdb(panel_params)
+        range_hum <- self$range_hum(panel_params)
 
         if (self$mollier) {
             mask_x <- c(sat$hum, 1.0, sat$hum[1L])
@@ -414,6 +421,10 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
             ggplot2::element_render(
                 theme, "psychro.panel.mask",
                 x = mask_x, y = mask_y
+            ),
+            psychro_protractor_grob(
+                self$protractor, theme, self$mollier, range_tdb, range_hum,
+                self$units
             ),
             ggplot2::element_render(
                 theme, "psychro.panel.grid.saturation",

@@ -17,6 +17,11 @@ ggplot_add.CoordPsychro <- function(object, plot, object_name, ...) {
     } else {
         plot$psychro$grid_labels <- object$grid_labels
     }
+    if (is.null(object$protractor)) {
+        object$protractor <- plot$psychro$protractor
+    } else {
+        plot$psychro$protractor <- object$protractor
+    }
 
     # update plot meta data if necessary
     if (is.null(object$mollier)) {
@@ -113,6 +118,25 @@ add_psychro_grid <- function(object, plot) {
     plot
 }
 
+#' @export
+ggplot_add.PsyProtractor <- function(object, plot, object_name, ...) {
+    add_psychro_protractor(object, plot)
+}
+
+add_psychro_protractor <- function(object, plot) {
+    if (!is.ggpsychro(plot)) {
+        stop("`geom_psychro_protractor()` can only be added to a ggpsychro plot.", call. = FALSE)
+    }
+
+    plot$psychro$protractor <- object
+
+    if (inherits(plot$coordinates, "CoordPsychro")) {
+        plot$coordinates$protractor <- object
+    }
+
+    plot
+}
+
 local({
     ggplot2_ns <- asNamespace("ggplot2")
     if (exists("update_ggplot", envir = ggplot2_ns, inherits = FALSE) &&
@@ -121,6 +145,9 @@ local({
         class_ggplot <- get("class_ggplot", envir = ggplot2_ns)
         S7::method(update_ggplot, list(S7::new_S3_class("PsyGrid"), class_ggplot)) <- function(object, plot, ...) {
             add_psychro_grid(object, plot)
+        }
+        S7::method(update_ggplot, list(S7::new_S3_class("PsyProtractor"), class_ggplot)) <- function(object, plot, ...) {
+            add_psychro_protractor(object, plot)
         }
     }
 })
