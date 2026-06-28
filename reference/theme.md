@@ -100,7 +100,7 @@ Hongyuan Jia
 
 ``` r
 theme_psychro()
-#> <theme> List of 152
+#> <theme> List of 154
 #>  $ line                            : <ggplot2::element_line>
 #>   ..@ colour       : chr "black"
 #>   ..@ linewidth    : num 0.5
@@ -471,7 +471,7 @@ theme_psychro()
 #>  @ complete: logi TRUE
 #>  @ validate: logi TRUE
 theme_psychro_ashrae()
-#> <theme> List of 162
+#> <theme> List of 164
 #>  $ line                             : <ggplot2::element_line>
 #>   ..@ colour       : chr "black"
 #>   ..@ linewidth    : num 0.5
@@ -856,7 +856,7 @@ theme_psychro_ashrae()
 #>  @ complete: logi TRUE
 #>  @ validate: logi TRUE
 theme_psychro_minimal()
-#> <theme> List of 162
+#> <theme> List of 164
 #>  $ line                             : <ggplot2::element_line>
 #>   ..@ colour       : chr "black"
 #>   ..@ linewidth    : num 0.5

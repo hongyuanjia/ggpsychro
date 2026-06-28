@@ -30,6 +30,9 @@
   [`geom_grid_specvol()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_grid.md)
   [`geom_grid_enthalpy()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_grid.md)
   : Add psychrometric grid lines
+- [`geom_psychro_protractor()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_psychro_protractor.md)
+  [`guide_psychro_protractor()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_psychro_protractor.md)
+  : Add a psychrometric protractor
 - [`ggpsychro-package`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro-package.md)
   : ggpsychro: A 'ggplot2' Extension for Making Psychrometric Charts
 - [`ggpsychro()`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro.md)
