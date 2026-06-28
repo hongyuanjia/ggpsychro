@@ -31,10 +31,10 @@ geom_psychro_tile(
   gap = 0.08,
   boundary = c(0, 0),
   cell.grid = TRUE,
-  cell.grid.colour = "grey78",
-  cell.grid.linewidth = 0.25,
-  cell.grid.linetype = 1,
-  cell.grid.alpha = 1,
+  cell.grid.colour = ggplot2::waiver(),
+  cell.grid.linewidth = ggplot2::waiver(),
+  cell.grid.linetype = ggplot2::waiver(),
+  cell.grid.alpha = ggplot2::waiver(),
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -171,7 +171,9 @@ give the stat as \code{"count"}.
 \item{cell.grid}{If \code{TRUE}, the default, draw a tile-local grid across the
 chart area using the computed psychrometric bin spacing.}
 
-\item{cell.grid.colour, cell.grid.linewidth, cell.grid.linetype, cell.grid.alpha}{Appearance of the tile-local cell grid.}
+\item{cell.grid.colour, cell.grid.linewidth, cell.grid.linetype, cell.grid.alpha}{Appearance of the tile-local cell grid. The default, \code{\link[ggplot2:waiver]{ggplot2::waiver()}},
+inherits from the current \code{panel.grid.major.x} and \code{panel.grid.major.y}
+theme elements. Explicit values override the inherited theme style.}
 }
 \description{
 \code{stat_psychro_bin()} bins observations on dry-bulb temperature and humidity

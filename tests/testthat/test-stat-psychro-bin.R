@@ -211,6 +211,85 @@ test_that("psychrometric tile cell grid covers the chart area", {
     expect_true(all(horizontal$xend == built$layout$panel_params[[1L]]$x.range[[2L]]))
 })
 
+test_that("psychrometric tile cell grid inherits x and y grid theme styles", {
+    d <- data.frame(
+        dry_bulb = c(20.1, 20.8, 22.1),
+        humidity_ratio = c(8.1, 8.5, 8.2)
+    )
+    built <- ggplot2::ggplot_build(
+        ggpsychro(d, tdb_lim = c(10, 35), hum_lim = c(0, 20)) +
+            geom_psychro_tile(
+                ggplot2::aes(dry_bulb, humidity_ratio),
+                binwidth = c(2, 2)
+            )
+    )
+    cell_grid_data <- function(theme = theme_psychro(), ...) {
+        psychro_tile_cell_grid_data(
+            built$data[[1L]],
+            built$layout$panel_params[[1L]],
+            built$layout$coord,
+            theme = theme,
+            ...
+        )
+    }
+    defaults <- list(
+        colour = ggplot2::waiver(),
+        linewidth = ggplot2::waiver(),
+        linetype = ggplot2::waiver(),
+        alpha = ggplot2::waiver()
+    )
+
+    segments <- do.call(cell_grid_data, defaults)
+    vertical <- segments[segments$x == segments$xend, , drop = FALSE]
+    horizontal <- segments[segments$y == segments$yend, , drop = FALSE]
+
+    expect_equal(unique(vertical$colour), "#DA251DFF")
+    expect_equal(unique(horizontal$colour), "#002060FF")
+    expect_equal(unique(segments$linewidth), 0.15)
+    expect_equal(unique(segments$linetype), 3)
+    expect_true(all(is.na(segments$alpha)))
+
+    custom <- do.call(
+        cell_grid_data,
+        utils::modifyList(defaults, list(colour = "grey70", alpha = 0.5))
+    )
+    expect_equal(unique(custom$colour), "grey70")
+    expect_equal(unique(custom$linewidth), 0.15)
+    expect_equal(unique(custom$linetype), 3)
+    expect_equal(unique(custom$alpha), 0.5)
+
+    blank_x <- do.call(
+        cell_grid_data,
+        c(
+            defaults,
+            list(
+                theme = theme_psychro() +
+                    ggplot2::theme(panel.grid.major.x = ggplot2::element_blank())
+            )
+        )
+    )
+    expect_false(any(blank_x$x == blank_x$xend))
+    expect_true(any(blank_x$y == blank_x$yend))
+
+    override_blank_x <- do.call(
+        cell_grid_data,
+        c(
+            utils::modifyList(
+                defaults,
+                list(colour = "grey70", linewidth = 0.4, linetype = 2)
+            ),
+            list(
+                theme = theme_psychro() +
+                    ggplot2::theme(panel.grid.major.x = ggplot2::element_blank())
+            )
+        )
+    )
+    expect_true(any(override_blank_x$x == override_blank_x$xend))
+    expect_equal(unique(override_blank_x$colour), "grey70")
+    expect_equal(unique(override_blank_x$linewidth), 0.4)
+    expect_equal(unique(override_blank_x$linetype), 2)
+})
+
 test_that("psychrometric tile bodies are clipped to saturation", {
     d <- data.frame(dry_bulb = 9.5, humidity_ratio = 7)
     plot <- ggpsychro(d, tdb_lim = c(0, 20), hum_lim = c(0, 15)) +

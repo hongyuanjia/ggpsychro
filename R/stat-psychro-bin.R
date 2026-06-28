@@ -27,7 +27,9 @@
 #' @param cell.grid If `TRUE`, the default, draw a tile-local grid across the
 #'   chart area using the computed psychrometric bin spacing.
 #' @param cell.grid.colour,cell.grid.linewidth,cell.grid.linetype,cell.grid.alpha
-#'   Appearance of the tile-local cell grid.
+#'   Appearance of the tile-local cell grid. The default, [ggplot2::waiver()],
+#'   inherits from the current `panel.grid.major.x` and `panel.grid.major.y`
+#'   theme elements. Explicit values override the inherited theme style.
 #'
 #' @details
 #' The stat accepts either `x` and `y` aesthetics, where `y` is humidity ratio
@@ -98,10 +100,10 @@ stat_psychro_bin <- function(mapping = NULL, data = NULL, geom = "tile",
 geom_psychro_tile <- function(mapping = NULL, data = NULL, stat = "psychro_bin",
                               position = "identity", ..., gap = 0.08,
                               boundary = c(0, 0), cell.grid = TRUE,
-                              cell.grid.colour = "grey78",
-                              cell.grid.linewidth = 0.25,
-                              cell.grid.linetype = 1,
-                              cell.grid.alpha = 1,
+                              cell.grid.colour = ggplot2::waiver(),
+                              cell.grid.linewidth = ggplot2::waiver(),
+                              cell.grid.linetype = ggplot2::waiver(),
+                              cell.grid.alpha = ggplot2::waiver(),
                               na.rm = FALSE,
                               show.legend = NA, inherit.aes = TRUE) {
     params <- list(
@@ -130,7 +132,7 @@ GeomPsychroTile <- ggproto(
     "GeomPsychroTile", ggplot2::GeomTile,
     extra_params = c(
         "na.rm", "cell.grid", "cell.grid.colour", "cell.grid.linewidth",
-        "cell.grid.linetype", "cell.grid.alpha"
+        "cell.grid.linetype", "cell.grid.alpha", "psychro.theme"
     ),
     default_aes = utils::modifyList(
         ggplot2::GeomTile$default_aes,
@@ -138,10 +140,11 @@ GeomPsychroTile <- ggproto(
     ),
     draw_panel = function(self, data, panel_params, coord, lineend = "butt",
                           linejoin = "mitre", cell.grid = TRUE,
-                          cell.grid.colour = "grey78",
-                          cell.grid.linewidth = 0.25,
-                          cell.grid.linetype = 1,
-                          cell.grid.alpha = 1) {
+                          cell.grid.colour = ggplot2::waiver(),
+                          cell.grid.linewidth = ggplot2::waiver(),
+                          cell.grid.linetype = ggplot2::waiver(),
+                          cell.grid.alpha = ggplot2::waiver(),
+                          psychro.theme = NULL) {
         tiles <- psychro_tile_grob(
             data, panel_params, coord, lineend = lineend, linejoin = linejoin
         )
@@ -152,6 +155,7 @@ GeomPsychroTile <- ggproto(
 
         cell_grid <- psychro_tile_cell_grid_grob(
             data, panel_params, coord,
+            theme = psychro.theme,
             colour = cell.grid.colour,
             linewidth = cell.grid.linewidth,
             linetype = cell.grid.linetype,
@@ -529,24 +533,100 @@ psychro_tile_tdb_at_hum <- function(hum, units, pres) {
     out
 }
 
-psychro_tile_cell_grid_grob <- function(data, panel_params, coord, colour,
+psychro_tile_cell_grid_grob <- function(data, panel_params, coord, theme, colour,
                                         linewidth, linetype, alpha,
                                         lineend, linejoin) {
-    segments <- psychro_tile_cell_segments(data, panel_params, coord)
+    segments <- psychro_tile_cell_grid_data(
+        data, panel_params, coord, theme, colour, linewidth, linetype, alpha
+    )
     if (!nrow(segments)) {
         return(grid::nullGrob())
     }
-
-    segments$colour <- colour
-    segments$linewidth <- linewidth
-    segments$linetype <- linetype
-    segments$alpha <- alpha
-    segments$group <- seq_len(nrow(segments))
 
     ggplot2::GeomSegment$draw_panel(
         segments, panel_params, coord, lineend = lineend,
         linejoin = linejoin, na.rm = TRUE
     )
+}
+
+psychro_tile_cell_grid_data <- function(data, panel_params, coord, theme,
+                                        colour, linewidth, linetype, alpha) {
+    segments <- psychro_tile_cell_segments(data, panel_params, coord)
+    if (!nrow(segments)) {
+        return(segments)
+    }
+
+    theme <- theme %||% coord$psychro_theme %||% ggplot2::theme_get()
+    x_style <- psychro_tile_cell_grid_style(
+        theme, "x", colour, linewidth, linetype, alpha
+    )
+    y_style <- psychro_tile_cell_grid_style(
+        theme, "y", colour, linewidth, linetype, alpha
+    )
+
+    is_vertical <- segments$x == segments$xend
+    is_horizontal <- segments$y == segments$yend
+    keep <- (is_vertical & x_style$visible) | (is_horizontal & y_style$visible)
+    segments <- segments[keep, , drop = FALSE]
+    if (!nrow(segments)) {
+        return(segments)
+    }
+
+    is_vertical <- is_vertical[keep]
+    segments$colour <- ifelse(is_vertical, x_style$colour, y_style$colour)
+    segments$linewidth <- ifelse(
+        is_vertical, x_style$linewidth, y_style$linewidth
+    )
+    segments$linetype <- ifelse(
+        is_vertical, x_style$linetype, y_style$linetype
+    )
+    segments$alpha <- ifelse(is_vertical, x_style$alpha, y_style$alpha)
+    segments$group <- seq_len(nrow(segments))
+    segments
+}
+
+psychro_tile_cell_grid_style <- function(theme, axis, colour, linewidth,
+                                         linetype, alpha) {
+    element <- ggplot2::calc_element(
+        paste("panel.grid.major", axis, sep = "."),
+        theme
+    )
+    has_override <- !is.waive(colour) || !is.waive(linewidth) ||
+        !is.waive(linetype) || !is.waive(alpha)
+    is_blank <- is.null(element) || inherits(element, "element_blank")
+    defaults <- list(
+        colour = "grey78",
+        linewidth = 0.25,
+        linetype = 1,
+        alpha = NA_real_
+    )
+
+    list(
+        visible = !is_blank || has_override,
+        colour = psychro_tile_cell_grid_value(
+            colour, if (!is_blank) element$colour else NULL, defaults$colour
+        ),
+        linewidth = psychro_tile_cell_grid_value(
+            linewidth,
+            if (!is_blank) element$linewidth else NULL,
+            defaults$linewidth
+        ),
+        linetype = psychro_tile_cell_grid_value(
+            linetype, if (!is_blank) element$linetype else NULL,
+            defaults$linetype
+        ),
+        alpha = psychro_tile_cell_grid_value(
+            alpha, if (!is_blank) element$alpha else NULL, defaults$alpha
+        )
+    )
+}
+
+psychro_tile_cell_grid_value <- function(value, inherited, default) {
+    if (!is.waive(value)) {
+        return(value)
+    }
+
+    inherited %||% default
 }
 
 psychro_tile_cell_segments <- function(data, panel_params, coord) {
