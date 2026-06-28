@@ -68,10 +68,13 @@ geom_comfort_pmv_lines(
   n = 360,
   label_sensation = TRUE,
   label_axis = TRUE,
-  axis_label_hjust = 0.01,
-  axis_label_vjust = 0.5,
+  axis_label_hjust = 0.015,
+  axis_label_vjust = 1.25,
   sensation_label_hjust = 0.5,
   sensation_label_vjust = 0.5,
+  axis_label_size = NULL,
+  sensation_label_size = NULL,
+  padding = grid::unit(1, "pt"),
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -223,11 +226,16 @@ sensation text.}
 
 \item{label_axis}{If \code{TRUE}, label each PMV curve near the x-axis.}
 
-\item{axis_label_hjust, axis_label_vjust}{Position and vertical adjustment
-for PMV numeric labels near the x-axis.}
+\item{axis_label_hjust, axis_label_vjust}{Offset from the x-axis and
+perpendicular adjustment for PMV numeric labels near the x-axis.}
 
 \item{sensation_label_hjust, sensation_label_vjust}{Position and vertical
 adjustment for thermal sensation labels.}
+
+\item{axis_label_size, sensation_label_size}{Text size for PMV numeric and
+thermal sensation labels.}
+
+\item{padding}{Gap padding around labels, passed as a grid unit.}
 
 \item{standard}{A PMV-based comfort standard object.}
 

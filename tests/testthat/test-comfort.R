@@ -204,10 +204,34 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
             geom_comfort_pmv_lines(levels = c(-1, 0, 1), n = 80)
     )$data
-    expect_gte(length(pmv_lines), 3L)
-    expect_true(all(c("level", "label", "linetype") %in% names(pmv_lines[[1L]])))
-    pmv_line_labels <- unique(unlist(lapply(pmv_lines, `[[`, "label")))
-    expect_true("NEUTRAL" %in% pmv_line_labels)
+    expect_equal(length(pmv_lines), 2L)
+    expect_true(all(c("level", "linetype") %in% names(pmv_lines[[1L]])))
+    expect_equal(sort(unique(pmv_lines[[1L]]$level)), c(-1, 0, 1))
+    expect_equal(unique(pmv_lines[[1L]]$linetype[pmv_lines[[1L]]$level == 0]), "dashed")
+    expect_true(all(c("-1.0", "0.0", "+1.0") %in% unique(pmv_lines[[2L]]$label)))
+    expect_true(all(table(pmv_lines[[2L]]$group) >= 2L))
+    axis_y <- vapply(split(pmv_lines[[2L]]$y, pmv_lines[[2L]]$group),
+        min, numeric(1L))
+    expect_equal(length(unique(round(axis_y, 6))), 1L)
+
+    axis_labels <- comfort_pmv_axis_label_data(
+        comfort_model_pmv(), c(-1, 0, 1), 80, "SI", pressure,
+        FALSE, c(15, 30), c(0, 20), axis_label_hjust = 0.015
+    )
+    expect_true(all(table(axis_labels$group) >= 2L))
+    axis_hum <- vapply(split(axis_labels$humratio, axis_labels$group),
+        min, numeric(1L))
+    expect_equal(length(unique(round(axis_hum, 8))), 1L)
+    expect_equal(unique(axis_labels$hjust), 0.015)
+    expect_equal(unique(axis_labels$vjust), 1.25)
+
+    trimmed <- comfort_pmv_curve_data(
+        comfort_model_pmv(), c(-1, 0, 1), 80, "SI", pressure,
+        FALSE, c(15, 30), c(0, 20), label = "none",
+        trim_axis_hjust = comfort_pmv_line_trim_hjust(0.015)
+    )
+    expect_gt(min(trimmed$humratio), 0)
+
     pmv_axis <- comfort_pmv_curve_data(
         comfort_model_pmv(), c(-1, 0, 1), 80, "SI", pressure,
         FALSE, c(15, 30), c(0, 20), label = "axis"
@@ -230,39 +254,6 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
         FALSE, c(15, 30), c(0, 20), label = "sensation"
     )
     expect_equal(unique(pmv_sensation$vjust), 0.5)
-    gap_lines <- comfort_pmv_curve_data(
-        comfort_model_pmv(), c(-1, 0, 1), 80, "SI", pressure,
-        FALSE, c(15, 30), c(0, 20), label = "none",
-        line_gaps = comfort_pmv_line_gaps(
-            c(-1, 0, 1), label_axis = TRUE, label_sensation = TRUE,
-            axis_label_hjust = 0.01, sensation_label_hjust = 0.5
-        )
-    )
-    expect_gt(length(unique(gap_lines$group)), 3L)
-    gap_specs <- comfort_pmv_line_gaps(
-        c(-1, 0, 1), label_axis = TRUE, label_sensation = TRUE,
-        axis_label_hjust = 0.01, sensation_label_hjust = 0.5
-    )
-    expect_true(all(c("position", "label_type") %in% names(gap_specs)))
-    expect_equal(unique(gap_specs$position[gap_specs$label_type == "axis"]), 0.01)
-    expect_equal(unique(gap_specs$position[gap_specs$label_type == "sensation"]), 0.5)
-
-    axis_paths <- comfort_pmv_label_path_data(
-        comfort_model_pmv(), c(-1, 0, 1), 80, "SI", pressure,
-        FALSE, c(15, 30), c(0, 20), label = "axis",
-        label_hjust = 0.01, label_vjust = 0.5
-    )
-    expect_equal(unique(axis_paths$hjust), 0.5)
-    expect_equal(unique(axis_paths$label_position), 0.01)
-
-    sensation_paths <- comfort_pmv_label_path_data(
-        comfort_model_pmv(), c(-1, 0, 1), 80, "SI", pressure,
-        FALSE, c(15, 30), c(0, 20), label = "sensation",
-        label_hjust = 0.5, label_vjust = 0.5
-    )
-    expect_true("NEUTRAL" %in% unique(sensation_paths$label))
-    expect_equal(unique(sensation_paths$hjust), 0.5)
-    expect_equal(unique(sensation_paths$label_position), 0.5)
 
     ashrae <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +

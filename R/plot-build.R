@@ -195,7 +195,7 @@ setup_psychro_stat_params <- function(layers, psychro) {
     state_classes <- c("StatPsychroState", "StatPsychroZone", "StatComfortState")
     panel_classes <- c(
         "StatComfortBand", "StatComfortGrid", "StatComfortContour",
-        "StatComfortPmvCurve", "StatComfortPmvLabelPath",
+        "StatComfortPmvCurve", "StatComfortPmvAxisLabel",
         "StatComfortPmvRootBand",
         "StatComfortZone"
     )
