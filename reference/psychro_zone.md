@@ -262,22 +262,6 @@ ggpsychro(tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
     )
 
 
-volume_zone <- data.frame(
-    specvol_min = 0.84,
-    specvol_max = 0.90,
-    relhum_min = 30,
-    relhum_max = 90
-)
-ggpsychro(tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
-    geom_psychro_zone(
-        aes(specvol_min = specvol_min, specvol_max = specvol_max,
-            relhum_min = relhum_min, relhum_max = relhum_max),
-        data = volume_zone,
-        type = "specvol-rh",
-        alpha = 0.25
-    )
-
-
 # Draw an already-specified polygon in chart display units.
 polygon_zone <- data.frame(
     tdb = c(20, 26, 28),

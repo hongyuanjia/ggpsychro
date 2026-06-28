@@ -267,22 +267,6 @@ chart display units: g/kg in SI and gr/lb in IP.</p>
 <span class="r-in"><span>    <span class="op">)</span></span></span>
 <span class="r-plt img"><img src="psychro_zone-3.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">volume_zone</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>    specvol_min <span class="op">=</span> <span class="fl">0.84</span>,</span></span>
-<span class="r-in"><span>    specvol_max <span class="op">=</span> <span class="fl">0.90</span>,</span></span>
-<span class="r-in"><span>    relhum_min <span class="op">=</span> <span class="fl">30</span>,</span></span>
-<span class="r-in"><span>    relhum_max <span class="op">=</span> <span class="fl">90</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">40</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">25</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
-<span class="r-in"><span>    <span class="fu">geom_psychro_zone</span><span class="op">(</span></span></span>
-<span class="r-in"><span>        <span class="fu">aes</span><span class="op">(</span>specvol_min <span class="op">=</span> <span class="va">specvol_min</span>, specvol_max <span class="op">=</span> <span class="va">specvol_max</span>,</span></span>
-<span class="r-in"><span>            relhum_min <span class="op">=</span> <span class="va">relhum_min</span>, relhum_max <span class="op">=</span> <span class="va">relhum_max</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>        data <span class="op">=</span> <span class="va">volume_zone</span>,</span></span>
-<span class="r-in"><span>        type <span class="op">=</span> <span class="st">"specvol-rh"</span>,</span></span>
-<span class="r-in"><span>        alpha <span class="op">=</span> <span class="fl">0.25</span></span></span>
-<span class="r-in"><span>    <span class="op">)</span></span></span>
-<span class="r-plt img"><img src="psychro_zone-4.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Draw an already-specified polygon in chart display units.</span></span></span>
 <span class="r-in"><span><span class="va">polygon_zone</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>    tdb <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">26</span>, <span class="fl">28</span><span class="op">)</span>,</span></span>
@@ -295,7 +279,7 @@ chart display units: g/kg in SI and gr/lb in IP.</p>
 <span class="r-in"><span>        type <span class="op">=</span> <span class="st">"xy-points"</span>,</span></span>
 <span class="r-in"><span>        alpha <span class="op">=</span> <span class="fl">0.25</span></span></span>
 <span class="r-in"><span>    <span class="op">)</span></span></span>
-<span class="r-plt img"><img src="psychro_zone-5.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="psychro_zone-4.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
