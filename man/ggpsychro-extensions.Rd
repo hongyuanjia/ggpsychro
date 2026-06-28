@@ -15,8 +15,8 @@
 \alias{StatComfortGrid}
 \alias{StatComfortContour}
 \alias{StatComfortPmvCurve}
+\alias{StatComfortPmvLabelPath}
 \alias{StatComfortPmvRootBand}
-\alias{StatComfortPmvBand}
 \alias{StatComfortZone}
 \alias{StatComfortState}
 \alias{StatPsychroZone}

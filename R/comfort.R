@@ -389,10 +389,10 @@ geom_comfort_zone <- function(mapping = NULL, data = NULL,
 #' @param label_sensation If `TRUE`, label integer PMV curves with thermal
 #'   sensation text.
 #' @param label_axis If `TRUE`, label each PMV curve near the x-axis.
-#' @param axis_label_hjust,axis_label_vjust Textpath justification for PMV
-#'   numeric labels near the x-axis.
-#' @param sensation_label_hjust,sensation_label_vjust Textpath justification
-#'   for thermal sensation labels.
+#' @param axis_label_hjust,axis_label_vjust Position and vertical adjustment
+#'   for PMV numeric labels near the x-axis.
+#' @param sensation_label_hjust,sensation_label_vjust Position and vertical
+#'   adjustment for thermal sensation labels.
 #' @export
 geom_comfort_pmv_lines <- function(mapping = NULL, data = NULL,
                                    position = "identity", ...,
@@ -419,18 +419,21 @@ geom_comfort_pmv_lines <- function(mapping = NULL, data = NULL,
         params$linewidth <- 0.45
     }
 
+    line_gaps <- comfort_pmv_line_gaps(
+        levels, label_axis = label_axis, label_sensation = label_sensation,
+        axis_label_hjust = axis_label_hjust,
+        sensation_label_hjust = sensation_label_hjust,
+        axis_label_vjust = axis_label_vjust,
+        sensation_label_vjust = sensation_label_vjust
+    )
     sensation_levels <- numeric()
     if (isTRUE(label_sensation)) {
         sensation_levels <- levels[
-            abs(levels) >= 1e-8 &
-                abs(levels - round(levels)) <= 1e-8 &
+            abs(levels - round(levels)) <= 1e-8 &
                 !is.na(vapply(levels, comfort_pmv_sensation_label, character(1L)))
         ]
     }
     solid_levels <- levels[abs(levels) >= 1e-8]
-    if (length(sensation_levels)) {
-        solid_levels <- setdiff(solid_levels, sensation_levels)
-    }
     layers <- list()
     if (length(solid_levels)) {
         layers[[length(layers) + 1L]] <- psychro_layer(
@@ -438,43 +441,20 @@ geom_comfort_pmv_lines <- function(mapping = NULL, data = NULL,
             mapping = mapping, geom = "path", position = position,
             show.legend = show.legend, inherit.aes = inherit.aes,
             params = utils::modifyList(params, list(
-                levels = solid_levels, label_type = "none", linetype = "solid"
+                levels = solid_levels, label_type = "none",
+                line_gaps = line_gaps, linetype = "solid"
             ))
         )
     }
     neutral_level <- levels[abs(levels) < 1e-8]
-    draw_neutral_textpath <- length(neutral_level) && isTRUE(label_sensation)
-    if (length(neutral_level) && !draw_neutral_textpath) {
+    if (length(neutral_level)) {
         layers[[length(layers) + 1L]] <- psychro_layer(
             stat = StatComfortPmvCurve, data = comfort_layer_data(data),
             mapping = mapping, geom = "path", position = position,
             show.legend = show.legend, inherit.aes = inherit.aes,
             params = utils::modifyList(params, list(
-                levels = 0, label_type = "none", linetype = "dashed"
-            ))
-        )
-    }
-
-    if (draw_neutral_textpath) {
-        neutral_params <- params
-        if (is.null(neutral_params$size)) {
-            neutral_params$size <- 3
-        }
-        layers[[length(layers) + 1L]] <- psychro_layer(
-            stat = StatComfortPmvCurve, data = comfort_layer_data(data),
-            mapping = ggplot2::aes(
-                label = ggplot2::after_stat(label),
-                hjust = ggplot2::after_stat(hjust),
-                vjust = ggplot2::after_stat(vjust)
-            ),
-            geom = geomtextpath::GeomTextpath, position = position,
-            show.legend = show.legend, inherit.aes = FALSE,
-            params = utils::modifyList(neutral_params, list(
-                levels = 0, label_type = "sensation",
-                label_hjust = sensation_label_hjust,
-                label_vjust = sensation_label_vjust,
-                linetype = "dashed", text_only = FALSE, gap = TRUE,
-                upright = TRUE, remove_long = TRUE
+                levels = 0, label_type = "none", line_gaps = line_gaps,
+                linetype = "dashed"
             ))
         )
     }
@@ -487,7 +467,7 @@ geom_comfort_pmv_lines <- function(mapping = NULL, data = NULL,
         label_levels <- sensation_levels
         if (length(label_levels)) {
             layers[[length(layers) + 1L]] <- psychro_layer(
-                stat = StatComfortPmvCurve, data = comfort_layer_data(data),
+                stat = StatComfortPmvLabelPath, data = comfort_layer_data(data),
                 mapping = ggplot2::aes(
                     label = ggplot2::after_stat(label),
                     hjust = ggplot2::after_stat(hjust),
@@ -499,8 +479,8 @@ geom_comfort_pmv_lines <- function(mapping = NULL, data = NULL,
                     levels = label_levels, label_type = "sensation",
                     label_hjust = sensation_label_hjust,
                     label_vjust = sensation_label_vjust,
-                    linetype = "solid", text_only = FALSE, gap = TRUE,
-                    upright = TRUE, remove_long = TRUE
+                    text_only = TRUE,
+                    upright = TRUE, remove_long = FALSE
                 ))
             )
         }
@@ -512,7 +492,7 @@ geom_comfort_pmv_lines <- function(mapping = NULL, data = NULL,
             axis_params$size <- 2.8
         }
         layers[[length(layers) + 1L]] <- psychro_layer(
-            stat = StatComfortPmvCurve, data = comfort_layer_data(data),
+            stat = StatComfortPmvLabelPath, data = comfort_layer_data(data),
             mapping = ggplot2::aes(
                 label = ggplot2::after_stat(label),
                 hjust = ggplot2::after_stat(hjust),
@@ -525,7 +505,7 @@ geom_comfort_pmv_lines <- function(mapping = NULL, data = NULL,
                 label_hjust = axis_label_hjust,
                 label_vjust = axis_label_vjust,
                 text_only = TRUE, upright = TRUE,
-                remove_long = TRUE
+                remove_long = FALSE
             ))
         )
     }
@@ -562,7 +542,7 @@ geom_comfort_standard_zone <- function(standard = comfort_standard_ashrae55_2017
             band_params$colour <- NA
         }
         layers[[length(layers) + 1L]] <- psychro_layer(
-            stat = StatComfortPmvBand, data = comfort_layer_data(data),
+            stat = StatComfortZone, data = comfort_layer_data(data),
             mapping = mapping, geom = "polygon", position = position,
             show.legend = show.legend, inherit.aes = inherit.aes,
             params = band_params
@@ -668,7 +648,6 @@ GeomComfortTile <- ggplot2::ggproto(
 #' @rdname ggpsychro-extensions
 #' @format NULL
 #' @usage NULL
-#' @export
 StatComfortBand <- ggplot2::ggproto(
     "StatComfortBand", ggplot2::Stat,
 
@@ -706,7 +685,6 @@ StatComfortBand <- ggplot2::ggproto(
 #' @rdname ggpsychro-extensions
 #' @format NULL
 #' @usage NULL
-#' @export
 StatComfortGrid <- ggplot2::ggproto(
     "StatComfortGrid", ggplot2::Stat,
 
@@ -745,7 +723,6 @@ StatComfortGrid <- ggplot2::ggproto(
 #' @rdname ggpsychro-extensions
 #' @format NULL
 #' @usage NULL
-#' @export
 StatComfortContour <- ggplot2::ggproto(
     "StatComfortContour", ggplot2::Stat,
 
@@ -779,9 +756,47 @@ StatComfortContour <- ggplot2::ggproto(
 #' @rdname ggpsychro-extensions
 #' @format NULL
 #' @usage NULL
-#' @export
 StatComfortPmvCurve <- ggplot2::ggproto(
     "StatComfortPmvCurve", ggplot2::Stat,
+
+    setup_data = function(self, data, params) {
+        init_stat_data(data, params)
+    },
+
+    default_aes = ggplot2::aes(),
+
+    dropped_aes = c("pres", "units"),
+
+    extra_params = c(
+        "na.rm", "model", "levels", "n", "label_type", "label_hjust",
+        "label_vjust", "line_gaps", "units", "pres", "mollier", "tdb_lim",
+        "hum_lim"
+    ),
+
+    compute_panel = function(self, data, scales, model = comfort_model_pmv(),
+                             levels = seq(-3, 3, by = 0.5), n = 360,
+                             label_type = c("none", "sensation", "axis", "boundary", "comfort"),
+                             label_hjust = NULL, label_vjust = NULL,
+                             line_gaps = NULL,
+                             units, pres, mollier = FALSE,
+                             tdb_lim = NULL, hum_lim = NULL,
+                             na.rm = FALSE) {
+        label_type <- match.arg(label_type)
+        units <- comfort_stat_units(data, units)
+        pres <- comfort_stat_pressure(data, pres)
+        comfort_pmv_curve_data(
+            model, levels, n, units, pres, mollier, tdb_lim, hum_lim,
+            label = label_type, label_hjust = label_hjust,
+            label_vjust = label_vjust, line_gaps = line_gaps
+        )
+    }
+)
+
+#' @rdname ggpsychro-extensions
+#' @format NULL
+#' @usage NULL
+StatComfortPmvLabelPath <- ggplot2::ggproto(
+    "StatComfortPmvLabelPath", ggplot2::Stat,
 
     setup_data = function(self, data, params) {
         init_stat_data(data, params)
@@ -798,7 +813,7 @@ StatComfortPmvCurve <- ggplot2::ggproto(
 
     compute_panel = function(self, data, scales, model = comfort_model_pmv(),
                              levels = seq(-3, 3, by = 0.5), n = 360,
-                             label_type = c("none", "sensation", "axis", "boundary", "comfort"),
+                             label_type = c("sensation", "axis"),
                              label_hjust = NULL, label_vjust = NULL,
                              units, pres, mollier = FALSE,
                              tdb_lim = NULL, hum_lim = NULL,
@@ -806,7 +821,7 @@ StatComfortPmvCurve <- ggplot2::ggproto(
         label_type <- match.arg(label_type)
         units <- comfort_stat_units(data, units)
         pres <- comfort_stat_pressure(data, pres)
-        comfort_pmv_curve_data(
+        comfort_pmv_label_path_data(
             model, levels, n, units, pres, mollier, tdb_lim, hum_lim,
             label = label_type, label_hjust = label_hjust,
             label_vjust = label_vjust
@@ -817,7 +832,6 @@ StatComfortPmvCurve <- ggplot2::ggproto(
 #' @rdname ggpsychro-extensions
 #' @format NULL
 #' @usage NULL
-#' @export
 StatComfortPmvRootBand <- ggplot2::ggproto(
     "StatComfortPmvRootBand", ggplot2::Stat,
 
@@ -855,39 +869,6 @@ StatComfortPmvRootBand <- ggplot2::ggproto(
 #' @rdname ggpsychro-extensions
 #' @format NULL
 #' @usage NULL
-#' @export
-StatComfortPmvBand <- ggplot2::ggproto(
-    "StatComfortPmvBand", ggplot2::Stat,
-
-    setup_data = function(self, data, params) {
-        init_stat_data(data, params)
-    },
-
-    default_aes = ggplot2::aes(subgroup = ggplot2::after_stat(subgroup)),
-
-    dropped_aes = c("pres", "units"),
-
-    extra_params = c(
-        "na.rm", "model", "range", "n", "units", "pres", "mollier",
-        "tdb_lim", "hum_lim"
-    ),
-
-    compute_panel = function(self, data, scales, model = comfort_model_pmv(),
-                             range = c(-0.5, 0.5), n = 360, units, pres,
-                             mollier = FALSE, tdb_lim = NULL, hum_lim = NULL,
-                             na.rm = FALSE) {
-        units <- comfort_stat_units(data, units)
-        pres <- comfort_stat_pressure(data, pres)
-        comfort_pmv_band_data(
-            model, range, n, units, pres, mollier, tdb_lim, hum_lim
-        )
-    }
-)
-
-#' @rdname ggpsychro-extensions
-#' @format NULL
-#' @usage NULL
-#' @export
 StatComfortZone <- ggplot2::ggproto(
     "StatComfortZone", ggplot2::Stat,
 
@@ -925,7 +906,6 @@ StatComfortZone <- ggplot2::ggproto(
 #' @rdname ggpsychro-extensions
 #' @format NULL
 #' @usage NULL
-#' @export
 StatComfortState <- ggplot2::ggproto(
     "StatComfortState", ggplot2::Stat,
 
@@ -1525,7 +1505,8 @@ comfort_pmv_curve_data <- function(model, levels, n, units, pres, mollier,
                                    tdb_lim, hum_lim,
                                    label = c("none", "sensation", "axis",
                                        "boundary", "comfort"),
-                                   label_hjust = NULL, label_vjust = NULL) {
+                                   label_hjust = NULL, label_vjust = NULL,
+                                   line_gaps = NULL) {
     label <- match.arg(label)
     levels <- comfort_check_breaks(levels, "`levels`", n_min = 1L)
     n <- comfort_pmv_curve_n(n)
@@ -1569,6 +1550,12 @@ comfort_pmv_curve_data <- function(model, levels, n, units, pres, mollier,
     out <- do.call(rbind, curves)
     row.names(out) <- NULL
 
+    if (label == "none" && !is.null(line_gaps) && nrow(line_gaps)) {
+        out <- comfort_pmv_curve_apply_gaps(
+            out, line_gaps, lim$tdb, narrow_hum(lim$hum, units)
+        )
+    }
+
     if (label != "none") {
         out <- out[!is.na(out$label), , drop = FALSE]
     }
@@ -1576,6 +1563,314 @@ comfort_pmv_curve_data <- function(model, levels, n, units, pres, mollier,
         return(comfort_empty_pmv_curve())
     }
     psychro_output_xy(out, out$tdb, out$humratio, mollier)
+}
+
+comfort_pmv_line_gaps <- function(levels, label_axis, label_sensation,
+                                  axis_label_hjust,
+                                  sensation_label_hjust,
+                                  axis_label_vjust = 0.5,
+                                  sensation_label_vjust = 0.5) {
+    specs <- comfort_pmv_label_specs(
+        levels, label_axis = label_axis, label_sensation = label_sensation,
+        axis_label_hjust = axis_label_hjust,
+        axis_label_vjust = axis_label_vjust,
+        sensation_label_hjust = sensation_label_hjust,
+        sensation_label_vjust = sensation_label_vjust
+    )
+    if (!nrow(specs)) {
+        return(new_data_frame(list(
+            level = numeric(), hjust = numeric(), position = numeric(),
+            width = numeric(), label = character(), label_type = character(),
+            vjust = numeric()
+        )))
+    }
+    specs$hjust <- specs$position
+    specs
+}
+
+comfort_pmv_label_specs <- function(levels, label_axis, label_sensation,
+                                    axis_label_hjust, axis_label_vjust,
+                                    sensation_label_hjust,
+                                    sensation_label_vjust) {
+    specs <- list()
+    if (isTRUE(label_axis)) {
+        labels <- comfort_format_pmv_level(levels)
+        n <- length(levels)
+        specs[[length(specs) + 1L]] <- new_data_frame(list(
+            level = levels,
+            position = comfort_recycle_param(
+                axis_label_hjust, n, comfort_pmv_curve_hjust("axis")
+            ),
+            hjust = rep(0.5, n),
+            vjust = comfort_recycle_param(axis_label_vjust, n, 0.5),
+            width = comfort_pmv_label_width(labels, "axis"),
+            label = labels,
+            label_type = rep("axis", n)
+        ))
+    }
+
+    if (isTRUE(label_sensation)) {
+        labels <- vapply(levels, comfort_pmv_sensation_label, character(1L))
+        keep <- !is.na(labels)
+        if (any(keep)) {
+            n <- length(levels)
+            pos <- comfort_recycle_param(
+                sensation_label_hjust, n, comfort_pmv_curve_hjust("sensation")
+            )
+            vjust <- comfort_recycle_param(sensation_label_vjust, n, 0.5)
+            specs[[length(specs) + 1L]] <- new_data_frame(list(
+                level = levels[keep],
+                position = pos[keep],
+                hjust = rep(0.5, sum(keep)),
+                vjust = vjust[keep],
+                width = comfort_pmv_label_width(labels[keep], "sensation"),
+                label = labels[keep],
+                label_type = rep("sensation", sum(keep))
+            ))
+        }
+    }
+
+    if (!length(specs)) {
+        return(new_data_frame(list(
+            level = numeric(), position = numeric(), hjust = numeric(),
+            vjust = numeric(), width = numeric(), label = character(),
+            label_type = character()
+        )))
+    }
+
+    out <- do.call(rbind, specs)
+    out <- out[is.finite(out$level) & is.finite(out$position) &
+        is.finite(out$width) & out$width > 0 & !is.na(out$label), ,
+        drop = FALSE]
+    out$position <- pmin(1, pmax(0, out$position))
+    row.names(out) <- NULL
+    out
+}
+
+comfort_pmv_label_width <- function(label, type = c("axis", "sensation")) {
+    type <- match.arg(type)
+    if (!length(label)) {
+        return(numeric())
+    }
+    if (type == "axis") {
+        return(pmin(0.22, pmax(0.12, nchar(label) * 0.038)))
+    }
+    pmin(0.38, pmax(0.18, nchar(label) * 0.024))
+}
+
+comfort_recycle_param <- function(value, n, default) {
+    if (n == 0L) {
+        return(numeric())
+    }
+    if (is.null(value)) {
+        value <- default
+    }
+    rep_len(value, n)
+}
+
+comfort_pmv_label_path_data <- function(model, levels, n, units, pres, mollier,
+                                        tdb_lim, hum_lim,
+                                        label = c("sensation", "axis"),
+                                        label_hjust = NULL,
+                                        label_vjust = NULL) {
+    label <- match.arg(label)
+    levels <- comfort_check_breaks(levels, "`levels`", n_min = 1L)
+    n <- comfort_pmv_curve_n(n)
+    lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
+    specs <- comfort_pmv_label_specs(
+        levels,
+        label_axis = label == "axis",
+        label_sensation = label == "sensation",
+        axis_label_hjust = if (label == "axis") label_hjust else 0.01,
+        axis_label_vjust = if (label == "axis") label_vjust else 0.5,
+        sensation_label_hjust = if (label == "sensation") label_hjust else 0.5,
+        sensation_label_vjust = if (label == "sensation") label_vjust else 0.5
+    )
+    if (!nrow(specs)) {
+        return(comfort_empty_pmv_curve())
+    }
+
+    curves <- comfort_pmv_curve_data(
+        model, levels, n, units, pres, FALSE, tdb_lim, hum_lim, label = "none"
+    )
+    if (!nrow(curves)) {
+        return(comfort_empty_pmv_curve())
+    }
+
+    out <- comfort_pmv_curve_label_paths(
+        curves, specs, lim$tdb, narrow_hum(lim$hum, units)
+    )
+    if (!nrow(out)) {
+        return(comfort_empty_pmv_curve())
+    }
+    psychro_output_xy(out, out$tdb, out$humratio, mollier)
+}
+
+comfort_pmv_curve_label_paths <- function(data, specs, tdb_lim, hum_lim) {
+    pieces <- list()
+    next_group <- 1L
+    for (curve in split(data, data$group)) {
+        level <- curve$level[[1L]]
+        label_specs <- specs[abs(specs$level - level) <= 1e-8, , drop = FALSE]
+        if (!nrow(label_specs)) {
+            next
+        }
+        pos <- comfort_pmv_curve_position(curve, tdb_lim, hum_lim)
+        for (i in seq_len(nrow(label_specs))) {
+            interval <- comfort_pmv_label_interval(label_specs[i, , drop = FALSE])
+            part <- comfort_pmv_curve_slice(curve, interval[[1L]], interval[[2L]], pos)
+            if (nrow(part) < 2L) {
+                next
+            }
+            part$group <- next_group
+            part$label <- label_specs$label[[i]]
+            part$hjust <- 0.5
+            part$vjust <- label_specs$vjust[[i]]
+            part$label_type <- label_specs$label_type[[i]]
+            part$label_position <- label_specs$position[[i]]
+            pieces[[length(pieces) + 1L]] <- part
+            next_group <- next_group + 1L
+        }
+    }
+
+    if (!length(pieces)) {
+        return(data[0, , drop = FALSE])
+    }
+    out <- do.call(rbind, pieces)
+    row.names(out) <- NULL
+    out
+}
+
+comfort_pmv_curve_apply_gaps <- function(data, line_gaps, tdb_lim, hum_lim) {
+    pieces <- list()
+    next_group <- 1L
+    for (curve in split(data, data$group)) {
+        level <- curve$level[[1L]]
+        gaps <- line_gaps[abs(line_gaps$level - level) <= 1e-8, , drop = FALSE]
+        if (!nrow(gaps)) {
+            curve$group <- next_group
+            pieces[[length(pieces) + 1L]] <- curve
+            next_group <- next_group + 1L
+            next
+        }
+
+        pos <- comfort_pmv_curve_position(curve, tdb_lim, hum_lim)
+        gaps <- comfort_pmv_merge_intervals(gaps)
+        starts <- c(0, gaps$hi)
+        ends <- c(gaps$lo, 1)
+        for (i in seq_along(starts)) {
+            if (ends[[i]] - starts[[i]] <= 1e-8) {
+                next
+            }
+            part <- comfort_pmv_curve_slice(curve, starts[[i]], ends[[i]], pos)
+            if (nrow(part) < 2L) {
+                next
+            }
+            part$group <- next_group
+            pieces[[length(pieces) + 1L]] <- part
+            next_group <- next_group + 1L
+        }
+    }
+
+    if (!length(pieces)) {
+        return(data[0, , drop = FALSE])
+    }
+    out <- do.call(rbind, pieces)
+    row.names(out) <- NULL
+    out
+}
+
+comfort_pmv_merge_intervals <- function(gaps) {
+    intervals <- t(vapply(seq_len(nrow(gaps)), function(i) {
+        comfort_pmv_label_interval(gaps[i, , drop = FALSE])
+    }, numeric(2L)))
+    intervals <- intervals[is.finite(intervals[, 1L]) &
+        is.finite(intervals[, 2L]) & intervals[, 2L] > intervals[, 1L],
+        , drop = FALSE]
+    if (!nrow(intervals)) {
+        return(new_data_frame(list(lo = numeric(), hi = numeric())))
+    }
+    intervals <- intervals[order(intervals[, 1L], intervals[, 2L]), , drop = FALSE]
+    merged <- list()
+    current <- intervals[1L, ]
+    if (nrow(intervals) > 1L) {
+        for (i in 2:nrow(intervals)) {
+            if (intervals[i, 1L] <= current[[2L]]) {
+                current[[2L]] <- max(current[[2L]], intervals[i, 2L])
+            } else {
+                merged[[length(merged) + 1L]] <- current
+                current <- intervals[i, ]
+            }
+        }
+    }
+    merged[[length(merged) + 1L]] <- current
+    mat <- do.call(rbind, merged)
+    new_data_frame(list(lo = mat[, 1L], hi = mat[, 2L]))
+}
+
+comfort_pmv_label_interval <- function(spec) {
+    center <- if ("position" %in% names(spec)) spec$position[[1L]] else spec$hjust[[1L]]
+    width <- spec$width[[1L]]
+    c(max(0, center - width / 2), min(1, center + width / 2))
+}
+
+comfort_pmv_curve_slice <- function(curve, lo, hi, pos) {
+    lo <- max(0, min(1, lo))
+    hi <- max(0, min(1, hi))
+    if (!is.finite(lo) || !is.finite(hi) || hi <= lo || nrow(curve) < 2L) {
+        return(curve[0, , drop = FALSE])
+    }
+
+    ok <- is.finite(pos) & is.finite(curve$tdb) & is.finite(curve$humratio)
+    unique_pos <- !duplicated(pos)
+    interp_idx <- ok & unique_pos
+    if (sum(interp_idx) < 2L) {
+        return(curve[0, , drop = FALSE])
+    }
+    interp_row <- function(at) {
+        row <- curve[1L, , drop = FALSE]
+        row$tdb <- stats::approx(
+            pos[interp_idx], curve$tdb[interp_idx], xout = at,
+            rule = 2, ties = "ordered"
+        )$y
+        row$humratio <- stats::approx(
+            pos[interp_idx], curve$humratio[interp_idx], xout = at,
+            rule = 2, ties = "ordered"
+        )$y
+        row
+    }
+
+    middle <- which(pos > lo & pos < hi)
+    out <- rbind(interp_row(lo), curve[middle, , drop = FALSE], interp_row(hi))
+    out <- out[is.finite(out$tdb) & is.finite(out$humratio), , drop = FALSE]
+    if (!nrow(out)) {
+        return(out)
+    }
+    row.names(out) <- NULL
+    out
+}
+
+comfort_pmv_curve_position <- function(curve, tdb_lim, hum_lim) {
+    if (nrow(curve) < 2L) {
+        return(rep(0, nrow(curve)))
+    }
+    x_scale <- diff(range(tdb_lim, finite = TRUE))
+    y_scale <- diff(range(hum_lim, finite = TRUE))
+    if (!is.finite(x_scale) || x_scale <= 0) {
+        x_scale <- diff(range(curve$tdb, finite = TRUE))
+    }
+    if (!is.finite(y_scale) || y_scale <= 0) {
+        y_scale <- diff(range(curve$humratio, finite = TRUE))
+    }
+    x_scale <- if (is.finite(x_scale) && x_scale > 0) x_scale else 1
+    y_scale <- if (is.finite(y_scale) && y_scale > 0) y_scale else 1
+    step <- sqrt((diff(curve$tdb) / x_scale)^2 +
+        (diff(curve$humratio) / y_scale)^2)
+    total <- sum(step, na.rm = TRUE)
+    if (!is.finite(total) || total <= 0) {
+        return(seq(0, 1, length.out = nrow(curve)))
+    }
+    c(0, cumsum(step) / total)
 }
 
 comfort_pmv_rootband_data <- function(model, metric, levels, n, units, pres,
@@ -1710,43 +2005,23 @@ comfort_pmv_band_data <- function(model, range, n, units, pres, mollier,
         stop("`range` must contain exactly two PMV boundaries.", call. = FALSE)
     }
 
-    curves <- comfort_pmv_curve_data(
-        model, range, n, units, pres, FALSE, tdb_lim, hum_lim, label = "none"
+    bands <- comfort_pmv_rootband_data(
+        model, "pmv", range, n, units, pres, mollier, tdb_lim, hum_lim
     )
-    if (!nrow(curves)) {
-        return(comfort_empty_pmv_band())
+    if (!nrow(bands)) {
+        return(comfort_empty_band())
     }
 
-    left <- curves[curves$level == range[[1L]], c("tdb", "humratio")]
-    right <- curves[curves$level == range[[2L]], c("tdb", "humratio")]
-    shared <- intersect(left$humratio, right$humratio)
-    if (length(shared) < 2L) {
-        return(comfort_empty_pmv_band())
+    keep <- is.finite(bands$level_low) & is.finite(bands$level_high) &
+        abs(bands$level_low - range[[1L]]) <= 1e-8 &
+        abs(bands$level_high - range[[2L]]) <= 1e-8
+    out <- bands[keep, , drop = FALSE]
+    if (!nrow(out)) {
+        return(comfort_empty_band())
     }
-    left <- left[left$humratio %in% shared, , drop = FALSE]
-    right <- right[right$humratio %in% shared, , drop = FALSE]
-    left <- left[order(left$humratio), , drop = FALSE]
-    right <- right[order(right$humratio), , drop = FALSE]
-
-    out <- new_data_frame(list(
-        tdb = c(left$tdb, rev(right$tdb)),
-        humratio = c(left$humratio, rev(right$humratio)),
-        level_low = range[[1L]],
-        level_high = range[[2L]],
-        value = mean(range),
-        group = 1L,
-        subgroup = 1L,
-        metric = "pmv"
-    ))
-    psychro_output_xy(out, out$tdb, out$humratio, mollier)
-}
-
-comfort_empty_pmv_band <- function() {
-    new_data_frame(list(
-        tdb = numeric(), humratio = numeric(), x = numeric(), y = numeric(),
-        level_low = numeric(), level_high = numeric(), value = numeric(),
-        group = integer(), subgroup = integer(), metric = character()
-    ))
+    out$value <- mean(range)
+    out$level_mid <- mean(range)
+    out
 }
 
 comfort_pmv_rootband_breaks <- function(levels) {
@@ -2079,7 +2354,7 @@ comfort_pmv_curve_vjust <- function(level, label, override = NULL) {
         return(0.5)
     }
     if (label == "boundary") {
-        return(if (level <= 0) 1.25 else -0.25)
+        return(if (level <= 0) -0.25 else 1.25)
     }
     if (label == "comfort") {
         return(0.5)

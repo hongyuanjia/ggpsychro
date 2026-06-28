@@ -223,11 +223,11 @@ sensation text.}
 
 \item{label_axis}{If \code{TRUE}, label each PMV curve near the x-axis.}
 
-\item{axis_label_hjust, axis_label_vjust}{Textpath justification for PMV
-numeric labels near the x-axis.}
+\item{axis_label_hjust, axis_label_vjust}{Position and vertical adjustment
+for PMV numeric labels near the x-axis.}
 
-\item{sensation_label_hjust, sensation_label_vjust}{Textpath justification
-for thermal sensation labels.}
+\item{sensation_label_hjust, sensation_label_vjust}{Position and vertical
+adjustment for thermal sensation labels.}
 
 \item{standard}{A PMV-based comfort standard object.}
 

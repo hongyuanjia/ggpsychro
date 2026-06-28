@@ -187,6 +187,14 @@ test_that("PMV root-traced curves solve requested levels", {
             round_output = FALSE)$pmv
         expect_lt(max(abs(pmv - level), na.rm = TRUE), 0.02)
     }
+
+    standard_band <- comfort_pmv_band_data(
+        comfort_model_pmv(), c(-0.5, 0.5), c(140, 90),
+        "SI", pressure, FALSE, c(5, 35), c(0, 24)
+    )
+    top <- standard_band[which.max(standard_band$humratio), , drop = FALSE]
+    sat <- psychro_saturation_humratio(top$tdb, "SI", pressure)
+    expect_lt(abs(top$humratio - sat), 1e-6)
 })
 
 test_that("PMV comfort lines and PMV-based standard zones build", {
@@ -210,12 +218,51 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
         FALSE, c(15, 30), c(0, 20), label = "axis", label_vjust = 1.2
     )
     expect_equal(unique(pmv_axis_custom$vjust), 1.2)
+    pmv_boundary <- comfort_pmv_curve_data(
+        comfort_model_pmv(), c(-0.5, 0.5), 80, "SI", pressure,
+        FALSE, c(15, 30), c(0, 20), label = "boundary"
+    )
+    expect_equal(unique(pmv_boundary$vjust[pmv_boundary$level < 0]), -0.25)
+    expect_equal(unique(pmv_boundary$vjust[pmv_boundary$level > 0]), 1.25)
 
     pmv_sensation <- comfort_pmv_curve_data(
         comfort_model_pmv(), c(-1, 0, 1), 80, "SI", pressure,
         FALSE, c(15, 30), c(0, 20), label = "sensation"
     )
     expect_equal(unique(pmv_sensation$vjust), 0.5)
+    gap_lines <- comfort_pmv_curve_data(
+        comfort_model_pmv(), c(-1, 0, 1), 80, "SI", pressure,
+        FALSE, c(15, 30), c(0, 20), label = "none",
+        line_gaps = comfort_pmv_line_gaps(
+            c(-1, 0, 1), label_axis = TRUE, label_sensation = TRUE,
+            axis_label_hjust = 0.01, sensation_label_hjust = 0.5
+        )
+    )
+    expect_gt(length(unique(gap_lines$group)), 3L)
+    gap_specs <- comfort_pmv_line_gaps(
+        c(-1, 0, 1), label_axis = TRUE, label_sensation = TRUE,
+        axis_label_hjust = 0.01, sensation_label_hjust = 0.5
+    )
+    expect_true(all(c("position", "label_type") %in% names(gap_specs)))
+    expect_equal(unique(gap_specs$position[gap_specs$label_type == "axis"]), 0.01)
+    expect_equal(unique(gap_specs$position[gap_specs$label_type == "sensation"]), 0.5)
+
+    axis_paths <- comfort_pmv_label_path_data(
+        comfort_model_pmv(), c(-1, 0, 1), 80, "SI", pressure,
+        FALSE, c(15, 30), c(0, 20), label = "axis",
+        label_hjust = 0.01, label_vjust = 0.5
+    )
+    expect_equal(unique(axis_paths$hjust), 0.5)
+    expect_equal(unique(axis_paths$label_position), 0.01)
+
+    sensation_paths <- comfort_pmv_label_path_data(
+        comfort_model_pmv(), c(-1, 0, 1), 80, "SI", pressure,
+        FALSE, c(15, 30), c(0, 20), label = "sensation",
+        label_hjust = 0.5, label_vjust = 0.5
+    )
+    expect_true("NEUTRAL" %in% unique(sensation_paths$label))
+    expect_equal(unique(sensation_paths$hjust), 0.5)
+    expect_equal(unique(sensation_paths$label_position), 0.5)
 
     ashrae <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
@@ -223,7 +270,7 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
     )$data
     expect_gt(nrow(ashrae[[1L]]), 0L)
     expect_gt(length(unique(round(ashrae[[2L]]$x[ashrae[[2L]]$level == -0.5], 4))), 1L)
-    expect_true("COMFORT" %in% unique(ashrae[[4L]]$label))
+    expect_true("COMFORT" %in% unique(unlist(lapply(ashrae, `[[`, "label"))))
 
     en <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
@@ -290,6 +337,10 @@ test_that("Marsh-style comfort overlays have visual regressions", {
         base +
             geom_comfort_standard_zone(comfort_standard_en15251_2007(), n = 140)
     )
+})
+
+test_that("comfort layer internals are not exported", {
+    expect_false(any(grepl("^StatComfort", getNamespaceExports("ggpsychro"))))
 })
 
 test_that("comfort zones and state stats build model-specific fields", {
