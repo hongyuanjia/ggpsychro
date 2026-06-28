@@ -367,27 +367,26 @@ geom_comfort_contour <- function(mapping = NULL, data = NULL,
         breaks = breaks, n = n, contour_method = contour_method, ...
     )
 
-    contour_layer <- psychro_layer(
-        stat = stat, data = comfort_layer_data(data), mapping = mapping, geom = "path",
-        position = position, show.legend = show.legend,
-        inherit.aes = inherit.aes,
-        params = params
-    )
-
     if (!isTRUE(label)) {
-        return(contour_layer)
+        params$label_path <- FALSE
+        return(psychro_layer(
+            stat = stat, data = comfort_layer_data(data), mapping = mapping, geom = "path",
+            position = position, show.legend = show.legend,
+            inherit.aes = inherit.aes,
+            params = params
+        ))
     }
 
     label_params <- comfort_contour_label_params(params, label_size)
-    label_layer <- psychro_layer(
+    label_params$label_path <- TRUE
+    psychro_layer(
         stat = stat, data = comfort_layer_data(data),
         mapping = comfort_contour_label_mapping(mapping),
         geom = geomtextpath::GeomTextpath,
-        position = position, show.legend = FALSE,
+        position = position, show.legend = show.legend,
         inherit.aes = inherit.aes,
         params = label_params
     )
-    list(contour_layer, label_layer)
 }
 
 #' @rdname geom_comfort_overlay
@@ -753,19 +752,21 @@ StatComfortContour <- ggplot2::ggproto(
 
     extra_params = c(
         "na.rm", "model", "metric", "breaks", "n", "contour_method",
-        "units", "pres", "mollier", "tdb_lim", "hum_lim"
+        "label_path", "units", "pres", "mollier", "tdb_lim", "hum_lim"
     ),
 
     compute_panel = function(self, data, scales, model = comfort_model_pmv(),
                              metric = "pmv", breaks = NULL,
-                             n = NULL, contour_method = "auto", units, pres,
+                             n = NULL, contour_method = "auto",
+                             label_path = FALSE, units, pres,
                              mollier = FALSE, tdb_lim = NULL, hum_lim = NULL,
                              na.rm = FALSE) {
         units <- comfort_stat_units(data, units)
         pres <- comfort_stat_pressure(data, pres)
         comfort_contour_data(
             model, metric, breaks, comfort_default_n(model, n), units, pres,
-            mollier, tdb_lim, hum_lim, contour_method = contour_method
+            mollier, tdb_lim, hum_lim, contour_method = contour_method,
+            label_path = label_path
         )
     }
 )
@@ -2422,7 +2423,8 @@ comfort_grid_boundary_values <- function(model, metric, units, pres,
 
 comfort_contour_data <- function(model, metric, breaks, n, units, pres,
                                  mollier, tdb_lim, hum_lim,
-                                 contour_method = c("auto", "root", "isoband")) {
+                                 contour_method = c("auto", "root", "isoband"),
+                                 label_path = FALSE) {
     contour_method <- match.arg(contour_method)
     metric <- comfort_model_metric(model, metric)
     if (contour_method == "auto") {
@@ -2444,7 +2446,11 @@ comfort_contour_data <- function(model, metric, breaks, n, units, pres,
             model, breaks, n[[1L]], units, pres, mollier, tdb_lim, hum_lim,
             label = "none"
         )
-        return(comfort_add_contour_labels(out))
+        out <- comfort_add_contour_labels(out)
+        if (isTRUE(label_path)) {
+            out <- comfort_orient_contour_label_paths(out)
+        }
+        return(out)
     }
 
     m <- comfort_grid_matrix(
@@ -2464,7 +2470,11 @@ comfort_contour_data <- function(model, metric, breaks, n, units, pres,
         x = m$tdb, y = m$humratio, z = t(z), levels = breaks
     )
     out <- comfort_isoband_data(lines, breaks, breaks, m$metric, mollier, geom = "path")
-    comfort_add_contour_labels(out)
+    out <- comfort_add_contour_labels(out)
+    if (isTRUE(label_path)) {
+        out <- comfort_orient_contour_label_paths(out)
+    }
+    out
 }
 
 comfort_empty_contour <- function() {
@@ -2484,6 +2494,48 @@ comfort_add_contour_labels <- function(data) {
     data
 }
 
+comfort_orient_contour_label_paths <- function(data) {
+    if (!nrow(data) || !"group" %in% names(data)) {
+        return(data)
+    }
+
+    x_scale <- diff(range(data$x, finite = TRUE))
+    y_scale <- diff(range(data$y, finite = TRUE))
+    if (!is.finite(x_scale) || x_scale <= 0) {
+        x_scale <- 1
+    }
+    if (!is.finite(y_scale) || y_scale <= 0) {
+        y_scale <- 1
+    }
+
+    groups <- split(seq_len(nrow(data)), data$group)
+    out <- lapply(groups, function(i) {
+        group_data <- data[i, , drop = FALSE]
+        if (nrow(group_data) < 2L) {
+            return(group_data)
+        }
+
+        dx <- (group_data$x[[nrow(group_data)]] - group_data$x[[1L]]) / x_scale
+        dy <- (group_data$y[[nrow(group_data)]] - group_data$y[[1L]]) / y_scale
+        if (!is.finite(dx)) {
+            dx <- 0
+        }
+        if (!is.finite(dy)) {
+            dy <- 0
+        }
+
+        reverse <- if (abs(dy) >= abs(dx)) dy < 0 else dx < 0
+        if (isTRUE(reverse)) {
+            group_data <- group_data[rev(seq_len(nrow(group_data))), , drop = FALSE]
+        }
+        group_data
+    })
+
+    out <- do.call(rbind, out)
+    row.names(out) <- NULL
+    out
+}
+
 comfort_format_contour_level <- function(level, metric) {
     metric <- rep(metric, length.out = length(level))
     out <- scales::number(level, accuracy = NULL, trim = TRUE)
@@ -2500,16 +2552,12 @@ comfort_contour_label_mapping <- function(mapping) {
 }
 
 comfort_contour_label_params <- function(params, label_size = NULL) {
-    params$linewidth <- NULL
-    params$linetype <- NULL
-    params$lineend <- NULL
-    params$linejoin <- NULL
-    params$arrow <- NULL
-    params$size <- label_size %||% 2.8
-    params$text_only <- TRUE
-    params$upright <- TRUE
+    params$size <- label_size %||% params$size %||% 2.8
+    params$text_only <- FALSE
+    params$upright <- FALSE
     params$remove_long <- TRUE
     params$gap <- TRUE
+    params$padding <- params$padding %||% grid::unit(1, "pt")
     params
 }
 

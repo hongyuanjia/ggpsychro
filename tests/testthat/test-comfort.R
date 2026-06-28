@@ -234,10 +234,9 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
                 label = TRUE
             )
     )$data
-    expect_equal(length(contour_labelled), 2L)
-    expect_true(all(c("22", "24", "26") %in% contour_labelled[[2L]]$label))
+    expect_equal(length(contour_labelled), 1L)
+    expect_true(all(c("22", "24", "26") %in% contour_labelled[[1L]]$label))
     expect_true(all(c("label", "level", "value") %in% names(contour_labelled[[1L]])))
-    expect_true(all(c("label", "level", "value") %in% names(contour_labelled[[2L]])))
 
     pmv_labelled <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
@@ -246,7 +245,7 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
                 n = c(32, 20),
                 label = TRUE
             )
-    )$data[[2L]]
+    )$data[[1L]]
     expect_true(all(c("-1.0", "0.0", "+1.0") %in% pmv_labelled$label))
 
     expect_error(
