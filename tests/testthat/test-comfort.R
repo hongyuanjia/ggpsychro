@@ -21,9 +21,56 @@ test_that("comfort PMV and PPD match fixed pythermalcomfort oracle values", {
     expect_equal(result$tsv, c("Neutral", "Neutral"))
 })
 
+test_that("native PMV kernel matches R scalar fallback", {
+    tdb <- c(20, 25, 30, NA)
+    tr <- c(21, 25, 32, 25)
+    vr <- c(0.1, 0.2, 0.4, 0.1)
+    rh <- c(40, 50, 70, 50)
+    met <- c(1.0, 1.2, 1.6, 1.2)
+    clo <- c(0.5, 0.7, 0.3, 0.5)
+    wme <- c(0, 0, 0.1, 0)
+
+    native <- comfort_pmv_vec(tdb, tr, vr, rh, met, clo, wme)
+    fallback <- mapply(
+        comfort_pmv_one,
+        tdb, tr, vr, rh, met, clo, wme,
+        SIMPLIFY = TRUE, USE.NAMES = FALSE
+    )
+
+    expect_equal(native, fallback, tolerance = 1e-10)
+})
+
 test_that("comfort SET matches fixed pythermalcomfort oracle value", {
     result <- comfort_set(25, tr = 25, v = 0.1, rh = 50, met = 1.2, clo = 0.5)
     expect_equal(result$set[[1L]], comfort_oracle("set", "gagge_default", "set"))
+})
+
+test_that("native SET kernel matches R scalar fallback", {
+    tdb <- c(22, 25, 28, NA)
+    tr <- c(22, 26, 30, 25)
+    v <- c(0.1, 0.2, 0.6, 0.1)
+    rh <- c(40, 50, 70, 50)
+    met <- c(1.1, 1.2, 1.6, 1.2)
+    clo <- c(0.4, 0.5, 0.7, 0.5)
+    wme <- c(0, 0, 0.1, 0)
+
+    native <- comfort_set_vec(
+        tdb, tr, v, rh, met, clo, wme,
+        body_surface_area = 1.8258, p_atm = 101325,
+        position = "standing"
+    )
+    fallback <- mapply(
+        comfort_set_one,
+        tdb, tr, v, rh, met, clo, wme,
+        MoreArgs = list(
+            body_surface_area = 1.8258,
+            p_atm = 101325,
+            position = "standing"
+        ),
+        SIMPLIFY = TRUE, USE.NAMES = FALSE
+    )
+
+    expect_equal(native, fallback, tolerance = 1e-7)
 })
 
 test_that("comfort adaptive models match fixed pythermalcomfort oracle values", {
@@ -180,6 +227,25 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
 
 test_that("PMV root-traced curves solve requested levels", {
     pressure <- with_units("SI", psychrolib::GetStandardAtmPressure(0))
+    model <- comfort_model_pmv()
+
+    humratio <- seq(0, 0.02, length.out = 40)
+    native_roots <- comfort_pmv_curve_roots(
+        model, -0.5, humratio, c(15, 30), "SI", pressure
+    )
+    fallback_roots <- comfort_pmv_curve_roots_r(
+        model, -0.5, humratio, c(15, 30), "SI", pressure
+    )
+    expect_equal(native_roots, fallback_roots, tolerance = 1e-7)
+
+    native_sat_roots <- comfort_pmv_curve_saturation_roots(
+        model, 0, c(0, 35), c(0, 35), "SI", pressure, 120
+    )
+    fallback_sat_roots <- comfort_pmv_curve_saturation_roots_r(
+        model, 0, c(0, 35), c(0, 35), "SI", pressure, 120
+    )
+    expect_equal(native_sat_roots, fallback_sat_roots, tolerance = 1e-7)
+
     curves <- comfort_pmv_curve_data(
         comfort_model_pmv(), c(-0.5, 0, 0.5), 96, "SI", pressure,
         FALSE, c(15, 30), c(0, 20), label = "none"
@@ -349,9 +415,11 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
 
     ip_overlay <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(50, 90), hum_lim = c(0, 140), units = "IP") +
-            geom_comfort_overlay(n = c(40, 24))
+            geom_comfort_overlay(n = c(40, 24)) +
+            scale_fill_comfort_pmv()
     )
     expect_gt(nrow(ip_overlay$data[[1L]]), 0L)
+    expect_gt(length(unique(ip_overlay$data[[1L]]$fill)), 1L)
 })
 
 test_that("comfort overlays build in Mollier coordinates", {
@@ -490,6 +558,22 @@ test_that("Mollier comfort overlays have visual regressions", {
         "comfort mollier en15251 2007 pmv zones",
         base +
             geom_comfort_standard_zone(comfort_standard_en15251_2007(), n = 100)
+    )
+})
+
+test_that("IP comfort overlays have visual regressions", {
+    testthat::skip_on_os(c("linux", "windows"))
+
+    base <- ggpsychro(tdb_lim = c(50, 90), hum_lim = c(0, 140),
+        units = "IP") +
+        psychro_preset("minimal")
+
+    vdiffr::expect_doppelganger(
+        "comfort ip pmv overlay",
+        base +
+            geom_comfort_overlay(n = c(50, 30)) +
+            scale_fill_comfort_pmv() +
+            geom_comfort_pmv_lines(levels = seq(-2, 2, by = 1), n = 100)
     )
 })
 

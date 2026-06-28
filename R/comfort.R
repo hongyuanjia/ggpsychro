@@ -41,11 +41,7 @@ comfort_pmv <- function(tdb, tr = tdb, vr = 0.1, rh, met = 1.2,
     tr_si <- comfort_to_si_temp(x$tr, units)
     vr_si <- comfort_to_si_speed(x$vr, units)
 
-    pmv <- mapply(
-        comfort_pmv_one,
-        tdb_si, tr_si, vr_si, x$rh, x$met, x$clo, x$wme,
-        SIMPLIFY = TRUE, USE.NAMES = FALSE
-    )
+    pmv <- comfort_pmv_vec(tdb_si, tr_si, vr_si, x$rh, x$met, x$clo, x$wme)
 
     ppd <- 100 - 95 * exp(-0.03353 * pmv^4 - 0.2179 * pmv^2)
 
@@ -93,15 +89,11 @@ comfort_set <- function(tdb, tr = tdb, v = 0.1, rh, met = 1.2,
     tr_si <- comfort_to_si_temp(x$tr, units)
     v_si <- comfort_to_si_speed(x$v, units)
 
-    set <- mapply(
-        comfort_set_one,
+    set <- comfort_set_vec(
         tdb_si, tr_si, v_si, x$rh, x$met, x$clo, x$wme,
-        MoreArgs = list(
-            body_surface_area = body_surface_area,
-            p_atm = p_atm,
-            position = position
-        ),
-        SIMPLIFY = TRUE, USE.NAMES = FALSE
+        body_surface_area = body_surface_area,
+        p_atm = p_atm,
+        position = position
     )
 
     if (isTRUE(limit_inputs)) {
@@ -1013,6 +1005,25 @@ comfort_to_si_speed <- function(x, units) {
 
 comfort_pressure_pa <- function(p_atm, units) {
     if (units == "IP") p_atm * 6894.757293168 else p_atm
+}
+
+comfort_pmv_vec <- function(tdb, tr, vr, rh, met, clo, wme) {
+    .Call(
+        C_comfort_pmv_vec,
+        as.numeric(tdb), as.numeric(tr), as.numeric(vr), as.numeric(rh),
+        as.numeric(met), as.numeric(clo), as.numeric(wme)
+    )
+}
+
+comfort_set_vec <- function(tdb, tr, v, rh, met, clo, wme,
+                            body_surface_area, p_atm, position) {
+    .Call(
+        C_comfort_set_vec,
+        as.numeric(tdb), as.numeric(tr), as.numeric(v), as.numeric(rh),
+        as.numeric(met), as.numeric(clo), as.numeric(wme),
+        as.numeric(body_surface_area), as.numeric(p_atm),
+        isTRUE(position == "sitting")
+    )
 }
 
 comfort_pmv_one <- function(tdb, tr, vr, rh, met, clo, wme) {
@@ -2007,8 +2018,87 @@ comfort_pmv_curve_model <- function(model) {
     model
 }
 
+comfort_pmv_native_params <- function(model, units, pres) {
+    p <- model$params
+    if (isTRUE(p$limit_inputs)) {
+        return(NULL)
+    }
+    numeric_params <- c("vr", "met", "clo", "wme")
+    for (param in numeric_params) {
+        value <- p[[param]]
+        if (!is.numeric(value) || length(value) != 1L || !is.finite(value)) {
+            return(NULL)
+        }
+    }
+    tr <- NA_real_
+    if (!is.null(p$tr)) {
+        if (!is.numeric(p$tr) || length(p$tr) != 1L || !is.finite(p$tr)) {
+            return(NULL)
+        }
+        tr <- comfort_to_si_temp(as.numeric(p$tr), units)
+    }
+    list(
+        tr = tr,
+        vr = comfort_to_si_speed(as.numeric(p$vr), units),
+        met = as.numeric(p$met),
+        clo = as.numeric(p$clo),
+        wme = as.numeric(p$wme),
+        pressure = comfort_pressure_pa(as.numeric(pres), units),
+        min_hum_ratio = psychrolib_options()$MIN_HUM_RATIO
+    )
+}
+
+comfort_pmv_native_curve_roots <- function(model, level, humratio, tdb_lim,
+                                           units, pres) {
+    p <- comfort_pmv_native_params(model, units, pres)
+    if (is.null(p)) {
+        return(NULL)
+    }
+    roots <- .Call(
+        C_comfort_pmv_curve_roots,
+        as.numeric(level), as.numeric(humratio),
+        as.numeric(comfort_to_si_temp(tdb_lim, units)),
+        as.numeric(p$pressure), as.numeric(p$tr), as.numeric(p$vr),
+        as.numeric(p$met), as.numeric(p$clo), as.numeric(p$wme),
+        as.numeric(p$min_hum_ratio)
+    )
+    roots$tdb <- comfort_from_si_temp(roots$tdb, units)
+    roots
+}
+
+comfort_pmv_native_saturation_roots <- function(model, level, tdb_lim, hum_lim,
+                                                units, pres, n) {
+    p <- comfort_pmv_native_params(model, units, pres)
+    if (is.null(p)) {
+        return(NULL)
+    }
+    roots <- .Call(
+        C_comfort_pmv_saturation_roots,
+        as.numeric(level),
+        as.numeric(comfort_to_si_temp(tdb_lim, units)),
+        as.numeric(narrow_hum(hum_lim, units)),
+        as.integer(max(as.integer(n), 80L)),
+        as.numeric(p$pressure), as.numeric(p$tr), as.numeric(p$vr),
+        as.numeric(p$met), as.numeric(p$clo), as.numeric(p$wme),
+        as.numeric(p$min_hum_ratio)
+    )
+    roots$tdb <- comfort_from_si_temp(roots$tdb, units)
+    roots
+}
+
 comfort_pmv_curve_roots <- function(model, level, humratio, tdb_lim,
                                     units, pres) {
+    roots <- comfort_pmv_native_curve_roots(
+        model, level, humratio, tdb_lim, units, pres
+    )
+    if (!is.null(roots)) {
+        return(roots)
+    }
+    comfort_pmv_curve_roots_r(model, level, humratio, tdb_lim, units, pres)
+}
+
+comfort_pmv_curve_roots_r <- function(model, level, humratio, tdb_lim,
+                                      units, pres) {
     xlo <- rep(tdb_lim[[1L]], length(humratio))
     positive <- humratio > 0
     if (any(positive)) {
@@ -2071,6 +2161,19 @@ comfort_pmv_curve_roots <- function(model, level, humratio, tdb_lim,
 
 comfort_pmv_curve_saturation_roots <- function(model, level, tdb_lim, hum_lim,
                                                units, pres, n) {
+    roots <- comfort_pmv_native_saturation_roots(
+        model, level, tdb_lim, hum_lim, units, pres, n
+    )
+    if (!is.null(roots)) {
+        return(roots)
+    }
+    comfort_pmv_curve_saturation_roots_r(
+        model, level, tdb_lim, hum_lim, units, pres, n
+    )
+}
+
+comfort_pmv_curve_saturation_roots_r <- function(model, level, tdb_lim, hum_lim,
+                                                 units, pres, n) {
     n <- max(as.integer(n), 80L)
     tdb <- seq(tdb_lim[[1L]], tdb_lim[[2L]], length.out = n)
     hum <- psychro_saturation_humratio(tdb, units, pres)

@@ -14,19 +14,12 @@ GetHumRatioFromAirVolume <- function (TDryBulb, AirVolume, Pressure) {
 }
 
 GetTDewPointFromHumRatioOnly <- function(HumRatio, Pressure) {
-    VapPres <- psychrolib::GetVapPresFromHumRatio(HumRatio, Pressure)
-    if (isIP()) {
-        CONST <- 6894.7572931783
-        # convert to SI
-        VapPres <- VapPres * CONST
-    }
-    TDewPoint <- vapply(VapPres, GetTDewPointFromVapPresOnly, double(1L))
-
-    if (isIP()) {
-        TDewPoint <- TDewPoint * 9.0 / 5.0 + 32.0
-    }
-
-    TDewPoint
+    units <- if (isIP()) "IP" else "SI"
+    .Call(
+        C_dew_point_from_hum_ratio,
+        as.numeric(HumRatio), as.numeric(Pressure),
+        encode_units(units), psychrolib_options()$MIN_HUM_RATIO
+    )
 }
 
 GetTDewPointFromVapPresOnly <- function(VapPres) {
