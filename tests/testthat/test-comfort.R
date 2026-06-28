@@ -336,25 +336,69 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
     )
     expect_gt(nrow(ip$data[[1L]]), 0L)
 
-    mollier <- ggplot2::ggplot_build(
-        ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20), mollier = TRUE) +
-            geom_comfort_standard_zone(comfort_standard_ashrae55_2017(), n = 60)
-    )
-    expect_gt(nrow(mollier$data[[1L]]), 0L)
-    expect_true(all(mollier$data[[1L]]$x <= 0.02))
-
     ip_overlay <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(50, 90), hum_lim = c(0, 140), units = "IP") +
             geom_comfort_overlay(n = c(40, 24))
     )
     expect_gt(nrow(ip_overlay$data[[1L]]), 0L)
+})
 
-    mollier_overlay <- ggplot2::ggplot_build(
-        ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20), mollier = TRUE) +
-            geom_comfort_overlay(n = c(40, 24))
-    )
-    expect_gt(nrow(mollier_overlay$data[[1L]]), 0L)
-    expect_true(all(mollier_overlay$data[[1L]]$x <= 0.02))
+test_that("comfort overlays build in Mollier coordinates", {
+    expect_mollier_comfort <- function(plot) {
+        layers <- ggplot2::ggplot_build(plot)$data
+        expect_gt(length(layers), 0L)
+        for (layer in layers) {
+            if (!nrow(layer)) {
+                next
+            }
+            expect_true(all(c("x", "y") %in% names(layer)))
+            expect_true(all(is.finite(layer$x)))
+            expect_true(all(is.finite(layer$y)))
+            expect_true(all(layer$x >= -1e-10))
+            expect_true(all(layer$x <= 0.02 + 1e-10))
+        }
+        invisible(layers)
+    }
+
+    base <- ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20), mollier = TRUE)
+
+    expect_mollier_comfort(base + geom_comfort_overlay(n = c(40, 24)))
+    expect_mollier_comfort(base + geom_comfort_overlay(method = "isoband",
+        n = c(32, 20)))
+    expect_mollier_comfort(base + geom_comfort_overlay(method = "tile",
+        n = c(24, 16)))
+    expect_mollier_comfort(base + geom_comfort_overlay(
+        model = comfort_model_set(), n = c(24, 16)
+    ))
+    expect_mollier_comfort(base + geom_comfort_overlay(
+        model = comfort_model_adaptive(t_running = 20), n = c(24, 16)
+    ))
+
+    expect_mollier_comfort(base + geom_comfort_contour(
+        breaks = c(-1, 0, 1), n = c(32, 20)
+    ))
+    expect_mollier_comfort(base + geom_comfort_contour(
+        model = comfort_model_set(), metric = "set", breaks = c(22, 24, 26),
+        n = c(32, 20)
+    ))
+
+    expect_mollier_comfort(base + geom_comfort_pmv_lines(
+        levels = c(-1, 0, 1), n = 60
+    ))
+    expect_mollier_comfort(base + geom_comfort_standard_zone(
+        comfort_standard_ashrae55_2017(), n = 60
+    ))
+    expect_mollier_comfort(base + geom_comfort_standard_zone(
+        comfort_standard_en15251_2007(), n = 60
+    ))
+
+    expect_mollier_comfort(base + geom_comfort_zone(n = c(60, 40)))
+    expect_mollier_comfort(base + geom_comfort_zone(
+        model = comfort_model_set(), n = c(32, 20)
+    ))
+    expect_mollier_comfort(base + geom_comfort_zone(
+        model = comfort_model_adaptive(t_running = 20)
+    ))
 })
 
 test_that("Marsh-style comfort overlays have visual regressions", {
