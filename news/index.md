@@ -2,6 +2,9 @@
 
 ## ggpsychro 0.0.0.9000
 
+- Added README acknowledgements for external psychrometric-chart
+  references and refined SET/adaptive comfort overlay examples.
+  ([\#23](https://github.com/hongyuanjia/ggpsychro/issues/23))
 - Added README and pkgdown documentation for comfort overlays and the
   psychrometric protractor.
   ([\#22](https://github.com/hongyuanjia/ggpsychro/issues/22))

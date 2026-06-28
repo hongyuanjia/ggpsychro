@@ -60,7 +60,9 @@ bands.](comfort-overlays_files/figure-html/en15251-zone-1.png)
 
 Create reusable model objects with `comfort_model_*()` helpers. SET
 overlays default to the `"set"` metric, while adaptive models default to
-`"acceptability"`.
+`"acceptability"`. For non-PMV metrics, contours and zones are often
+easier to read than a full-panel filled overlay because the metric can
+vary smoothly across almost the entire valid air region.
 
 ``` r
 
@@ -68,18 +70,18 @@ set_model <- comfort_model_set()
 
 ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
     psychro_preset("minimal") +
-    geom_comfort_overlay(model = set_model, n = c(40, 24)) +
     geom_comfort_contour(
         model = set_model,
         metric = "set",
-        breaks = c(22, 24, 26),
-        n = c(40, 24),
-        colour = "#4A4A4A"
+        breaks = seq(22, 30, by = 2),
+        n = c(70, 42),
+        colour = "#4A4A4A",
+        linewidth = 0.7
     )
 ```
 
-![Psychrometric chart with a SET comfort overlay and labelled SET
-contour lines.](comfort-overlays_files/figure-html/set-overlay-1.png)
+![Psychrometric chart with SET contour
+lines.](comfort-overlays_files/figure-html/set-contours-1.png)
 
 ``` r
 
@@ -87,17 +89,17 @@ adaptive_model <- comfort_model_adaptive(t_running = 20)
 
 ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
     psychro_preset("minimal") +
-    geom_comfort_overlay(model = adaptive_model, n = c(40, 24)) +
     geom_comfort_zone(
         model = adaptive_model,
-        fill = NA,
-        colour = "#4A4A4A"
+        fill = "#22c55e",
+        alpha = 0.18,
+        colour = "#166534",
+        linewidth = 0.7
     )
 ```
 
-![Psychrometric chart with an adaptive comfort acceptability overlay and
-boundary
-zone.](comfort-overlays_files/figure-html/adaptive-overlay-1.png)
+![Psychrometric chart with an adaptive comfort acceptability
+zone.](comfort-overlays_files/figure-html/adaptive-zone-1.png)
 
 ## State metrics
 
