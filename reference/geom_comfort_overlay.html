@@ -83,6 +83,20 @@ evaluates comfort fields at supplied states.</p>
 <span>  inherit.aes <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
+<span><span class="fu">geom_comfort_heat_index</span><span class="op">(</span></span>
+<span>  mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
+<span>  <span class="va">...</span>,</span>
+<span>  model <span class="op">=</span> <span class="fu"><a href="comfort_model_pmv.html">comfort_model_heat_index</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">160</span>, <span class="fl">100</span><span class="op">)</span>,</span>
+<span>  alpha <span class="op">=</span> <span class="fl">0.55</span>,</span>
+<span>  show_labels <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  show.legend <span class="op">=</span> <span class="cn">NA</span>,</span>
+<span>  inherit.aes <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
 <span><span class="fu">geom_comfort_contour</span><span class="op">(</span></span>
 <span>  mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -90,7 +104,7 @@ evaluates comfort fields at supplied states.</p>
 <span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  model <span class="op">=</span> <span class="fu"><a href="comfort_model_pmv.html">comfort_model_pmv</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  metric <span class="op">=</span> <span class="st">"pmv"</span>,</span>
+<span>  metric <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  contour_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"root"</span>, <span class="st">"isoband"</span><span class="op">)</span>,</span>
@@ -147,6 +161,23 @@ evaluates comfort fields at supplied states.</p>
 <span>  <span class="va">...</span>,</span>
 <span>  model <span class="op">=</span> <span class="fu"><a href="comfort_model_pmv.html">comfort_model_pmv</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  n <span class="op">=</span> <span class="fl">360</span>,</span>
+<span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  show.legend <span class="op">=</span> <span class="cn">NA</span>,</span>
+<span>  inherit.aes <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">geom_comfort_givoni</span><span class="op">(</span></span>
+<span>  strategy <span class="op">=</span> <span class="fu"><a href="comfort_strategy_givoni.html">comfort_strategy_givoni</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
+<span>  <span class="va">...</span>,</span>
+<span>  alpha <span class="op">=</span> <span class="fl">0.55</span>,</span>
+<span>  show_labels <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  show_pmv <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  pmv_model <span class="op">=</span> <span class="fu"><a href="comfort_model_pmv.html">comfort_model_pmv</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  zone_alpha <span class="op">=</span> <span class="fl">0.2</span>,</span>
+<span>  zone_style <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  show.legend <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  inherit.aes <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -303,6 +334,10 @@ that define both data and aesthetics and shouldn't inherit behaviour from
 the default plot specification, e.g. <code><a href="https://ggplot2.tidyverse.org/reference/annotation_borders.html" class="external-link">annotation_borders()</a></code>.</p></dd>
 
 
+<dt id="arg-show-labels">show_labels<a class="anchor" aria-label="anchor" href="#arg-show-labels"></a></dt>
+<dd><p>If <code>TRUE</code>, draw overlay labels.</p></dd>
+
+
 <dt id="arg-breaks">breaks<a class="anchor" aria-label="anchor" href="#arg-breaks"></a></dt>
 <dd><p>Contour break values.</p></dd>
 
@@ -356,6 +391,33 @@ thermal sensation labels.</p></dd>
 
 <dt id="arg-standard">standard<a class="anchor" aria-label="anchor" href="#arg-standard"></a></dt>
 <dd><p>A PMV-based comfort standard object.</p></dd>
+
+
+<dt id="arg-strategy">strategy<a class="anchor" aria-label="anchor" href="#arg-strategy"></a></dt>
+<dd><p>A Givoni bioclimatic strategy object.</p></dd>
+
+
+<dt id="arg-show-pmv">show_pmv<a class="anchor" aria-label="anchor" href="#arg-show-pmv"></a></dt>
+<dd><p>If <code>TRUE</code>, draw the PMV comfort background under the Givoni
+strategy outlines.</p></dd>
+
+
+<dt id="arg-pmv-model">pmv_model<a class="anchor" aria-label="anchor" href="#arg-pmv-model"></a></dt>
+<dd><p>PMV model used when <code>show_pmv = TRUE</code>.</p></dd>
+
+
+<dt id="arg-zone-alpha">zone_alpha<a class="anchor" aria-label="anchor" href="#arg-zone-alpha"></a></dt>
+<dd><p>Alpha for the filled Givoni comfort zone. Other Givoni
+strategy regions are drawn as outlines.</p></dd>
+
+
+<dt id="arg-zone-style">zone_style<a class="anchor" aria-label="anchor" href="#arg-zone-style"></a></dt>
+<dd><p>Optional named list of per-zone style overrides for
+<code>geom_comfort_givoni()</code>. Names must match Givoni zone ids such as
+<code>"comfort"</code>, <code>"winter"</code>, or <code>"air_conditioning"</code>. Values can be created
+with <code><a href="element_comfort_zone.html">element_comfort_zone()</a></code>, <code><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">ggplot2::element_polygon()</a></code>, or ordinary
+named lists with fields <code>fill</code>, <code>colour</code>/<code>color</code>, <code>linewidth</code>, <code>linetype</code>,
+<code>alpha</code>, and <code>linejoin</code>.</p></dd>
 
 
 <dt id="arg-geom">geom<a class="anchor" aria-label="anchor" href="#arg-geom"></a></dt>

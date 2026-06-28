@@ -48,6 +48,15 @@ comfort_adaptive(
   limit_inputs = TRUE,
   round_output = TRUE
 )
+
+comfort_heat_index(
+  tdb,
+  rh,
+  solar_exposure = 0,
+  units = c("SI", "IP"),
+  limit_inputs = TRUE,
+  round_output = TRUE
+)
 ```
 
 ## Arguments
@@ -122,6 +131,10 @@ comfort_adaptive(
   Comfort category. For ASHRAE 55 use `"80"` or `"90"`; for EN 16798 use
   `"I"`, `"II"`, or `"III"`.
 
+- solar_exposure:
+
+  Relative solar exposure for heat index, from 0 to 1.
+
 ## Value
 
 A data frame with model outputs.
@@ -140,4 +153,7 @@ comfort_adaptive(25, t_running = 20)
 #> 1 ashrae55      24           20.5          27.5           21.5          26.5
 #>   acceptability_80 acceptability_90 lower upper acceptability
 #> 1             TRUE             TRUE  20.5  27.5          TRUE
+comfort_heat_index(32, rh = 70)
+#>   heat_index category category_id
+#> 1       40.4   danger           3
 ```

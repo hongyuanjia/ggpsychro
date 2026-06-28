@@ -29,6 +29,20 @@ geom_comfort_overlay(
   inherit.aes = TRUE
 )
 
+geom_comfort_heat_index(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  model = comfort_model_heat_index(),
+  n = c(160, 100),
+  alpha = 0.55,
+  show_labels = TRUE,
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
+
 geom_comfort_contour(
   mapping = NULL,
   data = NULL,
@@ -36,7 +50,7 @@ geom_comfort_contour(
   position = "identity",
   ...,
   model = comfort_model_pmv(),
-  metric = "pmv",
+  metric = NULL,
   breaks = NULL,
   n = NULL,
   contour_method = c("auto", "root", "isoband"),
@@ -93,6 +107,23 @@ geom_comfort_standard_zone(
   ...,
   model = comfort_model_pmv(),
   n = 360,
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
+
+geom_comfort_givoni(
+  strategy = comfort_strategy_givoni(),
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  alpha = 0.55,
+  show_labels = TRUE,
+  show_pmv = FALSE,
+  pmv_model = comfort_model_pmv(),
+  zone_alpha = 0.2,
+  zone_style = NULL,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -274,6 +305,10 @@ stat_comfort_state(
   plot specification, e.g.
   [`annotation_borders()`](https://ggplot2.tidyverse.org/reference/annotation_borders.html).
 
+- show_labels:
+
+  If `TRUE`, draw overlay labels.
+
 - breaks:
 
   Contour break values.
@@ -327,6 +362,35 @@ stat_comfort_state(
 - standard:
 
   A PMV-based comfort standard object.
+
+- strategy:
+
+  A Givoni bioclimatic strategy object.
+
+- show_pmv:
+
+  If `TRUE`, draw the PMV comfort background under the Givoni strategy
+  outlines.
+
+- pmv_model:
+
+  PMV model used when `show_pmv = TRUE`.
+
+- zone_alpha:
+
+  Alpha for the filled Givoni comfort zone. Other Givoni strategy
+  regions are drawn as outlines.
+
+- zone_style:
+
+  Optional named list of per-zone style overrides for
+  `geom_comfort_givoni()`. Names must match Givoni zone ids such as
+  `"comfort"`, `"winter"`, or `"air_conditioning"`. Values can be
+  created with
+  [`element_comfort_zone()`](https://hongyuanjia.github.io/ggpsychro/reference/element_comfort_zone.md),
+  [`ggplot2::element_polygon()`](https://ggplot2.tidyverse.org/reference/element.html),
+  or ordinary named lists with fields `fill`, `colour`/`color`,
+  `linewidth`, `linetype`, `alpha`, and `linejoin`.
 
 - geom:
 

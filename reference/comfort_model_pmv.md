@@ -39,6 +39,12 @@ comfort_model_adaptive(
   limit_inputs = TRUE,
   round_output = FALSE
 )
+
+comfort_model_heat_index(
+  solar_exposure = 0,
+  limit_inputs = TRUE,
+  round_output = FALSE
+)
 ```
 
 ## Arguments
@@ -104,6 +110,10 @@ comfort_model_adaptive(
 - category:
 
   Adaptive comfort category.
+
+- solar_exposure:
+
+  Relative solar exposure for heat index, from 0 to 1.
 
 ## Value
 

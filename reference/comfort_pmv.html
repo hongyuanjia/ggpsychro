@@ -95,6 +95,15 @@ and ft/s.</p>
 <span>  units <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"SI"</span>, <span class="st">"IP"</span><span class="op">)</span>,</span>
 <span>  limit_inputs <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  round_output <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">comfort_heat_index</span><span class="op">(</span></span>
+<span>  <span class="va">tdb</span>,</span>
+<span>  <span class="va">rh</span>,</span>
+<span>  solar_exposure <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  units <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"SI"</span>, <span class="st">"IP"</span><span class="op">)</span>,</span>
+<span>  limit_inputs <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  round_output <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -172,6 +181,10 @@ are returned as <code>NA</code>.</p></dd>
 <dd><p>Comfort category. For ASHRAE 55 use <code>"80"</code> or <code>"90"</code>; for
 EN 16798 use <code>"I"</code>, <code>"II"</code>, or <code>"III"</code>.</p></dd>
 
+
+<dt id="arg-solar-exposure">solar_exposure<a class="anchor" aria-label="anchor" href="#arg-solar-exposure"></a></dt>
+<dd><p>Relative solar exposure for heat index, from 0 to 1.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -191,6 +204,9 @@ EN 16798 use <code>"I"</code>, <code>"II"</code>, or <code>"III"</code>.</p></dd
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 ashrae55      24           20.5          27.5           21.5          26.5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   acceptability_80 acceptability_90 lower upper acceptability</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1             TRUE             TRUE  20.5  27.5          TRUE</span>
+<span class="r-in"><span><span class="fu">comfort_heat_index</span><span class="op">(</span><span class="fl">32</span>, rh <span class="op">=</span> <span class="fl">70</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   heat_index category category_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1       40.4   danger           3</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

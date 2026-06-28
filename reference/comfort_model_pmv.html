@@ -82,6 +82,12 @@ reused across overlays, contours, zones, and point states.</p>
 <span>  category <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  limit_inputs <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  round_output <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">comfort_model_heat_index</span><span class="op">(</span></span>
+<span>  solar_exposure <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  limit_inputs <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  round_output <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -149,6 +155,10 @@ unrounded values by default so contours and zones remain smooth.</p></dd>
 
 <dt id="arg-category">category<a class="anchor" aria-label="anchor" href="#arg-category"></a></dt>
 <dd><p>Adaptive comfort category.</p></dd>
+
+
+<dt id="arg-solar-exposure">solar_exposure<a class="anchor" aria-label="anchor" href="#arg-solar-exposure"></a></dt>
+<dd><p>Relative solar exposure for heat index, from 0 to 1.</p></dd>
 
 </dl></div>
     <div class="section level2">

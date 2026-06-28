@@ -120,6 +120,81 @@ above, `t_running = 20` gives an ASHRAE 55 80% acceptability interval
 from 20.5 to 27.5 degrees C; because `tr` defaults to `tdb`, the zone is
 clipped only by the current chart limits and saturation boundary.
 
+## Outdoor Heat Index
+
+Heat Index overlays use
+[`comfort_model_heat_index()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_model_pmv.md)
+and
+[`geom_comfort_heat_index()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
+to draw Outdoor Work Heat Index categories. The model uses a NOAA-style
+Heat Index calculation internally in Fahrenheit, while the layer follows
+the parent chart’s unit system.
+
+``` r
+
+ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
+    psychro_preset("minimal") +
+    geom_comfort_heat_index(n = c(70, 42), alpha = 0.5)
+```
+
+![Psychrometric chart with Outdoor Work Heat Index caution and danger
+categories.](comfort-overlays_files/figure-html/heat-index-overlay-1.png)
+
+## Givoni bioclimatic strategies
+
+Givoni overlays are strategy zones rather than a single continuous
+comfort metric. Create a strategy with
+[`comfort_strategy_givoni()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_strategy_givoni.md)
+and draw it with
+[`geom_comfort_givoni()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md).
+The mean outdoor temperature shifts the strategy geometry and is shown
+on the chart as a dashed marker.
+
+``` r
+
+givoni <- comfort_strategy_givoni(mean_outdoor = 22)
+
+ggpsychro(tdb_lim = c(-10, 50), hum_lim = c(0, 35)) +
+    psychro_preset("minimal") +
+    geom_comfort_givoni(givoni, alpha = 0.45)
+```
+
+![Psychrometric chart with Givoni bioclimatic strategy zones and a mean
+outdoor temperature
+marker.](comfort-overlays_files/figure-html/givoni-zones-1.png)
+
+Use `zone_style` with
+[`element_comfort_zone()`](https://hongyuanjia.github.io/ggpsychro/reference/element_comfort_zone.md)
+to highlight individual strategy zones without changing the strategy
+geometry.
+
+``` r
+
+ggpsychro(tdb_lim = c(-10, 50), hum_lim = c(0, 35)) +
+    psychro_preset("minimal") +
+    geom_comfort_givoni(
+        givoni,
+        zone_style = list(
+            comfort = element_comfort_zone(
+                fill = "#66D27A", colour = "#1F5F2D", alpha = 0.35
+            ),
+            natural_ventilation = element_comfort_zone(
+                fill = "#B6E3FF", colour = "#2F6FB0", alpha = 0.25
+            ),
+            winter = element_comfort_zone(
+                colour = "#A14D00", linetype = "dashed"
+            ),
+            air_conditioning = element_comfort_zone(
+                colour = "#8B1E3F", linewidth = 1.2
+            )
+        )
+    )
+```
+
+![Psychrometric chart with styled Givoni comfort, natural ventilation,
+winter, and air-conditioning
+zones.](comfort-overlays_files/figure-html/givoni-zone-style-1.png)
+
 ## State metrics
 
 [`stat_comfort_state()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)

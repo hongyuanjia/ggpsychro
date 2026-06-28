@@ -2,6 +2,9 @@
 
 ## ggpsychro 0.0.0.9000
 
+- Added Heat Index overlays, Givoni bioclimatic strategy zones, and
+  per-zone styling controls for Givoni overlays.
+  ([\#24](https://github.com/hongyuanjia/ggpsychro/issues/24))
 - Added optional contour labels to
   [`geom_comfort_contour()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md).
   ([\#26](https://github.com/hongyuanjia/ggpsychro/issues/26))

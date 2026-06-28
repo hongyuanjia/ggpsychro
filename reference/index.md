@@ -5,23 +5,31 @@
 - [`comfort_model_pmv()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_model_pmv.md)
   [`comfort_model_set()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_model_pmv.md)
   [`comfort_model_adaptive()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_model_pmv.md)
+  [`comfort_model_heat_index()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_model_pmv.md)
   : Comfort model objects
 - [`comfort_pmv()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_pmv.md)
   [`comfort_set()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_pmv.md)
   [`comfort_adaptive()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_pmv.md)
+  [`comfort_heat_index()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_pmv.md)
   : Thermal comfort calculations
 - [`comfort_standard_ashrae55_2017()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_standard_ashrae55_2017.md)
   [`comfort_standard_en15251_2007()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_standard_ashrae55_2017.md)
   : PMV-based comfort standards
+- [`comfort_strategy_givoni()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_strategy_givoni.md)
+  : Givoni bioclimatic strategy
 - [`coord_psychro()`](https://hongyuanjia.github.io/ggpsychro/reference/coord_psychro.md)
   : Psychrometric coordinates
+- [`element_comfort_zone()`](https://hongyuanjia.github.io/ggpsychro/reference/element_comfort_zone.md)
+  : Comfort zone style element
 - [`element_polygon()`](https://hongyuanjia.github.io/ggpsychro/reference/element_polygon.md)
   : Polygon theme element for psychrometric chart panels
 - [`geom_comfort_overlay()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
+  [`geom_comfort_heat_index()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
   [`geom_comfort_contour()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
   [`geom_comfort_zone()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
   [`geom_comfort_pmv_lines()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
   [`geom_comfort_standard_zone()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
+  [`geom_comfort_givoni()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
   [`stat_comfort_state()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
   : Comfort overlays for psychrometric charts
 - [`geom_grid_relhum()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_grid.md)
