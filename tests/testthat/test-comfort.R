@@ -289,6 +289,17 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
     expect_equal(unique(pmv_boundary$vjust[pmv_boundary$level < 0]), -0.25)
     expect_equal(unique(pmv_boundary$vjust[pmv_boundary$level > 0]), 1.25)
 
+    pmv_boundary_mollier <- comfort_pmv_curve_data(
+        comfort_model_pmv(), c(-0.5, 0.5), 80, "SI", pressure,
+        TRUE, c(15, 30), c(0, 20), label = "boundary"
+    )
+    expect_equal(unique(pmv_boundary_mollier$vjust[
+        pmv_boundary_mollier$level < 0
+    ]), 1.25)
+    expect_equal(unique(pmv_boundary_mollier$vjust[
+        pmv_boundary_mollier$level > 0
+    ]), -0.25)
+
     pmv_sensation <- comfort_pmv_curve_data(
         comfort_model_pmv(), c(-1, 0, 1), 80, "SI", pressure,
         FALSE, c(15, 30), c(0, 20), label = "sensation"
@@ -427,6 +438,58 @@ test_that("Marsh-style comfort overlays have visual regressions", {
         "comfort en15251 2007 pmv zones",
         base +
             geom_comfort_standard_zone(comfort_standard_en15251_2007(), n = 140)
+    )
+})
+
+test_that("Mollier comfort overlays have visual regressions", {
+    testthat::skip_on_os(c("linux", "windows"))
+
+    base <- ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20),
+        mollier = TRUE) +
+        psychro_preset("minimal")
+
+    vdiffr::expect_doppelganger(
+        "comfort mollier pmv overlay",
+        base +
+            geom_comfort_overlay(n = c(50, 30)) +
+            scale_fill_comfort_pmv() +
+            geom_comfort_pmv_lines(levels = seq(-2, 2, by = 1), n = 100)
+    )
+
+    vdiffr::expect_doppelganger(
+        "comfort mollier set overlay",
+        base +
+            geom_comfort_overlay(model = comfort_model_set(), n = c(40, 24)) +
+            geom_comfort_contour(
+                model = comfort_model_set(), metric = "set",
+                breaks = c(22, 24, 26), n = c(40, 24),
+                colour = "#4A4A4A"
+            )
+    )
+
+    vdiffr::expect_doppelganger(
+        "comfort mollier adaptive overlay",
+        base +
+            geom_comfort_overlay(
+                model = comfort_model_adaptive(t_running = 20),
+                n = c(40, 24)
+            ) +
+            geom_comfort_zone(
+                model = comfort_model_adaptive(t_running = 20),
+                fill = NA, colour = "#4A4A4A"
+            )
+    )
+
+    vdiffr::expect_doppelganger(
+        "comfort mollier ashrae55 2017 pmv zone",
+        base +
+            geom_comfort_standard_zone(comfort_standard_ashrae55_2017(), n = 100)
+    )
+
+    vdiffr::expect_doppelganger(
+        "comfort mollier en15251 2007 pmv zones",
+        base +
+            geom_comfort_standard_zone(comfort_standard_en15251_2007(), n = 100)
     )
 })
 

@@ -482,7 +482,7 @@ geom_comfort_pmv_lines <- function(mapping = NULL, data = NULL,
                 label_hjust = sensation_label_hjust,
                 label_vjust = sensation_label_vjust,
                 reverse = TRUE, gap = TRUE, padding = padding,
-                upright = FALSE, remove_long = FALSE
+                upright = TRUE, remove_long = FALSE
             ))
         )
     }
@@ -506,7 +506,7 @@ geom_comfort_pmv_lines <- function(mapping = NULL, data = NULL,
                 vjust = comfort_pmv_axis_label_text_vjust(
                     axis_label_vjust, axis_label_size
                 ),
-                text_only = TRUE, upright = FALSE,
+                text_only = TRUE, upright = TRUE,
                 remove_long = FALSE
             ))
         )
@@ -1546,7 +1546,9 @@ comfort_pmv_curve_data <- function(model, levels, n, units, pres, mollier,
             linetype = comfort_pmv_linetype(levels[[i]]),
             label = comfort_pmv_curve_label(levels[[i]], label),
             hjust = comfort_pmv_curve_hjust(label, label_hjust),
-            vjust = comfort_pmv_curve_vjust(levels[[i]], label, label_vjust),
+            vjust = comfort_pmv_curve_vjust(
+                levels[[i]], label, label_vjust, mollier = mollier
+            ),
             metric = "pmv"
         ))
     }
@@ -2183,11 +2185,15 @@ comfort_pmv_curve_hjust <- function(label, override = NULL) {
     )
 }
 
-comfort_pmv_curve_vjust <- function(level, label, override = NULL) {
+comfort_pmv_curve_vjust <- function(level, label, override = NULL,
+                                    mollier = FALSE) {
     if (!is.null(override)) {
         return(override)
     }
     if (label == "boundary") {
+        if (isTRUE(mollier)) {
+            return(if (level <= 0) 1.25 else -0.25)
+        }
         return(if (level <= 0) -0.25 else 1.25)
     }
     if (label == "comfort") {
