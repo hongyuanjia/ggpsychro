@@ -34,10 +34,10 @@ geom_psychro_tile(
   gap = 0.08,
   boundary = c(0, 0),
   cell.grid = TRUE,
-  cell.grid.colour = "grey78",
-  cell.grid.linewidth = 0.25,
-  cell.grid.linetype = 1,
-  cell.grid.alpha = 1,
+  cell.grid.colour = ggplot2::waiver(),
+  cell.grid.linewidth = ggplot2::waiver(),
+  cell.grid.linetype = ggplot2::waiver(),
+  cell.grid.alpha = ggplot2::waiver(),
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -226,13 +226,20 @@ geom_psychro_tile(
 
 - cell.grid:
 
-  If `TRUE`, the default, draw a tile-local grid across the chart area
-  using the computed psychrometric bin spacing.
+  If `TRUE`, the default, draw a tile-local grid across the chart area.
+  The grid uses the current x/y scale major and minor breaks by default.
+  If `binwidth` is finer than, and aligned with, those scale breaks, the
+  cell grid uses the finer bin spacing while preserving the existing x/y
+  breaks as grid lines. If scale breaks are unavailable, the grid falls
+  back to the computed bin spacing.
 
 - cell.grid.colour, cell.grid.linewidth, cell.grid.linetype,
   cell.grid.alpha:
 
-  Appearance of the tile-local cell grid.
+  Appearance of the tile-local cell grid. The default,
+  [`ggplot2::waiver()`](https://ggplot2.tidyverse.org/reference/waiver.html),
+  inherits from the current `panel.grid.*.x` and `panel.grid.*.y` theme
+  elements. Explicit values override the inherited theme style.
 
 ## Details
 
@@ -242,9 +249,13 @@ relative humidity in percent. Relative humidity inputs inherit the plot
 unit system and pressure from
 [`ggpsychro()`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro.md).
 Tiles default to a small gap and `alpha = 0.85` so psychrometric grid
-lines remain visible. When `binwidth` is used, each tile represents one
-dry-bulb and humidity-ratio cell aligned to `boundary`; the optional
-cell grid redraws those bin boundaries across the chart area.
+lines remain visible. Tile bodies are clipped to the saturation line in
+psychrometric coordinates. When `binwidth` is used, each tile represents
+one dry-bulb and humidity-ratio cell aligned to `boundary`. The optional
+cell grid follows the chart's x/y breaks so it stays aligned with the
+visible dry-bulb and humidity-ratio grid. Choose a `binwidth` that
+evenly subdivides those breaks when a denser Marsh-style cell grid
+should still coincide with the existing x/y grid.
 
 ## Computed variables
 

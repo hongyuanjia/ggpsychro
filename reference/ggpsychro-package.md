@@ -6,6 +6,8 @@ A 'ggplot2' extension for making psychrometric charts.
 
 Useful links:
 
+- <https://hongyuanjia.github.io/ggpsychro/>
+
 - <https://github.com/hongyuanjia/ggpsychro>
 
 - Report bugs at <https://github.com/hongyuanjia/ggpsychro/issues>

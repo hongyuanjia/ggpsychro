@@ -78,10 +78,10 @@ useful for weather-hour distributions and gridded simulation summaries.</p>
 <span>  gap <span class="op">=</span> <span class="fl">0.08</span>,</span>
 <span>  boundary <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,</span>
 <span>  cell.grid <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  cell.grid.colour <span class="op">=</span> <span class="st">"grey78"</span>,</span>
-<span>  cell.grid.linewidth <span class="op">=</span> <span class="fl">0.25</span>,</span>
-<span>  cell.grid.linetype <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  cell.grid.alpha <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  cell.grid.colour <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/waiver.html" class="external-link">waiver</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  cell.grid.linewidth <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/waiver.html" class="external-link">waiver</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  cell.grid.linetype <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/waiver.html" class="external-link">waiver</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  cell.grid.alpha <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/waiver.html" class="external-link">waiver</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  show.legend <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  inherit.aes <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -240,11 +240,17 @@ give the stat as <code>"count"</code>.</p></li>
 
 <dt id="arg-cell-grid">cell.grid<a class="anchor" aria-label="anchor" href="#arg-cell-grid"></a></dt>
 <dd><p>If <code>TRUE</code>, the default, draw a tile-local grid across the
-chart area using the computed psychrometric bin spacing.</p></dd>
+chart area. The grid uses the current x/y scale major and minor breaks by
+default. If <code>binwidth</code> is finer than, and aligned with, those scale breaks,
+the cell grid uses the finer bin spacing while preserving the existing x/y
+breaks as grid lines. If scale breaks are unavailable, the grid falls back
+to the computed bin spacing.</p></dd>
 
 
 <dt id="arg-cell-grid-colour-cell-grid-linewidth-cell-grid-linetype-cell-grid-alpha">cell.grid.colour, cell.grid.linewidth, cell.grid.linetype, cell.grid.alpha<a class="anchor" aria-label="anchor" href="#arg-cell-grid-colour-cell-grid-linewidth-cell-grid-linetype-cell-grid-alpha"></a></dt>
-<dd><p>Appearance of the tile-local cell grid.</p></dd>
+<dd><p>Appearance of the tile-local cell grid. The default, <code><a href="https://ggplot2.tidyverse.org/reference/waiver.html" class="external-link">ggplot2::waiver()</a></code>,
+inherits from the current <code>panel.grid.*.x</code> and <code>panel.grid.*.y</code> theme
+elements. Explicit values override the inherited theme style.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -252,10 +258,13 @@ chart area using the computed psychrometric bin spacing.</p></dd>
     <p>The stat accepts either <code>x</code> and <code>y</code> aesthetics, where <code>y</code> is humidity ratio
 in chart display units, or <code>x</code> and <code>relhum</code>, where <code>relhum</code> is relative
 humidity in percent. Relative humidity inputs inherit the plot unit system
-and pressure from <code><a href="ggpsychro.html">ggpsychro()</a></code>. Tiles default to a small gap and <code>alpha = 0.85</code> so psychrometric grid lines remain visible. When <code>binwidth</code> is used,
+and pressure from <code><a href="ggpsychro.html">ggpsychro()</a></code>. Tiles default to a small gap and <code>alpha = 0.85</code> so psychrometric grid lines remain visible. Tile bodies are clipped to
+the saturation line in psychrometric coordinates. When <code>binwidth</code> is used,
 each tile represents one dry-bulb and humidity-ratio cell aligned to
-<code>boundary</code>; the optional cell grid redraws those bin boundaries across the
-chart area.</p>
+<code>boundary</code>. The optional cell grid follows the chart's x/y breaks so it stays
+aligned with the visible dry-bulb and humidity-ratio grid. Choose a
+<code>binwidth</code> that evenly subdivides those breaks when a denser Marsh-style cell
+grid should still coincide with the existing x/y grid.</p>
     </div>
     <div class="section level2">
     <h2 id="computed-variables">Computed variables<a class="anchor" aria-label="anchor" href="#computed-variables"></a></h2>
