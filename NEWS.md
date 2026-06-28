@@ -1,5 +1,7 @@
 # ggpsychro 0.0.0.9000
 
+* Clarified SET and adaptive comfort overlay examples in the comfort overlays
+  article. (#25)
 * Added README acknowledgements for external psychrometric-chart references and
   refined SET/adaptive comfort overlay examples. (#23)
 * Added README and pkgdown documentation for comfort overlays and the
