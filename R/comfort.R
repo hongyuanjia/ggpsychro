@@ -343,6 +343,41 @@ comfort_strategy_givoni <- function(mean_outdoor = 19,
     )
 }
 
+#' Comfort zone style element
+#'
+#' `element_comfort_zone()` creates a small style object for comfort strategy
+#' zones. It is used by `geom_comfort_givoni()` through the `zone_style`
+#' argument to override Marsh-style defaults for individual zones.
+#'
+#' @param fill,colour,color,linewidth,linetype,alpha,linejoin Zone drawing
+#'   properties. Values left as [ggplot2::waiver()] inherit the layer default.
+#'
+#' @return A comfort zone style element.
+#'
+#' @export
+element_comfort_zone <- function(fill = ggplot2::waiver(),
+                                 colour = ggplot2::waiver(),
+                                 linewidth = ggplot2::waiver(),
+                                 linetype = ggplot2::waiver(),
+                                 alpha = ggplot2::waiver(),
+                                 linejoin = ggplot2::waiver(),
+                                 color = NULL) {
+    if (!is.null(color)) {
+        colour <- color
+    }
+    structure(
+        list(
+            fill = fill,
+            colour = colour,
+            linewidth = linewidth,
+            linetype = linetype,
+            alpha = alpha,
+            linejoin = linejoin
+        ),
+        class = c("PsyComfortZoneElement", "list")
+    )
+}
+
 #' Comfort overlays for psychrometric charts
 #'
 #' `geom_comfort_overlay()` samples a psychrometric panel on a dry-bulb by
@@ -386,6 +421,12 @@ comfort_strategy_givoni <- function(mean_outdoor = 19,
 #' @param pmv_model PMV model used when `show_pmv = TRUE`.
 #' @param zone_alpha Alpha for the filled Givoni comfort zone. Other Givoni
 #'   strategy regions are drawn as outlines.
+#' @param zone_style Optional named list of per-zone style overrides for
+#'   `geom_comfort_givoni()`. Names must match Givoni zone ids such as
+#'   `"comfort"`, `"winter"`, or `"air_conditioning"`. Values can be created
+#'   with [element_comfort_zone()], [ggplot2::element_polygon()], or ordinary
+#'   named lists with fields `fill`, `colour`/`color`, `linewidth`, `linetype`,
+#'   `alpha`, and `linejoin`.
 #'
 #' @export
 geom_comfort_overlay <- function(mapping = NULL, data = NULL,
@@ -800,7 +841,7 @@ geom_comfort_givoni <- function(strategy = comfort_strategy_givoni(),
                                 alpha = 0.55, show_labels = TRUE,
                                 show_pmv = FALSE,
                                 pmv_model = comfort_model_pmv(),
-                                zone_alpha = 0.2,
+                                zone_alpha = 0.2, zone_style = NULL,
                                 na.rm = FALSE, show.legend = NA,
                                 inherit.aes = TRUE) {
     label <- angle <- NULL
@@ -809,6 +850,7 @@ geom_comfort_givoni <- function(strategy = comfort_strategy_givoni(),
     params <- list(...)
     zone_specs <- comfort_givoni_zone_specs()
     zone_specs <- zone_specs[zone_specs$draw_zone, , drop = FALSE]
+    zone_style <- comfort_givoni_check_zone_style(zone_style, zone_specs$zone)
     layers <- list()
     if (isTRUE(show_pmv)) {
         layers[[length(layers) + 1L]] <- geom_comfort_overlay(
@@ -824,19 +866,13 @@ geom_comfort_givoni <- function(strategy = comfort_strategy_givoni(),
     }
     for (i in seq_len(nrow(zone_specs))) {
         spec <- zone_specs[i, , drop = FALSE]
-        zone_is_filled <- isTRUE(spec$filled[[1L]])
+        zone_params <- comfort_givoni_zone_params(
+            spec, params, zone_style, zone_alpha, na.rm, strategy
+        )
+        zone_is_filled <- comfort_zone_fill_is_set(zone_params$fill)
         zone_geom <- if (zone_is_filled) "polygon" else "path"
-        zone_params <- utils::modifyList(params, list(
-            na.rm = na.rm, strategy = strategy, zone = spec$zone[[1L]],
-            colour = "#444444",
-            linetype = spec$linetype[[1L]],
-            alpha = if (zone_is_filled) zone_alpha else 1
-        ))
-        if (zone_is_filled) {
-            zone_params$fill <- spec$fill[[1L]]
-        }
-        if (is.null(zone_params$linewidth)) {
-            zone_params$linewidth <- 0.9
+        if (!zone_is_filled) {
+            zone_params$fill <- NULL
         }
         layers[[length(layers) + 1L]] <- psychro_layer(
             stat = StatComfortGivoniZone, data = comfort_layer_data(data),
@@ -3499,6 +3535,107 @@ comfort_givoni_zone_specs <- function() {
             FALSE, FALSE
         )
     ))
+}
+
+comfort_zone_style_fields <- function() {
+    c("fill", "colour", "color", "linewidth", "linetype", "alpha", "linejoin")
+}
+
+comfort_zone_fill_is_set <- function(fill) {
+    !is.null(fill) && length(fill) == 1L && !is.na(fill)
+}
+
+comfort_givoni_check_zone_style <- function(zone_style, zone_names) {
+    if (is.null(zone_style)) {
+        return(list())
+    }
+    if (!is.list(zone_style) || is.null(names(zone_style)) ||
+            any(!nzchar(names(zone_style)))) {
+        stop(
+            "`zone_style` must be a named list of comfort zone style ",
+            "overrides.",
+            call. = FALSE
+        )
+    }
+    unknown <- setdiff(names(zone_style), zone_names)
+    if (length(unknown)) {
+        stop(
+            "Unknown Givoni zone style name: ",
+            paste(unknown, collapse = ", "),
+            call. = FALSE
+        )
+    }
+    zone_style
+}
+
+comfort_zone_style_to_params <- function(style) {
+    if (inherits(style, "PsyComfortZoneElement") ||
+            inherits(style, "ggplot2::element_polygon")) {
+        out <- list(
+            fill = style$fill,
+            colour = style$colour,
+            linewidth = style$linewidth,
+            linetype = style$linetype,
+            linejoin = style$linejoin
+        )
+        if (!is.null(style$alpha)) {
+            out$alpha <- style$alpha
+        }
+    } else if (is.list(style)) {
+        out <- style
+    } else {
+        stop(
+            "`zone_style` values must be created by element_comfort_zone(), ",
+            "ggplot2::element_polygon(), or ordinary named lists.",
+            call. = FALSE
+        )
+    }
+
+    if (is.null(names(out))) {
+        stop("Zone style lists must be named.", call. = FALSE)
+    }
+    unknown <- setdiff(names(out), comfort_zone_style_fields())
+    if (length(unknown)) {
+        stop(
+            "Unknown comfort zone style field: ",
+            paste(unknown, collapse = ", "),
+            call. = FALSE
+        )
+    }
+    if (!is.null(out$color)) {
+        out$colour <- out$color
+        out$color <- NULL
+    }
+    out <- out[!vapply(out, ggplot2::is_waiver, logical(1L))]
+    out <- out[!vapply(out, is.null, logical(1L))]
+    out
+}
+
+comfort_givoni_zone_params <- function(spec, params, zone_style, zone_alpha,
+                                       na.rm, strategy) {
+    zone_is_filled <- isTRUE(spec$filled[[1L]])
+    defaults <- list(
+        na.rm = na.rm,
+        strategy = strategy,
+        zone = spec$zone[[1L]],
+        fill = if (zone_is_filled) spec$fill[[1L]] else NA_character_,
+        colour = "#444444",
+        linewidth = 0.9,
+        linetype = spec$linetype[[1L]],
+        alpha = if (zone_is_filled) zone_alpha else 1
+    )
+    out <- utils::modifyList(defaults, params)
+    style <- zone_style[[spec$zone[[1L]]]]
+    if (!is.null(style)) {
+        style_params <- comfort_zone_style_to_params(style)
+        out <- utils::modifyList(out, style_params)
+        if (!("alpha" %in% names(style_params)) &&
+                "fill" %in% names(style_params) &&
+                comfort_zone_fill_is_set(style_params$fill)) {
+            out$alpha <- zone_alpha
+        }
+    }
+    out
 }
 
 comfort_givoni_empty_zone <- function() {

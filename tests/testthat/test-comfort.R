@@ -315,6 +315,7 @@ test_that("Givoni strategy zones build and stay below saturation", {
     pressure <- with_units("SI", psychrolib::GetStandardAtmPressure(0))
     expect_s3_class(comfort_strategy_givoni(), "PsyComfortGivoniStrategy")
     expect_error(comfort_strategy_givoni(mean_outdoor = NA), "mean_outdoor")
+    expect_s3_class(element_comfort_zone(), "PsyComfortZoneElement")
 
     cool <- comfort_givoni_zone_data(
         comfort_strategy_givoni(mean_outdoor = 15), "comfort", "SI",
@@ -413,6 +414,68 @@ test_that("Givoni strategy zones build and stay below saturation", {
             geom_comfort_givoni(alpha = 0.35, show_pmv = TRUE)
     )$data
     expect_gt(length(with_pmv), length(built))
+})
+
+test_that("Givoni zone styles can be overridden per zone", {
+    styled <- ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 35)) +
+            geom_comfort_givoni(
+                zone_style = list(
+                    comfort = element_comfort_zone(
+                        fill = "#00AA55", colour = "#123456",
+                        linewidth = 1.4, alpha = 0.4
+                    ),
+                    winter = ggplot2::element_polygon(
+                        colour = "#AA0000", linetype = "dotdash",
+                        linewidth = 1.2
+                    ),
+                    natural_ventilation = list(
+                        fill = "#99CCFF", colour = "#0033AA"
+                    )
+                )
+            )
+    )$data
+
+    comfort_layer <- which(vapply(styled, function(x) {
+        "zone" %in% names(x) && any(x$zone == "comfort")
+    }, logical(1L)))[[1L]]
+    expect_equal(unique(styled[[comfort_layer]]$fill), "#00AA55")
+    expect_equal(unique(styled[[comfort_layer]]$colour), "#123456")
+    expect_equal(unique(styled[[comfort_layer]]$linewidth), 1.4)
+    expect_equal(unique(styled[[comfort_layer]]$alpha), 0.4)
+
+    winter_layer <- which(vapply(styled, function(x) {
+        "zone" %in% names(x) && any(x$zone == "winter")
+    }, logical(1L)))[[1L]]
+    expect_equal(unique(styled[[winter_layer]]$colour), "#AA0000")
+    expect_equal(unique(styled[[winter_layer]]$linetype), "dotdash")
+    expect_equal(unique(styled[[winter_layer]]$linewidth), 1.2)
+
+    natural_layer <- which(vapply(styled, function(x) {
+        "zone" %in% names(x) && any(x$zone == "natural_ventilation")
+    }, logical(1L)))[[1L]]
+    expect_equal(unique(styled[[natural_layer]]$fill), "#99CCFF")
+    expect_equal(unique(styled[[natural_layer]]$colour), "#0033AA")
+    expect_equal(unique(styled[[natural_layer]]$alpha), 0.2)
+
+    expect_error(
+        ggplot2::ggplot_build(
+            ggpsychro() +
+                geom_comfort_givoni(
+                    zone_style = list(not_a_zone = element_comfort_zone())
+                )
+        ),
+        "Unknown Givoni zone"
+    )
+    expect_error(
+        ggplot2::ggplot_build(
+            ggpsychro() +
+                geom_comfort_givoni(
+                    zone_style = list(comfort = list(stroke_color = "red"))
+                )
+        ),
+        "Unknown comfort zone style field"
+    )
 })
 
 test_that("PMV root-traced curves solve requested levels", {

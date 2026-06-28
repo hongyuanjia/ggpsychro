@@ -123,6 +123,7 @@ geom_comfort_givoni(
   show_pmv = FALSE,
   pmv_model = comfort_model_pmv(),
   zone_alpha = 0.2,
+  zone_style = NULL,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -296,6 +297,13 @@ strategy outlines.}
 
 \item{zone_alpha}{Alpha for the filled Givoni comfort zone. Other Givoni
 strategy regions are drawn as outlines.}
+
+\item{zone_style}{Optional named list of per-zone style overrides for
+\code{geom_comfort_givoni()}. Names must match Givoni zone ids such as
+\code{"comfort"}, \code{"winter"}, or \code{"air_conditioning"}. Values can be created
+with \code{\link[=element_comfort_zone]{element_comfort_zone()}}, \code{\link[ggplot2:element]{ggplot2::element_polygon()}}, or ordinary
+named lists with fields \code{fill}, \code{colour}/\code{color}, \code{linewidth}, \code{linetype},
+\code{alpha}, and \code{linejoin}.}
 
 \item{geom}{The geometric object to use to display the data for this layer.
 When using a \verb{stat_*()} function to construct a layer, the \code{geom} argument
