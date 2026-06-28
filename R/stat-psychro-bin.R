@@ -34,7 +34,8 @@
 #' in chart display units, or `x` and `relhum`, where `relhum` is relative
 #' humidity in percent. Relative humidity inputs inherit the plot unit system
 #' and pressure from [ggpsychro()]. Tiles default to a small gap and `alpha =
-#' 0.85` so psychrometric grid lines remain visible. When `binwidth` is used,
+#' 0.85` so psychrometric grid lines remain visible. Tile bodies are clipped to
+#' the saturation line in psychrometric coordinates. When `binwidth` is used,
 #' each tile represents one dry-bulb and humidity-ratio cell aligned to
 #' `boundary`; the optional cell grid redraws those bin boundaries across the
 #' chart area.
@@ -141,7 +142,7 @@ GeomPsychroTile <- ggproto(
                           cell.grid.linewidth = 0.25,
                           cell.grid.linetype = 1,
                           cell.grid.alpha = 1) {
-        tiles <- ggplot2::ggproto_parent(ggplot2::GeomTile, self)$draw_panel(
+        tiles <- psychro_tile_grob(
             data, panel_params, coord, lineend = lineend, linejoin = linejoin
         )
 
@@ -396,6 +397,136 @@ psychro_bin_values <- function(data, bin_id, n_bins, fun) {
         split_values, fun, numeric(1L)
     )
     values
+}
+
+psychro_tile_grob <- function(data, panel_params, coord, lineend, linejoin) {
+    polygons <- psychro_tile_polygon_data(data, coord)
+    if (!nrow(polygons)) {
+        return(grid::nullGrob())
+    }
+
+    ggplot2::GeomPolygon$draw_panel(
+        polygons, panel_params, coord, lineend = lineend, linejoin = linejoin
+    )
+}
+
+psychro_tile_polygon_data <- function(data, coord, n = 16L) {
+    if (!nrow(data)) {
+        return(data[0, , drop = FALSE])
+    }
+
+    data <- psychro_tile_bounds(data)
+    draw_rectangular <- isTRUE(coord$mollier) ||
+        is.null(coord$units) || is.null(coord$pressure)
+
+    polygons <- lapply(seq_len(nrow(data)), function(i) {
+        if (draw_rectangular) {
+            psychro_tile_rectangle_polygon(data[i, , drop = FALSE], i)
+        } else {
+            psychro_tile_saturation_polygon(
+                data[i, , drop = FALSE], coord$units, coord$pressure, i, n = n
+            )
+        }
+    })
+    polygons <- Filter(nrow, polygons)
+    if (!length(polygons)) {
+        return(data[0, , drop = FALSE])
+    }
+
+    out <- do.call(rbind, polygons)
+    row.names(out) <- NULL
+    out
+}
+
+psychro_tile_bounds <- function(data) {
+    if (!"xmin" %in% names(data)) {
+        data$xmin <- data$x - data$width / 2
+    }
+    if (!"xmax" %in% names(data)) {
+        data$xmax <- data$x + data$width / 2
+    }
+    if (!"ymin" %in% names(data)) {
+        data$ymin <- data$y - data$height / 2
+    }
+    if (!"ymax" %in% names(data)) {
+        data$ymax <- data$y + data$height / 2
+    }
+    data
+}
+
+psychro_tile_rectangle_polygon <- function(row, group) {
+    if (!psychro_tile_has_area(row)) {
+        return(row[0, , drop = FALSE])
+    }
+
+    out <- row[rep(1L, 4L), , drop = FALSE]
+    out$x <- c(row$xmin, row$xmax, row$xmax, row$xmin)
+    out$y <- c(row$ymin, row$ymin, row$ymax, row$ymax)
+    out$group <- group
+    out
+}
+
+psychro_tile_saturation_polygon <- function(row, units, pres, group, n = 16L,
+                                            tolerance = 1e-10) {
+    if (!psychro_tile_has_area(row)) {
+        return(row[0, , drop = FALSE])
+    }
+
+    saturation_min <- psychro_saturation_humratio(row$xmin, units, pres)
+    saturation_max <- psychro_saturation_humratio(row$xmax, units, pres)
+    if (is.finite(saturation_min) && row$ymax <= saturation_min + tolerance) {
+        return(psychro_tile_rectangle_polygon(row, group))
+    }
+    if (is.finite(saturation_max) && row$ymin >= saturation_max - tolerance) {
+        return(row[0, , drop = FALSE])
+    }
+
+    x <- psychro_tile_saturation_x(row, units, pres, n = n)
+    saturation <- psychro_saturation_humratio(x, units, pres)
+    upper <- pmin(row$ymax, saturation)
+    keep <- is.finite(x) & is.finite(upper) & upper >= row$ymin - tolerance
+    x <- x[keep]
+    upper <- pmax(upper[keep], row$ymin)
+
+    if (length(x) < 2L || all(upper <= row$ymin + tolerance)) {
+        return(row[0, , drop = FALSE])
+    }
+
+    out <- row[rep(1L, length(x) * 2L), , drop = FALSE]
+    out$x <- c(x, rev(x))
+    out$y <- c(rep(row$ymin, length(x)), rev(upper))
+    out$group <- group
+    out
+}
+
+psychro_tile_has_area <- function(row) {
+    vals <- unlist(row[c("xmin", "xmax", "ymin", "ymax")], use.names = FALSE)
+    all(is.finite(vals)) && row$xmin < row$xmax && row$ymin < row$ymax
+}
+
+psychro_tile_saturation_x <- function(row, units, pres, n = 16L,
+                                      tolerance = 1e-10) {
+    x <- c(
+        seq(row$xmin, row$xmax, length.out = max(2L, n)),
+        row$xmin,
+        row$xmax,
+        psychro_tile_tdb_at_hum(c(row$ymin, row$ymax), units, pres)
+    )
+    x <- x[is.finite(x) & x >= row$xmin - tolerance & x <= row$xmax + tolerance]
+    x <- sort(pmin(pmax(x, row$xmin), row$xmax))
+    x[c(TRUE, diff(x) > tolerance)]
+}
+
+psychro_tile_tdb_at_hum <- function(hum, units, pres) {
+    out <- rep(NA_real_, length(hum))
+    keep <- is.finite(hum) & hum > 0
+    if (any(keep)) {
+        out[keep] <- with_units(
+            units,
+            GetTDewPointFromHumRatioOnly(hum[keep], pres)
+        )
+    }
+    out
 }
 
 psychro_tile_cell_grid_grob <- function(data, panel_params, coord, colour,
