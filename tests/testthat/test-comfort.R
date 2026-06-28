@@ -223,6 +223,42 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
     )$data[[1L]]
     expect_gt(nrow(contour), 0L)
     expect_true(all(contour$level %in% c(-1, 0, 1)))
+
+    contour_labelled <- ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+            geom_comfort_contour(
+                model = comfort_model_set(),
+                metric = "set",
+                breaks = c(22, 24, 26),
+                n = c(32, 20),
+                label = TRUE
+            )
+    )$data
+    expect_equal(length(contour_labelled), 2L)
+    expect_true(all(c("22", "24", "26") %in% contour_labelled[[2L]]$label))
+    expect_true(all(c("label", "level", "value") %in% names(contour_labelled[[1L]])))
+    expect_true(all(c("label", "level", "value") %in% names(contour_labelled[[2L]])))
+
+    pmv_labelled <- ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+            geom_comfort_contour(
+                breaks = c(-1, 0, 1),
+                n = c(32, 20),
+                label = TRUE
+            )
+    )$data[[2L]]
+    expect_true(all(c("-1.0", "0.0", "+1.0") %in% pmv_labelled$label))
+
+    expect_error(
+        ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+            geom_comfort_contour(label = NA),
+        "label"
+    )
+    expect_error(
+        ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+            geom_comfort_contour(label = TRUE, label_size = -1),
+        "label_size"
+    )
 })
 
 test_that("PMV root-traced curves solve requested levels", {
@@ -459,6 +495,10 @@ test_that("comfort overlays build in Mollier coordinates", {
     expect_mollier_comfort(base + geom_comfort_contour(
         model = comfort_model_set(), metric = "set", breaks = c(22, 24, 26),
         n = c(32, 20)
+    ))
+    expect_mollier_comfort(base + geom_comfort_contour(
+        model = comfort_model_set(), metric = "set", breaks = c(22, 24, 26),
+        n = c(32, 20), label = TRUE
     ))
 
     expect_mollier_comfort(base + geom_comfort_pmv_lines(

@@ -38,6 +38,8 @@ geom_comfort_contour(
   breaks = NULL,
   n = NULL,
   contour_method = c("auto", "root", "isoband"),
+  label = FALSE,
+  label_size = NULL,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -224,6 +226,11 @@ the default plot specification, e.g. \code{\link[ggplot2:annotation_borders]{ann
 
 \item{contour_method}{Contour drawing method. \code{"auto"} uses root-traced
 curves for PMV and isobands for other metrics.}
+
+\item{label}{A single logical value. If \code{TRUE}, label contour lines with
+their level values.}
+
+\item{label_size}{Text size for contour labels. Defaults to \code{2.8}.}
 
 \item{range}{Comfort value interval for PMV and SET zones.}
 
