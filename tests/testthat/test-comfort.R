@@ -117,6 +117,37 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
     )$data[[1L]]
     expect_gt(nrow(isoband), 0L)
     expect_true("level_mid" %in% names(isoband))
+    expect_equal(unique(isoband$alpha), 0.55)
+
+    tile <- ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+            geom_comfort_overlay(method = "tile", n = c(24, 16))
+    )$data[[1L]]
+    expect_gt(nrow(tile), 0L)
+    expect_equal(unique(tile$alpha), 0.55)
+
+    set_overlay <- ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+            geom_comfort_overlay(model = comfort_model_set(), n = c(24, 16))
+    )$data[[1L]]
+    expect_gt(nrow(set_overlay), 0L)
+    expect_equal(unique(set_overlay$alpha), 0.55)
+
+    adaptive_overlay <- ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+            geom_comfort_overlay(
+                model = comfort_model_adaptive(t_running = 20),
+                n = c(24, 16)
+            )
+    )$data[[1L]]
+    expect_gt(nrow(adaptive_overlay), 0L)
+    expect_equal(unique(adaptive_overlay$alpha), 0.55)
+
+    tile_alpha <- ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+            geom_comfort_overlay(method = "tile", n = c(24, 16), alpha = 0.35)
+    )$data[[1L]]
+    expect_equal(unique(tile_alpha$alpha), 0.35)
 
     pressure <- with_units("SI", psychrolib::GetStandardAtmPressure(0))
     grid <- comfort_grid_data(
