@@ -37,6 +37,7 @@
 <li><a class="dropdown-item" href="../articles/ggpsychro.html">Get started</a></li>
     <li><a class="dropdown-item" href="../articles/grids-and-styles.html">Chart grids and styles</a></li>
     <li><a class="dropdown-item" href="../articles/plotting-data.html">Plotting psychrometric data</a></li>
+    <li><a class="dropdown-item" href="../articles/comfort-overlays.html">Comfort overlays</a></li>
     <li><a class="dropdown-item" href="../articles/zones-and-processes.html">Zones and processes</a></li>
   </ul>
 </li>
@@ -160,11 +161,42 @@ and labels.</p>
 <code>label.color</code>, and <code>label.vjust</code>.</p>
 </div>
 <div class="section level2">
+<h2 id="psychrometric-protractor">Psychrometric protractor<a class="anchor" aria-label="anchor" href="#psychrometric-protractor"></a>
+</h2>
+<p><code><a href="../reference/geom_psychro_protractor.html">geom_psychro_protractor()</a></code> adds the ASHRAE-style sensible
+heat ratio and heat-moisture-ratio protractor in the chart mask area.
+The parent chart decides the orientation: regular charts place it in the
+upper-left mask area, while Mollier charts rotate the same protractor
+into the lower-right mask area.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">50</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/psychro_preset.html">psychro_preset</a></span><span class="op">(</span><span class="st">"ashrae"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/geom_psychro_protractor.html">geom_psychro_protractor</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p><img src="grids-and-styles_files/figure-html/psychro-protractor-1.png" class="r-plt" alt="ASHRAE-style psychrometric chart with a sensible heat ratio and heat-moisture-ratio protractor in the upper-left mask area." width="100%" style="display: block; margin: auto;"></p>
+<p>Use <code>scale</code> to resize the whole protractor and a length-2
+<code>margin</code> to adjust the horizontal and vertical mask-area
+offsets. Tick breaks and labels are controlled by
+<code><a href="../reference/geom_psychro_protractor.html">guide_psychro_protractor()</a></code>.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">50</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">30</span><span class="op">)</span>, mollier <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/psychro_preset.html">psychro_preset</a></span><span class="op">(</span><span class="st">"minimal"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/geom_psychro_protractor.html">geom_psychro_protractor</a></span><span class="op">(</span></span>
+<span>        scale <span class="op">=</span> <span class="fl">0.85</span>,</span>
+<span>        margin <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.06</span>, <span class="fl">0.12</span><span class="op">)</span>,</span>
+<span>        guide <span class="op">=</span> <span class="fu"><a href="../reference/geom_psychro_protractor.html">guide_psychro_protractor</a></span><span class="op">(</span></span>
+<span>            shr_breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.2</span>, <span class="fl">0.4</span>, <span class="fl">0.6</span>, <span class="fl">0.8</span>, <span class="fl">1</span><span class="op">)</span>,</span>
+<span>            shr_minor_breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.9</span>, by <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span>,</span>
+<span>            ratio_labels <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>        <span class="op">)</span></span>
+<span>    <span class="op">)</span></span></code></pre></div>
+<p><img src="grids-and-styles_files/figure-html/psychro-protractor-custom-1.png" class="r-plt" alt="Mollier chart with a smaller psychrometric protractor in the lower-right mask area and only sensible heat ratio labels shown." width="100%" style="display: block; margin: auto;"></p>
+</div>
+<div class="section level2">
 <h2 id="theme-elements">Theme elements<a class="anchor" aria-label="anchor" href="#theme-elements"></a>
 </h2>
 <p>ggpsychro adds psychrometric theme elements for panel masks and
 reference grids. Use these with regular <code><a href="../reference/theme.html">theme()</a></code> calls.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">50</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/geom_grid.html">geom_grid_relhum</a></span><span class="op">(</span>label <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/theme.html">theme</a></span><span class="op">(</span></span>

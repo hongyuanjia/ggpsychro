@@ -7,6 +7,8 @@
 - ggplot2-native psychrometric charts with SI/IP units and Mollier
   orientation.
 - Preset grid and style helpers for common psychrometric chart layouts.
+- ASHRAE-style psychrometric protractor for sensible heat ratio and
+  heat-moisture-ratio guides in the chart mask area.
 - Psychrometric stats for relative humidity, wet-bulb temperature, vapor
   pressure, specific volume, enthalpy, and humidity ratio.
 - State points, process lines, and filled operating zones for HVAC
@@ -69,14 +71,18 @@ The longer examples live on the pkgdown site:
 - [Chart grids and
   styles](https://hongyuanjia.github.io/ggpsychro/articles/grids-and-styles.html) -
   tune dry-bulb, humidity-ratio, relative-humidity, wet-bulb, enthalpy,
-  and specific-volume grid guides.
+  and specific-volume grid guides, plus the psychrometric protractor.
 - [Plotting psychrometric
   data](https://hongyuanjia.github.io/ggpsychro/articles/plotting-data.html) -
   plot points, bins, and overlays from weather or measured state data.
+- [Comfort
+  overlays](https://hongyuanjia.github.io/ggpsychro/articles/comfort-overlays.html) -
+  draw PMV, SET, adaptive comfort, and PMV-based standard comfort
+  overlays.
 - [Zones and
   processes](https://hongyuanjia.github.io/ggpsychro/articles/zones-and-processes.html) -
-  draw comfort regions, operating limits, state points, and HVAC process
-  lines.
+  draw manual comfort regions, operating limits, state points, and HVAC
+  process lines.
 
 ## Author
 

@@ -2,7 +2,9 @@
 
 Use zones and process lines when a psychrometric chart needs to
 communicate constraints or movement between states, not just point
-observations.
+observations. For model-based thermal comfort layers that calculate PMV,
+SET, or adaptive comfort across the chart, see [Comfort
+overlays](https://hongyuanjia.github.io/ggpsychro/articles/comfort-overlays.md).
 
 ## Comfort and operating zones
 

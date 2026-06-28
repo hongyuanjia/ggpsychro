@@ -97,6 +97,50 @@ Line style arguments go directly to
 Label style arguments use a `label.` prefix, such as `label.size`,
 `label.color`, and `label.vjust`.
 
+## Psychrometric protractor
+
+[`geom_psychro_protractor()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_psychro_protractor.md)
+adds the ASHRAE-style sensible heat ratio and heat-moisture-ratio
+protractor in the chart mask area. The parent chart decides the
+orientation: regular charts place it in the upper-left mask area, while
+Mollier charts rotate the same protractor into the lower-right mask
+area.
+
+``` r
+
+ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+    psychro_preset("ashrae") +
+    geom_psychro_protractor()
+```
+
+![ASHRAE-style psychrometric chart with a sensible heat ratio and
+heat-moisture-ratio protractor in the upper-left mask
+area.](grids-and-styles_files/figure-html/psychro-protractor-1.png)
+
+Use `scale` to resize the whole protractor and a length-2 `margin` to
+adjust the horizontal and vertical mask-area offsets. Tick breaks and
+labels are controlled by
+[`guide_psychro_protractor()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_psychro_protractor.md).
+
+``` r
+
+ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30), mollier = TRUE) +
+    psychro_preset("minimal") +
+    geom_psychro_protractor(
+        scale = 0.85,
+        margin = c(0.06, 0.12),
+        guide = guide_psychro_protractor(
+            shr_breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1),
+            shr_minor_breaks = seq(0.1, 0.9, by = 0.1),
+            ratio_labels = NULL
+        )
+    )
+```
+
+![Mollier chart with a smaller psychrometric protractor in the
+lower-right mask area and only sensible heat ratio labels
+shown.](grids-and-styles_files/figure-html/psychro-protractor-custom-1.png)
+
 ## Theme elements
 
 ggpsychro adds psychrometric theme elements for panel masks and

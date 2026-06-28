@@ -163,5 +163,7 @@ ggpsychro(weather, tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
 dry-bulb and humidity-ratio
 bins.](plotting-data_files/figure-html/tile-value-1.png)
 
-For state points, process lines, and comfort zones, see [Zones and
+For model-based thermal comfort overlays, see [Comfort
+overlays](https://hongyuanjia.github.io/ggpsychro/articles/comfort-overlays.md).
+For manual state points, process lines, and zones, see [Zones and
 processes](https://hongyuanjia.github.io/ggpsychro/articles/zones-and-processes.md).

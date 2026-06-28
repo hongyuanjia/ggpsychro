@@ -2,11 +2,12 @@ pandoc: 3.8.3
 pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
+  articles/comfort-overlays: comfort-overlays.html
   articles/ggpsychro: ggpsychro.html
   articles/grids-and-styles: grids-and-styles.html
   articles/plotting-data: plotting-data.html
   articles/zones-and-processes: zones-and-processes.html
-last_built: 2026-06-28T16:32Z
+last_built: 2026-06-28T17:45Z
 urls:
   reference: https://hongyuanjia.github.io/ggpsychro/reference
   article: https://hongyuanjia.github.io/ggpsychro/articles
