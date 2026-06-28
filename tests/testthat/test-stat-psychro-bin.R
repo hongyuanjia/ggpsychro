@@ -200,15 +200,170 @@ test_that("psychrometric tile cell grid covers the chart area", {
     )
     vertical <- segments[segments$x == segments$xend, , drop = FALSE]
     horizontal <- segments[segments$y == segments$yend, , drop = FALSE]
+    expected_x <- psychro_tile_panel_grid_breaks(
+        built$layout$panel_params[[1L]], "x"
+    )
+    expected_y <- psychro_tile_panel_grid_breaks(
+        built$layout$panel_params[[1L]], "y"
+    )
 
     expect_gt(nrow(segments), nrow(built$data[[1L]]) * 4L)
-    expect_equal(min(vertical$x), 10, tolerance = 1e-8)
-    expect_equal(max(vertical$x), 34, tolerance = 1e-8)
-    expect_equal(min(horizontal$y), 0, tolerance = 1e-8)
-    expect_equal(max(horizontal$y), 0.02, tolerance = 1e-8)
+    expect_equal(sort(unique(vertical$x)), expected_x$value, tolerance = 1e-8)
+    expect_equal(sort(unique(horizontal$y)), expected_y$value, tolerance = 1e-8)
+    expect_true(all(c("major", "minor") %in% vertical$grid_type))
+    expect_true(all(c("major", "minor") %in% horizontal$grid_type))
     expect_true(all(vertical$yend <= built$layout$panel_params[[1L]]$y.range[[2L]]))
     expect_true(any(vertical$yend < built$layout$panel_params[[1L]]$y.range[[2L]]))
     expect_true(all(horizontal$xend == built$layout$panel_params[[1L]]$x.range[[2L]]))
+})
+
+test_that("psychrometric tile cell grid can subdivide x and y axis breaks", {
+    d <- data.frame(
+        dry_bulb = c(20.1, 20.8, 22.1),
+        humidity_ratio = c(8.1, 8.5, 8.2)
+    )
+
+    built <- ggplot2::ggplot_build(
+        ggpsychro(d, tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
+            geom_psychro_tile(
+                ggplot2::aes(dry_bulb, humidity_ratio),
+                binwidth = c(1.25, 2.5)
+            )
+    )
+
+    segments <- psychro_tile_cell_segments(
+        built$data[[1L]],
+        built$layout$panel_params[[1L]],
+        built$layout$coord
+    )
+    vertical <- segments[segments$x == segments$xend, , drop = FALSE]
+    horizontal <- segments[segments$y == segments$yend, , drop = FALSE]
+    axis_x <- psychro_tile_panel_grid_breaks(
+        built$layout$panel_params[[1L]], "x"
+    )
+    axis_y <- psychro_tile_panel_grid_breaks(
+        built$layout$panel_params[[1L]], "y"
+    )
+
+    expect_gt(length(unique(vertical$x)), nrow(axis_x))
+    expect_gt(length(unique(horizontal$y)), nrow(axis_y))
+    expect_true(all(round(axis_x$value, 10L) %in% round(vertical$x, 10L)))
+    expect_true(all(round(axis_y$value, 10L) %in% round(horizontal$y, 10L)))
+    expect_equal(min(diff(sort(unique(vertical$x)))), 1.25, tolerance = 1e-8)
+    expect_equal(min(diff(sort(unique(horizontal$y)))), 0.0025, tolerance = 1e-8)
+})
+
+test_that("psychrometric tile cell grid inherits x and y grid theme styles", {
+    d <- data.frame(
+        dry_bulb = c(20.1, 20.8, 22.1),
+        humidity_ratio = c(8.1, 8.5, 8.2)
+    )
+    built <- ggplot2::ggplot_build(
+        ggpsychro(d, tdb_lim = c(10, 35), hum_lim = c(0, 20)) +
+            geom_psychro_tile(
+                ggplot2::aes(dry_bulb, humidity_ratio),
+                binwidth = c(2, 2)
+            )
+    )
+    cell_grid_data <- function(theme = theme_psychro(), ...) {
+        psychro_tile_cell_grid_data(
+            built$data[[1L]],
+            built$layout$panel_params[[1L]],
+            built$layout$coord,
+            theme = theme,
+            ...
+        )
+    }
+    defaults <- list(
+        colour = ggplot2::waiver(),
+        linewidth = ggplot2::waiver(),
+        linetype = ggplot2::waiver(),
+        alpha = ggplot2::waiver()
+    )
+
+    segments <- do.call(cell_grid_data, defaults)
+    vertical <- segments[segments$x == segments$xend, , drop = FALSE]
+    horizontal <- segments[segments$y == segments$yend, , drop = FALSE]
+
+    expect_equal(unique(vertical$colour), "#DA251DFF")
+    expect_equal(unique(horizontal$colour), "#002060FF")
+    expect_equal(unique(segments$linewidth), 0.15)
+    expect_equal(unique(segments$linetype), 3)
+    expect_true(all(is.na(segments$alpha)))
+
+    custom <- do.call(
+        cell_grid_data,
+        utils::modifyList(defaults, list(colour = "grey70", alpha = 0.5))
+    )
+    expect_equal(unique(custom$colour), "grey70")
+    expect_equal(unique(custom$linewidth), 0.15)
+    expect_equal(unique(custom$linetype), 3)
+    expect_equal(unique(custom$alpha), 0.5)
+
+    blank_x <- do.call(
+        cell_grid_data,
+        c(
+            defaults,
+            list(
+                theme = theme_psychro() +
+                    ggplot2::theme(
+                        panel.grid.major.x = ggplot2::element_blank(),
+                        panel.grid.minor.x = ggplot2::element_blank()
+                    )
+            )
+        )
+    )
+    expect_false(any(blank_x$x == blank_x$xend))
+    expect_true(any(blank_x$y == blank_x$yend))
+
+    override_blank_x <- do.call(
+        cell_grid_data,
+        c(
+            utils::modifyList(
+                defaults,
+                list(colour = "grey70", linewidth = 0.4, linetype = 2)
+            ),
+            list(
+                theme = theme_psychro() +
+                    ggplot2::theme(
+                        panel.grid.major.x = ggplot2::element_blank(),
+                        panel.grid.minor.x = ggplot2::element_blank()
+                    )
+            )
+        )
+    )
+    expect_true(any(override_blank_x$x == override_blank_x$xend))
+    expect_equal(unique(override_blank_x$colour), "grey70")
+    expect_equal(unique(override_blank_x$linewidth), 0.4)
+    expect_equal(unique(override_blank_x$linetype), 2)
+})
+
+test_that("psychrometric tile bodies are clipped to saturation", {
+    d <- data.frame(dry_bulb = 9.5, humidity_ratio = 7)
+    plot <- ggpsychro(d, tdb_lim = c(0, 20), hum_lim = c(0, 15)) +
+        geom_psychro_tile(
+            ggplot2::aes(dry_bulb, humidity_ratio),
+            binwidth = c(4, 2),
+            gap = 0
+        )
+    built <- ggplot2::ggplot_build(plot)
+    tile <- built$data[[1L]]
+    polygons <- psychro_tile_polygon_data(tile, built$layout$coord, n = 32)
+    saturation <- psychro_saturation_humratio(
+        polygons$x,
+        built$layout$coord$units,
+        built$layout$coord$pressure
+    )
+
+    expect_gt(nrow(polygons), 4L)
+    expect_true(all(polygons$y <= saturation + 1e-8))
+    expect_equal(min(polygons$y), tile$ymin, tolerance = 1e-8)
+    expect_lte(max(polygons$y), tile$ymax + 1e-8)
+    expect_true(any(
+        polygons$y > tile$ymin + 1e-8 &
+            polygons$y < tile$ymax - 1e-8
+    ))
+    expect_no_error(ggplot2::ggplotGrob(plot))
 })
 
 test_that("psychrometric tile gap is validated", {
@@ -361,8 +516,28 @@ test_that("psychrometric tile distribution is stable", {
         ggpsychro(d, tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
             geom_psychro_tile(
                 ggplot2::aes(dry_bulb, relhum = relative_humidity),
-                binwidth = c(2, 2)
+                binwidth = c(1.25, 2.5)
             ) +
             ggplot2::scale_fill_gradient(low = "#dbeafe", high = "#1d4ed8")
+    )
+})
+
+test_that("psychrometric tile crossing saturation is visually clipped", {
+    d <- data.frame(dry_bulb = 9.5, humidity_ratio = 7)
+
+    vdiffr::expect_doppelganger(
+        "psychro tile clipped at saturation",
+        ggpsychro(d, tdb_lim = c(0, 20), hum_lim = c(0, 15)) +
+            geom_psychro_tile(
+                ggplot2::aes(
+                    dry_bulb, humidity_ratio,
+                    fill = ggplot2::after_stat(hours)
+                ),
+                binwidth = c(2.5, 2.5),
+                gap = 0,
+                colour = "#f97316",
+                linewidth = 0.4
+            ) +
+            ggplot2::scale_fill_gradient(low = "#fed7aa", high = "#c2410c")
     )
 })

@@ -25,19 +25,28 @@
 #'   tiles. Must be a single finite number greater than or equal to 0 and less
 #'   than 1.
 #' @param cell.grid If `TRUE`, the default, draw a tile-local grid across the
-#'   chart area using the computed psychrometric bin spacing.
+#'   chart area. The grid uses the current x/y scale major and minor breaks by
+#'   default. If `binwidth` is finer than, and aligned with, those scale breaks,
+#'   the cell grid uses the finer bin spacing while preserving the existing x/y
+#'   breaks as grid lines. If scale breaks are unavailable, the grid falls back
+#'   to the computed bin spacing.
 #' @param cell.grid.colour,cell.grid.linewidth,cell.grid.linetype,cell.grid.alpha
-#'   Appearance of the tile-local cell grid.
+#'   Appearance of the tile-local cell grid. The default, [ggplot2::waiver()],
+#'   inherits from the current `panel.grid.*.x` and `panel.grid.*.y` theme
+#'   elements. Explicit values override the inherited theme style.
 #'
 #' @details
 #' The stat accepts either `x` and `y` aesthetics, where `y` is humidity ratio
 #' in chart display units, or `x` and `relhum`, where `relhum` is relative
 #' humidity in percent. Relative humidity inputs inherit the plot unit system
 #' and pressure from [ggpsychro()]. Tiles default to a small gap and `alpha =
-#' 0.85` so psychrometric grid lines remain visible. When `binwidth` is used,
+#' 0.85` so psychrometric grid lines remain visible. Tile bodies are clipped to
+#' the saturation line in psychrometric coordinates. When `binwidth` is used,
 #' each tile represents one dry-bulb and humidity-ratio cell aligned to
-#' `boundary`; the optional cell grid redraws those bin boundaries across the
-#' chart area.
+#' `boundary`. The optional cell grid follows the chart's x/y breaks so it stays
+#' aligned with the visible dry-bulb and humidity-ratio grid. Choose a
+#' `binwidth` that evenly subdivides those breaks when a denser Marsh-style cell
+#' grid should still coincide with the existing x/y grid.
 #'
 #' @section Computed variables:
 #' * `count`: number of observations in each tile.
@@ -97,10 +106,10 @@ stat_psychro_bin <- function(mapping = NULL, data = NULL, geom = "tile",
 geom_psychro_tile <- function(mapping = NULL, data = NULL, stat = "psychro_bin",
                               position = "identity", ..., gap = 0.08,
                               boundary = c(0, 0), cell.grid = TRUE,
-                              cell.grid.colour = "grey78",
-                              cell.grid.linewidth = 0.25,
-                              cell.grid.linetype = 1,
-                              cell.grid.alpha = 1,
+                              cell.grid.colour = ggplot2::waiver(),
+                              cell.grid.linewidth = ggplot2::waiver(),
+                              cell.grid.linetype = ggplot2::waiver(),
+                              cell.grid.alpha = ggplot2::waiver(),
                               na.rm = FALSE,
                               show.legend = NA, inherit.aes = TRUE) {
     params <- list(
@@ -129,7 +138,7 @@ GeomPsychroTile <- ggproto(
     "GeomPsychroTile", ggplot2::GeomTile,
     extra_params = c(
         "na.rm", "cell.grid", "cell.grid.colour", "cell.grid.linewidth",
-        "cell.grid.linetype", "cell.grid.alpha"
+        "cell.grid.linetype", "cell.grid.alpha", "psychro.theme"
     ),
     default_aes = utils::modifyList(
         ggplot2::GeomTile$default_aes,
@@ -137,11 +146,12 @@ GeomPsychroTile <- ggproto(
     ),
     draw_panel = function(self, data, panel_params, coord, lineend = "butt",
                           linejoin = "mitre", cell.grid = TRUE,
-                          cell.grid.colour = "grey78",
-                          cell.grid.linewidth = 0.25,
-                          cell.grid.linetype = 1,
-                          cell.grid.alpha = 1) {
-        tiles <- ggplot2::ggproto_parent(ggplot2::GeomTile, self)$draw_panel(
+                          cell.grid.colour = ggplot2::waiver(),
+                          cell.grid.linewidth = ggplot2::waiver(),
+                          cell.grid.linetype = ggplot2::waiver(),
+                          cell.grid.alpha = ggplot2::waiver(),
+                          psychro.theme = NULL) {
+        tiles <- psychro_tile_grob(
             data, panel_params, coord, lineend = lineend, linejoin = linejoin
         )
 
@@ -151,6 +161,7 @@ GeomPsychroTile <- ggproto(
 
         cell_grid <- psychro_tile_cell_grid_grob(
             data, panel_params, coord,
+            theme = psychro.theme,
             colour = cell.grid.colour,
             linewidth = cell.grid.linewidth,
             linetype = cell.grid.linetype,
@@ -398,24 +409,226 @@ psychro_bin_values <- function(data, bin_id, n_bins, fun) {
     values
 }
 
-psychro_tile_cell_grid_grob <- function(data, panel_params, coord, colour,
-                                        linewidth, linetype, alpha,
-                                        lineend, linejoin) {
-    segments <- psychro_tile_cell_segments(data, panel_params, coord)
-    if (!nrow(segments)) {
+psychro_tile_grob <- function(data, panel_params, coord, lineend, linejoin) {
+    polygons <- psychro_tile_polygon_data(data, coord)
+    if (!nrow(polygons)) {
         return(grid::nullGrob())
     }
 
-    segments$colour <- colour
-    segments$linewidth <- linewidth
-    segments$linetype <- linetype
-    segments$alpha <- alpha
-    segments$group <- seq_len(nrow(segments))
+    ggplot2::GeomPolygon$draw_panel(
+        polygons, panel_params, coord, lineend = lineend, linejoin = linejoin
+    )
+}
+
+psychro_tile_polygon_data <- function(data, coord, n = 16L) {
+    if (!nrow(data)) {
+        return(data[0, , drop = FALSE])
+    }
+
+    data <- psychro_tile_bounds(data)
+    draw_rectangular <- isTRUE(coord$mollier) ||
+        is.null(coord$units) || is.null(coord$pressure)
+
+    polygons <- lapply(seq_len(nrow(data)), function(i) {
+        if (draw_rectangular) {
+            psychro_tile_rectangle_polygon(data[i, , drop = FALSE], i)
+        } else {
+            psychro_tile_saturation_polygon(
+                data[i, , drop = FALSE], coord$units, coord$pressure, i, n = n
+            )
+        }
+    })
+    polygons <- Filter(nrow, polygons)
+    if (!length(polygons)) {
+        return(data[0, , drop = FALSE])
+    }
+
+    out <- do.call(rbind, polygons)
+    row.names(out) <- NULL
+    out
+}
+
+psychro_tile_bounds <- function(data) {
+    if (!"xmin" %in% names(data)) {
+        data$xmin <- data$x - data$width / 2
+    }
+    if (!"xmax" %in% names(data)) {
+        data$xmax <- data$x + data$width / 2
+    }
+    if (!"ymin" %in% names(data)) {
+        data$ymin <- data$y - data$height / 2
+    }
+    if (!"ymax" %in% names(data)) {
+        data$ymax <- data$y + data$height / 2
+    }
+    data
+}
+
+psychro_tile_rectangle_polygon <- function(row, group) {
+    if (!psychro_tile_has_area(row)) {
+        return(row[0, , drop = FALSE])
+    }
+
+    out <- row[rep(1L, 4L), , drop = FALSE]
+    out$x <- c(row$xmin, row$xmax, row$xmax, row$xmin)
+    out$y <- c(row$ymin, row$ymin, row$ymax, row$ymax)
+    out$group <- group
+    out
+}
+
+psychro_tile_saturation_polygon <- function(row, units, pres, group, n = 16L,
+                                            tolerance = 1e-10) {
+    if (!psychro_tile_has_area(row)) {
+        return(row[0, , drop = FALSE])
+    }
+
+    saturation_min <- psychro_saturation_humratio(row$xmin, units, pres)
+    saturation_max <- psychro_saturation_humratio(row$xmax, units, pres)
+    if (is.finite(saturation_min) && row$ymax <= saturation_min + tolerance) {
+        return(psychro_tile_rectangle_polygon(row, group))
+    }
+    if (is.finite(saturation_max) && row$ymin >= saturation_max - tolerance) {
+        return(row[0, , drop = FALSE])
+    }
+
+    x <- psychro_tile_saturation_x(row, units, pres, n = n)
+    saturation <- psychro_saturation_humratio(x, units, pres)
+    upper <- pmin(row$ymax, saturation)
+    keep <- is.finite(x) & is.finite(upper) & upper >= row$ymin - tolerance
+    x <- x[keep]
+    upper <- pmax(upper[keep], row$ymin)
+
+    if (length(x) < 2L || all(upper <= row$ymin + tolerance)) {
+        return(row[0, , drop = FALSE])
+    }
+
+    out <- row[rep(1L, length(x) * 2L), , drop = FALSE]
+    out$x <- c(x, rev(x))
+    out$y <- c(rep(row$ymin, length(x)), rev(upper))
+    out$group <- group
+    out
+}
+
+psychro_tile_has_area <- function(row) {
+    vals <- unlist(row[c("xmin", "xmax", "ymin", "ymax")], use.names = FALSE)
+    all(is.finite(vals)) && row$xmin < row$xmax && row$ymin < row$ymax
+}
+
+psychro_tile_saturation_x <- function(row, units, pres, n = 16L,
+                                      tolerance = 1e-10) {
+    x <- c(
+        seq(row$xmin, row$xmax, length.out = max(2L, n)),
+        row$xmin,
+        row$xmax,
+        psychro_tile_tdb_at_hum(c(row$ymin, row$ymax), units, pres)
+    )
+    x <- x[is.finite(x) & x >= row$xmin - tolerance & x <= row$xmax + tolerance]
+    x <- sort(pmin(pmax(x, row$xmin), row$xmax))
+    x[c(TRUE, diff(x) > tolerance)]
+}
+
+psychro_tile_tdb_at_hum <- function(hum, units, pres) {
+    out <- rep(NA_real_, length(hum))
+    keep <- is.finite(hum) & hum > 0
+    if (any(keep)) {
+        out[keep] <- with_units(
+            units,
+            GetTDewPointFromHumRatioOnly(hum[keep], pres)
+        )
+    }
+    out
+}
+
+psychro_tile_cell_grid_grob <- function(data, panel_params, coord, theme, colour,
+                                        linewidth, linetype, alpha,
+                                        lineend, linejoin) {
+    segments <- psychro_tile_cell_grid_data(
+        data, panel_params, coord, theme, colour, linewidth, linetype, alpha
+    )
+    if (!nrow(segments)) {
+        return(grid::nullGrob())
+    }
 
     ggplot2::GeomSegment$draw_panel(
         segments, panel_params, coord, lineend = lineend,
         linejoin = linejoin, na.rm = TRUE
     )
+}
+
+psychro_tile_cell_grid_data <- function(data, panel_params, coord, theme,
+                                        colour, linewidth, linetype, alpha) {
+    segments <- psychro_tile_cell_segments(data, panel_params, coord)
+    if (!nrow(segments)) {
+        return(segments)
+    }
+
+    theme <- theme %||% coord$psychro_theme %||% ggplot2::theme_get()
+    styles <- lapply(seq_len(nrow(segments)), function(i) {
+        psychro_tile_cell_grid_style(
+            theme, segments$axis[[i]], segments$grid_type[[i]],
+            colour, linewidth, linetype, alpha
+        )
+    })
+    keep <- vapply(styles, `[[`, logical(1L), "visible")
+    segments <- segments[keep, , drop = FALSE]
+    if (!nrow(segments)) {
+        return(segments)
+    }
+    styles <- styles[keep]
+
+    segments$colour <- vapply(styles, `[[`, character(1L), "colour")
+    segments$linewidth <- vapply(styles, `[[`, numeric(1L), "linewidth")
+    segments$linetype <- unlist(
+        lapply(styles, `[[`, "linetype"),
+        use.names = FALSE
+    )
+    segments$alpha <- vapply(styles, `[[`, numeric(1L), "alpha")
+    segments$group <- seq_len(nrow(segments))
+    segments
+}
+
+psychro_tile_cell_grid_style <- function(theme, axis, type, colour, linewidth,
+                                         linetype, alpha) {
+    element <- ggplot2::calc_element(
+        paste("panel.grid", type, axis, sep = "."),
+        theme
+    )
+    has_override <- !is.waive(colour) || !is.waive(linewidth) ||
+        !is.waive(linetype) || !is.waive(alpha)
+    is_blank <- is.null(element) || inherits(element, "element_blank")
+    defaults <- list(
+        colour = "grey78",
+        linewidth = 0.25,
+        linetype = 1,
+        alpha = NA_real_
+    )
+
+    list(
+        visible = !is_blank || has_override,
+        colour = psychro_tile_cell_grid_value(
+            colour, if (!is_blank) element$colour else NULL, defaults$colour
+        ),
+        linewidth = psychro_tile_cell_grid_value(
+            linewidth,
+            if (!is_blank) element$linewidth else NULL,
+            defaults$linewidth
+        ),
+        linetype = psychro_tile_cell_grid_value(
+            linetype, if (!is_blank) element$linetype else NULL,
+            defaults$linetype
+        ),
+        alpha = psychro_tile_cell_grid_value(
+            alpha, if (!is_blank) element$alpha else NULL, defaults$alpha
+        )
+    )
+}
+
+psychro_tile_cell_grid_value <- function(value, inherited, default) {
+    if (!is.waive(value)) {
+        return(value)
+    }
+
+    inherited %||% default
 }
 
 psychro_tile_cell_segments <- function(data, panel_params, coord) {
@@ -428,17 +641,125 @@ psychro_tile_cell_segments <- function(data, panel_params, coord) {
 
     x_spacing <- psychro_tile_cell_spacing(data$cell_xmin, data$cell_xmax)
     y_spacing <- psychro_tile_cell_spacing(data$cell_ymin, data$cell_ymax)
-    if (is.null(x_spacing) || is.null(y_spacing)) {
+    x_breaks <- psychro_tile_cell_grid_breaks(panel_params, "x", x_spacing)
+    y_breaks <- psychro_tile_cell_grid_breaks(panel_params, "y", y_spacing)
+    if ((!nrow(x_breaks) && is.null(x_spacing)) ||
+        (!nrow(y_breaks) && is.null(y_spacing))) {
         return(new_data_frame(list(
             x = numeric(), y = numeric(), xend = numeric(), yend = numeric()
         )))
     }
 
     ranges <- psychro_tile_panel_ranges(panel_params)
-    x_breaks <- psychro_tile_grid_breaks(ranges$x, x_spacing$width, x_spacing$anchor)
-    y_breaks <- psychro_tile_grid_breaks(ranges$y, y_spacing$width, y_spacing$anchor)
+    if (!nrow(x_breaks)) {
+        x_breaks <- psychro_tile_spacing_breaks(
+            ranges$x, x_spacing$width, x_spacing$anchor
+        )
+    }
+    if (!nrow(y_breaks)) {
+        y_breaks <- psychro_tile_spacing_breaks(
+            ranges$y, y_spacing$width, y_spacing$anchor
+        )
+    }
 
     psychro_tile_chart_segments(x_breaks, y_breaks, ranges$x, ranges$y, coord)
+}
+
+psychro_tile_panel_grid_breaks <- function(panel_params, axis,
+                                           tolerance = 1e-8) {
+    scale <- panel_params[[axis]]
+    if (is.null(scale)) {
+        return(psychro_tile_break_data(numeric(), character()))
+    }
+
+    ranges <- psychro_tile_panel_ranges(panel_params)[[axis]]
+    major <- psychro_tile_break_values(scale$breaks)
+    minor <- psychro_tile_break_values(scale$minor_breaks)
+    major <- major[major >= ranges[[1L]] - tolerance &
+        major <= ranges[[2L]] + tolerance]
+    minor <- minor[minor >= ranges[[1L]] - tolerance &
+        minor <= ranges[[2L]] + tolerance]
+
+    major_key <- round(major, 12L)
+    minor <- minor[!round(minor, 12L) %in% major_key]
+
+    psychro_tile_break_data(c(minor, major), c(
+        rep("minor", length(minor)),
+        rep("major", length(major))
+    ))
+}
+
+psychro_tile_cell_grid_breaks <- function(panel_params, axis, spacing,
+                                          tolerance = 1e-8) {
+    breaks <- psychro_tile_panel_grid_breaks(panel_params, axis)
+    if (is.null(spacing)) {
+        return(breaks)
+    }
+
+    ranges <- psychro_tile_panel_ranges(panel_params)[[axis]]
+    if (!nrow(breaks)) {
+        return(psychro_tile_spacing_breaks(
+            ranges, spacing$width, spacing$anchor
+        ))
+    }
+
+    values <- unique(breaks$value)
+    if (length(values) < 2L) {
+        return(psychro_tile_merge_breaks(
+            psychro_tile_grid_breaks(ranges, spacing$width, min(values)),
+            breaks
+        ))
+    }
+
+    step <- min(diff(sort(values)), na.rm = TRUE)
+    if (!is.finite(step) || spacing$width >= step - tolerance) {
+        return(breaks)
+    }
+
+    anchor <- min(values)
+    if (!psychro_tile_breaks_are_aligned(values, spacing$width, anchor)) {
+        return(breaks)
+    }
+
+    psychro_tile_merge_breaks(
+        psychro_tile_grid_breaks(ranges, spacing$width, anchor),
+        breaks
+    )
+}
+
+psychro_tile_breaks_are_aligned <- function(values, width, anchor,
+                                            tolerance = 1e-8) {
+    steps <- (values - anchor) / width
+    all(abs(steps - round(steps)) <= tolerance)
+}
+
+psychro_tile_merge_breaks <- function(values, existing) {
+    out <- psychro_tile_break_data(values, rep("minor", length(values)))
+    if (!nrow(out) || !nrow(existing)) {
+        return(out)
+    }
+
+    out_key <- round(out$value, 12L)
+    existing_key <- round(existing$value, 12L)
+    minor <- match(existing_key[existing$type == "minor"], out_key)
+    major <- match(existing_key[existing$type == "major"], out_key)
+    out$type[minor[!is.na(minor)]] <- "minor"
+    out$type[major[!is.na(major)]] <- "major"
+    out
+}
+
+psychro_tile_break_values <- function(x) {
+    x <- unlist(x, use.names = FALSE)
+    x[is.finite(x)]
+}
+
+psychro_tile_break_data <- function(value, type) {
+    if (!length(value)) {
+        return(new_data_frame(list(value = numeric(), type = character())))
+    }
+
+    order <- order(value)
+    new_data_frame(list(value = value[order], type = type[order]))
 }
 
 psychro_tile_cell_spacing <- function(lower, upper, tolerance = 1e-8) {
@@ -476,9 +797,14 @@ psychro_tile_grid_breaks <- function(range, width, anchor, tolerance = 1e-8) {
     seq(lower, upper, by = width)
 }
 
+psychro_tile_spacing_breaks <- function(range, width, anchor) {
+    breaks <- psychro_tile_grid_breaks(range, width, anchor)
+    psychro_tile_break_data(breaks, rep("major", length(breaks)))
+}
+
 psychro_tile_chart_segments <- function(x_breaks, y_breaks, x_range, y_range,
                                         coord) {
-    if (!length(x_breaks) && !length(y_breaks)) {
+    if (!nrow(x_breaks) && !nrow(y_breaks)) {
         return(new_data_frame(list(
             x = numeric(), y = numeric(), xend = numeric(), yend = numeric()
         )))
@@ -490,29 +816,33 @@ psychro_tile_chart_segments <- function(x_breaks, y_breaks, x_range, y_range,
 
     x_sat <- with_units(
         coord$units,
-        psychrolib::GetHumRatioFromRelHum(x_breaks, 1.0, coord$pressure)
+        psychrolib::GetHumRatioFromRelHum(x_breaks$value, 1.0, coord$pressure)
     )
     vertical <- new_data_frame(list(
-        x = x_breaks,
+        x = x_breaks$value,
         y = y_range[[1L]],
-        xend = x_breaks,
-        yend = pmin(y_range[[2L]], x_sat)
+        xend = x_breaks$value,
+        yend = pmin(y_range[[2L]], x_sat),
+        axis = "x",
+        grid_type = x_breaks$type
     ))
     vertical <- vertical[vertical$yend >= vertical$y, , drop = FALSE]
 
-    y_dew <- rep(x_range[[1L]], length(y_breaks))
-    positive <- y_breaks > 0
+    y_dew <- rep(x_range[[1L]], nrow(y_breaks))
+    positive <- y_breaks$value > 0
     if (any(positive)) {
         y_dew[positive] <- with_units(
             coord$units,
-            GetTDewPointFromHumRatioOnly(y_breaks[positive], coord$pressure)
+            GetTDewPointFromHumRatioOnly(y_breaks$value[positive], coord$pressure)
         )
     }
     horizontal <- new_data_frame(list(
         x = pmax(x_range[[1L]], y_dew),
-        y = y_breaks,
+        y = y_breaks$value,
         xend = x_range[[2L]],
-        yend = y_breaks
+        yend = y_breaks$value,
+        axis = "y",
+        grid_type = y_breaks$type
     ))
     horizontal <- horizontal[horizontal$x <= horizontal$xend, , drop = FALSE]
 
@@ -521,16 +851,20 @@ psychro_tile_chart_segments <- function(x_breaks, y_breaks, x_range, y_range,
 
 psychro_tile_rectangular_segments <- function(x_breaks, y_breaks, x_range, y_range) {
     vertical <- new_data_frame(list(
-        x = x_breaks,
+        x = x_breaks$value,
         y = y_range[[1L]],
-        xend = x_breaks,
-        yend = y_range[[2L]]
+        xend = x_breaks$value,
+        yend = y_range[[2L]],
+        axis = "x",
+        grid_type = x_breaks$type
     ))
     horizontal <- new_data_frame(list(
         x = x_range[[1L]],
-        y = y_breaks,
+        y = y_breaks$value,
         xend = x_range[[2L]],
-        yend = y_breaks
+        yend = y_breaks$value,
+        axis = "y",
+        grid_type = y_breaks$type
     ))
 
     unique(rbind(vertical, horizontal))
