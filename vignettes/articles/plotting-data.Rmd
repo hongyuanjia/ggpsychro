@@ -146,5 +146,6 @@ ggpsychro(weather, tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
     scale_fill_gradient("Mean cooling load", low = "#fef3c7", high = "#b45309")
 ```
 
-For state points, process lines, and comfort zones, see [Zones and
-processes](zones-and-processes.html).
+For model-based thermal comfort overlays, see [Comfort
+overlays](comfort-overlays.html). For manual state points, process lines, and
+zones, see [Zones and processes](zones-and-processes.html).

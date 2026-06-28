@@ -18,6 +18,8 @@ knitr::opts_chunk$set(
 
 Use zones and process lines when a psychrometric chart needs to communicate
 constraints or movement between states, not just point observations.
+For model-based thermal comfort layers that calculate PMV, SET, or adaptive
+comfort across the chart, see [Comfort overlays](comfort-overlays.html).
 
 ## Comfort and operating zones
 
