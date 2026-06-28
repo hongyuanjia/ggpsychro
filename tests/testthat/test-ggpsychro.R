@@ -419,3 +419,25 @@ test_that("Psychrometric stats inherit units and pressure from the plot", {
     expect_equal(built$data[[1L]]$y, expected, tolerance = 1e-8)
     expect_gt(max(built$data[[1L]]$y), 0.01)
 })
+
+test_that("Enthalpy stat creates y output without an explicit y aesthetic", {
+    d <- data.frame(
+        dry_bulb_temperature = c(18, 24, 30),
+        enthalpy = c(35000, 50000, 65000)
+    )
+
+    built <- ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(10, 35), hum_lim = c(0, 25)) +
+            stat_enthalpy(
+                ggplot2::aes(x = dry_bulb_temperature, enthalpy = enthalpy),
+                data = d
+            )
+    )
+    expected <- with_units(
+        "SI",
+        GetHumRatioFromEnthalpyAndTDryBulb(d$enthalpy, d$dry_bulb_temperature)
+    )
+
+    expect_equal(built$data[[1L]]$y, expected, tolerance = 1e-8)
+    expect_true(all(is.finite(built$data[[1L]]$y)))
+})
