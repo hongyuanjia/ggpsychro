@@ -79,6 +79,9 @@ ggplot_build.ggpsychro <- function(plot, ...) {
     data <- layout$map_position(data)
     layout$setup_panel_guides(plot@guides, plot@layers)
     plot@theme <- ggplot2_plot_theme(plot)
+    layout$coord$psychro_theme <- plot@theme
+    layers <- setup_psychro_geom_params(layers, plot@theme)
+    plot@layers <- layers
 
     npscales <- ggproto(NULL, scales,
         scales = scales$scales[!scales$find("x") & !scales$find("y") &
@@ -232,6 +235,17 @@ setup_psychro_stat_params <- function(layers, psychro) {
             if (is.null(layer$stat_params$hum_lim) || is.waive(layer$stat_params$hum_lim)) {
                 layer$stat_params$hum_lim <- psychro$hum_lim
             }
+        }
+
+        layer
+    })
+}
+
+setup_psychro_geom_params <- function(layers, theme) {
+    lapply(layers, function(layer) {
+        if (inherits(layer$geom, "GeomPsychroTile")) {
+            layer$geom_params$psychro.theme <- theme
+            layer$computed_geom_params$psychro.theme <- theme
         }
 
         layer

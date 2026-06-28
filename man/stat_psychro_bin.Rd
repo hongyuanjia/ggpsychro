@@ -31,10 +31,10 @@ geom_psychro_tile(
   gap = 0.08,
   boundary = c(0, 0),
   cell.grid = TRUE,
-  cell.grid.colour = "grey78",
-  cell.grid.linewidth = 0.25,
-  cell.grid.linetype = 1,
-  cell.grid.alpha = 1,
+  cell.grid.colour = ggplot2::waiver(),
+  cell.grid.linewidth = ggplot2::waiver(),
+  cell.grid.linetype = ggplot2::waiver(),
+  cell.grid.alpha = ggplot2::waiver(),
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -169,9 +169,15 @@ give the stat as \code{"count"}.
 }}
 
 \item{cell.grid}{If \code{TRUE}, the default, draw a tile-local grid across the
-chart area using the computed psychrometric bin spacing.}
+chart area. The grid uses the current x/y scale major and minor breaks by
+default. If \code{binwidth} is finer than, and aligned with, those scale breaks,
+the cell grid uses the finer bin spacing while preserving the existing x/y
+breaks as grid lines. If scale breaks are unavailable, the grid falls back
+to the computed bin spacing.}
 
-\item{cell.grid.colour, cell.grid.linewidth, cell.grid.linetype, cell.grid.alpha}{Appearance of the tile-local cell grid.}
+\item{cell.grid.colour, cell.grid.linewidth, cell.grid.linetype, cell.grid.alpha}{Appearance of the tile-local cell grid. The default, \code{\link[ggplot2:waiver]{ggplot2::waiver()}},
+inherits from the current \code{panel.grid.*.x} and \code{panel.grid.*.y} theme
+elements. Explicit values override the inherited theme style.}
 }
 \description{
 \code{stat_psychro_bin()} bins observations on dry-bulb temperature and humidity
@@ -182,10 +188,13 @@ useful for weather-hour distributions and gridded simulation summaries.
 The stat accepts either \code{x} and \code{y} aesthetics, where \code{y} is humidity ratio
 in chart display units, or \code{x} and \code{relhum}, where \code{relhum} is relative
 humidity in percent. Relative humidity inputs inherit the plot unit system
-and pressure from \code{\link[=ggpsychro]{ggpsychro()}}. Tiles default to a small gap and \code{alpha = 0.85} so psychrometric grid lines remain visible. When \code{binwidth} is used,
+and pressure from \code{\link[=ggpsychro]{ggpsychro()}}. Tiles default to a small gap and \code{alpha = 0.85} so psychrometric grid lines remain visible. Tile bodies are clipped to
+the saturation line in psychrometric coordinates. When \code{binwidth} is used,
 each tile represents one dry-bulb and humidity-ratio cell aligned to
-\code{boundary}; the optional cell grid redraws those bin boundaries across the
-chart area.
+\code{boundary}. The optional cell grid follows the chart's x/y breaks so it stays
+aligned with the visible dry-bulb and humidity-ratio grid. Choose a
+\code{binwidth} that evenly subdivides those breaks when a denser Marsh-style cell
+grid should still coincide with the existing x/y grid.
 }
 \section{Computed variables}{
 
