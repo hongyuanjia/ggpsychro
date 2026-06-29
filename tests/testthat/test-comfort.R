@@ -120,6 +120,22 @@ test_that("comfort heat index matches Marsh and NOAA-style expected behavior", {
     exposed <- comfort_heat_index(90, rh = 70, solar_exposure = 1, units = "IP")
     expect_equal(exposed$heat_index - hi$heat_index, 8, tolerance = 0.05)
 
+    exposure_vector <- comfort_heat_index(
+        c(90, 90), rh = 70, solar_exposure = c(0, 1), units = "IP"
+    )
+    expect_equal(diff(exposure_vector$heat_index), 8, tolerance = 0.05)
+    expect_true(is.na(comfort_heat_index(
+        90, rh = 70, solar_exposure = NA_real_, units = "IP"
+    )$heat_index))
+    expect_error(
+        comfort_heat_index(90, rh = 70, solar_exposure = 2, units = "IP"),
+        "solar_exposure"
+    )
+    expect_error(
+        comfort_heat_index(90, rh = 70, solar_exposure = -0.1, units = "IP"),
+        "solar_exposure"
+    )
+
     si <- comfort_heat_index(get_c_from_f(90), rh = 70, round_output = FALSE)
     ip <- comfort_heat_index(90, rh = 70, units = "IP", round_output = FALSE)
     expect_equal(get_f_from_c(si$heat_index), ip$heat_index, tolerance = 1e-8)
@@ -159,6 +175,14 @@ test_that("comfort model objects validate inputs", {
     expect_error(comfort_model_pmv(model = "bad"))
     expect_error(comfort_model_type(list()), "comfort_model")
     expect_error(comfort_model_adaptive(t_running = 20, standard = "bad"))
+    expect_error(
+        comfort_standard_ashrae55_2017(c(0.5, -0.5)),
+        "strictly increasing"
+    )
+    expect_error(
+        comfort_standard_en15251_2007(c(-0.7, 0.2, -0.2, 0.7)),
+        "strictly increasing"
+    )
 })
 
 test_that("comfort overlay and contour build on psychrometric panel grids", {
@@ -326,6 +350,29 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
     ))
     expect_true(all(sort(unique(round(heat_contour$level, 6))) %in%
         round(comfort_heat_index_thresholds("SI"), 6)))
+
+    heat_zones <- comfort_heat_index_zone_data(
+        comfort_model_heat_index(), NULL, c(32, 24), "SI", pressure,
+        FALSE, c(20, 45), c(0, 35)
+    )
+    heat_zone_parts <- lapply(seq_along(comfort_heat_index_zone_specs()), function(i) {
+        comfort_heat_index_zone_data(
+            comfort_model_heat_index(), i, c(32, 24), "SI", pressure,
+            FALSE, c(20, 45), c(0, 35)
+        )
+    })
+    heat_zone_parts <- heat_zone_parts[vapply(heat_zone_parts, nrow, integer(1L)) > 0L]
+    heat_zone_parts <- do.call(rbind, heat_zone_parts)
+    expect_equal(
+        table(heat_zones$category_id),
+        table(heat_zone_parts$category_id)
+    )
+    zone_fills <- vapply(comfort_heat_index_zone_specs(), `[[`,
+        character(1L), "fill")
+    expect_equal(
+        as.vector(tapply(heat_zones$fill, heat_zones$category_id, unique)),
+        zone_fills[as.integer(names(table(heat_zones$category_id)))]
+    )
 })
 
 test_that("Givoni strategy zones build and stay below saturation", {

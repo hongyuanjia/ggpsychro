@@ -33,8 +33,9 @@ StatComfortBand <- ggplot2::ggproto(
                              units, pres, mollier = FALSE,
                              tdb_lim = NULL, hum_lim = NULL,
                              na.rm = FALSE) {
-        units <- comfort_stat_units(data, units)
-        pres <- comfort_stat_pressure(data, pres)
+        ctx <- comfort_stat_context(data, units, pres)
+        units <- ctx$units
+        pres <- ctx$pres
         comfort_band_data(
             model, metric, levels, comfort_default_n(model, n), units, pres,
             mollier, tdb_lim, hum_lim
@@ -69,8 +70,9 @@ StatComfortGrid <- ggplot2::ggproto(
                              units, pres, mollier = FALSE,
                              tdb_lim = NULL, hum_lim = NULL,
                              na.rm = FALSE) {
-        units <- comfort_stat_units(data, units)
-        pres <- comfort_stat_pressure(data, pres)
+        ctx <- comfort_stat_context(data, units, pres)
+        units <- ctx$units
+        pres <- ctx$pres
         comfort_grid_data(
             model, metric, comfort_default_n(model, n), gap, units, pres,
             mollier, tdb_lim, hum_lim, na.rm = na.rm
@@ -101,8 +103,9 @@ StatComfortContour <- ggplot2::ggproto(
                              label_path = FALSE, units, pres,
                              mollier = FALSE, tdb_lim = NULL, hum_lim = NULL,
                              na.rm = FALSE) {
-        units <- comfort_stat_units(data, units)
-        pres <- comfort_stat_pressure(data, pres)
+        ctx <- comfort_stat_context(data, units, pres)
+        units <- ctx$units
+        pres <- ctx$pres
         comfort_contour_data(
             model, metric, breaks, comfort_default_n(model, n), units, pres,
             mollier, tdb_lim, hum_lim, contour_method = contour_method,
@@ -138,8 +141,9 @@ StatComfortPmvCurve <- ggplot2::ggproto(
                              tdb_lim = NULL, hum_lim = NULL,
                              na.rm = FALSE) {
         label_type <- match.arg(label_type)
-        units <- comfort_stat_units(data, units)
-        pres <- comfort_stat_pressure(data, pres)
+        ctx <- comfort_stat_context(data, units, pres)
+        units <- ctx$units
+        pres <- ctx$pres
         comfort_pmv_curve_data(
             model, levels, n, units, pres, mollier, tdb_lim, hum_lim,
             label = label_type, label_hjust = label_hjust,
@@ -171,8 +175,9 @@ StatComfortPmvAxisLabel <- ggplot2::ggproto(
                              units, pres, mollier = FALSE,
                              tdb_lim = NULL, hum_lim = NULL,
                              na.rm = FALSE) {
-        units <- comfort_stat_units(data, units)
-        pres <- comfort_stat_pressure(data, pres)
+        ctx <- comfort_stat_context(data, units, pres)
+        units <- ctx$units
+        pres <- ctx$pres
         comfort_pmv_axis_label_data(
             model, levels, n, units, pres, mollier, tdb_lim, hum_lim,
             axis_label_hjust = axis_label_hjust
@@ -206,8 +211,9 @@ StatComfortPmvRootBand <- ggplot2::ggproto(
                              units, pres, mollier = FALSE,
                              tdb_lim = NULL, hum_lim = NULL,
                              na.rm = FALSE) {
-        units <- comfort_stat_units(data, units)
-        pres <- comfort_stat_pressure(data, pres)
+        ctx <- comfort_stat_context(data, units, pres)
+        units <- ctx$units
+        pres <- ctx$pres
         comfort_pmv_rootband_data(
             model, metric, levels, comfort_default_n(model, n), units, pres,
             mollier, tdb_lim, hum_lim
@@ -241,8 +247,9 @@ StatComfortZone <- ggplot2::ggproto(
                              n = NULL, gap = 0, units, pres,
                              mollier = FALSE, tdb_lim = NULL, hum_lim = NULL,
                              na.rm = FALSE) {
-        units <- comfort_stat_units(data, units)
-        pres <- comfort_stat_pressure(data, pres)
+        ctx <- comfort_stat_context(data, units, pres)
+        units <- ctx$units
+        pres <- ctx$pres
         comfort_zone_data(
             model, metric, range, comfort_default_n(model, n), gap, units,
             pres, mollier, tdb_lim, hum_lim, na.rm = na.rm
@@ -264,21 +271,23 @@ StatComfortHeatIndexZone <- ggplot2::ggproto(
     dropped_aes = c("pres", "units"),
 
     extra_params = c(
-        "na.rm", "model", "n", "category_id", "units", "pres",
+        "na.rm", "model", "n", "category_id", "grid_cache", "units", "pres",
         "mollier", "tdb_lim", "hum_lim"
     ),
 
     compute_panel = function(self, data, scales,
                              model = comfort_model_heat_index(),
-                             n = c(160, 100), category_id = 1L,
+                             n = c(160, 100), category_id = NULL,
+                             grid_cache = NULL,
                              units, pres, mollier = FALSE,
                              tdb_lim = NULL, hum_lim = NULL,
                              na.rm = FALSE) {
-        units <- comfort_stat_units(data, units)
-        pres <- comfort_stat_pressure(data, pres)
+        ctx <- comfort_stat_context(data, units, pres)
+        units <- ctx$units
+        pres <- ctx$pres
         comfort_heat_index_zone_data(
             model, category_id, comfort_grid_n(n), units, pres,
-            mollier, tdb_lim, hum_lim
+            mollier, tdb_lim, hum_lim, grid_cache = grid_cache
         )
     }
 )
@@ -305,8 +314,9 @@ StatComfortHeatIndexContour <- ggplot2::ggproto(
                              n = c(160, 100), units, pres, mollier = FALSE,
                              tdb_lim = NULL, hum_lim = NULL,
                              na.rm = FALSE) {
-        units <- comfort_stat_units(data, units)
-        pres <- comfort_stat_pressure(data, pres)
+        ctx <- comfort_stat_context(data, units, pres)
+        units <- ctx$units
+        pres <- ctx$pres
         comfort_contour_data(
             model, "heat_index", comfort_heat_index_thresholds(units),
             comfort_grid_n(n), units, pres, mollier, tdb_lim, hum_lim,
@@ -337,8 +347,9 @@ StatComfortHeatIndexLabel <- ggplot2::ggproto(
                              n = c(160, 100), units, pres, mollier = FALSE,
                              tdb_lim = NULL, hum_lim = NULL,
                              na.rm = FALSE) {
-        units <- comfort_stat_units(data, units)
-        pres <- comfort_stat_pressure(data, pres)
+        ctx <- comfort_stat_context(data, units, pres)
+        units <- ctx$units
+        pres <- ctx$pres
         comfort_heat_index_label_data(
             model, comfort_grid_n(n), units, pres, mollier, tdb_lim, hum_lim
         )
@@ -367,8 +378,9 @@ StatComfortGivoniZone <- ggplot2::ggproto(
                              zone = NULL, units, pres, mollier = FALSE,
                              tdb_lim = NULL, hum_lim = NULL,
                              na.rm = FALSE) {
-        units <- comfort_stat_units(data, units)
-        pres <- comfort_stat_pressure(data, pres)
+        ctx <- comfort_stat_context(data, units, pres)
+        units <- ctx$units
+        pres <- ctx$pres
         comfort_givoni_zone_data(
             strategy, zone, units, pres, mollier, tdb_lim, hum_lim
         )
@@ -398,8 +410,9 @@ StatComfortGivoniLabel <- ggplot2::ggproto(
                              units, pres, mollier = FALSE,
                              tdb_lim = NULL, hum_lim = NULL,
                              na.rm = FALSE) {
-        units <- comfort_stat_units(data, units)
-        pres <- comfort_stat_pressure(data, pres)
+        ctx <- comfort_stat_context(data, units, pres)
+        units <- ctx$units
+        pres <- ctx$pres
         comfort_givoni_label_data(
             strategy, label_type, units, pres, mollier, tdb_lim, hum_lim
         )
@@ -428,8 +441,9 @@ StatComfortGivoniMeanOutdoor <- ggplot2::ggproto(
                              units, pres, mollier = FALSE,
                              tdb_lim = NULL, hum_lim = NULL,
                              na.rm = FALSE) {
-        units <- comfort_stat_units(data, units)
-        pres <- comfort_stat_pressure(data, pres)
+        ctx <- comfort_stat_context(data, units, pres)
+        units <- ctx$units
+        pres <- ctx$pres
         comfort_givoni_mean_outdoor_data(
             strategy, units, pres, mollier, tdb_lim, hum_lim
         )
@@ -458,8 +472,9 @@ StatComfortGivoniMeanOutdoorLabel <- ggplot2::ggproto(
                              units, pres, mollier = FALSE,
                              tdb_lim = NULL, hum_lim = NULL,
                              na.rm = FALSE) {
-        units <- comfort_stat_units(data, units)
-        pres <- comfort_stat_pressure(data, pres)
+        ctx <- comfort_stat_context(data, units, pres)
+        units <- ctx$units
+        pres <- ctx$pres
         comfort_givoni_mean_outdoor_label_data(
             strategy, units, pres, mollier, tdb_lim, hum_lim
         )
@@ -483,8 +498,9 @@ StatComfortState <- ggplot2::ggproto(
     compute_group = function(self, data, scales, model = comfort_model_pmv(),
                              units, pres, mollier = FALSE,
                              na.rm = FALSE) {
-        units <- get_units(data)
-        pres <- comfort_stat_pressure(data, pres)
+        ctx <- comfort_stat_context(data, units, pres)
+        units <- ctx$units
+        pres <- ctx$pres
         data <- psychro_compute_state(data, units, pres, mollier, na.rm = na.rm)
         if (!nrow(data)) {
             return(data)

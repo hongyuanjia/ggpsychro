@@ -256,6 +256,32 @@ comfort_pmv_curve_data <- function(model, levels, n, units, pres, mollier,
                                    label_hjust = NULL, label_vjust = NULL,
                                    reverse = FALSE) {
     label <- match.arg(label)
+    out <- comfort_pmv_curve_base_data(
+        model, levels, n, units, pres, tdb_lim, hum_lim
+    )
+    if (!nrow(out)) {
+        return(comfort_empty_pmv_curve())
+    }
+    out$label <- vapply(out$level, comfort_pmv_curve_label, character(1L),
+        label = label)
+    out$hjust <- comfort_pmv_curve_hjust(label, label_hjust)
+    out$vjust <- vapply(out$level, comfort_pmv_curve_vjust, numeric(1L),
+        label = label, override = label_vjust, mollier = mollier)
+
+    if (label != "none") {
+        out <- out[!is.na(out$label), , drop = FALSE]
+    }
+    if (!nrow(out)) {
+        return(comfort_empty_pmv_curve())
+    }
+    if (isTRUE(reverse)) {
+        out <- comfort_pmv_reverse_groups(out)
+    }
+    psychro_output_xy(out, out$tdb, out$humratio, mollier)
+}
+
+comfort_pmv_curve_base_data <- function(model, levels, n, units, pres,
+                                        tdb_lim, hum_lim) {
     levels <- comfort_check_breaks(levels, "`levels`", n_min = 1L)
     n <- comfort_pmv_curve_n(n)
     model <- comfort_pmv_curve_model(model)
@@ -285,31 +311,24 @@ comfort_pmv_curve_data <- function(model, levels, n, units, pres, mollier,
             value = levels[[i]],
             group = i,
             linetype = comfort_pmv_linetype(levels[[i]]),
-            label = comfort_pmv_curve_label(levels[[i]], label),
-            hjust = comfort_pmv_curve_hjust(label, label_hjust),
-            vjust = comfort_pmv_curve_vjust(
-                levels[[i]], label, label_vjust, mollier = mollier
-            ),
             metric = "pmv"
         ))
     }
     curves <- curves[!vapply(curves, is.null, logical(1L))]
     if (!length(curves)) {
-        return(comfort_empty_pmv_curve())
+        return(comfort_empty_pmv_curve_base())
     }
     out <- do.call(rbind, curves)
     row.names(out) <- NULL
+    out
+}
 
-    if (label != "none") {
-        out <- out[!is.na(out$label), , drop = FALSE]
-    }
-    if (!nrow(out)) {
-        return(comfort_empty_pmv_curve())
-    }
-    if (isTRUE(reverse)) {
-        out <- comfort_pmv_reverse_groups(out)
-    }
-    psychro_output_xy(out, out$tdb, out$humratio, mollier)
+comfort_empty_pmv_curve_base <- function() {
+    new_data_frame(list(
+        tdb = numeric(), humratio = numeric(),
+        level = numeric(), value = numeric(), group = integer(),
+        linetype = character(), metric = character()
+    ))
 }
 
 comfort_pmv_sensation_levels <- function(levels) {
@@ -327,8 +346,8 @@ comfort_pmv_axis_label_data <- function(model, levels, n, units, pres,
         diff(hum_lim_narrow) * comfort_pmv_axis_label_offset(axis_label_hjust)
     label_end <- hum_lim_narrow[[1L]] +
         diff(hum_lim_narrow) * comfort_pmv_axis_label_end(axis_label_hjust)
-    curves <- comfort_pmv_curve_data(
-        model, levels, n, units, pres, FALSE, tdb_lim, hum_lim, label = "none"
+    curves <- comfort_pmv_curve_base_data(
+        model, levels, n, units, pres, tdb_lim, hum_lim
     )
     if (!nrow(curves)) {
         return(comfort_empty_pmv_curve())
@@ -467,8 +486,12 @@ comfort_pmv_rootband_data <- function(model, metric, levels, n, units, pres,
     breaks <- comfort_pmv_rootband_breaks(levels)
     n <- comfort_grid_n(n)
     lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
+    saturation_roots <- comfort_pmv_rootband_saturation_roots(
+        model, breaks, lim$tdb, lim$hum, units, pres, n[[1L]]
+    )
     humratio <- comfort_pmv_rootband_humratio(
-        model, breaks, n[[1L]], units, pres, lim$tdb, lim$hum
+        model, breaks, n[[1L]], units, pres, lim$tdb, lim$hum,
+        saturation_roots = saturation_roots
     )
     domain <- comfort_pmv_rootband_domain(humratio, lim$tdb, units, pres)
     valid <- domain$valid
@@ -496,9 +519,7 @@ comfort_pmv_rootband_data <- function(model, metric, levels, n, units, pres,
         roots <- comfort_pmv_curve_root_vector(
             model, level, humratio, lim$tdb, units, pres
         )
-        sat_roots <- comfort_pmv_curve_saturation_roots(
-            model, level, lim$tdb, lim$hum, units, pres, n[[1L]]
-        )
+        sat_roots <- saturation_roots[[as.character(level)]]
         key <- match(round(sat_roots$humratio, 12L), round(humratio, 12L))
         ok <- !is.na(key)
         roots[key[ok]] <- sat_roots$tdb[ok]
@@ -628,8 +649,20 @@ comfort_format_band_level <- function(level) {
     comfort_format_pmv_level(level)
 }
 
+comfort_pmv_rootband_saturation_roots <- function(model, breaks, tdb_lim,
+                                                  hum_lim, units, pres, n) {
+    roots <- lapply(breaks, function(level) {
+        comfort_pmv_curve_saturation_roots(
+            model, level, tdb_lim, hum_lim, units, pres, n
+        )
+    })
+    names(roots) <- as.character(breaks)
+    roots
+}
+
 comfort_pmv_rootband_humratio <- function(model, breaks, n, units, pres,
-                                          tdb_lim, hum_lim) {
+                                          tdb_lim, hum_lim,
+                                          saturation_roots = NULL) {
     hum <- seq(
         narrow_hum(hum_lim[[1L]], units),
         narrow_hum(hum_lim[[2L]], units),
@@ -637,10 +670,13 @@ comfort_pmv_rootband_humratio <- function(model, breaks, n, units, pres,
     )
     sat <- psychro_saturation_humratio(tdb_lim, units, pres)
     hum <- c(hum, sat[is.finite(sat)])
-    for (level in breaks) {
-        roots <- comfort_pmv_curve_saturation_roots(
-            model, level, tdb_lim, hum_lim, units, pres, n
+    if (is.null(saturation_roots)) {
+        saturation_roots <- comfort_pmv_rootband_saturation_roots(
+            model, breaks, tdb_lim, hum_lim, units, pres, n
         )
+    }
+    for (level in breaks) {
+        roots <- saturation_roots[[as.character(level)]]
         hum <- c(hum, roots$humratio)
     }
     hum <- sort(unique(round(hum[is.finite(hum)], 12L)))

@@ -72,22 +72,78 @@ comfort_heat_index_zone_specs <- function() {
     )
 }
 
-comfort_heat_index_zone_data <- function(model, category_id, n, units, pres,
-                                         mollier, tdb_lim, hum_lim) {
+comfort_heat_index_zone_data <- function(model, category_id = NULL, n, units, pres,
+                                         mollier, tdb_lim, hum_lim,
+                                         grid_cache = NULL) {
     thresholds <- comfort_heat_index_thresholds(units)
-    if (!category_id %in% seq_along(thresholds)) {
+    category_ids <- if (is.null(category_id)) {
+        seq_along(thresholds)
+    } else {
+        as.integer(category_id)
+    }
+    category_ids <- category_ids[category_ids %in% seq_along(thresholds)]
+    if (!length(category_ids)) {
         return(comfort_empty_band())
     }
 
-    m <- comfort_grid_matrix(
-        model, "heat_index", n, units, pres, tdb_lim, hum_lim,
-        at = "nodes", boundary = "saturation"
+    m <- comfort_heat_index_grid_matrix(
+        model, n, units, pres, tdb_lim, hum_lim, grid_cache = grid_cache
     )
     z_range <- range(m$value, finite = TRUE)
     if (!all(is.finite(z_range))) {
         return(comfort_empty_band())
     }
 
+    specs <- comfort_heat_index_zone_specs()
+    zones <- lapply(category_ids, function(id) {
+        comfort_heat_index_zone_from_grid(
+            m, id, thresholds, specs, z_range, mollier
+        )
+    })
+    zones <- zones[vapply(zones, nrow, integer(1L)) > 0L]
+    if (!length(zones)) {
+        return(comfort_empty_band())
+    }
+
+    group_offset <- 0L
+    for (i in seq_along(zones)) {
+        zones[[i]]$group <- zones[[i]]$group + group_offset
+        group_offset <- max(zones[[i]]$group, group_offset)
+    }
+    out <- do.call(rbind, zones)
+    row.names(out) <- NULL
+    out
+}
+
+comfort_heat_index_grid_matrix <- function(model, n, units, pres, tdb_lim,
+                                           hum_lim, grid_cache = NULL) {
+    key <- comfort_heat_index_grid_key(model, n, units, pres, tdb_lim, hum_lim)
+    if (!is.null(grid_cache) && exists(key, envir = grid_cache, inherits = FALSE)) {
+        return(get(key, envir = grid_cache, inherits = FALSE))
+    }
+
+    m <- comfort_grid_matrix(
+        model, "heat_index", n, units, pres, tdb_lim, hum_lim,
+        at = "nodes", boundary = "saturation"
+    )
+    if (!is.null(grid_cache)) {
+        assign(key, m, envir = grid_cache)
+    }
+    m
+}
+
+comfort_heat_index_grid_key <- function(model, n, units, pres, tdb_lim, hum_lim) {
+    paste(
+        utils::capture.output(utils::str(list(
+            model = model, n = n, units = units, pres = pres,
+            tdb_lim = tdb_lim, hum_lim = hum_lim
+        ), give.attr = FALSE)),
+        collapse = "\n"
+    )
+}
+
+comfort_heat_index_zone_from_grid <- function(m, category_id, thresholds, specs,
+                                              z_range, mollier) {
     low <- thresholds[[category_id]]
     high <- if (category_id < length(thresholds)) {
         thresholds[[category_id + 1L]]
@@ -108,7 +164,8 @@ comfort_heat_index_zone_data <- function(model, category_id, n, units, pres,
     )
     if (nrow(out)) {
         out$category_id <- category_id
-        out$category <- comfort_heat_index_zone_specs()[[category_id]]$label
+        out$category <- specs[[category_id]]$label
+        out$fill <- specs[[category_id]]$fill
     }
     out
 }

@@ -179,7 +179,11 @@ comfort_heat_index <- function(tdb, rh, solar_exposure = 0,
 
     tdb_si <- comfort_to_si_temp(x$tdb, units)
     tdb_f <- get_f_from_c(tdb_si)
-    exposure <- pmin(pmax(x$solar_exposure, 0), 1)
+    exposure <- x$solar_exposure
+    bad_exposure <- is.finite(exposure) & (exposure < 0 | exposure > 1)
+    if (any(bad_exposure)) {
+        stop("`solar_exposure` must be from 0 to 1.", call. = FALSE)
+    }
     heat_index_f <- comfort_heat_index_f(tdb_f, x$rh, exposure)
 
     if (isTRUE(limit_inputs)) {
@@ -356,7 +360,7 @@ comfort_model_heat_index <- function(solar_exposure = 0,
 #'
 #' @export
 comfort_standard_ashrae55_2017 <- function(range = c(-0.5, 0.5)) {
-    range <- comfort_check_breaks(range, "`range`", n_min = 2L)
+    range <- comfort_check_ordered_breaks(range, "`range`", n_min = 2L)
     if (length(range) != 2L) {
         stop("`range` must contain exactly two PMV boundaries.", call. = FALSE)
     }
@@ -371,7 +375,7 @@ comfort_standard_ashrae55_2017 <- function(range = c(-0.5, 0.5)) {
 #' @rdname comfort_standard_ashrae55_2017
 #' @export
 comfort_standard_en15251_2007 <- function(breaks = c(-0.7, -0.2, 0.2, 0.7)) {
-    breaks <- comfort_check_breaks(breaks, "`breaks`", n_min = 4L)
+    breaks <- comfort_check_ordered_breaks(breaks, "`breaks`", n_min = 4L)
     if (length(breaks) != 4L) {
         stop("`breaks` must contain four PMV boundaries.", call. = FALSE)
     }

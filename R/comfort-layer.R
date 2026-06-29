@@ -167,12 +167,15 @@ geom_comfort_heat_index <- function(mapping = NULL, data = NULL,
     layer_mapping <- comfort_computed_xy_mapping(mapping)
     params <- list(...)
     zone_specs <- comfort_heat_index_zone_specs()
+    # Share the expensive grid only across this grouped heat-index zone build.
+    zone_grid_cache <- new.env(parent = emptyenv())
     layers <- vector("list", length(zone_specs))
     for (i in seq_along(zone_specs)) {
         spec <- zone_specs[[i]]
         zone_params <- utils::modifyList(params, list(
             na.rm = na.rm, model = model, n = n, category_id = spec$id,
-            alpha = alpha, fill = spec$fill, colour = NA
+            grid_cache = zone_grid_cache, alpha = alpha, fill = spec$fill,
+            colour = NA
         ))
         layers[[i]] <- psychro_layer(
             stat = StatComfortHeatIndexZone, data = comfort_layer_data(data),

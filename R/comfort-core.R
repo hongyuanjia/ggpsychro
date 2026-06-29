@@ -68,6 +68,15 @@ comfort_check_breaks <- function(x, name, n_min = 2L) {
     x
 }
 
+comfort_check_ordered_breaks <- function(x, name, n_min = 2L) {
+    x <- as.numeric(x)
+    if (length(x) < n_min || any(!is.finite(x)) || any(diff(x) <= 0)) {
+        stop(name, " must contain finite strictly increasing PMV boundaries.",
+            call. = FALSE)
+    }
+    x
+}
+
 comfort_layer_data <- function(data) {
     if (is.null(data)) {
         return(new_data_frame(list(.comfort = 1), n = 1L))
@@ -137,6 +146,13 @@ comfort_stat_pressure <- function(data, pres) {
         stop("`pres` must resolve to a single finite pressure value.", call. = FALSE)
     }
     pres
+}
+
+comfort_stat_context <- function(data, units, pres) {
+    list(
+        units = comfort_stat_units(data, units),
+        pres = comfort_stat_pressure(data, pres)
+    )
 }
 
 comfort_grid_n <- function(n) {
