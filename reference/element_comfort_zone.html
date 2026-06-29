@@ -78,6 +78,53 @@ properties. Values left as <code><a href="https://ggplot2.tidyverse.org/referenc
     <p>A comfort zone style element.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Fill and outline the comfort zone with custom colours.</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">45</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="geom_comfort_overlay.html">geom_comfort_givoni</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        show_labels <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
+<span class="r-in"><span>        zone_style <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>            comfort <span class="op">=</span> <span class="fu">element_comfort_zone</span><span class="op">(</span></span></span>
+<span class="r-in"><span>                fill <span class="op">=</span> <span class="st">"#6FCF97"</span>,</span></span>
+<span class="r-in"><span>                colour <span class="op">=</span> <span class="st">"#1B7F4A"</span>,</span></span>
+<span class="r-in"><span>                alpha <span class="op">=</span> <span class="fl">0.35</span></span></span>
+<span class="r-in"><span>            <span class="op">)</span></span></span>
+<span class="r-in"><span>        <span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-plt img"><img src="element_comfort_zone-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Emphasize the air-conditioning region with a light fill.</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">45</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="geom_comfort_overlay.html">geom_comfort_givoni</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        show_labels <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
+<span class="r-in"><span>        zone_style <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>            air_conditioning <span class="op">=</span> <span class="fu">element_comfort_zone</span><span class="op">(</span></span></span>
+<span class="r-in"><span>                fill <span class="op">=</span> <span class="st">"#7BC8F6"</span>,</span></span>
+<span class="r-in"><span>                colour <span class="op">=</span> <span class="st">"#1B5E8C"</span>,</span></span>
+<span class="r-in"><span>                alpha <span class="op">=</span> <span class="fl">0.18</span>,</span></span>
+<span class="r-in"><span>                linetype <span class="op">=</span> <span class="st">"solid"</span></span></span>
+<span class="r-in"><span>            <span class="op">)</span></span></span>
+<span class="r-in"><span>        <span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-plt img"><img src="element_comfort_zone-2.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Restyle a line-only region without filling it.</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">45</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="geom_comfort_overlay.html">geom_comfort_givoni</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        show_labels <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
+<span class="r-in"><span>        zone_style <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>            winter <span class="op">=</span> <span class="fu">element_comfort_zone</span><span class="op">(</span></span></span>
+<span class="r-in"><span>                colour <span class="op">=</span> <span class="st">"#C44536"</span>,</span></span>
+<span class="r-in"><span>                linewidth <span class="op">=</span> <span class="fl">1.2</span>,</span></span>
+<span class="r-in"><span>                linetype <span class="op">=</span> <span class="st">"dashed"</span></span></span>
+<span class="r-in"><span>            <span class="op">)</span></span></span>
+<span class="r-in"><span>        <span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-plt img"><img src="element_comfort_zone-3.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

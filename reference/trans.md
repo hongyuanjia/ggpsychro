@@ -41,4 +41,6 @@ plot(wetbulb_trans("SI"), xlim = c(-50, 40))
 plot(vappres_trans("SI"), xlim = c(1000, 4000))
 
 plot(specvol_trans("SI"), xlim = c(0.8, 1))
+
+plot(enthalpy_trans("SI"), xlim = c(1000, 2000))
 ```

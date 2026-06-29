@@ -235,8 +235,14 @@ ggpsychro(tdb_lim = c(10, 35), hum_lim = c(0, 25)) +
     stat_relhum(aes(x = tdb, relhum = relhum), data = states)
 
 
-# The stats can also be used from ordinary ggplot2 geoms.
 wetbulb_line <- data.frame(tdb = 18:30, wetbulb = 16)
+ggpsychro(tdb_lim = c(10, 35), hum_lim = c(0, 25)) +
+    geom_grid_wetbulb() +
+    stat_wetbulb(aes(x = tdb, wetbulb = wetbulb),
+        data = wetbulb_line, geom = "line")
+
+
+# The stats can also be used from ordinary ggplot2 geoms.
 ggpsychro(tdb_lim = c(10, 35), hum_lim = c(0, 25)) +
     geom_grid_wetbulb() +
     geom_line(aes(x = tdb, wetbulb = wetbulb),

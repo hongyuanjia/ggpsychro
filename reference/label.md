@@ -264,4 +264,19 @@ demo_scale(seq(1000, 2000), labels = label_enthalpy(units = "SI", parse = TRUE))
 
 demo_scale(seq(1000, 2000), labels = label_enthalpy(units = "IP", parse = TRUE))
 
+
+demo_scale(10:50, labels = drybulb_format(units = "SI", parse = TRUE))
+
+demo_scale(10:20, labels = humratio_format(scale = 0.001, units = "SI", parse = TRUE))
+
+demo_scale(10:50, labels = relhum_format(units = "SI"))
+
+demo_scale(10:50, labels = wetbulb_format(units = "SI", parse = TRUE))
+
+demo_scale(10:50, labels = specvol_format(units = "SI", parse = TRUE))
+
+demo_scale(10:50, labels = vappres_format(units = "SI"))
+
+demo_scale(seq(1000, 2000), labels = enthalpy_format(units = "SI", parse = TRUE))
+
 ```

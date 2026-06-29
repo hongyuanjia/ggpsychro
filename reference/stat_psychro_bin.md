@@ -287,6 +287,13 @@ ggpsychro(d, tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
 
 
 ggpsychro(d, tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+    stat_psychro_bin(
+        aes(dry_bulb, relhum = relative_humidity, fill = after_stat(hours)),
+        binwidth = c(2, 2)
+    )
+
+
+ggpsychro(d, tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
     geom_psychro_tile(
         aes(dry_bulb, relhum = relative_humidity, value = cooling_load,
             fill = after_stat(value)),

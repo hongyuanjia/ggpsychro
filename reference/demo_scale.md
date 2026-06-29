@@ -18,3 +18,10 @@ demo_scale(x, ...)
 - ...:
 
   Other arguments pass to scale functions
+
+## Examples
+
+``` r
+demo_scale(0:10, labels = scales::label_number())
+
+```

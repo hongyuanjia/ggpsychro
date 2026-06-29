@@ -26,3 +26,26 @@ comfort_strategy_givoni(mean_outdoor = 19, units = c("SI", "IP"))
 ## Value
 
 A Givoni comfort strategy object.
+
+## Examples
+
+``` r
+# Create a Givoni strategy for a warm outdoor mean.
+comfort_strategy_givoni(mean_outdoor = 22)
+#> $mean_outdoor
+#> [1] 22
+#> 
+#> $units
+#> [1] "SI"
+#> 
+#> attr(,"class")
+#> [1] "PsyComfortGivoniStrategy" "list"                    
+
+# Draw the Givoni strategy overlay for that outdoor mean.
+ggpsychro(tdb_lim = c(5, 45), hum_lim = c(0, 30)) +
+    geom_comfort_givoni(
+        strategy = comfort_strategy_givoni(mean_outdoor = 22),
+        show_labels = FALSE
+    )
+
+```

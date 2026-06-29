@@ -75,6 +75,60 @@ mean outdoor temperature and produce operative-temperature bands.</p>
     <p>A comfort standard object.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Create the ASHRAE 55 PMV comfort interval.</span></span></span>
+<span class="r-in"><span><span class="fu">comfort_standard_ashrae55_2017</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $name</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "ashrae55_2017"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $breaks</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] -0.5  0.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $fills</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "#5BD96A"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $alphas</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.58</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "PsyComfortStandard" "list"              </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Create the EN 15251 PMV comfort bands.</span></span></span>
+<span class="r-in"><span><span class="fu">comfort_standard_en15251_2007</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $name</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "en15251_2007"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $breaks</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] -0.7 -0.2  0.2  0.7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $fills</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "#9BE89D" "#39D84A" "#9BE89D"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $alphas</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.34 0.58 0.34</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "PsyComfortStandard" "list"              </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Draw the ASHRAE 55 comfort zone.</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">35</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">24</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="geom_comfort_overlay.html">geom_comfort_standard_zone</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        standard <span class="op">=</span> <span class="fu">comfort_standard_ashrae55_2017</span><span class="op">(</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        n <span class="op">=</span> <span class="fl">80</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-plt img"><img src="comfort_standard_ashrae55_2017-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Draw the EN 15251 comfort bands.</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">35</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">24</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="geom_comfort_overlay.html">geom_comfort_standard_zone</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        standard <span class="op">=</span> <span class="fu">comfort_standard_en15251_2007</span><span class="op">(</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        n <span class="op">=</span> <span class="fl">80</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-plt img"><img src="comfort_standard_ashrae55_2017-2.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
