@@ -27,6 +27,8 @@ comfort_pmv_one <- function(tdb, tr, vr, rh, met, clo, wme) {
         return(NA_real_)
     }
 
+    # ISO 7730 PMV is evaluated in SI heat-balance units; vapor pressure,
+    # clothing insulation, and metabolic rate are converted before iteration.
     pa <- rh * 10 * exp(16.6536 - 4030.183 / (tdb + 235))
     icl <- 0.155 * clo
     m <- met * 58.15
@@ -46,6 +48,8 @@ comfort_pmv_one <- function(tdb, tr, vr, rh, met, clo, wme) {
     xn <- t_cla / 100
     xf <- t_cla / 50
 
+    # Clothing surface temperature is implicit because radiation and convection
+    # both depend on it, so solve the fixed point before evaluating heat losses.
     i <- 0L
     while (abs(xn - xf) > 0.00015 && i < 150L) {
         xf <- (xf + xn) / 2
@@ -56,6 +60,8 @@ comfort_pmv_one <- function(tdb, tr, vr, rh, met, clo, wme) {
     }
 
     tcl <- 100 * xn - 273
+    # Fanger heat-loss terms: skin diffusion, sweating, latent/dry respiration,
+    # radiation, and convection. Their residual is scaled into the PMV vote.
     hl1 <- 3.05e-3 * (5733 - 6.99 * mw - pa)
     hl2 <- if (mw > 58.15) 0.42 * (mw - 58.15) else 0
     hl3 <- 1.7e-5 * m * (5867 - pa)
@@ -84,6 +90,8 @@ comfort_set_one <- function(tdb, tr, v, rh, met, clo, wme,
         return(NA_real_)
     }
 
+    # SET uses the Gagge two-node model: first simulate skin/core state in the
+    # actual environment, then solve the standard environment with equal strain.
     air_speed <- max(v, 0.1)
     k_clo <- 0.25
     body_weight <- 70
@@ -138,6 +146,8 @@ comfort_set_one <- function(tdb, tr, v, rh, met, clo, wme,
     e_max <- 0
     w <- 0
 
+    # Transient two-node simulation. Each minute updates clothing temperature,
+    # sensible exchange, stored heat, blood flow, sweating, and shivering.
     while (n_simulation < length_time_simulation) {
         n_simulation <- n_simulation + 1L
 
@@ -170,6 +180,8 @@ comfort_set_one <- function(tdb, tr, v, rh, met, clo, wme,
         temp_skin <- temp_skin + d_t_sk
         temp_core <- temp_core + d_t_cr
         temp_body <- alfa * temp_skin + (1 - alfa) * temp_core
+        # Thermoregulation signals drive vasodilation/constriction, regulatory
+        # sweating, and shivering before the next minute is integrated.
         sk_sig <- temp_skin - temp_skin_neutral
         warm_sk <- max(sk_sig, 0)
         cold_sk <- max(-sk_sig, 0)
@@ -236,6 +248,8 @@ comfort_set_one <- function(tdb, tr, v, rh, met, clo, wme,
     delta <- 0.0001
     dx <- 100
     set_old <- round(temp_skin - q_skin / h_d_s, 2L)
+    # Newton iteration for the standard effective temperature whose sensible
+    # and evaporative skin losses match the simulated actual environment.
     while (abs(dx) > 0.01) {
         err_1 <- q_skin - h_d_s * (temp_skin - set_old) -
             w * h_e_s * (p_ssk - 0.5 * comfort_p_sat_torr(set_old))
@@ -286,6 +300,8 @@ comfort_pmv_curve_base_data <- function(model, levels, n, units, pres,
     n <- comfort_pmv_curve_n(n)
     model <- comfort_pmv_curve_model(model)
     lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
+    # Constant-PMV curves are traced by solving dry-bulb roots on humidity-ratio
+    # samples, then adding saturation-boundary roots so curves close cleanly.
     humratio <- seq(
         narrow_hum(lim$hum[[1L]], units),
         narrow_hum(lim$hum[[2L]], units),
@@ -486,6 +502,8 @@ comfort_pmv_rootband_data <- function(model, metric, levels, n, units, pres,
     breaks <- comfort_pmv_rootband_breaks(levels)
     n <- comfort_grid_n(n)
     lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
+    # Saturation roots are shared by the humidity sampling grid and by each band
+    # edge, avoiding duplicate solves on the curved upper boundary.
     saturation_roots <- comfort_pmv_rootband_saturation_roots(
         model, breaks, lim$tdb, lim$hum, units, pres, n[[1L]]
     )
@@ -515,6 +533,8 @@ comfort_pmv_rootband_data <- function(model, metric, levels, n, units, pres,
     pmv_lo <- pmv_lo[valid]
     pmv_hi <- pmv_hi[valid]
 
+    # Build one root vector per PMV break on the shared humidity grid. When a
+    # break intersects saturation exactly, overwrite the row with that root.
     roots <- lapply(breaks, function(level) {
         roots <- comfort_pmv_curve_root_vector(
             model, level, humratio, lim$tdb, units, pres
@@ -533,6 +553,8 @@ comfort_pmv_rootband_data <- function(model, metric, levels, n, units, pres,
         breaks[[length(breaks)]])
     overlap <- diff(range(lim$tdb)) / 10000
 
+    # Bands are assembled row-wise between adjacent PMV roots, then contiguous
+    # rows are stitched into polygons for ggplot.
     polys <- list()
     for (i in seq_along(values)) {
         low <- lows[[i]]
@@ -791,6 +813,8 @@ comfort_pmv_native_params <- function(model, units, pres) {
     if (isTRUE(p$limit_inputs)) {
         return(NULL)
     }
+    # The C root tracer assumes scalar fixed parameters and no input clipping;
+    # vectorized or limited models fall back to the R implementation.
     numeric_params <- c("vr", "met", "clo", "wme")
     for (param in numeric_params) {
         value <- p[[param]]
@@ -867,6 +891,8 @@ comfort_pmv_curve_roots <- function(model, level, humratio, tdb_lim,
 
 comfort_pmv_curve_roots_r <- function(model, level, humratio, tdb_lim,
                                       units, pres) {
+    # At a fixed humidity ratio, valid dry-bulb temperatures start at the
+    # dew-point line and end at the chart limit; roots are bracketed there.
     xlo <- rep(tdb_lim[[1L]], length(humratio))
     positive <- humratio > 0
     if (any(positive)) {
@@ -907,6 +933,8 @@ comfort_pmv_curve_roots_r <- function(model, level, humratio, tdb_lim,
     root[!exact_lo & exact_hi] <- hi[!exact_lo & exact_hi]
 
     active <- !solved
+    # A fixed 44-step bisection is enough to reach double-precision chart
+    # accuracy without depending on optimizers that allocate per row.
     for (i in seq_len(44L)) {
         if (!any(active)) {
             break
@@ -942,6 +970,8 @@ comfort_pmv_curve_saturation_roots <- function(model, level, tdb_lim, hum_lim,
 
 comfort_pmv_curve_saturation_roots_r <- function(model, level, tdb_lim, hum_lim,
                                                  units, pres, n) {
+    # Trace roots along the saturation curve so PMV contours and filled bands
+    # can close against the psychrometric chart boundary instead of stopping.
     n <- max(as.integer(n), 80L)
     tdb <- seq(tdb_lim[[1L]], tdb_lim[[2L]], length.out = n)
     hum <- psychro_saturation_humratio(tdb, units, pres)

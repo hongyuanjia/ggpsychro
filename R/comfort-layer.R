@@ -437,6 +437,8 @@ geom_comfort_standard_zone <- function(standard = comfort_standard_ashrae55_2017
     params$n <- n
 
     layers <- list()
+    # Standards are drawn as one filled PMV band per adjacent break pair; curve
+    # layers are added afterward so boundaries stay visible over the fill.
     ranges <- cbind(
         standard$breaks[-length(standard$breaks)],
         standard$breaks[-1L]
@@ -537,6 +539,8 @@ geom_comfort_givoni <- function(strategy = comfort_strategy_givoni(),
     zone_style <- comfort_givoni_check_zone_style(zone_style, zone_specs$zone)
     layers <- list()
     if (isTRUE(show_pmv)) {
+        # The optional PMV background is a normal comfort overlay, kept separate
+        # from Givoni zone paths so users can style both independently.
         layers[[length(layers) + 1L]] <- geom_comfort_overlay(
             data = data,
             model = pmv_model,

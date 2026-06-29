@@ -7,10 +7,13 @@ comfort_adaptive_ashrae <- function(tdb, tr, t_running, v, category,
                                     limit_inputs, round_output) {
     category <- comfort_adaptive_category(category, c("80", "90"), "80")
     to <- comfort_operative_temp(tdb, tr, v, standard = "ashrae")
+    # ASHRAE 55 neutral operative temperature is a linear function of running
+    # mean outdoor temperature; 80% and 90% acceptability are symmetric bands.
     t_cmf <- 0.31 * t_running + 17.8
     if (isTRUE(round_output)) {
         t_cmf <- round(t_cmf, 1L)
     }
+    # Elevated air speed only expands the upper acceptability limit.
     ce <- comfort_adaptive_cooling_effect(v, to)
 
     out <- new_data_frame(list(
@@ -46,6 +49,8 @@ comfort_adaptive_en <- function(tdb, tr, t_running, v, category,
     category <- comfort_adaptive_category(category, c("I", "II", "III"), "II")
     category_key <- switch(category, I = "cat_i", II = "cat_ii", III = "cat_iii")
     to <- comfort_operative_temp(tdb, tr, v, standard = "iso")
+    # EN adaptive comfort uses a different neutral-temperature fit and
+    # asymmetric category bands around that comfort temperature.
     t_cmf <- 0.33 * t_running + 18.8
     ce <- comfort_adaptive_cooling_effect(v, to)
 
@@ -93,6 +98,8 @@ comfort_operative_temp <- function(tdb, tr, v, standard) {
         out <- rep(NA_real_, length(v))
         valid <- is.finite(tdb) & is.finite(tr) & is.finite(v) & v >= 0
         if (any(valid)) {
+            # ISO 7726 weights air temperature by sqrt(10 * speed) rather than
+            # the stepwise coefficient used by ASHRAE 55.
             speed_weight <- sqrt(10 * v[valid])
             out[valid] <- (tdb[valid] * speed_weight + tr[valid]) /
                 (1 + speed_weight)
@@ -100,6 +107,8 @@ comfort_operative_temp <- function(tdb, tr, v, standard) {
         return(out)
     }
 
+    # ASHRAE 55 operative temperature uses tabulated air-temperature weights by
+    # local air speed.
     a <- ifelse(v < 0.2, 0.5, ifelse(v < 0.6, 0.6, 0.7))
     a * tdb + (1 - a) * tr
 }
@@ -125,6 +134,8 @@ comfort_zone_adaptive <- function(model, units, mollier, tdb_lim, hum_lim) {
 
     lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
     mid <- mean(lim$tdb)
+    # Adaptive comfort has no humidity dependence, so the zone is a vertical
+    # operative-temperature band spanning the visible humidity range.
     zone <- comfort_apply_model(model, mid, rh = 50, units = units, pres = 101325)
     lower <- max(zone$lower[[1L]], lim$tdb[[1L]])
     upper <- min(zone$upper[[1L]], lim$tdb[[2L]])

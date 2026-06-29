@@ -22,6 +22,8 @@ comfort_givoni_foreground_marker <- function(strategy, show_label, colour,
 }
 comfort_givoni_base_temp <- function(strategy) {
     mean_outdoor_si <- comfort_to_si_temp(strategy$mean_outdoor, strategy$units)
+    # Marsh's Givoni chart shifts the comfort polygon from the mean outdoor
+    # temperature; geometry is encoded in SI and converted at the output edge.
     round(17.6 + 0.31 * mean_outdoor_si - 3.5, 1L)
 }
 
@@ -192,6 +194,8 @@ comfort_givoni_rh_path <- function(t0, rh0, t1, rh1, pressure_pa,
     if (is.null(n)) {
         n <- max(8L, ceiling(abs(t1 - t0) * 4L) + 1L)
     }
+    # Curved chart edges are specified in temperature/RH space, then converted
+    # to humidity ratio so they follow psychrometric curvature on the plot.
     tdb <- seq(t0, t1, length.out = n)
     rh <- seq(rh0, rh1, length.out = n)
     hum_gkg <- pmin(
@@ -206,6 +210,8 @@ comfort_givoni_polygon <- function(zone, base, pressure_pa, tdb_max_si,
     if (zone %in% c("air_conditioning_dehumidification", "humidification")) {
         return(comfort_givoni_point(numeric(), numeric()))
     }
+    # Zone vertices follow the Marsh/Givoni overlay in dry-bulb and RH terms.
+    # Humidity caps keep upper edges from extending beyond the comfort maximum.
     hum20 <- function(tdb) comfort_givoni_hum_gkg(tdb, 20, pressure_pa)
     hum30 <- function(tdb) comfort_givoni_hum_gkg(tdb, 30, pressure_pa)
     hum50 <- function(tdb) comfort_givoni_hum_gkg(tdb, 50, pressure_pa)
@@ -368,6 +374,8 @@ comfort_givoni_label_path_entry <- function(zone, label, path,
 
 comfort_givoni_label_path_specs <- function(base, pressure_pa, tdb_max_si,
                                             hum_min_gkg) {
+    # Path labels reuse the same geometric primitives as zones so text follows
+    # curved RH boundaries and vertical strategy lines consistently.
     max_comfort_gkg <- min(16,
         comfort_givoni_hum_gkg(base + 5, 80, pressure_pa)
     )
@@ -561,6 +569,8 @@ comfort_givoni_mean_outdoor_label_vjust <- function(mollier) {
 
 comfort_givoni_mean_outdoor_marker <- function(mean_si, pressure_pa,
                                                hum_lim_narrow) {
+    # The mean-outdoor marker runs from the visible lower humidity limit to just
+    # past saturation, leaving a short extension for the numeric label.
     hum_sat <- comfort_givoni_humratio(mean_si, 100, pressure_pa)
     if (!is.finite(hum_sat)) {
         return(NULL)

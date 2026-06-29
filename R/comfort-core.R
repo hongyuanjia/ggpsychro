@@ -198,6 +198,8 @@ comfort_grid_matrix <- function(model, metric, n, units, pres, tdb_lim, hum_lim,
     boundary <- match.arg(boundary)
     n <- comfort_grid_n(n)
     lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
+    # Grid consumers need different sampling locations: nodes for isoband
+    # topology, centers for tile values and label placement.
     tdb_edges <- seq(lim$tdb[[1L]], lim$tdb[[2L]], length.out = n[[1L]] + 1L)
     hum_display_edges <- seq(lim$hum[[1L]], lim$hum[[2L]],
         length.out = n[[2L]] + 1L)
@@ -213,6 +215,8 @@ comfort_grid_matrix <- function(model, metric, n, units, pres, tdb_lim, hum_lim,
 
     humratio_eval <- grid$humratio
     if (boundary == "saturation") {
+        # Evaluate just inside saturation so psychrolib RH conversion remains
+        # finite while contours still trace the visible saturation boundary.
         saturation <- psychro_saturation_humratio(grid$tdb, units, pres)
         saturation_eps <- pmax(abs(saturation), 1) * sqrt(.Machine$double.eps)
         humratio_eval <- pmin(humratio_eval, saturation - saturation_eps)
@@ -266,6 +270,8 @@ comfort_grid_data <- function(model, metric, n, gap, units, pres, mollier,
     value <- as.vector(m$value)
     missing <- keep & !is.finite(value)
     if (any(missing)) {
+        # Cell centers can lie above saturation even when part of the tile is
+        # visible; resample near the valid saturated edge instead of dropping it.
         value[missing] <- comfort_grid_boundary_values(
             model, m$metric, units, pres,
             x0[missing], x1[missing], y0[missing], y1[missing],
@@ -291,6 +297,8 @@ comfort_grid_data <- function(model, metric, n, gap, units, pres, mollier,
 }
 comfort_band_data <- function(model, metric, levels, n, units, pres, mollier,
                               tdb_lim, hum_lim) {
+    # Filled bands are generated on node grids so isoband can preserve polygon
+    # topology across adjacent cells.
     m <- comfort_grid_matrix(
         model, metric, n, units, pres, tdb_lim, hum_lim,
         at = "nodes", boundary = "saturation"
@@ -330,6 +338,8 @@ comfort_empty_tile <- function() {
 
 comfort_grid_boundary_values <- function(model, metric, units, pres,
                                          x0, x1, y0, y1, s0, s1) {
+    # For partially clipped tiles, choose a representative point inside the
+    # valid psychrometric domain so the color reflects the visible fragment.
     tdb <- (x0 + x1) / 2
     sat_mid <- (s0 + s1) / 2
     humratio <- pmin((y0 + y1) / 2, sat_mid - sqrt(.Machine$double.eps))
@@ -366,6 +376,8 @@ comfort_contour_data <- function(model, metric, breaks, n, units, pres,
     contour_method <- match.arg(contour_method)
     metric <- comfort_model_metric(model, metric)
     if (contour_method == "auto") {
+        # PMV curves are root-traced because grid isolines can miss steep
+        # segments near saturation; other metrics use the cheaper grid path.
         contour_method <- if (comfort_model_type(model) == "pmv" && metric == "pmv") {
             "root"
         } else {
@@ -378,8 +390,10 @@ comfort_contour_data <- function(model, metric, breaks, n, units, pres,
                 call. = FALSE)
         }
         if (is.null(breaks)) {
-        breaks <- comfort_contour_breaks("pmv", numeric(), units)
+            breaks <- comfort_contour_breaks("pmv", numeric(), units)
         }
+        # Root-traced PMV contours already return curve vertices; the common
+        # label code below can treat them like isoband isolines.
         out <- comfort_pmv_curve_data(
             model, breaks, n[[1L]], units, pres, mollier, tdb_lim, hum_lim,
             label = "none"
@@ -407,6 +421,8 @@ comfort_contour_data <- function(model, metric, breaks, n, units, pres,
     lines <- isoband::isolines(
         x = m$tdb, y = m$humratio, z = t(z), levels = breaks
     )
+    # Normalize isoband's path representation to the columns expected by
+    # ggplot stats and psychrometric coordinate transforms.
     out <- comfort_isoband_data(lines, breaks, breaks, m$metric, mollier, geom = "path")
     out <- comfort_add_contour_labels(out)
     if (isTRUE(label_path)) {
@@ -665,6 +681,8 @@ comfort_apply_model <- function(model, tdb, rh, units, pres) {
     p <- model$params
     tr <- if (is.null(p$tr)) tdb else p$tr
 
+    # Layer stats operate in chart coordinates, so dispatch here converts fixed
+    # model parameters to the calculator API while preserving unrounded outputs.
     switch(model$type,
         pmv = comfort_pmv(
             tdb = tdb, tr = tr, vr = p$vr, rh = rh, met = p$met,

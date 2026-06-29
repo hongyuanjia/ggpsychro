@@ -8,6 +8,8 @@ comfort_heat_index_f <- function(tdb_f, rh, solar_exposure) {
     valid <- is.finite(tdb_f) & is.finite(rh) & is.finite(solar_exposure)
     warm <- valid & tdb_f > 40
     if (any(warm)) {
+        # NOAA heat index starts with the simple Steadman regression and only
+        # switches to the Rothfusz regression when the apparent heat is high.
         simple <- 0.5 * (
             tdb_f[warm] + (61 + 1.2 * (tdb_f[warm] - 68) + 0.094 * rh[warm])
         )
@@ -18,11 +20,15 @@ comfort_heat_index_f <- function(tdb_f, rh, solar_exposure) {
         if (length(roth)) {
             t <- tdb_f[roth]
             r <- rh[roth]
+            # Rothfusz regression is defined in degrees F and relative humidity
+            # percent; callers convert SI temperatures before reaching here.
             value <- 2.04901523 * t - 42.379 + 10.14333127 * r -
                 0.22475541 * t * r - 0.00683783 * t^2 -
                 0.05481717 * r^2 + 0.00122874 * t^2 * r +
                 0.00085282 * t * r^2 - 0.00000199 * t^2 * r^2
 
+            # NOAA applies small empirical corrections for very dry hot air and
+            # very humid warm air after the base Rothfusz regression.
             low_rh <- r <= 13 & t >= 80 & t <= 112
             if (any(low_rh)) {
                 value[low_rh] <- value[low_rh] -
@@ -38,6 +44,8 @@ comfort_heat_index_f <- function(tdb_f, rh, solar_exposure) {
         }
     }
 
+    # Marsh's solar-exposure adjustment is a post-regression offset from shaded
+    # to full sun, scaled by a validated 0..1 exposure fraction.
     hi[valid] <- hi[valid] + 8 * solar_exposure[valid]
     hi[!valid] <- NA_real_
     hi
@@ -122,6 +130,8 @@ comfort_heat_index_grid_matrix <- function(model, n, units, pres, tdb_lim,
         return(get(key, envir = grid_cache, inherits = FALSE))
     }
 
+    # Heat-index zone layers all need the same node grid; the caller supplies a
+    # short-lived environment so reuse stays local to one layer composition.
     m <- comfort_grid_matrix(
         model, "heat_index", n, units, pres, tdb_lim, hum_lim,
         at = "nodes", boundary = "saturation"
@@ -184,6 +194,8 @@ comfort_heat_index_label_data <- function(model, n, units, pres, mollier,
     for (i in seq_along(specs)) {
         low <- thresholds[[i]]
         high <- if (i < length(thresholds)) thresholds[[i + 1L]] else Inf
+        # Place labels near the category midpoint using the sampled cell whose
+        # computed heat index is closest to that target.
         target <- if (is.finite(high)) (low + high) / 2 else low + 4
         keep <- is.finite(values) & values >= low & values < high
         if (!any(keep)) {

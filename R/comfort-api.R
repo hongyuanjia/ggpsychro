@@ -48,6 +48,8 @@ comfort_pmv <- function(tdb, tr = tdb, vr = 0.1, rh, met = 1.2,
 
     pmv <- comfort_pmv_vec(tdb_si, tr_si, vr_si, x$rh, x$met, x$clo, x$wme)
 
+    # ISO 7730 maps PMV to predicted percentage dissatisfied with an empirical
+    # even-power curve, so warm and cool deviations are treated symmetrically.
     ppd <- 100 - 95 * exp(-0.03353 * pmv^4 - 0.2179 * pmv^2)
 
     if (isTRUE(limit_inputs)) {
@@ -180,6 +182,8 @@ comfort_heat_index <- function(tdb, rh, solar_exposure = 0,
     tdb_si <- comfort_to_si_temp(x$tdb, units)
     tdb_f <- get_f_from_c(tdb_si)
     exposure <- x$solar_exposure
+    # Missing exposure follows the vectorized calculator convention and returns
+    # NA, but finite values outside Marsh's 0..1 scale are input errors.
     bad_exposure <- is.finite(exposure) & (exposure < 0 | exposure > 1)
     if (any(bad_exposure)) {
         stop("`solar_exposure` must be from 0 to 1.", call. = FALSE)
