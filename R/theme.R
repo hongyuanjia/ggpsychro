@@ -35,7 +35,7 @@ theme_psychro <- function(base_size = 11, base_family = "",
         ) %+replace%
     ggplot2::theme(
          panel.border = ggplot2::element_blank(),
-         panel.background = ggplot2::element_blank(),
+         panel.background = ggplot2::element_rect(fill = "white", colour = NA),
          axis.line.x = ggplot2::element_line(color = grDevices::rgb(0.2, 0.2, 0.2, 1.0)),
          axis.line.y = ggplot2::element_line(color = grDevices::rgb(0.2, 0.2, 0.2, 1.0)),
          psychro.panel.background = element_polygon(fill = "white", color = NA),
@@ -66,7 +66,7 @@ theme_psychro_ashrae <- function(base_size = 11, base_family = "",
         ) %+replace%
     ggplot2::theme(
          panel.border = ggplot2::element_rect(fill = NA, color = "black", linewidth = 0.6),
-         panel.background = ggplot2::element_blank(),
+         panel.background = ggplot2::element_rect(fill = "white", colour = NA),
          axis.line.x = ggplot2::element_line(color = "black", linewidth = 0.6),
          axis.line.y = ggplot2::element_line(color = "black", linewidth = 0.6),
          axis.ticks = ggplot2::element_line(color = "black", linewidth = 0.45),
@@ -110,7 +110,7 @@ theme_psychro_minimal <- function(base_size = 11, base_family = "",
         ) %+replace%
     ggplot2::theme(
          panel.border = ggplot2::element_blank(),
-         panel.background = ggplot2::element_blank(),
+         panel.background = ggplot2::element_rect(fill = "white", colour = NA),
          axis.line.x = ggplot2::element_line(color = grDevices::rgb(0.855, 0.145, 0.114), linewidth = 0.75),
          axis.line.y = ggplot2::element_line(color = grDevices::rgb(0, 0.125, 0.376), linewidth = 0.75),
          axis.ticks.x = ggplot2::element_line(color = grDevices::rgb(0.855, 0.145, 0.114), linewidth = 0.35),

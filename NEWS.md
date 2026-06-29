@@ -2,6 +2,9 @@
 
 * Preserved ordinary ggplot2 aesthetics across legacy psychrometric stats.
   (#27)
+* Replaced foreground psychrometric panel masking with valid-region clipping for
+  ggpsychro-generated grids, stats, tiles, zones, and comfort overlays, while
+  allowing ordinary ggplot layers to draw in the mask area. (#4, #28)
 * Added Heat Index overlays, Givoni bioclimatic strategy zones, and per-zone
   styling controls for Givoni overlays. (#24)
 * Added optional contour labels to `geom_comfort_contour()`. (#26)

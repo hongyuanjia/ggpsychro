@@ -18,26 +18,19 @@ guide_grid_psychro <- function(theme, tdb.minor, tdb.major, hum.minor, hum.major
                                enthalpy.minor, enthalpy.major, grid.labels,
                                mollier) {
     # create psychrometric chart panel
-    if (mollier) {
-        panel_x <- c(0.0, 0.0, 1.0, rev(saturation$hum), saturation$hum[1L])
-        panel_y <- c(0.0, 1.0, 1.0, rev(saturation$tdb), 0.0)
-        psychro_panel <- ggplot2::element_render(
-            theme, "psychro.panel.background",
-            x = panel_x,
-            y = panel_y
-        )
+    panel <- psychro_panel_polygon(saturation, mollier)
+    panel_x <- panel$x
+    panel_y <- panel$y
+    psychro_panel <- psychro_panel_background_grob(theme, panel_x, panel_y)
+    psychro_panel_clip <- grid::polygonGrob(
+        panel_x, panel_y, gp = grid::gpar(col = NA, fill = NA),
+        name = "psychro-panel-clip"
+    )
 
+    if (mollier) {
         nm_tdb <- "y"
         nm_hum <- "x"
     } else {
-        panel_x <- c(0.0, 0.0,                saturation$tdb, 1.0, 1.0)
-        panel_y <- c(0.0, saturation$hum[1L], saturation$hum, 1.0, 0.0)
-        psychro_panel <- ggplot2::element_render(
-            theme, "psychro.panel.background",
-            x = panel_x,
-            y = panel_y
-        )
-
         nm_tdb <- "x"
         nm_hum <- "y"
     }
@@ -75,59 +68,59 @@ guide_grid_psychro <- function(theme, tdb.minor, tdb.major, hum.minor, hum.major
         psychro_panel,
 
         if (length(hum.minor)) {
-            clip_grob(psychro_panel, grid_elem(hum.minor, "minor", nm_hum))
+            clip_grob(psychro_panel_clip, grid_elem(hum.minor, "minor", nm_hum))
         },
 
         if (length(tdb.minor)) {
-            clip_grob(psychro_panel, grid_elem(tdb.minor, "minor", nm_tdb))
+            clip_grob(psychro_panel_clip, grid_elem(tdb.minor, "minor", nm_tdb))
         },
 
         if (length(hum.major)) {
-            clip_grob(psychro_panel, grid_elem(hum.major, "major", nm_hum))
+            clip_grob(psychro_panel_clip, grid_elem(hum.major, "major", nm_hum))
         },
 
         if (length(tdb.major)) {
-            clip_grob(psychro_panel, grid_elem(tdb.major, "major", nm_tdb))
+            clip_grob(psychro_panel_clip, grid_elem(tdb.major, "major", nm_tdb))
         },
 
         if (length(rh.minor)) {
-            psy_grid_elem(rh.minor, "minor", "relhum")
+            clip_grob(psychro_panel_clip, psy_grid_elem(rh.minor, "minor", "relhum"))
         },
 
         if (length(rh.major)) {
-            psy_grid_elem(rh.major, "major", "relhum")
+            clip_grob(psychro_panel_clip, psy_grid_elem(rh.major, "major", "relhum"))
         },
 
         if (length(twb.minor)) {
-            psy_grid_elem(twb.minor, "minor", "wetbulb")
+            clip_grob(psychro_panel_clip, psy_grid_elem(twb.minor, "minor", "wetbulb"))
         },
 
         if (length(twb.major)) {
-            psy_grid_elem(twb.major, "major", "wetbulb")
+            clip_grob(psychro_panel_clip, psy_grid_elem(twb.major, "major", "wetbulb"))
         },
 
         if (length(vappres.minor)) {
-            clip_grob(psychro_panel, psy_grid_elem(vappres.minor, "minor", "vappres"))
+            clip_grob(psychro_panel_clip, psy_grid_elem(vappres.minor, "minor", "vappres"))
         },
 
         if (length(vappres.major)) {
-            clip_grob(psychro_panel, psy_grid_elem(vappres.major, "major", "vappres"))
+            clip_grob(psychro_panel_clip, psy_grid_elem(vappres.major, "major", "vappres"))
         },
 
         if (length(specvol.minor)) {
-            clip_grob(psychro_panel, psy_grid_elem(specvol.minor, "minor", "specvol"))
+            clip_grob(psychro_panel_clip, psy_grid_elem(specvol.minor, "minor", "specvol"))
         },
 
         if (length(specvol.major)) {
-            clip_grob(psychro_panel, psy_grid_elem(specvol.major, "major", "specvol"))
+            clip_grob(psychro_panel_clip, psy_grid_elem(specvol.major, "major", "specvol"))
         },
 
         if (length(enthalpy.minor)) {
-            clip_grob(psychro_panel, psy_grid_elem(enthalpy.minor, "minor", "enthalpy"))
+            clip_grob(psychro_panel_clip, psy_grid_elem(enthalpy.minor, "minor", "enthalpy"))
         },
 
         if (length(enthalpy.major)) {
-            clip_grob(psychro_panel, psy_grid_elem(enthalpy.major, "major", "enthalpy"))
+            clip_grob(psychro_panel_clip, psy_grid_elem(enthalpy.major, "major", "enthalpy"))
         },
 
         if (length(rh.major)) {
@@ -155,9 +148,55 @@ guide_grid_psychro <- function(theme, tdb.minor, tdb.major, hum.minor, hum.major
     grill
 }
 
+psychro_panel_polygon <- function(saturation, mollier = FALSE) {
+    if (mollier) {
+        return(list(
+            x = c(0.0, 0.0, 1.0, rev(saturation$hum), saturation$hum[1L]),
+            y = c(0.0, 1.0, 1.0, rev(saturation$tdb), 0.0)
+        ))
+    }
+
+    list(
+        x = c(0.0, 0.0, saturation$tdb, 1.0, 1.0),
+        y = c(0.0, saturation$hum[1L], saturation$hum, 1.0, 0.0)
+    )
+}
+
+psychro_panel_background_grob <- function(theme, x, y) {
+    element <- ggplot2::calc_element("psychro.panel.background", theme)
+    if (is.null(element) || inherits(element, "element_blank")) {
+        return(grid::nullGrob())
+    }
+    if (inherits(element, "element_polygon")) {
+        return(ggplot2::element_render(
+            theme, "psychro.panel.background", x = x, y = y,
+            name = "psychro-panel-background"
+        ))
+    }
+
+    grid::polygonGrob(
+        x, y,
+        gp = grid::gpar(
+            fill = element$fill,
+            col = element$colour %||% element$color,
+            lwd = (element$linewidth %||% element$size %||% 0) * ggplot2::.pt,
+            lty = element$linetype %||% 1
+        ),
+        name = "psychro-panel-background"
+    )
+}
+
 #' @importFrom gridGeometry polyclipGrob
 clip_grob <- function(panel, grob, op = "intersection") {
-    gridGeometry::polyclipGrob(grob, panel, op, name = grob$name, gp = grob$gp)
+    if (!identical(op, "intersection")) {
+        return(gridGeometry::polyclipGrob(grob, panel, op, name = grob$name))
+    }
+    split <- psychro_split_styled_grob(grob)
+    clipped <- lapply(split, psychro_polyclip_grob, panel = panel)
+    if (length(clipped) == 1L) {
+        return(clipped[[1L]])
+    }
+    do.call(grid::grobTree, clipped)
 }
 
 psychro_protractor_guide <- function(protractor) {

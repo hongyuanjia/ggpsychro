@@ -236,6 +236,23 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
     expect_equal(unique(heat_index[[1L]]$alpha), 0.4)
     expect_true(all(c("CAUTION", "EXTREME CAUTION", "DANGER",
         "EXTREME DANGER") %in% unique(heat_index[[6L]]$label)))
+    expect_equal(unique(heat_index[[6L]]$alpha), 0)
+
+    collect_grobs <- function(grob) {
+        children <- c(
+            if (!is.null(grob$grobs)) grob$grobs else list(),
+            if (!is.null(grob$children)) as.list(grob$children) else list()
+        )
+
+        c(list(grob), unlist(lapply(children, collect_grobs), recursive = FALSE))
+    }
+    heat_index_grobs <- collect_grobs(ggplot2::ggplotGrob(
+        ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
+            geom_comfort_heat_index(n = c(32, 24), alpha = 0.4)
+    ))
+    expect_true(any(vapply(heat_index_grobs, function(grob) {
+        identical(grob$name, "psychro-heat-index-labels")
+    }, logical(1L))))
 
     tile_alpha <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
@@ -550,6 +567,24 @@ test_that("PMV root-traced curves solve requested levels", {
             round_output = FALSE)$pmv
         expect_lt(max(abs(pmv - level), na.rm = TRUE), 0.02)
     }
+
+    marsh_rootband <- comfort_pmv_rootband_data(
+        comfort_model_pmv(), NULL, NULL, c(70, 48),
+        "SI", pressure, FALSE, c(5, 40), c(0, 24)
+    )
+    cap_points <- data.frame(
+        x = c(18.05063, 18.16456, 18.16456, 18.16456),
+        y = c(0.01292650, 0.01302172, 0.01295477, 0.01288782)
+    )
+    cap_polys <- split(marsh_rootband, marsh_rootband$group)
+    cap_covered <- vapply(seq_len(nrow(cap_points)), function(i) {
+        any(vapply(cap_polys, function(poly) {
+            psychro_inside_polygon(
+                cap_points$x[[i]], cap_points$y[[i]], poly$x, poly$y
+            )
+        }, logical(1L)))
+    }, logical(1L))
+    expect_true(all(cap_covered))
 
     standard_band <- comfort_pmv_band_data(
         comfort_model_pmv(), c(-0.5, 0.5), c(140, 90),

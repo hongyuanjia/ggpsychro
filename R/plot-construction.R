@@ -98,7 +98,7 @@ ggplot_add.PsyComfortForeground <- function(object, plot, object_name, ...) {
 add_psychro_comfort_foreground <- function(object, plot) {
     if (!is.ggpsychro(plot)) {
         stop(
-            "`geom_comfort_givoni()` foreground markers can only be added ",
+            "Comfort foreground markers can only be added ",
             "to a ggpsychro plot.",
             call. = FALSE
         )

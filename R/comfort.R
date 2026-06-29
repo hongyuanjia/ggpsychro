@@ -538,11 +538,14 @@ geom_comfort_heat_index <- function(mapping = NULL, data = NULL,
                 label = ggplot2::after_stat(label),
                 angle = ggplot2::after_stat(angle)
             )),
-            geom = "text", position = position,
+            geom = GeomComfortNullText, position = position,
             show.legend = FALSE, inherit.aes = FALSE,
-            params = utils::modifyList(text_params, list(
-                na.rm = na.rm, model = model, n = n
-            ))
+            params = list(
+                na.rm = na.rm, model = model, n = n, alpha = 0
+            )
+        )
+        layers[[length(layers) + 1L]] <- comfort_heat_index_foreground_labels(
+            model, n, text_params
         )
     }
 
@@ -844,7 +847,7 @@ geom_comfort_givoni <- function(strategy = comfort_strategy_givoni(),
                                 zone_alpha = 0.2, zone_style = NULL,
                                 na.rm = FALSE, show.legend = NA,
                                 inherit.aes = TRUE) {
-    label <- angle <- NULL
+    label <- angle <- hjust <- vjust <- NULL
     strategy <- comfort_check_givoni_strategy(strategy)
     layer_mapping <- comfort_computed_xy_mapping(mapping)
     params <- list(...)
@@ -1003,6 +1006,32 @@ comfort_givoni_foreground_marker <- function(strategy, show_label, colour,
         class = "PsyComfortForeground"
     )
 }
+
+comfort_heat_index_foreground_labels <- function(model, n, params) {
+    structure(
+        list(
+            type = "heat_index_labels",
+            model = model,
+            n = n,
+            colour = params$colour %||% params$color %||% "#444444",
+            alpha = params$alpha %||% NA_real_,
+            size = params$size %||% 3,
+            family = params$family %||% "",
+            fontface = params$fontface %||% "bold",
+            lineheight = params$lineheight %||% 1.2,
+            hjust = params$hjust %||% 0.5,
+            vjust = params$vjust %||% 0.5
+        ),
+        class = "PsyComfortForeground"
+    )
+}
+
+GeomComfortNullText <- ggplot2::ggproto(
+    "GeomComfortNullText", ggplot2::GeomText,
+    draw_panel = function(data, panel_params, coord, ...) {
+        grid::nullGrob()
+    }
+)
 
 #' @rdname geom_comfort_overlay
 #' @export
@@ -2742,7 +2771,10 @@ comfort_pmv_curve_root_vector <- function(model, level, humratio, tdb_lim,
 comfort_pmv_rootband_edges <- function(low, high, breaks, roots,
                                        xlo, xhi, pmv_lo, pmv_hi,
                                        overlap = 0) {
-    value_tol <- 1e-5
+    # Saturation roots are matched back to horizontal slices after root finding.
+    # Keep a small PMV tolerance so boundary cap points are not dropped by
+    # roundoff, which would leave visible holes just under the saturation line.
+    value_tol <- 5e-5
     keep <- is.finite(pmv_lo) & is.finite(pmv_hi) &
         pmv_hi >= low - value_tol & pmv_lo <= high + value_tol
     left <- rep(NA_real_, length(xlo))
@@ -3312,6 +3344,7 @@ comfort_format_contour_level <- function(level, metric) {
 }
 
 comfort_contour_label_mapping <- function(mapping) {
+    label <- NULL
     out <- mapping %||% ggplot2::aes()
     label_mapping <- ggplot2::aes(label = ggplot2::after_stat(label))
     out$label <- label_mapping$label

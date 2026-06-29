@@ -406,22 +406,14 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
         range_hum <- self$range_hum(panel_params)
 
         if (self$mollier) {
-            mask_x <- c(sat$hum, 1.0, sat$hum[1L])
-            mask_y <- c(sat$tdb, 0.0, 0.0)
             line_x <- sat$hum
             line_y <- sat$tdb
         } else {
-            mask_x <- c(0.0, rev(sat$tdb), 0.0)
-            mask_y <- c(1.0, rev(sat$hum), sat$hum[1L])
             line_x <- sat$tdb
             line_y <- sat$hum
         }
 
         grid::grobTree(
-            ggplot2::element_render(
-                theme, "psychro.panel.mask",
-                x = mask_x, y = mask_y
-            ),
             psychro_protractor_grob(
                 self$protractor, theme, self$mollier, range_tdb, range_hum,
                 self$units
@@ -447,10 +439,364 @@ psychro_coord_extra_fg <- function(coord, panel_params, theme) {
             givoni_mean_outdoor = psychro_coord_givoni_mean_outdoor_grob(
                 coord, panel_params, spec
             ),
+            heat_index_labels = psychro_coord_heat_index_label_grob(
+                coord, panel_params, spec
+            ),
             grid::nullGrob()
         )
     })
     do.call(grid::grobTree, grobs)
+}
+
+psychro_coord_panel_polygon <- function(coord, panel_params) {
+    sat <- psychro_coord_saturation(coord, panel_params)
+    if (is.null(sat)) {
+        return(NULL)
+    }
+    psychro_panel_polygon(sat, coord$mollier)
+}
+
+psychro_coord_panel_grob <- function(coord, panel_params) {
+    panel <- psychro_coord_panel_polygon(coord, panel_params)
+    if (is.null(panel)) {
+        return(NULL)
+    }
+    grid::polygonGrob(
+        panel$x, panel$y, gp = grid::gpar(col = NA, fill = NA),
+        name = "psychro-panel-clip"
+    )
+}
+
+psychro_clip_grob_to_panel <- function(grob, coord, panel_params) {
+    panel <- psychro_coord_panel_grob(coord, panel_params)
+    if (is.null(panel) || inherits(grob, c("nullGrob", "zeroGrob"))) {
+        return(grob)
+    }
+    split <- psychro_split_styled_grob(grob)
+    if (length(split) > 1L) {
+        clipped <- lapply(split, function(child) {
+            psychro_polyclip_grob(child, panel)
+        })
+        return(do.call(grid::grobTree, clipped))
+    }
+    psychro_polyclip_grob(grob, panel)
+}
+
+psychro_clip_textpath_lines_to_panel <- function(grob, coord, panel_params) {
+    panel <- psychro_coord_panel_grob(coord, panel_params)
+    if (is.null(panel) || inherits(grob, c("nullGrob", "zeroGrob"))) {
+        return(grob)
+    }
+    grob$psychro_panel <- panel
+    class(grob) <- c("psychro_textpath_clip", class(grob))
+    grob
+}
+
+#' @method makeContent psychro_textpath_clip
+#' @importFrom grid makeContent
+#' @export
+makeContent.psychro_textpath_clip <- function(x) {
+    panel <- x$psychro_panel
+    x$psychro_panel <- NULL
+    class(x) <- setdiff(class(x), "psychro_textpath_clip")
+
+    # Textpath must lay out glyphs in its normal grid drawing context. Clipping
+    # the input data, or forcing the grob from a wrapper, can flip contour labels;
+    # therefore we expand the textpath first and only clip its stroke children.
+    x <- grid::makeContent(x)
+    class(x) <- setdiff(class(x), "textpath")
+    if (is.null(panel)) {
+        return(x)
+    }
+    psychro_clip_textpath_lines_grob(x, panel)
+}
+
+psychro_clip_textpath_lines_grob <- function(grob, panel) {
+    if (inherits(grob, "textpath")) {
+        grob <- grid::makeContent(grob)
+        class(grob) <- setdiff(class(grob), "textpath")
+    }
+    if (psychro_line_grob(grob)) {
+        split <- psychro_split_styled_grob(grob)
+        clipped <- lapply(split, psychro_polyclip_grob, panel = panel)
+        if (length(clipped) == 1L) {
+            return(clipped[[1L]])
+        }
+        return(do.call(grid::grobTree, clipped))
+    }
+    if (!is.null(grob$children)) {
+        children <- as.list(grob$children)
+        children <- lapply(
+            children, psychro_clip_textpath_lines_grob, panel = panel
+        )
+        grob$children <- do.call(grid::gList, children)
+        grob$childrenOrder <- names(children)
+    }
+    if (!is.null(grob$grobs)) {
+        grob$grobs <- lapply(
+            grob$grobs, psychro_clip_textpath_lines_grob, panel = panel
+        )
+    }
+    grob
+}
+
+psychro_polyclip_grob <- function(grob, panel) {
+    if (psychro_line_grob(grob)) {
+        return(gridGeometry::polyclipGrob(
+            grob, panel, "intersection",
+            closedFn = psychro_xy_list_to_null,
+            name = grob$name,
+            gp = grob$gp %||% grid::gpar()
+        ))
+    }
+    gridGeometry::polyclipGrob(grob, panel, "intersection", name = grob$name)
+}
+
+psychro_line_grob <- function(grob) {
+    inherits(grob, c("polyline", "segments", "lines"))
+}
+
+psychro_xy_list_to_null <- function(...) {
+    grid::nullGrob()
+}
+
+psychro_split_styled_grob <- function(grob) {
+    if (inherits(grob, "pathgrob")) {
+        return(psychro_split_path_grob(grob))
+    }
+    if (inherits(grob, "polyline")) {
+        return(psychro_split_polyline_grob(grob))
+    }
+    if (inherits(grob, "polygon")) {
+        return(psychro_split_polygon_grob(grob))
+    }
+    list(grob)
+}
+
+psychro_split_path_grob <- function(grob) {
+    path_id <- grob$pathId %||% grob$id
+    if (is.null(path_id)) {
+        return(list(grob))
+    }
+    path_ids <- unique(path_id)
+    n <- length(path_ids)
+    if (n <= 1L) {
+        return(list(grob))
+    }
+
+    lapply(seq_along(path_ids), function(i) {
+        keep <- path_id == path_ids[[i]]
+        id <- grob$id[keep]
+        id <- match(id, unique(id))
+        grid::pathGrob(
+            grob$x[keep], grob$y[keep],
+            id = id,
+            pathId = rep(1L, sum(keep)),
+            rule = grob$rule %||% "winding",
+            name = paste0(grob$name %||% "path", "-", i),
+            gp = psychro_gpar_at(grob$gp, i, n)
+        )
+    })
+}
+
+psychro_split_polyline_grob <- function(grob) {
+    id <- psychro_grob_id(grob)
+    if (is.null(id)) {
+        return(list(grob))
+    }
+    ids <- unique(id)
+    n <- length(ids)
+    if (n <= 1L) {
+        return(list(grob))
+    }
+
+    lapply(seq_along(ids), function(i) {
+        keep <- id == ids[[i]]
+        grid::polylineGrob(
+            grob$x[keep], grob$y[keep],
+            id = rep(1L, sum(keep)),
+            arrow = grob$arrow,
+            name = paste0(grob$name %||% "polyline", "-", i),
+            gp = psychro_gpar_at(grob$gp, i, n)
+        )
+    })
+}
+
+psychro_split_polygon_grob <- function(grob) {
+    id <- psychro_grob_id(grob)
+    if (is.null(id)) {
+        return(list(grob))
+    }
+    ids <- unique(id)
+    n <- length(ids)
+    if (n <= 1L) {
+        return(list(grob))
+    }
+
+    lapply(seq_along(ids), function(i) {
+        keep <- id == ids[[i]]
+        grid::polygonGrob(
+            grob$x[keep], grob$y[keep],
+            id = rep(1L, sum(keep)),
+            name = paste0(grob$name %||% "polygon", "-", i),
+            gp = psychro_gpar_at(grob$gp, i, n)
+        )
+    })
+}
+
+psychro_grob_id <- function(grob) {
+    if (!is.null(grob$id)) {
+        return(grob$id)
+    }
+    if (!is.null(grob$id.lengths)) {
+        return(rep(seq_along(grob$id.lengths), grob$id.lengths))
+    }
+    NULL
+}
+
+psychro_gpar_at <- function(gp, i, n) {
+    if (is.null(gp)) {
+        return(grid::gpar())
+    }
+    args <- lapply(as.list(gp), function(value) {
+        if (length(value) == n) value[[i]] else value
+    })
+    do.call(grid::gpar, args)
+}
+
+psychro_filter_data_to_panel <- function(data, panel_params, coord) {
+    if (!nrow(data) || !all(c("x", "y") %in% names(data))) {
+        return(data)
+    }
+    panel <- psychro_coord_panel_polygon(coord, panel_params)
+    if (is.null(panel)) {
+        return(data)
+    }
+    transformed <- coord$transform(data, panel_params)
+    keep <- psychro_inside_polygon(transformed$x, transformed$y, panel$x, panel$y)
+    data[keep, , drop = FALSE]
+}
+
+psychro_clip_polygon_data_to_panel <- function(data, panel_params, coord) {
+    if (!nrow(data) || !all(c("x", "y", "group") %in% names(data))) {
+        return(data)
+    }
+    panel <- psychro_coord_panel_polygon_data(coord, panel_params)
+    if (is.null(panel)) {
+        return(data)
+    }
+
+    group <- data$group
+    if ("subgroup" %in% names(data)) {
+        group <- interaction(group, data$subgroup, drop = TRUE, lex.order = TRUE)
+    }
+    pieces <- split(data, group)
+
+    out <- list()
+    group_id <- 0L
+    for (piece in pieces) {
+        if (nrow(piece) < 3L) {
+            next
+        }
+        clipped <- polyclip::polyclip(
+            list(list(x = piece$x, y = piece$y)),
+            list(panel),
+            op = "intersection",
+            fillA = "evenodd",
+            fillB = "nonzero",
+            closed = TRUE
+        )
+        if (!length(clipped)) {
+            next
+        }
+        for (poly in clipped) {
+            if (length(poly$x) < 3L || length(poly$y) < 3L) {
+                next
+            }
+            group_id <- group_id + 1L
+            clipped_piece <- piece[rep(1L, length(poly$x)), , drop = FALSE]
+            clipped_piece$x <- poly$x
+            clipped_piece$y <- poly$y
+            clipped_piece$group <- group_id
+            if ("subgroup" %in% names(clipped_piece)) {
+                clipped_piece$subgroup <- 1L
+            }
+            out[[length(out) + 1L]] <- clipped_piece
+        }
+    }
+
+    if (!length(out)) {
+        return(data[0L, , drop = FALSE])
+    }
+    do.call(rbind, out)
+}
+
+psychro_coord_panel_polygon_data <- function(coord, panel_params) {
+    sat <- psychro_coord_saturation_native(coord, panel_params)
+    if (is.null(sat)) {
+        return(NULL)
+    }
+    range_tdb <- coord$range_tdb(panel_params)
+    range_hum <- coord$range_hum(panel_params)
+
+    if (coord$mollier) {
+        return(list(
+            x = c(range_hum[1L], range_hum[1L], range_hum[2L],
+                rev(sat$hum), sat$hum[1L]),
+            y = c(range_tdb[1L], range_tdb[2L], range_tdb[2L],
+                rev(sat$tdb), range_tdb[1L])
+        ))
+    }
+
+    list(
+        x = c(range_tdb[1L], range_tdb[1L], sat$tdb,
+            range_tdb[2L], range_tdb[2L]),
+        y = c(range_hum[1L], sat$hum[1L], sat$hum,
+            range_hum[2L], range_hum[1L])
+    )
+}
+
+psychro_coord_saturation_native <- function(coord, panel_params) {
+    range_tdb <- coord$range_tdb(panel_params)
+    range_hum <- coord$range_hum(panel_params)
+
+    scale <- panel_params[[coord$pos_tdb()]]$scale
+    limits <- scale$trans$inverse(panel_params[[coord$pos_tdb()]]$continuous_range)
+    tdb <- scale$trans$breaks(limits, 100L)
+    hum <- with_units(
+        coord$units,
+        psychrolib::GetHumRatioFromRelHum(tdb, 1.0, coord$pressure)
+    )
+
+    sat_tdb <- tdb[hum <= range_hum[2L]]
+    sat_hum <- hum[hum <= range_hum[2L]]
+    if (!length(sat_tdb)) {
+        return(NULL)
+    }
+
+    sat_app_end <- FALSE
+    sat_tdb <- c(
+        if (range_hum[1L] > 0.0) {
+            with_units(coord$units, GetTDewPointFromHumRatioOnly(
+                range_hum[1L], coord$pressure
+            ))
+        },
+        sat_tdb,
+        if (range_hum[2L] > 0.0) {
+            sat_tdb_max <- with_units(coord$units, GetTDewPointFromHumRatioOnly(
+                range_hum[2L], coord$pressure
+            ))
+            sat_app_end <- sat_tdb_max > max(sat_tdb)
+            sat_tdb_max[sat_app_end]
+        }
+    )
+    sat_hum <- c(
+        if (range_hum[1L] > 0.0) range_hum[1L],
+        sat_hum,
+        if (range_hum[2L] > 0.0) range_hum[2L][sat_app_end]
+    )
+
+    list(tdb = sat_tdb, hum = sat_hum)
 }
 
 psychro_coord_givoni_mean_outdoor_grob <- function(coord, panel_params, spec) {
@@ -524,50 +870,44 @@ psychro_coord_givoni_mean_outdoor_grob <- function(coord, panel_params, spec) {
     )
 }
 
+psychro_coord_heat_index_label_grob <- function(coord, panel_params, spec) {
+    range_tdb <- coord$range_tdb(panel_params)
+    range_hum <- coord$range_hum(panel_params)
+    data <- comfort_heat_index_label_data(
+        spec$model, comfort_grid_n(spec$n), coord$units, coord$pressure,
+        coord$mollier, range_tdb, amplify_hum(range_hum, coord$units)
+    )
+    if (!nrow(data)) {
+        return(grid::nullGrob())
+    }
+
+    data <- coord$transform(data, panel_params)
+    colour <- psychro_grid_alpha(spec$colour %||% "#444444", spec$alpha)
+    grid::textGrob(
+        data$label, x = data$x, y = data$y, rot = data$angle,
+        hjust = spec$hjust %||% 0.5,
+        vjust = spec$vjust %||% 0.5,
+        gp = grid::gpar(
+            col = colour,
+            fontsize = (spec$size %||% 3) * ggplot2::.pt,
+            fontfamily = spec$family %||% "",
+            fontface = spec$fontface %||% "bold",
+            lineheight = spec$lineheight %||% 1.2
+        ),
+        name = "psychro-heat-index-labels"
+    )
+}
+
 psychro_coord_saturation <- function(coord, panel_params) {
     range_tdb <- coord$range_tdb(panel_params)
     range_hum <- coord$range_hum(panel_params)
-
-    scale <- panel_params[[coord$pos_tdb()]]$scale
-    limits <- scale$trans$inverse(panel_params[[coord$pos_tdb()]]$continuous_range)
-    tdb <- scale$trans$breaks(limits, 100L)
-    hum <- with_units(
-        coord$units,
-        psychrolib::GetHumRatioFromRelHum(tdb, 1.0, coord$pressure)
-    )
-
-    sat_tdb <- tdb[hum <= range_hum[2L]]
-    sat_hum <- hum[hum <= range_hum[2L]]
-    if (!length(sat_tdb)) {
-        return(NULL)
-    }
-
-    sat_app_end <- FALSE
-    sat_tdb <- c(
-        if (range_hum[1L] > 0.0) {
-            with_units(coord$units, GetTDewPointFromHumRatioOnly(
-                range_hum[1L], coord$pressure
-            ))
-        },
-        sat_tdb,
-        if (range_hum[2L] > 0.0) {
-            sat_tdb_max <- with_units(coord$units, GetTDewPointFromHumRatioOnly(
-                range_hum[2L], coord$pressure
-            ))
-            sat_app_end <- sat_tdb_max > max(sat_tdb)
-            sat_tdb_max[sat_app_end]
-        }
-    )
-    sat_hum <- c(
-        if (range_hum[1L] > 0.0) range_hum[1L],
-        sat_hum,
-        if (range_hum[2L] > 0.0) range_hum[2L][sat_app_end]
-    )
+    sat <- psychro_coord_saturation_native(coord, panel_params)
+    if (is.null(sat)) return(NULL)
 
     list(
-        tdb = rescale01(sat_tdb, range_tdb),
-        hum = rescale01(sat_hum, range_hum),
-        len = length(sat_tdb),
+        tdb = rescale01(sat$tdb, range_tdb),
+        hum = rescale01(sat$hum, range_hum),
+        len = length(sat$tdb),
         n = 1L
     )
 }

@@ -195,22 +195,10 @@ scales_add_default<- function (plot) {
 }
 
 setup_psychro_stat_params <- function(layers, psychro) {
-    state_classes <- c("StatPsychroState", "StatPsychroZone", "StatComfortState")
-    panel_classes <- c(
-        "StatComfortBand", "StatComfortGrid", "StatComfortContour",
-        "StatComfortPmvCurve", "StatComfortPmvAxisLabel",
-        "StatComfortPmvRootBand",
-        "StatComfortHeatIndexZone", "StatComfortHeatIndexContour",
-        "StatComfortHeatIndexLabel", "StatComfortGivoniZone",
-        "StatComfortGivoniLabel", "StatComfortGivoniMeanOutdoor",
-        "StatComfortGivoniMeanOutdoorLabel",
-        "StatComfortZone"
-    )
+    state_classes <- psychro_state_stat_classes()
+    panel_classes <- psychro_panel_stat_classes()
     chart_classes <- c(state_classes, panel_classes)
-    stat_classes <- c(
-        "StatRelhum", "StatWetbulb", "StatVappres", "StatSpecvol",
-        "StatEnthalpy", "StatPsychroBin", chart_classes
-    )
+    stat_classes <- psychro_stat_classes()
     pressure <- with_units(psychro$units, GetStandardAtmPressure(psychro$altitude))
 
     lapply(layers, function(layer) {
@@ -251,9 +239,127 @@ setup_psychro_geom_params <- function(layers, theme) {
             layer$geom_params$psychro.theme <- theme
             layer$computed_geom_params$psychro.theme <- theme
         }
+        if (psychro_layer_needs_panel_clip(layer)) {
+            layer$geom <- psychro_clip_geom(
+                layer$geom,
+                filter_anchor = psychro_layer_needs_anchor_filter(layer),
+                clip_polygon = psychro_layer_needs_polygon_clip(layer),
+                clip_path = psychro_layer_needs_path_clip(layer)
+            )
+        }
 
         layer
     })
+}
+
+psychro_state_stat_classes <- function() {
+    c("StatPsychroState", "StatPsychroZone", "StatComfortState")
+}
+
+psychro_panel_stat_classes <- function() {
+    c(
+        "StatComfortBand", "StatComfortGrid", "StatComfortContour",
+        "StatComfortPmvCurve", "StatComfortPmvAxisLabel",
+        "StatComfortPmvRootBand",
+        "StatComfortHeatIndexZone", "StatComfortHeatIndexContour",
+        "StatComfortHeatIndexLabel", "StatComfortGivoniZone",
+        "StatComfortGivoniLabel", "StatComfortGivoniMeanOutdoor",
+        "StatComfortGivoniMeanOutdoorLabel",
+        "StatComfortZone"
+    )
+}
+
+psychro_stat_classes <- function() {
+    c(
+        "StatRelhum", "StatWetbulb", "StatVappres", "StatSpecvol",
+        "StatEnthalpy", "StatPsychroBin",
+        psychro_state_stat_classes(), psychro_panel_stat_classes()
+    )
+}
+
+psychro_clip_exempt_stat_classes <- function() {
+    c(
+        "StatComfortHeatIndexLabel",
+        "StatComfortGivoniMeanOutdoor",
+        "StatComfortGivoniMeanOutdoorLabel"
+    )
+}
+
+psychro_layer_needs_panel_clip <- function(layer) {
+    if (inherits(layer$geom, "GeomTextpath") &&
+            !psychro_layer_needs_path_clip(layer)) {
+        return(FALSE)
+    }
+    if (inherits(layer$geom, "GeomPsychroTile")) {
+        return(FALSE)
+    }
+    is_psychro_stat <- any(vapply(
+        psychro_stat_classes(), inherits, logical(1L), x = layer$stat
+    ))
+    is_exempt <- any(vapply(
+        psychro_clip_exempt_stat_classes(), inherits, logical(1L),
+        x = layer$stat
+    ))
+    is_psychro_stat && !is_exempt
+}
+
+psychro_layer_needs_anchor_filter <- function(layer) {
+    any(vapply(
+        c("GeomPoint", "GeomText", "GeomLabel"),
+        inherits, logical(1L), x = layer$geom
+    ))
+}
+
+psychro_layer_needs_polygon_clip <- function(layer) {
+    inherits(layer$geom, "GeomPolygon")
+}
+
+psychro_layer_needs_path_clip <- function(layer) {
+    inherits(layer$geom, "GeomTextpath") &&
+        !inherits(layer$stat, "StatComfortGivoniLabel")
+}
+
+psychro_clip_geom <- function(geom, filter_anchor = FALSE,
+                              clip_polygon = FALSE, clip_path = FALSE) {
+    if (isTRUE(geom$psychro_clipped)) {
+        return(geom)
+    }
+    base_geom <- geom
+    ggplot2::ggproto(NULL, base_geom,
+        psychro_clipped = TRUE,
+        parameters = function(self, extra = FALSE) {
+            # ggplot2 filters draw parameters through `parameters()`. Delegate
+            # to the wrapped geom so special params such as textpath `upright`
+            # and `text_params` survive clipping wrappers.
+            base_geom$parameters(extra = extra)
+        },
+        draw_panel = function(data, panel_params, coord, ...) {
+            if (isTRUE(filter_anchor)) {
+                data <- psychro_filter_data_to_panel(data, panel_params, coord)
+                if (!nrow(data)) {
+                    return(grid::nullGrob())
+                }
+                return(base_geom$draw_panel(data, panel_params, coord, ...))
+            }
+            if (isTRUE(clip_polygon)) {
+                data <- psychro_clip_polygon_data_to_panel(
+                    data, panel_params, coord
+                )
+                if (!nrow(data)) {
+                    return(grid::nullGrob())
+                }
+                return(base_geom$draw_panel(data, panel_params, coord, ...))
+            }
+            if (isTRUE(clip_path)) {
+                grob <- base_geom$draw_panel(data, panel_params, coord, ...)
+                return(psychro_clip_textpath_lines_to_panel(
+                    grob, coord, panel_params
+                ))
+            }
+            grob <- base_geom$draw_panel(data, panel_params, coord, ...)
+            psychro_clip_grob_to_panel(grob, coord, panel_params)
+        }
+    )
 }
 
 plot_clone <- function(plot) {
