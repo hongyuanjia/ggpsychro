@@ -10,6 +10,17 @@
 #' @param inherit.blank Whether this element inherits from blank elements.
 #'
 #' @return A ggplot2 theme element.
+#'
+#' @examples
+#' ggpsychro(tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
+#'     ggplot2::theme(
+#'         psychro.panel.background = element_polygon(
+#'             fill = "#F7F7F2",
+#'             colour = "grey60",
+#'             size = 0.4
+#'         )
+#'     )
+#'
 #' @export
 element_polygon <- function(fill = NULL, colour = NULL, size = NULL, linetype = NULL,
                             color = NULL, inherit.blank = FALSE) {

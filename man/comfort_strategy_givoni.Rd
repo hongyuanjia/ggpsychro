@@ -21,3 +21,15 @@ Bioclimatic Chart overlay: the mean outdoor temperature shifts the base
 comfort zone, and zones are drawn in dry-bulb/relative-humidity space before
 conversion to humidity ratio.
 }
+\examples{
+# Create a Givoni strategy for a warm outdoor mean.
+comfort_strategy_givoni(mean_outdoor = 22)
+
+# Draw the Givoni strategy overlay for that outdoor mean.
+ggpsychro(tdb_lim = c(5, 45), hum_lim = c(0, 30)) +
+    geom_comfort_givoni(
+        strategy = comfort_strategy_givoni(mean_outdoor = 22),
+        show_labels = FALSE
+    )
+
+}

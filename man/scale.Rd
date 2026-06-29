@@ -177,20 +177,9 @@ to generate the values for the \code{expand} argument. The defaults are to
 expand the scale by 5\% on each side for continuous variables, and by
 0.6 units on each side for discrete variables.}
 
-\item{trans}{TODO: determined by \code{units}}
-
-\item{transform}{For continuous scales, the name of a transformation object
-or the object itself. Built-in transformations include "asn", "atanh",
-"boxcox", "date", "exp", "hms", "identity", "log", "log10", "log1p", "log2",
-"logit", "modulus", "probability", "probit", "pseudo_log", "reciprocal",
-"reverse", "sqrt" and "time".
-
-A transformation object bundles together a transform, its inverse,
-and methods for generating breaks and labels. Transformation objects
-are defined in the scales package, and are called \verb{transform_<name>}. If
-transformations require arguments, you can call them from the scales
-package, e.g. \code{\link[scales:transform_boxcox]{scales::transform_boxcox(p = 2)}}.
-You can create your own transformation with \code{\link[scales:new_transform]{scales::new_transform()}}.}
+\item{trans, transform}{A transformation object or transformer name passed
+to the underlying ggplot2 continuous scale. The default \code{\link[ggplot2:waiver]{ggplot2::waiver()}}
+keeps the psychrometric scale in chart display units.}
 
 \item{guide}{A function used to create a guide or its name. See
 \code{\link[ggplot2:guides]{guides()}} for more information.}
@@ -201,9 +190,32 @@ You can create your own transformation with \code{\link[scales:new_transform]{sc
 Transformation object for psychrometric chart
 }
 \examples{
-ggpsychro(tdb_lim = c(0, 35), hum_lim = c(0, 50)) +
+# Configure dry-bulb and humidity-ratio axes.
+ggpsychro(tdb_lim = c(0, 35), hum_lim = c(0, 25)) +
+    scale_drybulb_continuous(breaks = seq(0, 35, by = 5)) +
+    scale_humratio_continuous(breaks = seq(0, 25, by = 5))
+
+# Configure relative-humidity and wet-bulb grid breaks.
+ggpsychro(tdb_lim = c(0, 35), hum_lim = c(0, 25)) +
     scale_relhum_continuous(n.breaks = 8) +
-    scale_wetbulb_continuous(breaks = seq(25, 30, by = 5), minor_breaks = NULL) +
-    scale_vappres_continuous(breaks = seq(6000, 7000, by = 500), limits = c(6000, 7000))
+    scale_wetbulb_continuous(
+        breaks = seq(10, 30, by = 5),
+        minor_breaks = NULL
+    )
+
+# Configure vapor-pressure, specific-volume, and enthalpy grids.
+ggpsychro(tdb_lim = c(0, 35), hum_lim = c(0, 25)) +
+    scale_vappres_continuous(
+        breaks = seq(1000, 4000, by = 1000),
+        limits = c(1000, 4500)
+    ) +
+    scale_specvol_continuous(
+        breaks = seq(0.80, 0.95, by = 0.05),
+        limits = c(0.80, 0.95)
+    ) +
+    scale_enthalpy_continuous(
+        breaks = seq(20000, 80000, by = 20000),
+        limits = c(20000, 80000)
+    )
 
 }

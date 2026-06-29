@@ -123,11 +123,39 @@ geom_grid_enthalpy <- function(..., show = TRUE, label = TRUE, label_loc = 0.95,
 #' @export
 #'
 #' @examples
+#' # Draw the default protractor on a psychrometric chart.
 #' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
 #'     geom_psychro_protractor()
 #'
+#' # Draw the protractor in Mollier orientation.
 #' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30), mollier = TRUE) +
 #'     geom_psychro_protractor()
+#'
+#' # Customize major tick breaks with a guide.
+#' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+#'     geom_psychro_protractor(
+#'         guide = guide_psychro_protractor(
+#'             shr_breaks = seq(0, 1, by = 0.25),
+#'             ratio_breaks = c(0, 2000, 4000)
+#'         )
+#'     )
+#'
+#' # Hide the helper formula annotations.
+#' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+#'     geom_psychro_protractor(annotation = FALSE)
+#'
+#' # Scale and move the protractor inside the mask area.
+#' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+#'     geom_psychro_protractor(scale = 1.2, margin = c(0.03, 0.10))
+#'
+#' # Supply custom labels for selected sensible heat ratio ticks.
+#' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+#'     geom_psychro_protractor(
+#'         guide = guide_psychro_protractor(
+#'             shr_breaks = c(0, 0.5, 1),
+#'             shr_labels = c("0", "half", "1")
+#'         )
+#'     )
 geom_psychro_protractor <- function(..., show = TRUE, label = TRUE, annotation = TRUE,
                                     scale = 1, radius = 0.24, margin = 0.08,
                                     guide = guide_psychro_protractor()) {

@@ -210,6 +210,50 @@ comfort_heat_index <- function(tdb, rh, solar_exposure = 0,
 #'   unrounded values by default so contours and zones remain smooth.
 #'
 #' @return A comfort model object.
+#'
+#' @examples
+#' # Create a PMV model object.
+#' comfort_model_pmv(met = 1.4, clo = 0.5)
+#'
+#' # Create a SET model object.
+#' comfort_model_set(v = 0.2)
+#'
+#' # Create an adaptive comfort model object.
+#' comfort_model_adaptive(t_running = 22)
+#'
+#' # Create a heat-index model object.
+#' comfort_model_heat_index(solar_exposure = 0.5)
+#'
+#' # Draw a PMV overlay using custom activity and clothing assumptions.
+#' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+#'     geom_comfort_overlay(
+#'         model = comfort_model_pmv(met = 1.4, clo = 0.5),
+#'         n = c(45, 30)
+#'     )
+#'
+#' # Draw SET as the filled comfort metric.
+#' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+#'     geom_comfort_overlay(
+#'         model = comfort_model_set(v = 0.2),
+#'         metric = "set",
+#'         n = c(45, 30)
+#'     )
+#'
+#' # Draw the adaptive acceptability region.
+#' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+#'     geom_comfort_zone(
+#'         model = comfort_model_adaptive(t_running = 22),
+#'         metric = "acceptability",
+#'         n = c(45, 30),
+#'         alpha = 0.3
+#'     )
+#'
+#' # Draw heat-index categories with a solar exposure adjustment.
+#' ggpsychro(tdb_lim = c(25, 45), hum_lim = c(0, 32)) +
+#'     geom_comfort_heat_index(
+#'         model = comfort_model_heat_index(solar_exposure = 0.5),
+#'         n = c(55, 35)
+#'     )
 #' @export
 comfort_model_pmv <- function(tr = NULL, vr = 0.1, met = 1.2, clo = 0.5,
                               wme = 0, model = "7730-2005",
@@ -286,6 +330,27 @@ comfort_model_heat_index <- function(solar_exposure = 0,
 #'
 #' @return A comfort standard object.
 #'
+#' @examples
+#' # Create the ASHRAE 55 PMV comfort interval.
+#' comfort_standard_ashrae55_2017()
+#'
+#' # Create the EN 15251 PMV comfort bands.
+#' comfort_standard_en15251_2007()
+#'
+#' # Draw the ASHRAE 55 comfort zone.
+#' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+#'     geom_comfort_standard_zone(
+#'         standard = comfort_standard_ashrae55_2017(),
+#'         n = 80
+#'     )
+#'
+#' # Draw the EN 15251 comfort bands.
+#' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+#'     geom_comfort_standard_zone(
+#'         standard = comfort_standard_en15251_2007(),
+#'         n = 80
+#'     )
+#'
 #' @export
 comfort_standard_ashrae55_2017 <- function(range = c(-0.5, 0.5)) {
     range <- comfort_check_breaks(range, "`range`", n_min = 2L)
@@ -328,6 +393,17 @@ comfort_standard_en15251_2007 <- function(breaks = c(-0.7, -0.2, 0.2, 0.7)) {
 #'
 #' @return A Givoni comfort strategy object.
 #'
+#' @examples
+#' # Create a Givoni strategy for a warm outdoor mean.
+#' comfort_strategy_givoni(mean_outdoor = 22)
+#'
+#' # Draw the Givoni strategy overlay for that outdoor mean.
+#' ggpsychro(tdb_lim = c(5, 45), hum_lim = c(0, 30)) +
+#'     geom_comfort_givoni(
+#'         strategy = comfort_strategy_givoni(mean_outdoor = 22),
+#'         show_labels = FALSE
+#'     )
+#'
 #' @export
 comfort_strategy_givoni <- function(mean_outdoor = 19,
                                     units = c("SI", "IP")) {
@@ -353,6 +429,47 @@ comfort_strategy_givoni <- function(mean_outdoor = 19,
 #'   properties. Values left as [ggplot2::waiver()] inherit the layer default.
 #'
 #' @return A comfort zone style element.
+#'
+#' @examples
+#' # Fill and outline the comfort zone with custom colours.
+#' ggpsychro(tdb_lim = c(5, 45), hum_lim = c(0, 30)) +
+#'     geom_comfort_givoni(
+#'         show_labels = FALSE,
+#'         zone_style = list(
+#'             comfort = element_comfort_zone(
+#'                 fill = "#6FCF97",
+#'                 colour = "#1B7F4A",
+#'                 alpha = 0.35
+#'             )
+#'         )
+#'     )
+#'
+#' # Emphasize the air-conditioning region with a light fill.
+#' ggpsychro(tdb_lim = c(5, 45), hum_lim = c(0, 30)) +
+#'     geom_comfort_givoni(
+#'         show_labels = FALSE,
+#'         zone_style = list(
+#'             air_conditioning = element_comfort_zone(
+#'                 fill = "#7BC8F6",
+#'                 colour = "#1B5E8C",
+#'                 alpha = 0.18,
+#'                 linetype = "solid"
+#'             )
+#'         )
+#'     )
+#'
+#' # Restyle a line-only region without filling it.
+#' ggpsychro(tdb_lim = c(5, 45), hum_lim = c(0, 30)) +
+#'     geom_comfort_givoni(
+#'         show_labels = FALSE,
+#'         zone_style = list(
+#'             winter = element_comfort_zone(
+#'                 colour = "#C44536",
+#'                 linewidth = 1.2,
+#'                 linetype = "dashed"
+#'             )
+#'         )
+#'     )
 #'
 #' @export
 element_comfort_zone <- function(fill = ggplot2::waiver(),
@@ -427,6 +544,58 @@ element_comfort_zone <- function(fill = ggplot2::waiver(),
 #'   with [element_comfort_zone()], [ggplot2::element_polygon()], or ordinary
 #'   named lists with fields `fill`, `colour`/`color`, `linewidth`, `linetype`,
 #'   `alpha`, and `linejoin`.
+#'
+#' @examples
+#' # Draw filled PMV comfort bands.
+#' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+#'     geom_comfort_overlay(n = c(45, 30)) +
+#'     scale_fill_comfort_pmv(name = "PMV")
+#'
+#' # Draw labelled PMV contour lines.
+#' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+#'     geom_comfort_contour(
+#'         breaks = c(-1, 0, 1),
+#'         label = TRUE,
+#'         n = 80
+#'     )
+#'
+#' # Draw the neutral PMV comfort zone.
+#' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+#'     geom_comfort_zone(
+#'         range = c(-0.5, 0.5),
+#'         n = c(45, 30),
+#'         alpha = 0.3
+#'     )
+#'
+#' # Draw PMV curves and thermal sensation labels.
+#' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+#'     geom_comfort_pmv_lines(levels = seq(-2, 2, by = 1), n = 100)
+#'
+#' # Draw a PMV-based comfort standard zone.
+#' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+#'     geom_comfort_standard_zone(
+#'         standard = comfort_standard_ashrae55_2017(),
+#'         n = 80
+#'     )
+#'
+#' # Draw heat-index categories on hot conditions.
+#' ggpsychro(tdb_lim = c(25, 45), hum_lim = c(0, 32)) +
+#'     geom_comfort_heat_index(n = c(55, 35), show_labels = FALSE)
+#'
+#' # Draw Givoni bioclimatic strategy zones.
+#' ggpsychro(tdb_lim = c(5, 45), hum_lim = c(0, 30)) +
+#'     geom_comfort_givoni(show_labels = FALSE)
+#'
+#' # Evaluate PMV at supplied state points.
+#' states <- data.frame(
+#'     tdb = c(24, 28, 31),
+#'     relhum = c(45, 55, 65)
+#' )
+#' ggpsychro(states, tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+#'     stat_comfort_state(
+#'         aes(tdb = tdb, relhum = relhum, colour = after_stat(pmv)),
+#'         size = 3
+#'     )
 #'
 #' @export
 geom_comfort_overlay <- function(mapping = NULL, data = NULL,
@@ -1056,6 +1225,27 @@ stat_comfort_state <- function(mapping = NULL, data = NULL, geom = "point",
 #' @param low,mid,high Endpoint and midpoint colours.
 #' @param midpoint Scale midpoint.
 #' @param oob Out-of-bounds handler.
+#'
+#' @examples
+#' # Use the default PMV colour scale.
+#' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+#'     geom_comfort_overlay(n = c(45, 30)) +
+#'     scale_fill_comfort_pmv(name = "PMV")
+#'
+#' # Focus the legend on the usual comfort range.
+#' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+#'     geom_comfort_overlay(n = c(45, 30)) +
+#'     scale_fill_comfort_pmv(limits = c(-1.5, 1.5), name = "PMV")
+#'
+#' # Use a custom diverging palette.
+#' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+#'     geom_comfort_overlay(n = c(45, 30)) +
+#'     scale_fill_comfort_pmv(
+#'         low = "#2166AC",
+#'         mid = "white",
+#'         high = "#B2182B",
+#'         name = "PMV"
+#'     )
 #'
 #' @export
 scale_fill_comfort_pmv <- function(..., limits = c(-3, 3),

@@ -15,4 +15,8 @@ demo_scale(x, ...)
 This function generates ggplot2 code needed to use scales functions for real
 code.
 }
+\examples{
+demo_scale(0:10, labels = scales::label_number())
+
+}
 \keyword{internal}
