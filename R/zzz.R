@@ -1,7 +1,7 @@
 .onLoad <- function(...) {
     ggplot2::register_theme_elements(
         psychro.panel.mask = element_polygon(
-            fill = "white", color = NA, size = 0.5, linetype = 1
+            fill = NA, color = NA, size = 0.5, linetype = 1
         ),
         psychro.panel.background = element_polygon(
             fill = "gray92", color = NA, size = 0.5, linetype = 1

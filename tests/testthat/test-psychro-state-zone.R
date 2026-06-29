@@ -39,7 +39,7 @@ test_that("Psychrometric state stat converts supported properties", {
             ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
                 stat_psychro_state(case$mapping, data = case$data)
         )
-        expect_equal(built$data[[1L]]$y, case$expected, tolerance = 1e-8)
+        expect_equal(first_built_data(built)$y, case$expected, tolerance = 1e-8)
     }
 })
 
@@ -55,16 +55,16 @@ test_that("Psychrometric process supports IP units and Mollier charts", {
         ggpsychro(tdb_lim = c(50, 100), hum_lim = c(0, 140), units = "IP") +
             geom_psychro_process(ggplot2::aes(tdb = tdb, relhum = relhum), data = ip)
     )
-    expect_equal(built_ip$data[[1L]]$x, ip$tdb, tolerance = 1e-8)
-    expect_equal(built_ip$data[[1L]]$y, expected_ip, tolerance = 1e-8)
+    expect_equal(first_built_data(built_ip)$x, ip$tdb, tolerance = 1e-8)
+    expect_equal(first_built_data(built_ip)$y, expected_ip, tolerance = 1e-8)
 
     built_mollier <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30), mollier = TRUE) +
             geom_psychro_process(ggplot2::aes(tdb = tdb, relhum = relhum),
                 data = data.frame(tdb = c(20, 25), relhum = c(50, 60)))
     )
-    expect_equal(built_mollier$data[[1L]]$y, c(20, 25), tolerance = 1e-8)
-    expect_gt(built_mollier$data[[1L]]$x[[2L]], built_mollier$data[[1L]]$x[[1L]])
+    expect_equal(first_built_data(built_mollier)$y, c(20, 25), tolerance = 1e-8)
+    expect_gt(first_built_data(built_mollier)$x[[2L]], first_built_data(built_mollier)$x[[1L]])
 })
 
 test_that("Psychrometric state stat validates property inputs", {
@@ -137,16 +137,16 @@ test_that("Psychrometric zones build all supported zone types", {
 
     for (zone in zones) {
         built <- ggplot2::ggplot_build(zone)
-        expect_gt(nrow(built$data[[1L]]), 0L)
-        expect_true(all(is.finite(built$data[[1L]]$x)))
-        expect_true(all(is.finite(built$data[[1L]]$y)))
+        expect_gt(nrow(first_built_data(built)), 0L)
+        expect_true(all(is.finite(first_built_data(built)$x)))
+        expect_true(all(is.finite(first_built_data(built)$y)))
     }
 
-    wmax <- ggplot2::ggplot_build(zones$`dbt-wmax`)$data[[1L]]
+    wmax <- first_built_data(ggplot2::ggplot_build(zones$`dbt-wmax`))
     expect_lte(max(wmax$y), 0.012)
     expect_gte(min(wmax$y), 0)
 
-    xy <- ggplot2::ggplot_build(zones$`xy-points`)$data[[1L]]
+    xy <- first_built_data(ggplot2::ggplot_build(zones$`xy-points`))
     expect_equal(nrow(xy), 4L)
     expect_equal(xy$x[[1L]], xy$x[[nrow(xy)]], tolerance = 1e-8)
     expect_equal(xy$y[[1L]], xy$y[[nrow(xy)]], tolerance = 1e-8)
@@ -159,12 +159,12 @@ test_that("Psychrometric zone aliases and validation work", {
     mapping <- ggplot2::aes(specvol_min = specvol_min, specvol_max = specvol_max,
         relhum_min = relhum_min, relhum_max = relhum_max)
 
-    specvol <- ggplot2::ggplot_build(
+    specvol <- first_built_data(ggplot2::ggplot_build(
         base + geom_psychro_zone(mapping, data = data, type = "specvol-rh")
-    )$data[[1L]]
-    volume <- ggplot2::ggplot_build(
+    ))
+    volume <- first_built_data(ggplot2::ggplot_build(
         base + geom_psychro_zone(mapping, data = data, type = "volume-rh")
-    )$data[[1L]]
+    ))
     expect_equal(volume$x, specvol$x, tolerance = 1e-8)
     expect_equal(volume$y, specvol$y, tolerance = 1e-8)
 

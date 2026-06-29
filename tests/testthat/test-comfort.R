@@ -162,11 +162,11 @@ test_that("comfort model objects validate inputs", {
 })
 
 test_that("comfort overlay and contour build on psychrometric panel grids", {
-    overlay <- ggplot2::ggplot_build(
+    overlay <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
             geom_comfort_overlay(n = c(24, 16), gap = 0) +
             scale_fill_comfort_pmv()
-    )$data[[1L]]
+    ))
     expect_gt(nrow(overlay), 0L)
     expect_true(all(is.finite(overlay$value)))
     expect_true(all(overlay$y >= 0))
@@ -179,68 +179,85 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
     )))
     expect_true(all(abs(diff(overlay_breaks) - 0.25) < 1e-8))
 
-    overlay_alpha <- ggplot2::ggplot_build(
+    overlay_alpha <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
             geom_comfort_overlay(n = c(24, 16), alpha = 0.35)
-    )$data[[1L]]
+    ))
     expect_equal(unique(overlay_alpha$alpha), 0.35)
 
-    isoband <- ggplot2::ggplot_build(
+    isoband <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
             geom_comfort_overlay(method = "isoband", n = c(24, 16))
-    )$data[[1L]]
+    ))
     expect_gt(nrow(isoband), 0L)
     expect_true("level_mid" %in% names(isoband))
     expect_equal(unique(isoband$alpha), 0.55)
 
-    tile <- ggplot2::ggplot_build(
+    tile <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
             geom_comfort_overlay(method = "tile", n = c(24, 16))
-    )$data[[1L]]
+    ))
     expect_gt(nrow(tile), 0L)
     expect_equal(unique(tile$alpha), 0.55)
 
-    set_overlay <- ggplot2::ggplot_build(
+    set_overlay <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
             geom_comfort_overlay(model = comfort_model_set(), n = c(24, 16))
-    )$data[[1L]]
+    ))
     expect_gt(nrow(set_overlay), 0L)
     expect_equal(unique(set_overlay$alpha), 0.55)
 
-    adaptive_overlay <- ggplot2::ggplot_build(
+    adaptive_overlay <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
             geom_comfort_overlay(
                 model = comfort_model_adaptive(t_running = 20),
                 n = c(24, 16)
             )
-    )$data[[1L]]
+    ))
     expect_gt(nrow(adaptive_overlay), 0L)
     expect_equal(unique(adaptive_overlay$alpha), 0.55)
 
-    heat_overlay <- ggplot2::ggplot_build(
+    heat_overlay <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
             geom_comfort_overlay(
                 model = comfort_model_heat_index(), n = c(32, 24)
             )
-    )$data[[1L]]
+    ))
     expect_gt(nrow(heat_overlay), 0L)
     expect_true("heat_index" %in% unique(heat_overlay$metric))
     expect_equal(unique(heat_overlay$alpha), 0.55)
 
-    heat_index <- ggplot2::ggplot_build(
+    heat_index <- built_data_layers(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
             geom_comfort_heat_index(n = c(32, 24), alpha = 0.4)
-    )$data
+    ))
     expect_equal(length(heat_index), 6L)
     expect_true(all(vapply(heat_index[1:4], nrow, integer(1L)) > 0L))
     expect_equal(unique(heat_index[[1L]]$alpha), 0.4)
     expect_true(all(c("CAUTION", "EXTREME CAUTION", "DANGER",
         "EXTREME DANGER") %in% unique(heat_index[[6L]]$label)))
+    expect_equal(unique(heat_index[[6L]]$alpha), 0)
 
-    tile_alpha <- ggplot2::ggplot_build(
+    collect_grobs <- function(grob) {
+        children <- c(
+            if (!is.null(grob$grobs)) grob$grobs else list(),
+            if (!is.null(grob$children)) as.list(grob$children) else list()
+        )
+
+        c(list(grob), unlist(lapply(children, collect_grobs), recursive = FALSE))
+    }
+    heat_index_grobs <- collect_grobs(ggplot2::ggplotGrob(
+        ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
+            geom_comfort_heat_index(n = c(32, 24), alpha = 0.4)
+    ))
+    expect_true(any(vapply(heat_index_grobs, function(grob) {
+        identical(grob$name, "psychro-heat-index-labels")
+    }, logical(1L))))
+
+    tile_alpha <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
             geom_comfort_overlay(method = "tile", n = c(24, 16), alpha = 0.35)
-    )$data[[1L]]
+    ))
     expect_equal(unique(tile_alpha$alpha), 0.35)
 
     pressure <- with_units("SI", psychrolib::GetStandardAtmPressure(0))
@@ -259,14 +276,14 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
             pmax(saturation_left, saturation_right) + 1e-8
     ))
 
-    contour <- ggplot2::ggplot_build(
+    contour <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
             geom_comfort_contour(n = c(32, 20), breaks = c(-1, 0, 1))
-    )$data[[1L]]
+    ))
     expect_gt(nrow(contour), 0L)
     expect_true(all(contour$level %in% c(-1, 0, 1)))
 
-    contour_labelled <- ggplot2::ggplot_build(
+    contour_labelled <- built_data_layers(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
             geom_comfort_contour(
                 model = comfort_model_set(),
@@ -275,19 +292,19 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
                 n = c(32, 20),
                 label = TRUE
             )
-    )$data
+    ))
     expect_equal(length(contour_labelled), 1L)
     expect_true(all(c("22", "24", "26") %in% contour_labelled[[1L]]$label))
     expect_true(all(c("label", "level", "value") %in% names(contour_labelled[[1L]])))
 
-    pmv_labelled <- ggplot2::ggplot_build(
+    pmv_labelled <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
             geom_comfort_contour(
                 breaks = c(-1, 0, 1),
                 n = c(32, 20),
                 label = TRUE
             )
-    )$data[[1L]]
+    ))
     expect_true(all(c("-1.0", "0.0", "+1.0") %in% pmv_labelled$label))
 
     expect_error(
@@ -301,12 +318,12 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
         "label_size"
     )
 
-    heat_contour <- ggplot2::ggplot_build(
+    heat_contour <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
             geom_comfort_contour(
                 model = comfort_model_heat_index(), n = c(32, 24)
             )
-    )$data[[1L]]
+    ))
     expect_true(all(sort(unique(round(heat_contour$level, 6))) %in%
         round(comfort_heat_index_thresholds("SI"), 6)))
 })
@@ -551,6 +568,24 @@ test_that("PMV root-traced curves solve requested levels", {
         expect_lt(max(abs(pmv - level), na.rm = TRUE), 0.02)
     }
 
+    marsh_rootband <- comfort_pmv_rootband_data(
+        comfort_model_pmv(), NULL, NULL, c(70, 48),
+        "SI", pressure, FALSE, c(5, 40), c(0, 24)
+    )
+    cap_points <- data.frame(
+        x = c(18.05063, 18.16456, 18.16456, 18.16456),
+        y = c(0.01292650, 0.01302172, 0.01295477, 0.01288782)
+    )
+    cap_polys <- split(marsh_rootband, marsh_rootband$group)
+    cap_covered <- vapply(seq_len(nrow(cap_points)), function(i) {
+        any(vapply(cap_polys, function(poly) {
+            psychro_inside_polygon(
+                cap_points$x[[i]], cap_points$y[[i]], poly$x, poly$y
+            )
+        }, logical(1L)))
+    }, logical(1L))
+    expect_true(all(cap_covered))
+
     standard_band <- comfort_pmv_band_data(
         comfort_model_pmv(), c(-0.5, 0.5), c(140, 90),
         "SI", pressure, FALSE, c(5, 35), c(0, 24)
@@ -664,15 +699,15 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
         ggpsychro(tdb_lim = c(50, 90), hum_lim = c(0, 140), units = "IP") +
             geom_comfort_pmv_lines(levels = c(-0.5, 0.5), n = 60)
     )
-    expect_gt(nrow(ip$data[[1L]]), 0L)
+    expect_gt(nrow(first_built_data(ip)), 0L)
 
     ip_overlay <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(50, 90), hum_lim = c(0, 140), units = "IP") +
             geom_comfort_overlay(n = c(40, 24)) +
             scale_fill_comfort_pmv()
     )
-    expect_gt(nrow(ip_overlay$data[[1L]]), 0L)
-    expect_gt(length(unique(ip_overlay$data[[1L]]$fill)), 1L)
+    expect_gt(nrow(first_built_data(ip_overlay)), 0L)
+    expect_gt(length(unique(first_built_data(ip_overlay)$fill)), 1L)
 
     ip_heat <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(70, 115), hum_lim = c(0, 220), units = "IP") +
@@ -923,35 +958,35 @@ test_that("comfort layer internals are not exported", {
 })
 
 test_that("comfort zones and state stats build model-specific fields", {
-    zone <- ggplot2::ggplot_build(
+    zone <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
             geom_comfort_zone(model = comfort_model_adaptive(t_running = 20))
-    )$data[[1L]]
+    ))
     expect_equal(range(zone$x), c(20.5, 27.5), tolerance = 1e-8)
     expect_equal(range(zone$y), c(0, 0.02), tolerance = 1e-8)
 
     d <- data.frame(tdb = c(24, 26), relhum = c(50, 60))
-    pmv_state <- ggplot2::ggplot_build(
+    pmv_state <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(d) +
             stat_comfort_state(ggplot2::aes(tdb = tdb, relhum = relhum))
-    )$data[[1L]]
+    ))
     expect_true(all(c("pmv", "ppd") %in% names(pmv_state)))
 
-    set_state <- ggplot2::ggplot_build(
+    set_state <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(d) +
             stat_comfort_state(
                 ggplot2::aes(tdb = tdb, relhum = relhum),
                 model = comfort_model_set()
             )
-    )$data[[1L]]
+    ))
     expect_true("set" %in% names(set_state))
 
-    adaptive_state <- ggplot2::ggplot_build(
+    adaptive_state <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(d) +
             stat_comfort_state(
                 ggplot2::aes(tdb = tdb, relhum = relhum),
                 model = comfort_model_adaptive(t_running = 20)
             )
-    )$data[[1L]]
+    ))
     expect_true("acceptability" %in% names(adaptive_state))
 })

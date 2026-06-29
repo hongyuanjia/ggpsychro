@@ -10,7 +10,8 @@ collect_grobs <- function(grob) {
 count_line_shapes <- function(plot) {
     grobs <- collect_grobs(ggplot2::ggplotGrob(plot))
     sum(vapply(grobs, function(grob) {
-        inherits(grob, "polyline") || inherits(grob, "polygon")
+        inherits(grob, "polyline") || inherits(grob, "polygon") ||
+            inherits(grob, "polyclipgrob")
     }, logical(1)))
 }
 
@@ -35,6 +36,24 @@ find_named_grobs <- function(plot, pattern) {
         name <- grob$name
         !is.null(name) && grepl(pattern, name)
     }, logical(1))]
+}
+
+find_named_grobs_in <- function(grob, pattern) {
+    grobs <- collect_grobs(grob)
+    grobs[vapply(grobs, function(grob) {
+        name <- grob$name
+        !is.null(name) && grepl(pattern, name)
+    }, logical(1))]
+}
+
+panel_child_index <- function(plot, pattern) {
+    panel <- panel_grob(plot)
+    which(grepl(pattern, names(panel$children)))
+}
+
+panel_grob <- function(plot) {
+    gtable <- ggplot2::ggplotGrob(plot)
+    gtable$grobs[[which(gtable$layout$name == "panel")]]
 }
 
 convert_units_in_rectangular_viewport <- function(x, y) {
@@ -141,6 +160,145 @@ test_that("Empty psychrometric charts train display ranges", {
 
     expect_gt(count_line_shapes(ggpsychro()), 10L)
     expect_gt(count_line_shapes(ggpsychro(mollier = TRUE)), 10L)
+})
+
+test_that("Psychrometric panel backgrounds keep ggplot and psychro semantics", {
+    default_grobs <- collect_grobs(ggplot2::ggplotGrob(
+        ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50))
+    ))
+    default_name <- vapply(default_grobs, function(grob) {
+        grob$name %||% ""
+    }, character(1))
+    expect_false(any(grepl("psychro[.-]panel[.-]mask", default_name)))
+
+    p <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+        ggplot2::theme(
+            plot.background = ggplot2::element_rect(fill = "#F0F0A0", colour = NA),
+            panel.background = ggplot2::element_rect(fill = "#F0A0A0", colour = NA),
+            psychro.panel.background = element_polygon(fill = "#A0F0A0", color = NA),
+            psychro.panel.mask = element_polygon(fill = "#A0A0F0", color = NA),
+            plot.margin = ggplot2::margin(6, 6, 6, 6)
+        )
+    grobs <- collect_grobs(ggplot2::ggplotGrob(p))
+    fill <- vapply(grobs, function(grob) {
+        fill <- grob$gp$fill
+        if (is.null(fill) || !length(fill)) {
+            return(NA_character_)
+        }
+        as.character(fill)[[1L]]
+    }, character(1))
+    name <- vapply(grobs, function(grob) {
+        grob$name %||% ""
+    }, character(1))
+
+    expect_true(any(fill == "#F0F0A0", na.rm = TRUE))
+    expect_true(any(grepl("panel.background", name) & fill == "#F0A0A0"))
+    expect_true(any(grepl("psychro[.-]panel[.-]background", name) & fill == "#A0F0A0"))
+    expect_true(any(grepl("psychro[.-]panel[.-]mask", name) & fill == "#A0A0F0"))
+})
+
+test_that("Psychrometric grids and stat layers are clipped to the valid panel", {
+    p <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50))
+    grobs <- collect_grobs(ggplot2::ggplotGrob(p))
+    names <- vapply(grobs, function(grob) grob$name %||% "", character(1))
+    grid_grobs <- grobs[
+        grepl("^(panel.grid|psychro.panel.grid\\.(minor|major))", names) &
+            !grepl("saturation", names)
+    ]
+
+    expect_gt(length(grid_grobs), 0L)
+    expect_true(all(vapply(grid_grobs, inherits, logical(1L), "polyclipgrob")))
+
+    psychro_text <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+        stat_vappres(
+            ggplot2::aes(x = x, vappres = vappres, label = label),
+            data = data.frame(
+                x = c(20, 20),
+                vappres = c(1000, 10000),
+                label = c("in", "out")
+            ),
+            geom = "text"
+        )
+    built <- ggplot2::ggplot_build(psychro_text)
+    filtered <- psychro_filter_data_to_panel(
+        first_built_data(built), built$layout$panel_params[[1L]], built$layout$coord
+    )
+
+    expect_equal(filtered$label, "in")
+})
+
+test_that("Ordinary text can render in the psychrometric mask area", {
+    p <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+        ggplot2::geom_text(
+            ggplot2::aes(x = 5, y = 45, label = "mask area text"),
+            inherit.aes = FALSE
+        )
+    labels <- unlist(lapply(collect_grobs(ggplot2::ggplotGrob(p)), function(grob) {
+        if (is.null(grob$label)) {
+            return(character())
+        }
+        as.character(grob$label)
+    }))
+
+    expect_true("mask area text" %in% labels)
+
+    testthat::skip_on_os(c("linux", "windows"))
+    vdiffr::expect_doppelganger("text in mask area", p)
+})
+
+test_that("Saturation is drawn between psychro boundaries and markers", {
+    process <- data.frame(tdb = c(20, 30), relhum = c(50, 70))
+    p <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+        geom_psychro_process(
+            ggplot2::aes(tdb = tdb, relhum = relhum),
+            data = process
+        ) +
+        stat_psychro_state(
+            ggplot2::aes(tdb = tdb, relhum = relhum),
+            data = process
+        )
+    panel <- panel_grob(p)
+    process_index <- panel_child_index(p, "GRID.polyline")
+    saturation_index <- panel_child_index(p, "psychro.panel.grid.saturation")
+    point_index <- panel_child_index(p, "geom_point")
+
+    expect_length(process_index, 1L)
+    expect_length(saturation_index, 1L)
+    expect_length(point_index, 1L)
+    expect_gt(saturation_index, process_index)
+    expect_gt(point_index, saturation_index)
+
+    saturated_state <- ggpsychro(tdb_lim = c(5, 40), hum_lim = c(0, 24)) +
+        stat_psychro_state(ggplot2::aes(tdb = c(15.6), relhum = 100))
+    expect_gt(
+        panel_child_index(saturated_state, "geom_point"),
+        panel_child_index(saturated_state, "psychro.panel.grid.saturation")
+    )
+
+    heat_index <- panel_grob(
+        ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
+            geom_comfort_heat_index(n = c(32, 24))
+    )
+    heat_fg <- heat_index$children[[length(heat_index$children)]]
+    expect_gt(
+        length(find_named_grobs_in(heat_fg, "psychro.panel.grid.saturation")),
+        0L
+    )
+    expect_gt(
+        length(find_named_grobs_in(heat_fg, "psychro-heat-index-labels")),
+        0L
+    )
+
+    givoni <- panel_grob(
+        ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 35)) +
+            geom_comfort_givoni()
+    )
+    givoni_fg <- givoni$children[[length(givoni$children)]]
+    expect_gt(
+        length(find_named_grobs_in(givoni_fg, "psychro.panel.grid.saturation")),
+        0L
+    )
+    expect_gt(length(find_named_grobs_in(givoni_fg, "GRID.lines")), 0L)
 })
 
 test_that("Relative humidity grid breaks use psychrolib fractions", {
@@ -780,8 +938,8 @@ test_that("Psychrometric stats inherit units and pressure from the plot", {
         )
     )
 
-    expect_equal(built$data[[1L]]$y, expected, tolerance = 1e-8)
-    expect_gt(max(built$data[[1L]]$y), 0.01)
+    expect_equal(first_built_data(built)$y, expected, tolerance = 1e-8)
+    expect_gt(max(first_built_data(built)$y), 0.01)
 })
 
 test_that("Psychrometric stats retain ordinary aesthetics after transformation", {
@@ -846,7 +1004,7 @@ test_that("Psychrometric stats retain ordinary aesthetics after transformation",
 
     for (case in cases) {
         expect_warning(built <- ggplot2::ggplot_build(case$plot), NA)
-        values <- built$data[[1L]][[case$aes]]
+        values <- first_built_data(built)[[case$aes]]
         expect_false(anyNA(values))
         expect_gt(length(unique(values)), 1L)
     }
@@ -941,6 +1099,6 @@ test_that("Enthalpy stat creates y output without an explicit y aesthetic", {
         GetHumRatioFromEnthalpyAndTDryBulb(d$enthalpy, d$dry_bulb_temperature)
     )
 
-    expect_equal(built$data[[1L]]$y, expected, tolerance = 1e-8)
-    expect_true(all(is.finite(built$data[[1L]]$y)))
+    expect_equal(first_built_data(built)$y, expected, tolerance = 1e-8)
+    expect_true(all(is.finite(first_built_data(built)$y)))
 })
