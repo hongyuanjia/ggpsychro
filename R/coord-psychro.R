@@ -1,3 +1,6 @@
+#' @include comfort-givoni.R
+NULL
+
 #' Psychrometric coordinates
 #'
 #' @inheritParams ggplot2::coord_cartesian

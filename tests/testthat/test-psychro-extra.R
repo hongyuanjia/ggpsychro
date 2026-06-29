@@ -39,6 +39,29 @@ test_that("with_units restores nested unit systems", {
     })
 })
 
+test_that("with_units restores an unset unit system", {
+    psy_op <- psychrolib_options()
+    old_units <- psy_op$UNITS
+    old_tolerance <- psy_op$TOLERANCE
+    on.exit({
+        psy_op$UNITS <- old_units
+        psy_op$TOLERANCE <- old_tolerance
+    }, add = TRUE)
+
+    psy_op$UNITS <- NA_character_
+    psy_op$TOLERANCE <- NA_real_
+
+    value <- with_units("SI", {
+        expect_identical(psychrolib::GetUnitSystem(), "SI")
+        expect_false(is.na(psychrolib_options()$TOLERANCE))
+        psychrolib::GetStandardAtmPressure(0)
+    })
+
+    expect_type(value, "double")
+    expect_true(is.na(psychrolib::GetUnitSystem()))
+    expect_true(is.na(psychrolib_options()$TOLERANCE))
+})
+
 test_that("GetHumRatioFromAirVolume() round-trips specific volume", {
     with_units("SI", {
         pressure <- psychrolib::GetStandardAtmPressure(0)
