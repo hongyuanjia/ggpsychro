@@ -1,5 +1,7 @@
 # ggpsychro 0.0.0.9000
 
+* Added runnable reference examples across exported documentation topics and
+  grouped pkgdown reference pages by workflow area. (#29)
 * Preserved ordinary ggplot2 aesthetics across legacy psychrometric stats.
   (#27)
 * Replaced foreground psychrometric panel masking with valid-region clipping for
