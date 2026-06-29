@@ -158,11 +158,21 @@ test_that("Empty psychrometric charts train display ranges", {
 })
 
 test_that("Psychrometric panel backgrounds keep ggplot and psychro semantics", {
+    default_grobs <- collect_grobs(ggplot2::ggplotGrob(
+        ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50))
+    ))
+    default_name <- vapply(default_grobs, function(grob) {
+        grob$name %||% ""
+    }, character(1))
+    expect_false(any(grepl("psychro[.-]panel[.-]mask", default_name)))
+
     p <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
         ggplot2::theme(
+            plot.background = ggplot2::element_rect(fill = "#F0F0A0", colour = NA),
             panel.background = ggplot2::element_rect(fill = "#F0A0A0", colour = NA),
             psychro.panel.background = element_polygon(fill = "#A0F0A0", color = NA),
-            psychro.panel.mask = element_polygon(fill = "#A0A0F0", color = NA)
+            psychro.panel.mask = element_polygon(fill = "#A0A0F0", color = NA),
+            plot.margin = ggplot2::margin(6, 6, 6, 6)
         )
     grobs <- collect_grobs(ggplot2::ggplotGrob(p))
     fill <- vapply(grobs, function(grob) {
@@ -176,9 +186,10 @@ test_that("Psychrometric panel backgrounds keep ggplot and psychro semantics", {
         grob$name %||% ""
     }, character(1))
 
+    expect_true(any(fill == "#F0F0A0", na.rm = TRUE))
     expect_true(any(grepl("panel.background", name) & fill == "#F0A0A0"))
-    expect_true(any(grepl("psychro.panel.background", name) & fill == "#A0F0A0"))
-    expect_false(any(fill == "#A0A0F0", na.rm = TRUE))
+    expect_true(any(grepl("psychro[.-]panel[.-]background", name) & fill == "#A0F0A0"))
+    expect_true(any(grepl("psychro[.-]panel[.-]mask", name) & fill == "#A0A0F0"))
 })
 
 test_that("Psychrometric grids and stat layers are clipped to the valid panel", {
