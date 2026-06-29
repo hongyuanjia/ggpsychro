@@ -144,6 +144,18 @@ init_stat_data <- function (data, params) {
     data
 }
 
+finish_stat_humratio <- function(data, humratio) {
+    ys <- names(data)[names(data) %in% GGPSY_OPT$y_aes]
+
+    if (!length(ys)) ys <- "y"
+
+    for (var in ys) {
+        data[[var]] <- humratio
+    }
+
+    data
+}
+
 #' @rdname ggpsychro-extensions
 #' @format NULL
 #' @usage NULL
@@ -162,19 +174,8 @@ StatRelhum <- ggproto(
 
     compute_group = function (self, data, scales) {
         units <- get_units(data)
-        ys <- names(data)[names(data) %in% GGPSY_OPT$y_aes]
-
-        if (!length(ys)) ys <- "y"
-
-        # get input pair
-        for (var in ys) {
-            data[[var]] <- with_units(units, GetHumRatioFromRelHum(data$x, data$relhum, data$pres))
-        }
-
-        xs <- names(data)[names(data) %in% GGPSY_OPT$x_aes]
-
-        cols <- c(xs, ys, "relhum", "label"["label" %in% names(data)])
-        data[cols]
+        humratio <- with_units(units, GetHumRatioFromRelHum(data$x, data$relhum, data$pres))
+        finish_stat_humratio(data, humratio)
     }
 )
 
@@ -196,19 +197,8 @@ StatWetbulb <- ggproto(
 
     compute_group = function (self, data, scales) {
         units <- get_units(data)
-        ys <- names(data)[names(data) %in% GGPSY_OPT$y_aes]
-
-        if (!length(ys)) ys <- "y"
-
-        # get input pair
-        for (var in ys) {
-            data[[var]] <- with_units(units, GetHumRatioFromTWetBulb(data$x, data$wetbulb, data$pres))
-        }
-
-        xs <- names(data)[names(data) %in% GGPSY_OPT$x_aes]
-
-        cols <- c(xs, ys, "wetbulb", "label"["label" %in% names(data)])
-        data[cols]
+        humratio <- with_units(units, GetHumRatioFromTWetBulb(data$x, data$wetbulb, data$pres))
+        finish_stat_humratio(data, humratio)
     }
 )
 
@@ -230,18 +220,8 @@ StatVappres <- ggproto(
 
     compute_group = function (self, data, scales) {
         units <- get_units(data)
-        ys <- names(data)[names(data) %in% GGPSY_OPT$y_aes]
-
-        if (!length(ys)) ys <- "y"
-
-        for (var in ys) {
-            data[[var]] <- with_units(units, GetHumRatioFromVapPres(data$vappres, data$pres))
-        }
-
-        xs <- names(data)[names(data) %in% GGPSY_OPT$x_aes]
-
-        cols <- c(xs, ys, "vappres", "label"["label" %in% names(data)])
-        data[cols]
+        humratio <- with_units(units, GetHumRatioFromVapPres(data$vappres, data$pres))
+        finish_stat_humratio(data, humratio)
     }
 )
 
@@ -262,18 +242,8 @@ StatSpecvol <- ggproto(
 
     compute_group = function (self, data, scales) {
         units <- get_units(data)
-        ys <- names(data)[names(data) %in% GGPSY_OPT$y_aes]
-
-        if (!length(ys)) ys <- "y"
-
-        for (var in ys) {
-            data[[var]] <- with_units(units, GetHumRatioFromAirVolume(data$x, data$specvol, data$pres))
-        }
-
-        xs <- names(data)[names(data) %in% GGPSY_OPT$x_aes]
-
-        cols <- c(xs, ys, "specvol", "label"["label" %in% names(data)])
-        data[cols]
+        humratio <- with_units(units, GetHumRatioFromAirVolume(data$x, data$specvol, data$pres))
+        finish_stat_humratio(data, humratio)
     }
 )
 
@@ -295,17 +265,7 @@ StatEnthalpy <- ggproto(
 
     compute_group = function (self, data, scales) {
         units <- get_units(data)
-        ys <- names(data)[names(data) %in% GGPSY_OPT$y_aes]
-
-        if (!length(ys)) ys <- "y"
-
-        for (var in ys) {
-            data[[var]] <- with_units(units, GetHumRatioFromEnthalpyAndTDryBulb(data$enthalpy, data$x))
-        }
-
-        xs <- names(data)[names(data) %in% GGPSY_OPT$x_aes]
-
-        cols <- c(xs, ys, "enthalpy", "label"["label" %in% names(data)])
-        data[cols]
+        humratio <- with_units(units, GetHumRatioFromEnthalpyAndTDryBulb(data$enthalpy, data$x))
+        finish_stat_humratio(data, humratio)
     }
 )
