@@ -864,10 +864,10 @@ test_that("Psychrometric stats draw retained aesthetics in common plots", {
         label = LETTERS[1:5]
     )
     line_data <- data.frame(
-        tdb = rep(seq(20, 32, length.out = 5), 2),
-        wetbulb = rep(c(14, 18), each = 5),
+        tdb = c(18, 20, 22, 24, 26, 22, 24, 26, 28, 30),
+        wetbulb = c(13, 14, 15, 16, 17, 16, 17, 18, 19, 20),
         process = rep(c("cooling", "heating"), each = 5),
-        load = rep(c(1.2, 2.4), each = 5)
+        load = rep(c(1.2, 2.0), each = 5)
     )
 
     p_alpha <- ggpsychro(d, tdb_lim = c(10, 35), hum_lim = c(0, 25)) +
