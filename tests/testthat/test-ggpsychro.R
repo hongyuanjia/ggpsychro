@@ -46,6 +46,11 @@ find_named_grobs_in <- function(grob, pattern) {
     }, logical(1))]
 }
 
+panel_child_index <- function(plot, pattern) {
+    panel <- panel_grob(plot)
+    which(grepl(pattern, names(panel$children)))
+}
+
 panel_grob <- function(plot) {
     gtable <- ggplot2::ggplotGrob(plot)
     gtable$grobs[[which(gtable$layout$name == "panel")]]
@@ -216,7 +221,7 @@ test_that("Psychrometric grids and stat layers are clipped to the valid panel", 
         )
     built <- ggplot2::ggplot_build(psychro_text)
     filtered <- psychro_filter_data_to_panel(
-        built$data[[1L]], built$layout$panel_params[[1L]], built$layout$coord
+        first_built_data(built), built$layout$panel_params[[1L]], built$layout$coord
     )
 
     expect_equal(filtered$label, "in")
@@ -241,31 +246,46 @@ test_that("Ordinary text can render in the psychrometric mask area", {
     vdiffr::expect_doppelganger("text in mask area", p)
 })
 
-test_that("Saturation is drawn after psychro layers and before foreground markers", {
+test_that("Saturation is drawn between psychro boundaries and markers", {
     process <- data.frame(tdb = c(20, 30), relhum = c(50, 70))
     p <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
         geom_psychro_process(
             ggplot2::aes(tdb = tdb, relhum = relhum),
             data = process
+        ) +
+        stat_psychro_state(
+            ggplot2::aes(tdb = tdb, relhum = relhum),
+            data = process
         )
     panel <- panel_grob(p)
-    child_names <- names(panel$children)
-    layer_index <- which(grepl("polyline|pathgrob|points", child_names))
-    foreground_index <- length(panel$children)
-    foreground <- panel$children[[foreground_index]]
+    process_index <- panel_child_index(p, "GRID.polyline")
+    saturation_index <- panel_child_index(p, "psychro.panel.grid.saturation")
+    point_index <- panel_child_index(p, "geom_point")
 
-    expect_true(length(layer_index) > 0L)
-    expect_gt(foreground_index, max(layer_index))
-    expect_true(grepl("psychro.panel.grid.saturation", names(foreground$children)[[1L]]))
+    expect_length(process_index, 1L)
+    expect_length(saturation_index, 1L)
+    expect_length(point_index, 1L)
+    expect_gt(saturation_index, process_index)
+    expect_gt(point_index, saturation_index)
+
+    saturated_state <- ggpsychro(tdb_lim = c(5, 40), hum_lim = c(0, 24)) +
+        stat_psychro_state(ggplot2::aes(tdb = c(15.6), relhum = 100))
+    expect_gt(
+        panel_child_index(saturated_state, "geom_point"),
+        panel_child_index(saturated_state, "psychro.panel.grid.saturation")
+    )
 
     heat_index <- panel_grob(
         ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
             geom_comfort_heat_index(n = c(32, 24))
     )
     heat_fg <- heat_index$children[[length(heat_index$children)]]
-    expect_true(grepl("psychro.panel.grid.saturation", names(heat_fg$children)[[1L]]))
     expect_gt(
-        length(find_named_grobs_in(heat_fg$children[[2L]], "psychro-heat-index-labels")),
+        length(find_named_grobs_in(heat_fg, "psychro.panel.grid.saturation")),
+        0L
+    )
+    expect_gt(
+        length(find_named_grobs_in(heat_fg, "psychro-heat-index-labels")),
         0L
     )
 
@@ -274,8 +294,11 @@ test_that("Saturation is drawn after psychro layers and before foreground marker
             geom_comfort_givoni()
     )
     givoni_fg <- givoni$children[[length(givoni$children)]]
-    expect_true(grepl("psychro.panel.grid.saturation", names(givoni_fg$children)[[1L]]))
-    expect_gt(length(find_named_grobs_in(givoni_fg$children[[2L]], "GRID.lines")), 0L)
+    expect_gt(
+        length(find_named_grobs_in(givoni_fg, "psychro.panel.grid.saturation")),
+        0L
+    )
+    expect_gt(length(find_named_grobs_in(givoni_fg, "GRID.lines")), 0L)
 })
 
 test_that("Relative humidity grid breaks use psychrolib fractions", {
@@ -915,8 +938,8 @@ test_that("Psychrometric stats inherit units and pressure from the plot", {
         )
     )
 
-    expect_equal(built$data[[1L]]$y, expected, tolerance = 1e-8)
-    expect_gt(max(built$data[[1L]]$y), 0.01)
+    expect_equal(first_built_data(built)$y, expected, tolerance = 1e-8)
+    expect_gt(max(first_built_data(built)$y), 0.01)
 })
 
 test_that("Psychrometric stats retain ordinary aesthetics after transformation", {
@@ -981,7 +1004,7 @@ test_that("Psychrometric stats retain ordinary aesthetics after transformation",
 
     for (case in cases) {
         expect_warning(built <- ggplot2::ggplot_build(case$plot), NA)
-        values <- built$data[[1L]][[case$aes]]
+        values <- first_built_data(built)[[case$aes]]
         expect_false(anyNA(values))
         expect_gt(length(unique(values)), 1L)
     }
@@ -1076,6 +1099,6 @@ test_that("Enthalpy stat creates y output without an explicit y aesthetic", {
         GetHumRatioFromEnthalpyAndTDryBulb(d$enthalpy, d$dry_bulb_temperature)
     )
 
-    expect_equal(built$data[[1L]]$y, expected, tolerance = 1e-8)
-    expect_true(all(is.finite(built$data[[1L]]$y)))
+    expect_equal(first_built_data(built)$y, expected, tolerance = 1e-8)
+    expect_true(all(is.finite(first_built_data(built)$y)))
 })

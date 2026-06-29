@@ -6,7 +6,13 @@ ggplot_build.ggpsychro <- function(plot, ...) {
         plot <- plot + ggplot2::geom_blank()
     }
 
-    layers <- setup_psychro_stat_params(plot@layers, plot$psychro)
+    layers <- plot@layers
+    use_internal_saturation <- psychro_saturation_layer_needed(layers)
+    plot@coordinates$draw_saturation_fg <- !use_internal_saturation
+    if (use_internal_saturation) {
+        layers <- setup_psychro_saturation_layer(layers)
+    }
+    layers <- setup_psychro_stat_params(layers, plot$psychro)
     plot@layers <- layers
     data <- rep(list(NULL), length(layers))
     scales <- scales_add_default(plot)
@@ -233,8 +239,66 @@ setup_psychro_stat_params <- function(layers, psychro) {
     })
 }
 
+setup_psychro_saturation_layer <- function(layers) {
+    if (any(vapply(layers, psychro_layer_is_saturation, logical(1L)))) {
+        return(layers)
+    }
+
+    below <- vapply(layers, psychro_layer_below_saturation, logical(1L))
+    c(layers[below], list(psychro_saturation_layer()), layers[!below])
+}
+
+psychro_saturation_layer_needed <- function(layers) {
+    any(vapply(layers, psychro_layer_above_saturation, logical(1L)))
+}
+
+psychro_saturation_layer <- function() {
+    ggplot2::layer(
+        data = data.frame(.psychro_saturation = TRUE),
+        mapping = ggplot2::aes(),
+        stat = "identity",
+        geom = GeomPsychroSaturation,
+        position = "identity",
+        show.legend = FALSE,
+        inherit.aes = FALSE,
+        params = list(na.rm = TRUE)
+    )
+}
+
+psychro_layer_is_saturation <- function(layer) {
+    inherits(layer$geom, "GeomPsychroSaturation")
+}
+
+psychro_layer_below_saturation <- function(layer) {
+    if (inherits(layer$geom, "GeomPsychroTile")) {
+        return(TRUE)
+    }
+    is_psychro_stat <- any(vapply(
+        psychro_stat_classes(), inherits, logical(1L), x = layer$stat
+    ))
+    is_psychro_stat && !psychro_layer_above_saturation(layer)
+}
+
+psychro_layer_above_saturation <- function(layer) {
+    is_marker_geom <- any(vapply(
+        c("GeomPoint", "GeomText", "GeomLabel"),
+        inherits, logical(1L), x = layer$geom
+    ))
+    if (!is_marker_geom) {
+        return(FALSE)
+    }
+
+    any(vapply(
+        psychro_marker_stat_classes(), inherits, logical(1L), x = layer$stat
+    ))
+}
+
 setup_psychro_geom_params <- function(layers, theme) {
     lapply(layers, function(layer) {
+        if (inherits(layer$geom, "GeomPsychroSaturation")) {
+            layer$geom_params$psychro.theme <- theme
+            layer$computed_geom_params$psychro.theme <- theme
+        }
         if (inherits(layer$geom, "GeomPsychroTile")) {
             layer$geom_params$psychro.theme <- theme
             layer$computed_geom_params$psychro.theme <- theme
@@ -254,6 +318,13 @@ setup_psychro_geom_params <- function(layers, theme) {
 
 psychro_state_stat_classes <- function() {
     c("StatPsychroState", "StatPsychroZone", "StatComfortState")
+}
+
+psychro_marker_stat_classes <- function() {
+    c(
+        "StatRelhum", "StatWetbulb", "StatVappres", "StatSpecvol",
+        "StatEnthalpy", "StatPsychroState", "StatComfortState"
+    )
 }
 
 psychro_panel_stat_classes <- function() {

@@ -12,7 +12,7 @@ test_that("psychrometric tile bins relative humidity inputs", {
                 gap = 0
             )
     )
-    tiles <- built$data[[1L]][order(built$data[[1L]]$x), ]
+    tiles <- first_built_data(built)[order(first_built_data(built)$x), ]
 
     expect_equal(tiles$count, c(2, 1))
     expect_equal(tiles$hours, tiles$count)
@@ -53,7 +53,7 @@ test_that("psychrometric tile bins direct humidity ratio inputs and summaries", 
                 gap = 0
             )
     )
-    tiles <- built$data[[1L]][order(built$data[[1L]]$x), ]
+    tiles <- first_built_data(built)[order(first_built_data(built)$x), ]
 
     expect_equal(tiles$count, c(2, 1))
     expect_equal(tiles$hours, c(2, 1))
@@ -74,8 +74,8 @@ test_that("psychrometric tile bins direct humidity ratio inputs and summaries", 
                 gap = 0
             )
     )
-    expect_equal(sum(built$data[[1L]]$hours), nrow(d))
-    expect_equal(built$data[[1L]]$xmin, c(20, 22), tolerance = 1e-8)
+    expect_equal(sum(first_built_data(built)$hours), nrow(d))
+    expect_equal(first_built_data(built)$xmin, c(20, 22), tolerance = 1e-8)
 })
 
 test_that("psychrometric tile defaults set gap and alpha", {
@@ -91,7 +91,7 @@ test_that("psychrometric tile defaults set gap and alpha", {
                 binwidth = c(2, 2)
             )
     )
-    tiles <- built$data[[1L]][order(built$data[[1L]]$x), ]
+    tiles <- first_built_data(built)[order(first_built_data(built)$x), ]
 
     expect_equal(tiles$xmax - tiles$xmin, c(1.84, 1.84), tolerance = 1e-8)
     expect_equal(
@@ -115,7 +115,7 @@ test_that("psychrometric tile defaults set gap and alpha", {
                 alpha = 1
             )
     )
-    tiles <- built$data[[1L]][order(built$data[[1L]]$x), ]
+    tiles <- first_built_data(built)[order(first_built_data(built)$x), ]
 
     expect_equal(tiles$xmax - tiles$xmin, c(2, 2), tolerance = 1e-8)
     expect_equal(tiles$ymax - tiles$ymin, c(0.002, 0.002), tolerance = 1e-8)
@@ -137,8 +137,8 @@ test_that("psychrometric tile defaults set gap and alpha", {
                 binwidth = c(2, 2)
             )
     )
-    expect_gt(length(unique(built$data[[1L]]$alpha)), 1L)
-    expect_false(any(built$data[[1L]]$alpha == 0.85))
+    expect_gt(length(unique(first_built_data(built)$alpha)), 1L)
+    expect_false(any(first_built_data(built)$alpha == 0.85))
 })
 
 test_that("psychrometric tile boundary controls bin alignment", {
@@ -156,7 +156,7 @@ test_that("psychrometric tile boundary controls bin alignment", {
                 gap = 0.2
             )
     )
-    tiles <- built$data[[1L]][order(built$data[[1L]]$x), ]
+    tiles <- first_built_data(built)[order(first_built_data(built)$x), ]
 
     expect_equal(tiles$cell_xmin, c(19, 21), tolerance = 1e-8)
     expect_equal(tiles$cell_xmax, c(21, 23), tolerance = 1e-8)
@@ -194,7 +194,7 @@ test_that("psychrometric tile cell grid covers the chart area", {
     )
 
     segments <- psychro_tile_cell_segments(
-        built$data[[1L]],
+        first_built_data(built),
         built$layout$panel_params[[1L]],
         built$layout$coord
     )
@@ -207,7 +207,7 @@ test_that("psychrometric tile cell grid covers the chart area", {
         built$layout$panel_params[[1L]], "y"
     )
 
-    expect_gt(nrow(segments), nrow(built$data[[1L]]) * 4L)
+    expect_gt(nrow(segments), nrow(first_built_data(built)) * 4L)
     expect_equal(sort(unique(vertical$x)), expected_x$value, tolerance = 1e-8)
     expect_equal(sort(unique(horizontal$y)), expected_y$value, tolerance = 1e-8)
     expect_true(all(c("major", "minor") %in% vertical$grid_type))
@@ -232,7 +232,7 @@ test_that("psychrometric tile cell grid can subdivide x and y axis breaks", {
     )
 
     segments <- psychro_tile_cell_segments(
-        built$data[[1L]],
+        first_built_data(built),
         built$layout$panel_params[[1L]],
         built$layout$coord
     )
@@ -267,7 +267,7 @@ test_that("psychrometric tile cell grid inherits x and y grid theme styles", {
     )
     cell_grid_data <- function(theme = theme_psychro(), ...) {
         psychro_tile_cell_grid_data(
-            built$data[[1L]],
+            first_built_data(built),
             built$layout$panel_params[[1L]],
             built$layout$coord,
             theme = theme,
@@ -347,7 +347,7 @@ test_that("psychrometric tile bodies are clipped to saturation", {
             gap = 0
         )
     built <- ggplot2::ggplot_build(plot)
-    tile <- built$data[[1L]]
+    tile <- first_built_data(built)
     polygons <- psychro_tile_polygon_data(tile, built$layout$coord, n = 32)
     saturation <- psychro_saturation_humratio(
         polygons$x,
@@ -424,7 +424,7 @@ test_that("psychrometric tile stats inherit IP units and pressure", {
                 binwidth = c(5, 10)
             )
     )
-    tiles <- built$data[[1L]]
+    tiles <- first_built_data(built)
 
     expect_equal(sum(tiles$count), nrow(d))
     expect_gt(max(tiles$y), 0)
@@ -458,7 +458,7 @@ test_that("psychrometric tile stats handle missing values", {
                 )
         )
     )
-    expect_equal(sum(built$data[[1L]]$count), 1)
+    expect_equal(sum(first_built_data(built)$count), 1)
 })
 
 test_that("psychrometric tiles build with grids, fill scales, and facets", {

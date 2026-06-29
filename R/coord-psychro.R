@@ -31,6 +31,7 @@ coord_psychro <- function(tdb_lim = NULL, hum_lim = NULL,
         altitude = altitude,
         units = units,
         mollier = mollier,
+        draw_saturation_fg = TRUE,
         expand = expand,
         default = default,
         clip = clip
@@ -395,20 +396,21 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
     },
 
     render_fg = function(self, panel_params, theme) {
-        sat <- psychro_coord_saturation(self, panel_params)
+        sat <- if (isFALSE(self$draw_saturation_fg)) {
+            NULL
+        } else {
+            psychro_coord_saturation(self, panel_params)
+        }
         border <- ggplot2::ggproto_parent(CoordCartesian, self)$render_fg(
             panel_params, theme
         )
-        if (is.null(sat)) {
-            return(border)
-        }
         range_tdb <- self$range_tdb(panel_params)
         range_hum <- self$range_hum(panel_params)
 
-        if (self$mollier) {
+        if (!is.null(sat) && self$mollier) {
             line_x <- sat$hum
             line_y <- sat$tdb
-        } else {
+        } else if (!is.null(sat)) {
             line_x <- sat$tdb
             line_y <- sat$hum
         }
@@ -418,12 +420,43 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
                 self$protractor, theme, self$mollier, range_tdb, range_hum,
                 self$units
             ),
-            ggplot2::element_render(
-                theme, "psychro.panel.grid.saturation",
-                x = line_x, y = line_y
-            ),
+            if (!is.null(sat)) {
+                ggplot2::element_render(
+                    theme, "psychro.panel.grid.saturation",
+                    x = line_x, y = line_y
+                )
+            },
             psychro_coord_extra_fg(self, panel_params, theme),
             border
+        )
+    }
+)
+
+GeomPsychroSaturation <- ggplot2::ggproto(
+    "GeomPsychroSaturation", ggplot2::Geom,
+    required_aes = character(),
+    default_aes = ggplot2::aes(),
+    draw_key = ggplot2::draw_key_blank,
+    extra_params = c("na.rm", "psychro.theme"),
+
+    draw_panel = function(data, panel_params, coord, psychro.theme = NULL, ...) {
+        sat <- psychro_coord_saturation(coord, panel_params)
+        if (is.null(sat)) {
+            return(grid::nullGrob())
+        }
+
+        if (coord$mollier) {
+            line_x <- sat$hum
+            line_y <- sat$tdb
+        } else {
+            line_x <- sat$tdb
+            line_y <- sat$hum
+        }
+
+        ggplot2::element_render(
+            psychro.theme %||% coord$psychro_theme %||% ggplot2::theme_get(),
+            "psychro.panel.grid.saturation",
+            x = line_x, y = line_y
         )
     }
 )
