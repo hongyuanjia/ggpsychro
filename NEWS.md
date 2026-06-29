@@ -1,7 +1,7 @@
 # ggpsychro 0.0.0.9000
 
 * Preserved ordinary ggplot2 aesthetics across legacy psychrometric stats.
-  (#TBD)
+  (#27)
 * Added Heat Index overlays, Givoni bioclimatic strategy zones, and per-zone
   styling controls for Givoni overlays. (#24)
 * Added optional contour labels to `geom_comfort_contour()`. (#26)
