@@ -4,6 +4,12 @@
 
 - Preserved ordinary ggplot2 aesthetics across legacy psychrometric
   stats. ([\#27](https://github.com/hongyuanjia/ggpsychro/issues/27))
+- Replaced foreground psychrometric panel masking with valid-region
+  clipping for ggpsychro-generated grids, stats, tiles, zones, and
+  comfort overlays, while allowing ordinary ggplot layers to draw in the
+  mask area and state markers to render above the saturation boundary.
+  ([\#4](https://github.com/hongyuanjia/ggpsychro/issues/4),
+  [\#28](https://github.com/hongyuanjia/ggpsychro/issues/28))
 - Added Heat Index overlays, Givoni bioclimatic strategy zones, and
   per-zone styling controls for Givoni overlays.
   ([\#24](https://github.com/hongyuanjia/ggpsychro/issues/24))
