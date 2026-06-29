@@ -12,4 +12,9 @@ is.ggpsychro(x)
 \description{
 Reports whether x is a ggplot object
 }
+\examples{
+is.ggpsychro(ggpsychro())
+is.ggpsychro(ggplot2::ggplot())
+
+}
 \keyword{internal}

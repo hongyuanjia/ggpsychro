@@ -13,9 +13,20 @@
 #' @author Hongyuan Jia
 #' @importFrom ggplot2 "%+replace%"
 #' @examples
-#' theme_psychro()
-#' theme_psychro_ashrae()
-#' theme_psychro_minimal()
+#' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+#'     theme_grey_psychro()
+#'
+#' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+#'     theme_gray_psychro()
+#'
+#' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+#'     theme_psychro()
+#'
+#' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+#'     theme_psychro_ashrae()
+#'
+#' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+#'     theme_psychro_minimal()
 #'
 #' @name theme
 #' @export

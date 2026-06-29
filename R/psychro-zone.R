@@ -90,6 +90,15 @@ NULL
 #'         type = "xy-points",
 #'         alpha = 0.25
 #'     )
+#'
+#' ggpsychro(tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
+#'     stat_psychro_zone(
+#'         aes(tdb = tdb, humratio = humratio),
+#'         data = polygon_zone,
+#'         type = "xy-points",
+#'         geom = "polygon",
+#'         alpha = 0.25
+#'     )
 #' @export
 geom_psychro_zone <- function(mapping = NULL, data = NULL, stat = "psychro_zone",
                               position = "identity", ..., type = "dbt-rh",

@@ -77,9 +77,20 @@ psychrochart's ASHRAE and minimal chart styles.
 Custom theme for psychrometric chart.
 }
 \examples{
-theme_psychro()
-theme_psychro_ashrae()
-theme_psychro_minimal()
+ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+    theme_grey_psychro()
+
+ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+    theme_gray_psychro()
+
+ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+    theme_psychro()
+
+ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+    theme_psychro_ashrae()
+
+ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+    theme_psychro_minimal()
 
 }
 \seealso{

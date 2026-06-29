@@ -6,16 +6,41 @@ NULL
 #' @inheritParams ggplot2::continuous_scale
 #' @inheritParams ggplot2::scale_x_continuous
 #'
-#' @param trans TODO: determined by `units`
+#' @param trans,transform A transformation object or transformer name passed
+#'   to the underlying ggplot2 continuous scale. The default [ggplot2::waiver()]
+#'   keeps the psychrometric scale in chart display units.
 #'
 #' @rdname scale
 #' @importFrom ggplot2 continuous_scale
 #' @export
 #' @examples
-#' ggpsychro(tdb_lim = c(0, 35), hum_lim = c(0, 50)) +
+#' # Configure dry-bulb and humidity-ratio axes.
+#' ggpsychro(tdb_lim = c(0, 35), hum_lim = c(0, 25)) +
+#'     scale_drybulb_continuous(breaks = seq(0, 35, by = 5)) +
+#'     scale_humratio_continuous(breaks = seq(0, 25, by = 5))
+#'
+#' # Configure relative-humidity and wet-bulb grid breaks.
+#' ggpsychro(tdb_lim = c(0, 35), hum_lim = c(0, 25)) +
 #'     scale_relhum_continuous(n.breaks = 8) +
-#'     scale_wetbulb_continuous(breaks = seq(25, 30, by = 5), minor_breaks = NULL) +
-#'     scale_vappres_continuous(breaks = seq(6000, 7000, by = 500), limits = c(6000, 7000))
+#'     scale_wetbulb_continuous(
+#'         breaks = seq(10, 30, by = 5),
+#'         minor_breaks = NULL
+#'     )
+#'
+#' # Configure vapor-pressure, specific-volume, and enthalpy grids.
+#' ggpsychro(tdb_lim = c(0, 35), hum_lim = c(0, 25)) +
+#'     scale_vappres_continuous(
+#'         breaks = seq(1000, 4000, by = 1000),
+#'         limits = c(1000, 4500)
+#'     ) +
+#'     scale_specvol_continuous(
+#'         breaks = seq(0.80, 0.95, by = 0.05),
+#'         limits = c(0.80, 0.95)
+#'     ) +
+#'     scale_enthalpy_continuous(
+#'         breaks = seq(20000, 80000, by = 20000),
+#'         limits = c(20000, 80000)
+#'     )
 #'
 scale_drybulb_continuous <- function(name = waiver(), breaks = waiver(), minor_breaks = waiver(),
                                      n.breaks = NULL, labels = waiver(), limits = NULL,

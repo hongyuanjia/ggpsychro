@@ -31,3 +31,14 @@ A ggplot2 theme element.
 \code{element_polygon()} is used by ggpsychro-specific theme elements such as
 \code{psychro.panel.background} and \code{psychro.panel.mask}.
 }
+\examples{
+ggpsychro(tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
+    ggplot2::theme(
+        psychro.panel.background = element_polygon(
+            fill = "#F7F7F2",
+            colour = "grey60",
+            size = 0.4
+        )
+    )
+
+}

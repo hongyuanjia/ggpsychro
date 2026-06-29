@@ -4,6 +4,60 @@ destination: docs
 template:
   bootstrap: 5
 
+reference:
+- title: Package overview
+  contents:
+  - ggpsychro-package
+
+- title: Core chart construction
+  contents:
+  - ggpsychro
+  - coord_psychro
+  - is.ggpsychro
+
+- title: Psychrometric equation layers and grids
+  contents:
+  - stat_relhum
+  - geom_grid_relhum
+  - geom_psychro_protractor
+
+- title: Psychrometric data layers
+  contents:
+  - geom_psychro_process
+  - geom_psychro_zone
+  - stat_psychro_bin
+
+- title: Thermal comfort calculations and models
+  contents:
+  - comfort_pmv
+  - comfort_model_pmv
+  - comfort_standard_ashrae55_2017
+  - comfort_strategy_givoni
+
+- title: Thermal comfort chart layers
+  contents:
+  - geom_comfort_overlay
+  - scale_fill_comfort_pmv
+
+- title: Scales, labels, and transformations
+  contents:
+  - scale_drybulb_continuous
+  - label_drybulb
+  - drybulb_trans
+  - demo_scale
+
+- title: Themes, presets, and elements
+  contents:
+  - theme
+  - psychro_preset
+  - element_polygon
+  - element_comfort_zone
+
+- title: Extension API
+  contents:
+  - ggpsychro-extensions
+  - ggpsychro-ggproto
+
 articles:
 - title: Start
   navbar:

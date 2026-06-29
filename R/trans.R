@@ -25,6 +25,7 @@ is.empty_trans <- function(trans) {
 #' plot(wetbulb_trans("SI"), xlim = c(-50, 40))
 #' plot(vappres_trans("SI"), xlim = c(1000, 4000))
 #' plot(specvol_trans("SI"), xlim = c(0.8, 1))
+#' plot(enthalpy_trans("SI"), xlim = c(1000, 2000))
 drybulb_trans <- function(units = "SI") {
     units <- match.arg(units, c("SI", "IP"))
     trans_new("drybulb", "force", "force",

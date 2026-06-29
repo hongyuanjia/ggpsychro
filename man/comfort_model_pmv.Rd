@@ -89,3 +89,47 @@ A comfort model object.
 Model objects capture the fixed inputs used by comfort layers. They can be
 reused across overlays, contours, zones, and point states.
 }
+\examples{
+# Create a PMV model object.
+comfort_model_pmv(met = 1.4, clo = 0.5)
+
+# Create a SET model object.
+comfort_model_set(v = 0.2)
+
+# Create an adaptive comfort model object.
+comfort_model_adaptive(t_running = 22)
+
+# Create a heat-index model object.
+comfort_model_heat_index(solar_exposure = 0.5)
+
+# Draw a PMV overlay using custom activity and clothing assumptions.
+ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+    geom_comfort_overlay(
+        model = comfort_model_pmv(met = 1.4, clo = 0.5),
+        n = c(45, 30)
+    )
+
+# Draw SET as the filled comfort metric.
+ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+    geom_comfort_overlay(
+        model = comfort_model_set(v = 0.2),
+        metric = "set",
+        n = c(45, 30)
+    )
+
+# Draw the adaptive acceptability region.
+ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+    geom_comfort_zone(
+        model = comfort_model_adaptive(t_running = 22),
+        metric = "acceptability",
+        n = c(45, 30),
+        alpha = 0.3
+    )
+
+# Draw heat-index categories with a solar exposure adjustment.
+ggpsychro(tdb_lim = c(25, 45), hum_lim = c(0, 32)) +
+    geom_comfort_heat_index(
+        model = comfort_model_heat_index(solar_exposure = 0.5),
+        n = c(55, 35)
+    )
+}
