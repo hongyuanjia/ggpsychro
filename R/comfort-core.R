@@ -59,6 +59,26 @@ comfort_check_givoni_strategy <- function(strategy) {
     strategy
 }
 
+comfort_check_scalar_finite <- function(x, name, allow_null = FALSE) {
+    if (is.null(x) && isTRUE(allow_null)) {
+        return(NULL)
+    }
+    x <- suppressWarnings(as.numeric(x))
+    if (length(x) != 1L || !is.finite(x)) {
+        stop(name, " must be a single finite number.", call. = FALSE)
+    }
+    x
+}
+
+comfort_check_flag <- function(x, name) {
+    if (!is.logical(x) || length(x) != 1L || is.na(x)) {
+        stop(name, " must be `TRUE` or `FALSE`.", call. = FALSE)
+    }
+    x
+}
+
+# Internal contour/band generators may receive unordered break candidates from
+# callers or defaults, so they normalize before constructing geometry.
 comfort_check_breaks <- function(x, name, n_min = 2L) {
     x <- sort(unique(as.numeric(x)))
     if (length(x) < n_min || any(!is.finite(x))) {
@@ -68,6 +88,8 @@ comfort_check_breaks <- function(x, name, n_min = 2L) {
     x
 }
 
+# Public comfort standards preserve the user's declared category order; sorting
+# here would silently turn an invalid standard into a different one.
 comfort_check_ordered_breaks <- function(x, name, n_min = 2L) {
     x <- as.numeric(x)
     if (length(x) < n_min || any(!is.finite(x)) || any(diff(x) <= 0)) {
@@ -149,6 +171,8 @@ comfort_stat_pressure <- function(data, pres) {
 }
 
 comfort_stat_context <- function(data, units, pres) {
+    # ggpsychro() injects units/pres through the layer data; explicit Stat
+    # parameters are only used when the layer is built outside that context.
     list(
         units = comfort_stat_units(data, units),
         pres = comfort_stat_pressure(data, pres)
@@ -523,7 +547,12 @@ comfort_contour_breaks <- function(metric, z, units = "SI") {
     if (metric == "heat_index") {
         return(comfort_heat_index_thresholds(units))
     }
-    pretty(range(z, finite = TRUE), n = 8)
+    z <- z[is.finite(z)]
+    if (!length(z)) {
+        return(numeric())
+    }
+    z_range <- range(z)
+    pretty(z_range, n = 8)
 }
 
 comfort_band_breaks <- function(metric, z, levels = NULL, units = "SI") {
@@ -620,7 +649,9 @@ comfort_isoband_data <- function(iso, low, high, metric, mollier,
 }
 
 comfort_zone_data <- function(model, metric, range, n, gap, units, pres,
-                              mollier, tdb_lim, hum_lim, na.rm = FALSE) {
+                              mollier, tdb_lim, hum_lim, na.rm = FALSE,
+                              rootband_levels = NULL,
+                              rootband_cache = NULL) {
     if (comfort_model_type(model) == "adaptive") {
         return(comfort_zone_adaptive(model, units, mollier, tdb_lim, hum_lim))
     }
@@ -629,7 +660,8 @@ comfort_zone_data <- function(model, metric, range, n, gap, units, pres,
     range <- comfort_zone_range(model, metric, range, units)
     if (comfort_model_type(model) == "pmv" && metric == "pmv") {
         return(comfort_pmv_band_data(
-            model, range, n[[1L]], units, pres, mollier, tdb_lim, hum_lim
+            model, range, n[[1L]], units, pres, mollier, tdb_lim, hum_lim,
+            rootband_levels = rootband_levels, rootband_cache = rootband_cache
         ))
     }
     comfort_band_data(model, metric, range, n, units, pres, mollier,

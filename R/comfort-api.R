@@ -270,6 +270,15 @@ comfort_model_pmv <- function(tr = NULL, vr = 0.1, met = 1.2, clo = 0.5,
                               wme = 0, model = "7730-2005",
                               limit_inputs = FALSE, round_output = FALSE) {
     model <- match.arg(model, "7730-2005")
+    # Layer model objects hold fixed environmental assumptions for a whole
+    # contour/grid evaluation; vectorized point inputs belong in comfort_pmv().
+    tr <- comfort_check_scalar_finite(tr, "`tr`", allow_null = TRUE)
+    vr <- comfort_check_scalar_finite(vr, "`vr`")
+    met <- comfort_check_scalar_finite(met, "`met`")
+    clo <- comfort_check_scalar_finite(clo, "`clo`")
+    wme <- comfort_check_scalar_finite(wme, "`wme`")
+    limit_inputs <- comfort_check_flag(limit_inputs, "`limit_inputs`")
+    round_output <- comfort_check_flag(round_output, "`round_output`")
     comfort_model(
         "pmv",
         list(tr = tr, vr = vr, met = met, clo = clo, wme = wme,
@@ -286,6 +295,17 @@ comfort_model_set <- function(tr = NULL, v = 0.1, met = 1.2, clo = 0.5,
                               position = c("standing", "sitting"),
                               round_output = FALSE) {
     position <- match.arg(position)
+    tr <- comfort_check_scalar_finite(tr, "`tr`", allow_null = TRUE)
+    v <- comfort_check_scalar_finite(v, "`v`")
+    met <- comfort_check_scalar_finite(met, "`met`")
+    clo <- comfort_check_scalar_finite(clo, "`clo`")
+    wme <- comfort_check_scalar_finite(wme, "`wme`")
+    body_surface_area <- comfort_check_scalar_finite(
+        body_surface_area, "`body_surface_area`"
+    )
+    p_atm <- comfort_check_scalar_finite(p_atm, "`p_atm`", allow_null = TRUE)
+    limit_inputs <- comfort_check_flag(limit_inputs, "`limit_inputs`")
+    round_output <- comfort_check_flag(round_output, "`round_output`")
     comfort_model(
         "set",
         list(tr = tr, v = v, met = met, clo = clo, wme = wme,
@@ -304,6 +324,11 @@ comfort_model_adaptive <- function(t_running, tr = NULL, v = 0.1,
                                    category = NULL, limit_inputs = TRUE,
                                    round_output = FALSE) {
     standard <- match.arg(standard)
+    t_running <- comfort_check_scalar_finite(t_running, "`t_running`")
+    tr <- comfort_check_scalar_finite(tr, "`tr`", allow_null = TRUE)
+    v <- comfort_check_scalar_finite(v, "`v`")
+    limit_inputs <- comfort_check_flag(limit_inputs, "`limit_inputs`")
+    round_output <- comfort_check_flag(round_output, "`round_output`")
     comfort_model(
         "adaptive",
         list(t_running = t_running, tr = tr, v = v, standard = standard,
@@ -317,12 +342,15 @@ comfort_model_adaptive <- function(t_running, tr = NULL, v = 0.1,
 comfort_model_heat_index <- function(solar_exposure = 0,
                                      limit_inputs = TRUE,
                                      round_output = FALSE) {
-    solar_exposure <- as.numeric(solar_exposure)
-    if (length(solar_exposure) != 1L || !is.finite(solar_exposure) ||
-            solar_exposure < 0 || solar_exposure > 1) {
+    solar_exposure <- comfort_check_scalar_finite(
+        solar_exposure, "`solar_exposure`"
+    )
+    if (solar_exposure < 0 || solar_exposure > 1) {
         stop("`solar_exposure` must be a single finite value from 0 to 1.",
             call. = FALSE)
     }
+    limit_inputs <- comfort_check_flag(limit_inputs, "`limit_inputs`")
+    round_output <- comfort_check_flag(round_output, "`round_output`")
     comfort_model(
         "heat_index",
         list(solar_exposure = solar_exposure, limit_inputs = limit_inputs,

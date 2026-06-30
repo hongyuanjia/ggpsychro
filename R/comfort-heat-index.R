@@ -94,6 +94,8 @@ comfort_heat_index_zone_data <- function(model, category_id = NULL, n, units, pr
         return(comfort_empty_band())
     }
 
+    # Each category remains a separate ggplot layer, but all categories are cut
+    # from the same node grid so repeated layers do not recompute heat index.
     m <- comfort_heat_index_grid_matrix(
         model, n, units, pres, tdb_lim, hum_lim, grid_cache = grid_cache
     )
@@ -177,6 +179,26 @@ comfort_heat_index_zone_from_grid <- function(m, category_id, thresholds, specs,
         out$category <- specs[[category_id]]$label
         out$fill <- specs[[category_id]]$fill
     }
+    out
+}
+
+comfort_heat_index_contour_data <- function(model, n, units, pres, mollier,
+                                            tdb_lim, hum_lim,
+                                            grid_cache = NULL) {
+    # Contours use the same node grid as filled zones so threshold paths align
+    # exactly with the zone polygons when a wrapper-local cache is supplied.
+    m <- comfort_heat_index_grid_matrix(
+        model, n, units, pres, tdb_lim, hum_lim, grid_cache = grid_cache
+    )
+    thresholds <- comfort_heat_index_thresholds(units)
+    lines <- isoband::isolines(
+        x = m$tdb, y = m$humratio, z = t(m$value),
+        levels = thresholds
+    )
+    out <- comfort_isoband_data(
+        lines, thresholds, thresholds, m$metric, mollier, geom = "path"
+    )
+    out <- comfort_add_contour_labels(out)
     out
 }
 

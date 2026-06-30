@@ -167,7 +167,8 @@ geom_comfort_heat_index <- function(mapping = NULL, data = NULL,
     layer_mapping <- comfort_computed_xy_mapping(mapping)
     params <- list(...)
     zone_specs <- comfort_heat_index_zone_specs()
-    # Share the expensive grid only across this grouped heat-index zone build.
+    # Keep one layer per heat-index category so fill/alpha/legend semantics stay
+    # unchanged, but share the expensive node grid across those sibling layers.
     zone_grid_cache <- new.env(parent = emptyenv())
     layers <- vector("list", length(zone_specs))
     for (i in seq_along(zone_specs)) {
@@ -197,7 +198,8 @@ geom_comfort_heat_index <- function(mapping = NULL, data = NULL,
         mapping = layer_mapping, geom = "path", position = position,
         show.legend = FALSE, inherit.aes = inherit.aes,
         params = utils::modifyList(line_params, list(
-            na.rm = na.rm, model = model, n = n
+            na.rm = na.rm, model = model, n = n,
+            grid_cache = zone_grid_cache
         ))
     )
 
@@ -352,6 +354,9 @@ geom_comfort_pmv_lines <- function(mapping = NULL, data = NULL,
         params$linewidth <- 0.45
     }
 
+    # Lines, sensation labels, and axis labels are separate stats, but they all
+    # trace the same PMV roots for a given level set inside this wrapper call.
+    pmv_curve_cache <- new.env(parent = emptyenv())
     sensation_levels <- comfort_pmv_sensation_levels(levels)
     line_levels <- if (isTRUE(label_sensation)) {
         setdiff(levels, sensation_levels)
@@ -366,7 +371,8 @@ geom_comfort_pmv_lines <- function(mapping = NULL, data = NULL,
             mapping = mapping, geom = "path", position = position,
             show.legend = show.legend, inherit.aes = inherit.aes,
             params = utils::modifyList(params, list(
-                levels = line_levels, label_type = "none"
+                levels = line_levels, label_type = "none",
+                curve_cache = pmv_curve_cache
             ))
         )
     }
@@ -387,6 +393,7 @@ geom_comfort_pmv_lines <- function(mapping = NULL, data = NULL,
                 levels = sensation_levels, label_type = "sensation",
                 label_hjust = sensation_label_hjust,
                 label_vjust = sensation_label_vjust,
+                curve_cache = pmv_curve_cache,
                 reverse = TRUE, gap = TRUE, padding = padding,
                 upright = TRUE, remove_long = FALSE
             ))
@@ -408,6 +415,7 @@ geom_comfort_pmv_lines <- function(mapping = NULL, data = NULL,
             inherit.aes = inherit.aes,
             params = utils::modifyList(axis_params, list(
                 axis_label_hjust = axis_label_hjust,
+                curve_cache = pmv_curve_cache,
                 hjust = comfort_pmv_axis_label_text_hjust(axis_label_hjust),
                 vjust = comfort_pmv_axis_label_text_vjust(
                     axis_label_vjust, axis_label_size
@@ -437,6 +445,10 @@ geom_comfort_standard_zone <- function(standard = comfort_standard_ashrae55_2017
     params$n <- n
 
     layers <- list()
+    # These caches are intentionally scoped to one layer composition: they avoid
+    # duplicate root tracing without retaining model/coordinate state globally.
+    pmv_rootband_cache <- new.env(parent = emptyenv())
+    pmv_curve_cache <- new.env(parent = emptyenv())
     # Standards are drawn as one filled PMV band per adjacent break pair; curve
     # layers are added afterward so boundaries stay visible over the fill.
     ranges <- cbind(
@@ -447,6 +459,7 @@ geom_comfort_standard_zone <- function(standard = comfort_standard_ashrae55_2017
     for (i in seq_len(nrow(ranges))) {
         band_params <- params
         band_params$range <- ranges[i, ]
+        band_params$rootband_cache <- pmv_rootband_cache
         band_params$fill <- standard$fills[[i]]
         band_params$alpha <- comfort_standard_alpha(
             alpha_override, standard$alphas, i
@@ -464,6 +477,7 @@ geom_comfort_standard_zone <- function(standard = comfort_standard_ashrae55_2017
 
     line_params <- params
     line_params$levels <- standard$breaks
+    line_params$curve_cache <- pmv_curve_cache
     if (is.null(line_params$colour) && is.null(line_params$color)) {
         line_params$colour <- "#4A4A4A"
     }

@@ -3,6 +3,8 @@ NULL
 
 # All comfort stats route setup_data() through init_stat_data() so units/pres
 # injected by ggpsychro() remain available when compute_panel() resolves model inputs.
+# *_cache extra_params are private wrapper-local environments used to share
+# expensive root/grid work between sibling layers without global state.
 GeomComfortTile <- ggplot2::ggproto(
     "GeomComfortTile", ggplot2::GeomTile
 )
@@ -128,15 +130,15 @@ StatComfortPmvCurve <- ggplot2::ggproto(
 
     extra_params = c(
         "na.rm", "model", "levels", "n", "label_type", "label_hjust",
-        "label_vjust", "reverse", "units", "pres", "mollier", "tdb_lim",
-        "hum_lim"
+        "label_vjust", "reverse", "curve_cache", "units", "pres",
+        "mollier", "tdb_lim", "hum_lim"
     ),
 
     compute_panel = function(self, data, scales, model = comfort_model_pmv(),
                              levels = seq(-3, 3, by = 0.5), n = 360,
                              label_type = c("none", "sensation", "boundary", "comfort"),
                              label_hjust = NULL, label_vjust = NULL,
-                             reverse = FALSE,
+                             reverse = FALSE, curve_cache = NULL,
                              units, pres, mollier = FALSE,
                              tdb_lim = NULL, hum_lim = NULL,
                              na.rm = FALSE) {
@@ -147,7 +149,8 @@ StatComfortPmvCurve <- ggplot2::ggproto(
         comfort_pmv_curve_data(
             model, levels, n, units, pres, mollier, tdb_lim, hum_lim,
             label = label_type, label_hjust = label_hjust,
-            label_vjust = label_vjust, reverse = reverse
+            label_vjust = label_vjust, reverse = reverse,
+            curve_cache = curve_cache
         )
     }
 )
@@ -165,13 +168,14 @@ StatComfortPmvAxisLabel <- ggplot2::ggproto(
     dropped_aes = c("pres", "units"),
 
     extra_params = c(
-        "na.rm", "model", "levels", "n", "axis_label_hjust",
+        "na.rm", "model", "levels", "n", "axis_label_hjust", "curve_cache",
         "units", "pres", "mollier", "tdb_lim", "hum_lim"
     ),
 
     compute_panel = function(self, data, scales, model = comfort_model_pmv(),
                              levels = seq(-3, 3, by = 0.5), n = 360,
                              axis_label_hjust = ggplot2::waiver(),
+                             curve_cache = NULL,
                              units, pres, mollier = FALSE,
                              tdb_lim = NULL, hum_lim = NULL,
                              na.rm = FALSE) {
@@ -180,7 +184,8 @@ StatComfortPmvAxisLabel <- ggplot2::ggproto(
         pres <- ctx$pres
         comfort_pmv_axis_label_data(
             model, levels, n, units, pres, mollier, tdb_lim, hum_lim,
-            axis_label_hjust = axis_label_hjust
+            axis_label_hjust = axis_label_hjust,
+            curve_cache = curve_cache
         )
     }
 )
@@ -238,13 +243,15 @@ StatComfortZone <- ggplot2::ggproto(
     dropped_aes = c("pres", "units"),
 
     extra_params = c(
-        "na.rm", "model", "metric", "range", "n", "gap", "units",
-        "pres", "mollier", "tdb_lim", "hum_lim"
+        "na.rm", "model", "metric", "range", "n", "gap",
+        "rootband_levels", "rootband_cache", "units", "pres", "mollier",
+        "tdb_lim", "hum_lim"
     ),
 
     compute_panel = function(self, data, scales, model = comfort_model_pmv(),
                              metric = NULL, range = NULL,
-                             n = NULL, gap = 0, units, pres,
+                             n = NULL, gap = 0, rootband_levels = NULL,
+                             rootband_cache = NULL, units, pres,
                              mollier = FALSE, tdb_lim = NULL, hum_lim = NULL,
                              na.rm = FALSE) {
         ctx <- comfort_stat_context(data, units, pres)
@@ -252,7 +259,8 @@ StatComfortZone <- ggplot2::ggproto(
         pres <- ctx$pres
         comfort_zone_data(
             model, metric, range, comfort_default_n(model, n), gap, units,
-            pres, mollier, tdb_lim, hum_lim, na.rm = na.rm
+            pres, mollier, tdb_lim, hum_lim, na.rm = na.rm,
+            rootband_levels = rootband_levels, rootband_cache = rootband_cache
         )
     }
 )
@@ -305,22 +313,22 @@ StatComfortHeatIndexContour <- ggplot2::ggproto(
     dropped_aes = c("pres", "units"),
 
     extra_params = c(
-        "na.rm", "model", "n", "units", "pres",
+        "na.rm", "model", "n", "grid_cache", "units", "pres",
         "mollier", "tdb_lim", "hum_lim"
     ),
 
     compute_panel = function(self, data, scales,
                              model = comfort_model_heat_index(),
-                             n = c(160, 100), units, pres, mollier = FALSE,
+                             n = c(160, 100), grid_cache = NULL,
+                             units, pres, mollier = FALSE,
                              tdb_lim = NULL, hum_lim = NULL,
                              na.rm = FALSE) {
         ctx <- comfort_stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
-        comfort_contour_data(
-            model, "heat_index", comfort_heat_index_thresholds(units),
-            comfort_grid_n(n), units, pres, mollier, tdb_lim, hum_lim,
-            contour_method = "isoband"
+        comfort_heat_index_contour_data(
+            model, comfort_grid_n(n), units, pres, mollier, tdb_lim, hum_lim,
+            grid_cache = grid_cache
         )
     }
 )
