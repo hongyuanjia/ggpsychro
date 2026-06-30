@@ -1,4 +1,4 @@
-# ggpsychro 0.0.0.9000
+# ggpsychro 0.1.0
 
 * Refactored the ggpsychro build pipeline and comfort overlay internals to
   isolate build-time state, guard ggplot2 internals, and split comfort code

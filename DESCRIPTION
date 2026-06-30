@@ -1,6 +1,6 @@
 Package: ggpsychro
 Title: A 'ggplot2' Extension for Making Psychrometric Charts
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R:
     person(given = "Hongyuan",
            family = "Jia",
@@ -8,7 +8,11 @@ Authors@R:
            email = "hongyuan.jia@bears-berkeley.sg",
            comment = c(ORCID = "0000-0002-0075-8183"))
 Description:
-    A 'ggplot2' extension for making psychrometric charts.
+    Provides 'ggplot2' coordinates, layers, scales, themes, and presets for
+    creating psychrometric charts. The package supports SI and IP units,
+    psychrometric grids, state points, process lines, zones, and thermal comfort
+    overlays for heating, ventilation, air conditioning, and building
+    performance workflows.
 Depends:
     R (>= 4.1),
     ggplot2 (>= 4.0.0)
