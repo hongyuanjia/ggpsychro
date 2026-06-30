@@ -436,6 +436,12 @@ psychro_clip_geom <- function(geom, filter_anchor = FALSE,
 plot_clone <- function(plot) {
     p <- plot
     p@scales <- plot@scales$clone()
+    # Build setup writes derived psychro state into ggproto members, so keep
+    # those mutations local to the transient plot used by ggplot_build().
+    p@layers <- lapply(plot@layers, function(layer) ggplot2::ggproto(NULL, layer))
+    p@coordinates <- ggplot2::ggproto(NULL, plot@coordinates)
+    p@facet <- ggplot2::ggproto(NULL, plot@facet)
+    p@guides <- ggplot2::ggproto(NULL, plot@guides)
 
     p
 }

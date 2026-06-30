@@ -1081,6 +1081,55 @@ test_that("Psychrometric stats draw retained aesthetics in common plots", {
     )
 })
 
+test_that("building ggpsychro plots does not mutate source plot state", {
+    p <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+        geom_psychro_tile(
+            ggplot2::aes(x, y),
+            data = data.frame(x = 20, y = 10)
+        )
+
+    # Guard against build-time psychro metadata leaking back onto the user-held plot.
+    stat_param_names <- names(p@layers[[1L]]$stat_params)
+    expect_null(p@layers[[1L]]$geom_params$psychro.theme)
+    expect_null(p@coordinates$pressure)
+
+    invisible(ggplot2::ggplot_build(p))
+
+    expect_equal(names(p@layers[[1L]]$stat_params), stat_param_names)
+    expect_false(any(c("units", "pres", "mollier", "tdb_lim", "hum_lim") %in%
+        names(p@layers[[1L]]$stat_params)))
+    expect_null(p@coordinates$pressure)
+
+    invisible(ggplot2::ggplotGrob(p))
+
+    expect_equal(names(p@layers[[1L]]$stat_params), stat_param_names)
+    expect_null(p@layers[[1L]]$geom_params$psychro.theme)
+    expect_null(p@coordinates$pressure)
+})
+
+test_that("rebuilt plots do not reuse stale inherited psychro params", {
+    d <- data.frame(tdb = 77, relhum = 50)
+    p <- ggpsychro(d, tdb_lim = c(50, 100), hum_lim = c(0, 60)) +
+        stat_psychro_state(ggplot2::aes(tdb = tdb, relhum = relhum))
+
+    invisible(ggplot2::ggplot_build(p))
+    suppressMessages(
+        rebuilt <- p + coord_psychro(
+            tdb_lim = c(50, 100), hum_lim = c(0, 140), units = "IP"
+        )
+    )
+    fresh <- ggpsychro(
+        d, tdb_lim = c(50, 100), hum_lim = c(0, 140), units = "IP"
+    ) +
+        stat_psychro_state(ggplot2::aes(tdb = tdb, relhum = relhum))
+
+    rebuilt_data <- ggplot2::ggplot_build(rebuilt)$data[[1L]]
+    fresh_data <- ggplot2::ggplot_build(fresh)$data[[1L]]
+
+    expect_null(p@layers[[1L]]$stat_params$units)
+    expect_equal(rebuilt_data$y, fresh_data$y, tolerance = 1e-8)
+})
+
 test_that("Enthalpy stat creates y output without an explicit y aesthetic", {
     d <- data.frame(
         dry_bulb_temperature = c(18, 24, 30),
