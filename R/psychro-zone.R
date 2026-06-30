@@ -24,6 +24,7 @@ NULL
 #' @inheritParams ggplot2::geom_polygon
 #' @param type A zone type.
 #' @param n Number of samples used for computed zone boundaries.
+#' @return A ggplot layer.
 #'
 #' @rdname psychro_zone
 #' @examples

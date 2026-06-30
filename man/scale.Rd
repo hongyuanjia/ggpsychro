@@ -186,6 +186,9 @@ keeps the psychrometric scale in chart display units.}
 
 \item{...}{Other arguments passed on to \verb{scale_(x|y)_continuous()}}
 }
+\value{
+A ggplot2 continuous scale object.
+}
 \description{
 Transformation object for psychrometric chart
 }

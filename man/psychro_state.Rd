@@ -131,6 +131,9 @@ give the geom as \code{"point"}.
 \link[ggplot2:layer_geoms]{layer geom} documentation.
 }}
 }
+\value{
+A ggplot layer.
+}
 \description{
 \code{stat_psychro_state()} converts a dry-bulb temperature plus exactly one
 psychrometric state property to chart coordinates. \code{geom_psychro_process()}

@@ -9,6 +9,7 @@ NULL
 #' @param trans,transform A transformation object or transformer name passed
 #'   to the underlying ggplot2 continuous scale. The default [ggplot2::waiver()]
 #'   keeps the psychrometric scale in chart display units.
+#' @return A ggplot2 continuous scale object.
 #'
 #' @rdname scale
 #' @importFrom ggplot2 continuous_scale

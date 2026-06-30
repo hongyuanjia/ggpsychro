@@ -35,6 +35,7 @@ NULL
 #'
 #' @inheritParams ggplot2::layer
 #' @inheritParams ggplot2::geom_point
+#' @return A ggplot layer.
 #' @importFrom ggplot2 ggproto Stat Geom
 #' @rdname stat
 #' @examples

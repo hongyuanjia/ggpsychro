@@ -218,6 +218,9 @@ displayed as described in \code{?plotmath}. Default: \code{FALSE}.}
 
 \item{...}{Other arguments passed on to \code{\link[base:format]{base::format()}}.}
 }
+\value{
+A labelling function that formats numeric breaks.
+}
 \description{
 Format numbers as main variables on the psychrometric chart.
 }

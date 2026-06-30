@@ -5,6 +5,7 @@ NULL
 #'
 #' @inheritParams ggplot2::coord_cartesian
 #' @inheritParams ggpsychro
+#' @return A ggplot2 coordinate system object for psychrometric charts.
 #' @examples
 #' ggpsychro() +
 #'     coord_psychro(tdb_lim = c(10, 35), hum_lim = c(0, 25))

@@ -7,5 +7,6 @@
 #'
 #' @name ggpsychro-extensions
 #' @rdname ggpsychro-extensions
+#' @return A ggproto object used internally by ggpsychro extensions.
 #' @keywords internal
 NULL

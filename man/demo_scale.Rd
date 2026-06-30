@@ -11,6 +11,9 @@ demo_scale(x, ...)
 
 \item{...}{Other arguments pass to scale functions}
 }
+\value{
+A ggplot object demonstrating the supplied scale settings.
+}
 \description{
 This function generates ggplot2 code needed to use scales functions for real
 code.

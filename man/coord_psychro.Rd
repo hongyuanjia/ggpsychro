@@ -61,6 +61,9 @@ limits are set via \code{xlim} and \code{ylim} and some data points fall outside
 limits, then those data points may show up in places such as the axes, the
 legend, the plot title, or the plot margins.}
 }
+\value{
+A ggplot2 coordinate system object for psychrometric charts.
+}
 \description{
 Psychrometric coordinates
 }

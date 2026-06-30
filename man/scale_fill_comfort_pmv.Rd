@@ -25,6 +25,9 @@ scale_fill_comfort_pmv(
 
 \item{oob}{Out-of-bounds handler.}
 }
+\value{
+A ggplot2 fill scale.
+}
 \description{
 A diverging blue-white-red fill scale centered on PMV 0.
 }

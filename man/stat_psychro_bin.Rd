@@ -179,6 +179,9 @@ to the computed bin spacing.}
 inherits from the current \code{panel.grid.*.x} and \code{panel.grid.*.y} theme
 elements. Explicit values override the inherited theme style.}
 }
+\value{
+A ggplot layer.
+}
 \description{
 \code{stat_psychro_bin()} bins observations on dry-bulb temperature and humidity
 ratio coordinates. \code{geom_psychro_tile()} draws the result as tiles, which is

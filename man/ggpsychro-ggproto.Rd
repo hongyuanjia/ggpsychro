@@ -5,6 +5,9 @@
 \alias{ggpsychro-ggproto}
 \alias{CoordPsychro}
 \title{Base ggproto classes for ggpsychro}
+\value{
+A ggproto object used internally by ggpsychro.
+}
 \description{
 Base ggproto classes for ggpsychro
 }

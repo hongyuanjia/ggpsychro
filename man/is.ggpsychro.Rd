@@ -9,6 +9,9 @@ is.ggpsychro(x)
 \arguments{
 \item{x}{An object to test}
 }
+\value{
+A single logical value.
+}
 \description{
 Reports whether x is a ggplot object
 }

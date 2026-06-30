@@ -16,6 +16,7 @@ NULL
 #'
 #' @inheritParams ggplot2::layer
 #' @inheritParams ggplot2::geom_path
+#' @return A ggplot layer.
 #' @rdname psychro_state
 #' @examples
 #' process <- data.frame(
