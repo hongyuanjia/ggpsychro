@@ -2,6 +2,10 @@
 
 ## ggpsychro 0.0.0.9000
 
+- Refactored the ggpsychro build pipeline and comfort overlay internals
+  to isolate build-time state, guard ggplot2 internals, and split
+  comfort code into focused modules.
+  ([\#31](https://github.com/hongyuanjia/ggpsychro/issues/31))
 - Added runnable reference examples across exported documentation topics
   and grouped pkgdown reference pages by workflow area.
   ([\#29](https://github.com/hongyuanjia/ggpsychro/issues/29))

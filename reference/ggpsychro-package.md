@@ -15,4 +15,4 @@ Useful links:
 ## Author
 
 **Maintainer**: Hongyuan Jia <hongyuan.jia@bears-berkeley.sg>
-([ORCID](https://orcid.org/02-0075-8183))
+([ORCID](https://orcid.org/0000-0002-0075-8183))
