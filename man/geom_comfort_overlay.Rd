@@ -318,6 +318,9 @@ give the geom as \code{"point"}.
 \link[ggplot2:layer_geoms]{layer geom} documentation.
 }}
 }
+\value{
+A ggplot layer or a list of ggplot additions.
+}
 \description{
 \code{geom_comfort_overlay()} samples a psychrometric panel on a dry-bulb by
 humidity-ratio grid and draws the selected comfort metric as filled contour

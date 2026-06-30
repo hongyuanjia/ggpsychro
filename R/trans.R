@@ -14,6 +14,7 @@ is.empty_trans <- function(trans) {
 #'
 #' @param units A string indicating the system of units chosen. Should be either
 #'        `"SI"` or `"IP"`.
+#' @return A [scales::trans_new()] transformation object.
 #'
 #' @rdname trans
 #' @importFrom scales trans_new extended_breaks regular_minor_breaks

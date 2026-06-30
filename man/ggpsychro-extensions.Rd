@@ -13,6 +13,9 @@
 \alias{StatPsychroState}
 \alias{StatPsychroZone}
 \title{ggpsychro extensions to ggplot2}
+\value{
+A ggproto object used internally by ggpsychro extensions.
+}
 \description{
 ggpsychro makes heavy use of the ggproto class system to extend the
 functionality of ggplot2. In general the actual classes should be of little

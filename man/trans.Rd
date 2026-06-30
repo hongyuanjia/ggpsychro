@@ -28,6 +28,9 @@ enthalpy_trans(units = "SI")
 \item{units}{A string indicating the system of units chosen. Should be either
 \code{"SI"} or \code{"IP"}.}
 }
+\value{
+A \code{\link[scales:new_transform]{scales::trans_new()}} transformation object.
+}
 \description{
 Create transformation objects for psychrometric chart
 }

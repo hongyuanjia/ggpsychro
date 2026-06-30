@@ -53,6 +53,7 @@ NULL
 #'   with [element_comfort_zone()], [ggplot2::element_polygon()], or ordinary
 #'   named lists with fields `fill`, `colour`/`color`, `linewidth`, `linetype`,
 #'   `alpha`, and `linejoin`.
+#' @return A ggplot layer or a list of ggplot additions.
 #'
 #' @examples
 #' # Draw filled PMV comfort bands.
@@ -717,6 +718,7 @@ stat_comfort_state <- function(mapping = NULL, data = NULL, geom = "point",
 #' @param low,mid,high Endpoint and midpoint colours.
 #' @param midpoint Scale midpoint.
 #' @param oob Out-of-bounds handler.
+#' @return A ggplot2 fill scale.
 #'
 #' @examples
 #' # Use the default PMV colour scale.

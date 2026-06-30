@@ -24,6 +24,7 @@ default_labs <- function(units = "SI", mollier = FALSE) {
 #' @param parse If `TRUE`, the labels will be parsed into expressions and
 #'        displayed as described in `?plotmath`. Default: `FALSE`.
 #' @inherit scales::number_format params return
+#' @return A labelling function that formats numeric breaks.
 #'
 #' @examples
 #' demo_scale(10:50, labels = label_drybulb(units = "SI", parse = TRUE))
@@ -225,6 +226,7 @@ force_all <- function (...) list(...)
 #'
 #' @param x A vector of data
 #' @param ... Other arguments pass to scale functions
+#' @return A ggplot object demonstrating the supplied scale settings.
 #'
 #' @examples
 #' demo_scale(0:10, labels = scales::label_number())

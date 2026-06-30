@@ -66,6 +66,9 @@ position along each grid line. \code{NA} hides labels.}
 
 \item{label_parse}{If \code{TRUE}, labels are parsed as plotmath expressions.}
 }
+\value{
+A ggplot addition that controls rendering of a psychrometric grid.
+}
 \description{
 These helpers provide ggplot-style controls for psychrometric reference
 grids. They do not add data layers; they mark a grid as visible and let

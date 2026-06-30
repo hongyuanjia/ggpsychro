@@ -58,6 +58,8 @@ NULL
 #' * `width`, `height`: tile dimensions after applying `gap`.
 #' * `cell_xmin`, `cell_xmax`, `cell_ymin`, `cell_ymax`: full bin boundaries.
 #'
+#' @return A ggplot layer.
+#'
 #' @examples
 #' d <- data.frame(
 #'     dry_bulb = c(20.1, 20.4, 22.2, 22.5),

@@ -94,6 +94,7 @@ ggpsychro <- function (data = NULL, mapping = aes(), tdb_lim = NULL, hum_lim = N
 
 #' Reports whether x is a ggplot object
 #' @param x An object to test
+#' @return A single logical value.
 #'
 #' @examples
 #' is.ggpsychro(ggpsychro())

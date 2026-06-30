@@ -16,6 +16,7 @@
 #' @param label_loc A single number in range `[0, 1]` indicating the label
 #'   position along each grid line. `NA` hides labels.
 #' @param label_parse If `TRUE`, labels are parsed as plotmath expressions.
+#' @return A ggplot addition that controls rendering of a psychrometric grid.
 #'
 #' @rdname geom_grid
 #' @examples
