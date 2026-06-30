@@ -715,6 +715,30 @@ test_that("Psychrometric charts build with common ggplot features", {
     )
 })
 
+test_that("ggplot2 build internals are available with expected signatures", {
+    expect_silent(ggplot2_check_build_internals())
+
+    specs <- ggplot2_build_internal_specs()
+    internals <- ggplot2_build_internals(refresh = TRUE)
+
+    expect_named(internals, names(specs))
+    expect_true(all(vapply(internals, is.function, logical(1L))))
+    expect_length(ggplot2_build_internal_problems(internals, specs), 0L)
+})
+
+test_that("ggplot2 build internal signature checks report actionable problems", {
+    specs <- list(needed = c("x", "y"), absent = "z")
+    internals <- list(needed = function(x) NULL, absent = NULL)
+    problems <- ggplot2_build_internal_problems(internals, specs)
+    problem_text <- paste(problems, collapse = "\n")
+
+    expect_match(problem_text, "`needed\\(\\)` has incompatible arguments")
+    expect_match(problem_text, "expected x, y")
+    expect_match(problem_text, "found x")
+    expect_match(problem_text, "y")
+    expect_match(problem_text, "missing `absent\\(\\)`")
+})
+
 test_that("Psychrometric grid labels are rendered only for explicit helpers", {
     expect_equal(
         count_textpath_shapes(ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50))),
@@ -1079,6 +1103,55 @@ test_that("Psychrometric stats draw retained aesthetics in common plots", {
         "psychro stat mixed aesthetics",
         p_mixed
     )
+})
+
+test_that("building ggpsychro plots does not mutate source plot state", {
+    p <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+        geom_psychro_tile(
+            ggplot2::aes(x, y),
+            data = data.frame(x = 20, y = 10)
+        )
+
+    # Guard against build-time psychro metadata leaking back onto the user-held plot.
+    stat_param_names <- names(p@layers[[1L]]$stat_params)
+    expect_null(p@layers[[1L]]$geom_params$psychro.theme)
+    expect_null(p@coordinates$pressure)
+
+    invisible(ggplot2::ggplot_build(p))
+
+    expect_equal(names(p@layers[[1L]]$stat_params), stat_param_names)
+    expect_false(any(c("units", "pres", "mollier", "tdb_lim", "hum_lim") %in%
+        names(p@layers[[1L]]$stat_params)))
+    expect_null(p@coordinates$pressure)
+
+    invisible(ggplot2::ggplotGrob(p))
+
+    expect_equal(names(p@layers[[1L]]$stat_params), stat_param_names)
+    expect_null(p@layers[[1L]]$geom_params$psychro.theme)
+    expect_null(p@coordinates$pressure)
+})
+
+test_that("rebuilt plots do not reuse stale inherited psychro params", {
+    d <- data.frame(tdb = 77, relhum = 50)
+    p <- ggpsychro(d, tdb_lim = c(50, 100), hum_lim = c(0, 60)) +
+        stat_psychro_state(ggplot2::aes(tdb = tdb, relhum = relhum))
+
+    invisible(ggplot2::ggplot_build(p))
+    suppressMessages(
+        rebuilt <- p + coord_psychro(
+            tdb_lim = c(50, 100), hum_lim = c(0, 140), units = "IP"
+        )
+    )
+    fresh <- ggpsychro(
+        d, tdb_lim = c(50, 100), hum_lim = c(0, 140), units = "IP"
+    ) +
+        stat_psychro_state(ggplot2::aes(tdb = tdb, relhum = relhum))
+
+    rebuilt_data <- ggplot2::ggplot_build(rebuilt)$data[[1L]]
+    fresh_data <- ggplot2::ggplot_build(fresh)$data[[1L]]
+
+    expect_null(p@layers[[1L]]$stat_params$units)
+    expect_equal(rebuilt_data$y, fresh_data$y, tolerance = 1e-8)
 })
 
 test_that("building ggpsychro plots does not mutate source plot state", {

@@ -6,7 +6,7 @@ Authors@R:
            family = "Jia",
            role = c("aut", "cre"),
            email = "hongyuan.jia@bears-berkeley.sg",
-           comment = c(ORCID = "02-0075-8183"))
+           comment = c(ORCID = "0000-0002-0075-8183"))
 Description:
     A 'ggplot2' extension for making psychrometric charts.
 Depends:
@@ -40,7 +40,14 @@ Collate:
     'stat-psychro-bin.R'
     'psychro-extra.R'
     'psychro-state.R'
-    'comfort.R'
+    'comfort-core.R'
+    'comfort-adaptive.R'
+    'comfort-heat-index.R'
+    'comfort-pmv.R'
+    'comfort-api.R'
+    'comfort-givoni.R'
+    'comfort-stat.R'
+    'comfort-layer.R'
     'coord-psychro.R'
     'ggpsychro-package.R'
     'ggpsychro.R'

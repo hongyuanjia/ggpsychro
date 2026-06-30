@@ -1,6 +1,9 @@
 #' @importFrom ggplot2 ggplot_build
 #' @export
 ggplot_build.ggpsychro <- function(plot, ...) {
+    # Fail before the custom build pipeline starts if ggplot2 has changed one of
+    # the private build helpers that this method calls through the wrappers below.
+    ggplot2_check_build_internals()
     plot <- plot_clone(plot)
     if (length(plot@layers) == 0) {
         plot <- plot + ggplot2::geom_blank()
@@ -121,8 +124,93 @@ ggplot_build.ggpsychro <- function(plot, ...) {
     build
 }
 
+GGPSY_GGPLOT2_BUILD_INTERNALS <- new.env(parent = emptyenv())
+
+ggplot2_build_internal_specs <- function() {
+    # These are the private ggplot2 build helpers that ggpsychro calls directly.
+    # The expected argument names and order are the minimum interface contract we
+    # rely on; behavior-level regressions are covered by plot build tests.
+    list(
+        by_layer = c("f", "layers", "data", "step"),
+        .ignore_data = "data",
+        .expose_data = "data",
+        setup_plot_labels = c("plot", "layers", "data"),
+        plot_theme = c("x", "default"),
+        class_ggplot_built = c("...", "data", "layout", "plot"),
+        view_scales_from_scale = c("scale", "coord_limits", "expand")
+    )
+}
+
+ggplot2_build_internals <- function(refresh = FALSE) {
+    # Cache successful lookups so each plot build does not repeatedly inspect the
+    # ggplot2 namespace; `refresh = TRUE` keeps tests able to re-check the contract.
+    if (!refresh && exists("internals", GGPSY_GGPLOT2_BUILD_INTERNALS, inherits = FALSE)) {
+        return(get("internals", GGPSY_GGPLOT2_BUILD_INTERNALS, inherits = FALSE))
+    }
+
+    ns <- asNamespace("ggplot2")
+    specs <- ggplot2_build_internal_specs()
+    internals <- lapply(names(specs), function(name) {
+        if (!exists(name, envir = ns, inherits = FALSE)) {
+            return(NULL)
+        }
+        get(name, envir = ns, inherits = FALSE)
+    })
+    names(internals) <- names(specs)
+
+    problems <- ggplot2_build_internal_problems(internals, specs)
+    if (length(problems)) {
+        stop(
+            "ggpsychro's custom plot builder is not compatible with the ",
+            "installed ggplot2 internals.\n",
+            "Problems: ", paste(problems, collapse = "; "), "\n",
+            "Installed ggplot2 version: ",
+            as.character(utils::packageVersion("ggplot2")), "\n",
+            "Update ggpsychro's ggplot2 compatibility layer before building ",
+            "ggpsychro plots.",
+            call. = FALSE
+        )
+    }
+
+    assign("internals", internals, envir = GGPSY_GGPLOT2_BUILD_INTERNALS)
+    internals
+}
+
+ggplot2_build_internal_problems <- function(internals, specs = ggplot2_build_internal_specs()) {
+    # We intentionally compare function signatures, not whole function bodies.
+    # Body equality is too brittle for harmless upstream refactors, while a changed
+    # calling interface is the point where this custom build pipeline cannot be
+    # trusted to keep calling ggplot2 internals correctly.
+    problems <- character()
+    for (name in names(specs)) {
+        fun <- internals[[name]]
+        if (!is.function(fun)) {
+            problems <- c(problems, sprintf("missing `%s()`", name))
+            next
+        }
+
+        expected <- specs[[name]]
+        actual <- names(formals(fun))
+        if (!identical(actual, expected)) {
+            problems <- c(
+                problems,
+                sprintf(
+                    "`%s()` has incompatible arguments: expected %s; found %s",
+                    name, paste(expected, collapse = ", "),
+                    paste(actual, collapse = ", ")
+                )
+            )
+        }
+    }
+    problems
+}
+
+ggplot2_check_build_internals <- function() {
+    invisible(ggplot2_build_internals())
+}
+
 ggplot2_internal <- function(name) {
-    utils::getFromNamespace(name, "ggplot2")
+    ggplot2_build_internals()[[name]]
 }
 
 ggplot2_by_layer <- function(...) {
@@ -444,83 +532,4 @@ plot_clone <- function(plot) {
     p@guides <- ggplot2::ggproto(NULL, plot@guides)
 
     p
-}
-
-
-# Below are functions copied from ggplot2 which are needed to rewrite custom
-# plot building process
-# ------------------------------------------------------------------------------
-
-scales_transform_df <- function(scales, df) {
-    if (empty(df) || length(scales$scales) == 0) return(df)
-
-    transformed <- unlist(lapply(scales$scales, function(s) s$transform_df(df = df)),
-        recursive = FALSE)
-    new_data_frame(c(transformed, df[setdiff(names(df), names(transformed))]))
-}
-
-new_data_frame <- function(x = list(), n = NULL) {
-    if (length(x) != 0 && is.null(names(x))) {
-        stop("Elements must be named")
-    }
-    lengths <- vapply(x, length, integer(1))
-    if (is.null(n)) {
-        n <- if (length(x) == 0 || min(lengths) == 0) 0 else max(lengths)
-    }
-    for (i in seq_along(x)) {
-        if (lengths[i] == n) next
-        if (lengths[i] != 1) {
-            stop("Elements must equal the number of rows or 1")
-        }
-        x[[i]] <- rep(x[[i]], n)
-    }
-
-    class(x) <- "data.frame"
-
-    attr(x, "row.names") <- .set_row_names(n)
-    x
-}
-
-scales_add_missing <- function(plot, aesthetics, env) {
-
-    # Keep only aesthetics that aren't already in plot$scales
-    aesthetics <- setdiff(aesthetics, plot$scales$input())
-
-    for (aes in aesthetics) {
-        scale_name <- paste("scale", aes, "continuous", sep = "_")
-
-        scale_f <- find_global(scale_name, env, mode = "function")
-        plot$scales$add(scale_f())
-    }
-}
-
-find_global <- function(name, env, mode = "any") {
-    if (exists(name, envir = env, mode = mode)) {
-        return(get(name, envir = env, mode = mode))
-    }
-
-    nsenv <- asNamespace("ggplot2")
-    if (exists(name, envir = nsenv, mode = mode)) {
-        return(get(name, envir = nsenv, mode = mode))
-    }
-
-    NULL
-}
-
-empty <- function(df) {
-    is.null(df) || nrow(df) == 0 || ncol(df) == 0 || is.waive(df)
-}
-
-scales_train_df <- function(scales, df, drop = FALSE) {
-    if (empty(df) || length(scales$scales) == 0) return()
-
-    lapply(scales$scales, function(scale) scale$train_df(df = df))
-}
-
-scales_map_df <- function(scales, df) {
-    if (empty(df) || length(scales$scales) == 0) return(df)
-
-    mapped <- unlist(lapply(scales$scales, function(scale) scale$map_df(df = df)), recursive = FALSE)
-
-    new_data_frame(c(mapped, df[setdiff(names(df), names(mapped))]))
 }

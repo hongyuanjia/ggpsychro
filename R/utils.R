@@ -26,8 +26,15 @@ new_data_frame <- function(x = list(), n = NULL) {
 }
 
 with_units <- function (units, expr) {
-    old <- psychrolib::GetUnitSystem()
-    if (!is.na(old)) on.exit(psychrolib::SetUnitSystem(old), add = TRUE)
+    psy_op <- psychrolib_options()
+    old_units <- psy_op$UNITS
+    old_tolerance <- psy_op$TOLERANCE
+    # SetUnitSystem() rejects NA, so restore psychrolib's internal options
+    # directly and avoid leaking ggpsychro's temporary unit context.
+    on.exit({
+        psy_op$UNITS <- old_units
+        psy_op$TOLERANCE <- old_tolerance
+    }, add = TRUE)
     psychrolib::SetUnitSystem(units)
     force(expr)
 }

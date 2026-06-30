@@ -17,6 +17,6 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Hongyuan Jia \email{hongyuan.jia@bears-berkeley.sg} (\href{https://orcid.org/02-0075-8183}{ORCID})
+\strong{Maintainer}: Hongyuan Jia \email{hongyuan.jia@bears-berkeley.sg} (\href{https://orcid.org/0000-0002-0075-8183}{ORCID})
 
 }

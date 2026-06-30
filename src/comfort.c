@@ -4,7 +4,7 @@
 #include "ggpsychro.h"
 
 /*
- * Native thermal-comfort kernels used by R/comfort.R.
+ * Native thermal-comfort kernels used by the R comfort wrappers.
  *
  * Public R functions still own argument matching, recycling, SI/IP conversion,
  * input limits, rounding, and data-frame assembly.  The .Call routines here are
@@ -144,8 +144,9 @@ static double comfort_pmv_scalar(double tdb, double tr, double vr, double rh,
  *   2. A Newton-style solve for the standard environment temperature that
  *      gives the same skin heat loss.
  *
- * The scalar R implementation remains in R/comfort.R as an oracle/fallback for
- * tests; this native version is only an acceleration backend.
+ * Matching scalar formulas in R/comfort-pmv.R are kept for parity checks and
+ * for the R-side fallback paths used when native root tracing is not
+ * applicable.
  */
 static double comfort_set_scalar(double tdb, double tr, double v, double rh,
                                  double met, double clo, double wme,
