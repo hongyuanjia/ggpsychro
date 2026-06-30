@@ -241,6 +241,10 @@ geom_psychro_tile(
   inherits from the current `panel.grid.*.x` and `panel.grid.*.y` theme
   elements. Explicit values override the inherited theme style.
 
+## Value
+
+A ggplot layer.
+
 ## Details
 
 The stat accepts either `x` and `y` aesthetics, where `y` is humidity

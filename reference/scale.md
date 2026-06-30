@@ -221,6 +221,10 @@ scale_enthalpy_continuous(
 
   Other arguments passed on to `scale_(x|y)_continuous()`
 
+## Value
+
+A ggplot2 continuous scale object.
+
 ## Examples
 
 ``` r

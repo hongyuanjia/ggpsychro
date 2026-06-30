@@ -410,6 +410,10 @@ stat_comfort_state(
     geom](https://ggplot2.tidyverse.org/reference/layer_geoms.html)
     documentation.
 
+## Value
+
+A ggplot layer or a list of ggplot additions.
+
 ## Examples
 
 ``` r

@@ -27,6 +27,12 @@ enthalpy_trans(units = "SI")
   A string indicating the system of units chosen. Should be either
   `"SI"` or `"IP"`.
 
+## Value
+
+A
+[`scales::trans_new()`](https://scales.r-lib.org/reference/new_transform.html)
+transformation object.
+
 ## Examples
 
 ``` r

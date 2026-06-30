@@ -19,6 +19,10 @@ demo_scale(x, ...)
 
   Other arguments pass to scale functions
 
+## Value
+
+A ggplot object demonstrating the supplied scale settings.
+
 ## Examples
 
 ``` r

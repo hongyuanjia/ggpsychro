@@ -39,6 +39,10 @@ scale_fill_comfort_pmv(
 
   Out-of-bounds handler.
 
+## Value
+
+A ggplot2 fill scale.
+
 ## Examples
 
 ``` r

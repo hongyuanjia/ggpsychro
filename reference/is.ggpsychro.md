@@ -14,6 +14,10 @@ is.ggpsychro(x)
 
   An object to test
 
+## Value
+
+A single logical value.
+
 ## Examples
 
 ``` r

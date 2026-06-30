@@ -175,6 +175,10 @@ stat_psychro_state(
     geom](https://ggplot2.tidyverse.org/reference/layer_geoms.html)
     documentation.
 
+## Value
+
+A ggplot layer.
+
 ## Details
 
 The `tdb` aesthetic is required. Exactly one of `humratio`, `relhum`,

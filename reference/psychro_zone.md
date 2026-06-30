@@ -185,6 +185,10 @@ stat_psychro_zone(
     geom](https://ggplot2.tidyverse.org/reference/layer_geoms.html)
     documentation.
 
+## Value
+
+A ggplot layer.
+
 ## Details
 
 Supported zone types are:

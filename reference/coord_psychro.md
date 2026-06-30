@@ -77,6 +77,10 @@ coord_psychro(
   limits, then those data points may show up in places such as the axes,
   the legend, the plot title, or the plot margins.
 
+## Value
+
+A ggplot2 coordinate system object for psychrometric charts.
+
 ## Examples
 
 ``` r

@@ -2,6 +2,9 @@
 
 ## ggpsychro 0.1.0
 
+- Addressed CRAN preflight checks by adding return-value documentation
+  and recording the copyright-holder role.
+  ([\#33](https://github.com/hongyuanjia/ggpsychro/issues/33))
 - Refactored the ggpsychro build pipeline and comfort overlay internals
   to isolate build-time state, guard ggplot2 internals, and split
   comfort code into focused modules.

@@ -79,6 +79,10 @@ geom_grid_enthalpy(
 
   If `TRUE`, labels are parsed as plotmath expressions.
 
+## Value
+
+A ggplot addition that controls rendering of a psychrometric grid.
+
 ## Examples
 
 ``` r

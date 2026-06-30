@@ -227,6 +227,10 @@ enthalpy_format(
   Other arguments passed on to
   [`base::format()`](https://rdrr.io/r/base/format.html).
 
+## Value
+
+A labelling function that formats numeric breaks.
+
 ## Examples
 
 ``` r

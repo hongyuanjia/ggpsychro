@@ -187,6 +187,10 @@ stat_enthalpy(
   plot specification, e.g.
   [`annotation_borders()`](https://ggplot2.tidyverse.org/reference/annotation_borders.html).
 
+## Value
+
+A ggplot layer.
+
 ## Details
 
 - `stat_relhum` requires an extra `relhum` aesthetics for relative

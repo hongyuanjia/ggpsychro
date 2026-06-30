@@ -2,7 +2,7 @@
 
 ## Authors
 
-- **Hongyuan Jia**. Author, maintainer.
+- **Hongyuan Jia**. Author, maintainer, copyright holder.
   [](https://orcid.org/0000-0002-0075-8183)
 
 ## Citation
