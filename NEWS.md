@@ -1,5 +1,7 @@
 # ggpsychro 0.1.0
 
+* Replaced external path-label rendering with a native textpath renderer for
+  psychrometric grid labels and comfort overlay labels. (#34)
 * Addressed CRAN preflight checks by adding return-value documentation and
   recording the copyright-holder role. (#33)
 * Refactored the ggpsychro build pipeline and comfort overlay internals to
