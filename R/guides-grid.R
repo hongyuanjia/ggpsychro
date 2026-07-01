@@ -954,28 +954,27 @@ psychro_grid_label_grob <- function(grid, label, type, theme, mollier,
     if (!length(labels)) return(NULL)
 
     colour <- psychro_grid_alpha(style$colour, style$alpha)
-    geomtextpath::textpathGrob(
+    gp_text <- grid::gpar(
+        col = colour,
+        fontsize = style$size * ggplot2::.pt,
+        fontfamily = style$family,
+        fontface = style$fontface,
+        lineheight = style$lineheight
+    )
+
+    # Grid labels use the internal textpath renderer so CRAN examples avoid the
+    # old external renderer's cold glyph-index cost.
+    psychro_textpath_grob(
         label = labels,
         x = data$path$x,
         y = data$path$y,
         id = data$path$id,
         hjust = rep(label$label_loc, length(labels)),
         vjust = rep(style$vjust, length(labels)),
-        halign = style$halign,
-        gap = style$gap,
         upright = style$upright,
         straight = style$straight,
-        text_smoothing = style$text_smoothing,
-        padding = style$padding,
         remove_long = style$remove_long,
-        gp_text = grid::gpar(
-            col = colour,
-            fontsize = style$size * ggplot2::.pt,
-            fontfamily = style$family,
-            fontface = style$fontface,
-            lineheight = style$lineheight
-        ),
-        gp_path = grid::gpar(col = NA, lwd = 0),
+        gp_text = gp_text,
         default.units = "npc",
         name = paste0("psychro-grid-label-", type)
     )
@@ -1047,12 +1046,10 @@ psychro_grid_label_style_defaults <- function(type, theme, style = list()) {
         fontface = 1,
         lineheight = 1.2,
         vjust = -0.3,
-        halign = "center",
         gap = NA,
         upright = TRUE,
         straight = FALSE,
         padding = grid::unit(0.05, "inch"),
-        text_smoothing = 0,
         remove_long = FALSE
     )
 

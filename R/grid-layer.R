@@ -391,12 +391,10 @@ psychro_grid_label_style <- function(...) {
         label.fontface = "fontface",
         label.lineheight = "lineheight",
         label.vjust = "vjust",
-        label.halign = "halign",
         label.gap = "gap",
         label.upright = "upright",
         label.straight = "straight",
         label.padding = "padding",
-        label.text_smoothing = "text_smoothing",
         label.remove_long = "remove_long"
     )
 

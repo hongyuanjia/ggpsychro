@@ -61,11 +61,12 @@ NULL
 #'     geom_comfort_overlay(n = c(45, 30)) +
 #'     scale_fill_comfort_pmv(name = "PMV")
 #'
-#' # Draw PMV contour lines.
+#' # Draw labelled PMV contour lines.
 #' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
 #'     geom_comfort_contour(
 #'         breaks = c(-1, 0, 1),
-#'         n = 50
+#'         label = TRUE,
+#'         n = 80
 #'     )
 #'
 #' # Draw the neutral PMV comfort zone.
@@ -74,6 +75,36 @@ NULL
 #'         range = c(-0.5, 0.5),
 #'         n = c(45, 30),
 #'         alpha = 0.3
+#'     )
+#'
+#' # Draw PMV curves and thermal sensation labels.
+#' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+#'     geom_comfort_pmv_lines(levels = seq(-2, 2, by = 1), n = 100)
+#'
+#' # Draw a PMV-based comfort standard zone.
+#' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+#'     geom_comfort_standard_zone(
+#'         standard = comfort_standard_ashrae55_2017(),
+#'         n = 80
+#'     )
+#'
+#' # Draw heat-index categories on hot conditions.
+#' ggpsychro(tdb_lim = c(25, 45), hum_lim = c(0, 32)) +
+#'     geom_comfort_heat_index(n = c(55, 35), show_labels = FALSE)
+#'
+#' # Draw Givoni bioclimatic strategy zones.
+#' ggpsychro(tdb_lim = c(5, 45), hum_lim = c(0, 30)) +
+#'     geom_comfort_givoni(show_labels = FALSE)
+#'
+#' # Evaluate PMV at supplied state points.
+#' states <- data.frame(
+#'     tdb = c(24, 28, 31),
+#'     relhum = c(45, 55, 65)
+#' )
+#' ggpsychro(states, tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+#'     stat_comfort_state(
+#'         aes(tdb = tdb, relhum = relhum, colour = after_stat(pmv)),
+#'         size = 3
 #'     )
 #'
 #' # Evaluate PMV at supplied state points.
@@ -254,7 +285,7 @@ geom_comfort_contour <- function(mapping = NULL, data = NULL,
     psychro_layer(
         stat = stat, data = comfort_layer_data(data),
         mapping = comfort_contour_label_mapping(mapping),
-        geom = geomtextpath::GeomTextpath,
+        geom = GeomPsychroTextpath,
         position = position, show.legend = show.legend,
         inherit.aes = inherit.aes,
         params = label_params
@@ -368,7 +399,7 @@ geom_comfort_pmv_lines <- function(mapping = NULL, data = NULL,
                 hjust = ggplot2::after_stat(hjust),
                 vjust = ggplot2::after_stat(vjust)
             ),
-            geom = geomtextpath::GeomTextpath, position = position,
+            geom = GeomPsychroTextpath, position = position,
             show.legend = show.legend, inherit.aes = inherit.aes,
             params = utils::modifyList(sensation_params, list(
                 levels = sensation_levels, label_type = "sensation",
@@ -391,7 +422,7 @@ geom_comfort_pmv_lines <- function(mapping = NULL, data = NULL,
             mapping = ggplot2::aes(
                 label = ggplot2::after_stat(label)
             ),
-            geom = geomtextpath::GeomTextpath, position = position,
+            geom = GeomPsychroTextpath, position = position,
             show.legend = FALSE,
             inherit.aes = inherit.aes,
             params = utils::modifyList(axis_params, list(
@@ -483,11 +514,11 @@ geom_comfort_standard_zone <- function(standard = comfort_standard_ashrae55_2017
             hjust = ggplot2::after_stat(hjust),
             vjust = ggplot2::after_stat(vjust)
         ),
-        geom = geomtextpath::GeomTextpath, position = position,
+        geom = GeomPsychroTextpath, position = position,
         show.legend = FALSE, inherit.aes = FALSE,
         params = c(boundary_params, list(
             label_type = "boundary", text_only = TRUE, upright = TRUE,
-            remove_long = TRUE
+            remove_long = TRUE, keep_path_side = TRUE
         ))
     )
 
@@ -503,11 +534,11 @@ geom_comfort_standard_zone <- function(standard = comfort_standard_ashrae55_2017
             hjust = ggplot2::after_stat(hjust),
             vjust = ggplot2::after_stat(vjust)
         ),
-        geom = geomtextpath::GeomTextpath, position = position,
+        geom = GeomPsychroTextpath, position = position,
         show.legend = FALSE, inherit.aes = FALSE,
         params = c(comfort_params, list(
             label_type = "comfort", text_only = TRUE, upright = TRUE,
-            remove_long = TRUE
+            remove_long = TRUE, keep_path_side = TRUE
         ))
     )
 
@@ -601,7 +632,7 @@ geom_comfort_givoni <- function(strategy = comfort_strategy_givoni(),
                 hjust = ggplot2::after_stat(hjust),
                 vjust = ggplot2::after_stat(vjust)
             )),
-            geom = geomtextpath::GeomTextpath, position = position,
+            geom = GeomPsychroTextpath, position = position,
             show.legend = FALSE, inherit.aes = FALSE,
             params = utils::modifyList(label_params, list(
                 na.rm = na.rm, strategy = strategy, label_type = "path",

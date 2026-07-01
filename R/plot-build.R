@@ -445,7 +445,7 @@ psychro_clip_exempt_stat_classes <- function() {
 }
 
 psychro_layer_needs_panel_clip <- function(layer) {
-    if (inherits(layer$geom, "GeomTextpath") &&
+    if (inherits(layer$geom, "GeomPsychroTextpath") &&
             !psychro_layer_needs_path_clip(layer)) {
         return(FALSE)
     }
@@ -474,7 +474,7 @@ psychro_layer_needs_polygon_clip <- function(layer) {
 }
 
 psychro_layer_needs_path_clip <- function(layer) {
-    inherits(layer$geom, "GeomTextpath") &&
+    inherits(layer$geom, "GeomPsychroTextpath") &&
         !inherits(layer$stat, "StatComfortGivoniLabel")
 }
 
@@ -488,8 +488,8 @@ psychro_clip_geom <- function(geom, filter_anchor = FALSE,
         psychro_clipped = TRUE,
         parameters = function(self, extra = FALSE) {
             # ggplot2 filters draw parameters through `parameters()`. Delegate
-            # to the wrapped geom so special params such as textpath `upright`
-            # and `text_params` survive clipping wrappers.
+            # to the wrapped geom so special params such as `upright` survive
+            # clipping wrappers.
             base_geom$parameters(extra = extra)
         },
         draw_panel = function(data, panel_params, coord, ...) {
@@ -511,7 +511,7 @@ psychro_clip_geom <- function(geom, filter_anchor = FALSE,
             }
             if (isTRUE(clip_path)) {
                 grob <- base_geom$draw_panel(data, panel_params, coord, ...)
-                return(psychro_clip_textpath_lines_to_panel(
+                return(psychro_clip_textpath_to_panel(
                     grob, coord, panel_params
                 ))
             }

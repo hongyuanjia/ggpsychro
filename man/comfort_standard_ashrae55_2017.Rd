@@ -29,4 +29,18 @@ comfort_standard_ashrae55_2017()
 # Create the EN 15251 PMV comfort bands.
 comfort_standard_en15251_2007()
 
+# Draw the ASHRAE 55 comfort zone.
+ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+    geom_comfort_standard_zone(
+        standard = comfort_standard_ashrae55_2017(),
+        n = 80
+    )
+
+# Draw the EN 15251 comfort bands.
+ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+    geom_comfort_standard_zone(
+        standard = comfort_standard_en15251_2007(),
+        n = 80
+    )
+
 }

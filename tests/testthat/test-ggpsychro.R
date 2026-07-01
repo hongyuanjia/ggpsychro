@@ -18,7 +18,7 @@ count_line_shapes <- function(plot) {
 count_textpath_shapes <- function(plot) {
     grobs <- collect_grobs(ggplot2::ggplotGrob(plot))
     sum(vapply(grobs, function(grob) {
-        inherits(grob, "textpath")
+        inherits(grob, "psychro_textpath")
     }, logical(1)))
 }
 
@@ -299,6 +299,20 @@ test_that("Saturation is drawn between psychro boundaries and markers", {
         0L
     )
     expect_gt(length(find_named_grobs_in(givoni_fg, "GRID.lines")), 0L)
+})
+
+test_that("Comfort path labels use the internal textpath renderer", {
+    base <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 35))
+
+    expect_gt(count_textpath_shapes(
+        base + geom_comfort_pmv_lines(n = 80)
+    ), 0L)
+    expect_gt(count_textpath_shapes(
+        base + geom_comfort_standard_zone(n = 80)
+    ), 0L)
+    expect_gt(count_textpath_shapes(
+        base + geom_comfort_contour(label = TRUE, n = c(30, 20))
+    ), 0L)
 })
 
 test_that("Relative humidity grid breaks use psychrolib fractions", {
@@ -785,6 +799,14 @@ test_that("Psychrometric grid labels are rendered only for explicit helpers", {
         ),
         1L
     )
+
+    fast_labels <- find_named_grobs(
+        ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+            geom_grid_relhum(),
+        "psychro-grid-label-relhum"
+    )
+    expect_true(any(vapply(fast_labels, inherits, logical(1L), "psychro_textpath")))
+    expect_true(psychro_textpath_supported("label", vjust = 0.5))
 
     # Text-on-path glyph positions depend on platform font metrics. Keep these
     # visual snapshots on macOS, while the behavior checks above run everywhere.

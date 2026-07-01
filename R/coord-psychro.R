@@ -519,7 +519,7 @@ psychro_clip_grob_to_panel <- function(grob, coord, panel_params) {
     psychro_polyclip_grob(grob, panel)
 }
 
-psychro_clip_textpath_lines_to_panel <- function(grob, coord, panel_params) {
+psychro_clip_textpath_to_panel <- function(grob, coord, panel_params) {
     panel <- psychro_coord_panel_grob(coord, panel_params)
     if (is.null(panel) || inherits(grob, c("nullGrob", "zeroGrob"))) {
         return(grob)
@@ -537,25 +537,31 @@ makeContent.psychro_textpath_clip <- function(x) {
     x$psychro_panel <- NULL
     class(x) <- setdiff(class(x), "psychro_textpath_clip")
 
-    # Textpath must lay out glyphs in its normal grid drawing context. Clipping
-    # the input data, or forcing the grob from a wrapper, can flip contour labels;
-    # therefore we expand the textpath first and only clip its stroke children.
+    # Path labels must lay out in their normal grid drawing context. Clipping
+    # the input data, or forcing the grob from a wrapper, can flip contour
+    # labels; therefore we expand first and only clip stroke children.
     x <- grid::makeContent(x)
     class(x) <- setdiff(class(x), "textpath")
     if (is.null(panel)) {
         return(x)
     }
-    psychro_clip_textpath_lines_grob(x, panel)
+    psychro_clip_textpath_lines(x, panel, open_lines = TRUE)
 }
 
-psychro_clip_textpath_lines_grob <- function(grob, panel) {
-    if (inherits(grob, "textpath")) {
+psychro_clip_textpath_lines <- function(grob, panel, open_lines = FALSE) {
+    if (inherits(grob, c("textpath", "psychro_textpath"))) {
+        # The wrapper is expanded before its children, so force internal
+        # textpath grobs here; otherwise their stroke child is created only
+        # after the clipping pass has already returned.
         grob <- grid::makeContent(grob)
-        class(grob) <- setdiff(class(grob), "textpath")
+        class(grob) <- setdiff(class(grob), c("textpath", "psychro_textpath"))
     }
     if (psychro_line_grob(grob)) {
         split <- psychro_split_styled_grob(grob)
-        clipped <- lapply(split, psychro_polyclip_grob, panel = panel)
+        clipped <- lapply(
+            split, psychro_polyclip_grob, panel = panel,
+            open_lines = open_lines
+        )
         if (length(clipped) == 1L) {
             return(clipped[[1L]])
         }
@@ -564,21 +570,29 @@ psychro_clip_textpath_lines_grob <- function(grob, panel) {
     if (!is.null(grob$children)) {
         children <- as.list(grob$children)
         children <- lapply(
-            children, psychro_clip_textpath_lines_grob, panel = panel
+            children, psychro_clip_textpath_lines, panel = panel,
+            open_lines = open_lines
         )
         grob$children <- do.call(grid::gList, children)
         grob$childrenOrder <- names(children)
     }
     if (!is.null(grob$grobs)) {
         grob$grobs <- lapply(
-            grob$grobs, psychro_clip_textpath_lines_grob, panel = panel
+            grob$grobs, psychro_clip_textpath_lines, panel = panel,
+            open_lines = open_lines
         )
     }
     grob
 }
 
-psychro_polyclip_grob <- function(grob, panel) {
+psychro_polyclip_grob <- function(grob, panel, open_lines = FALSE) {
     if (psychro_line_grob(grob)) {
+        if (isTRUE(open_lines)) {
+            clipped <- psychro_clip_open_line(grob, panel)
+            if (!is.null(clipped)) {
+                return(clipped)
+            }
+        }
         return(gridGeometry::polyclipGrob(
             grob, panel, "intersection",
             closedFn = psychro_xy_list_to_null,
@@ -587,6 +601,86 @@ psychro_polyclip_grob <- function(grob, panel) {
         ))
     }
     gridGeometry::polyclipGrob(grob, panel, "intersection", name = grob$name)
+}
+
+# Clip open line paths numerically so contour textpath strokes stop at the
+# psychrometric panel boundary without polyclip adding closed boundary edges.
+psychro_clip_open_line <- function(grob, panel) {
+    if (!inherits(grob, c("polyline", "lines"))) {
+        return(NULL)
+    }
+
+    id <- psychro_grob_id(grob)
+    x <- grid::convertX(grob$x, "in", valueOnly = TRUE)
+    y <- grid::convertY(grob$y, "in", valueOnly = TRUE)
+    if (is.null(id)) {
+        id <- rep.int(1L, length(x))
+    }
+    panel_path <- psychro_panel_path_in(panel, grob)
+
+    pieces <- split(seq_along(x), id)
+    segments <- vector("list", length(pieces))
+    out_group <- 0L
+    for (piece in pieces) {
+        line <- list(list(x = x[piece], y = y[piece]))
+        if (length(line[[1L]]$x) < 2L) {
+            next
+        }
+        # closed = FALSE is the important part: these are stroked contour
+        # segments, not filled polygons, so boundary connector edges are invalid.
+        clipped <- polyclip::polyclip(
+            line, panel_path, op = "intersection", closed = FALSE
+        )
+        for (segment in clipped) {
+            if (length(segment$x) < 2L || length(segment$y) < 2L) {
+                next
+            }
+            out_group <- out_group + 1L
+            # Store fragments and flatten once after clipping. Repeated c()
+            # growth is avoidable here and can dominate dense contour output.
+            segments[[out_group]] <- segment
+        }
+    }
+    if (!out_group) {
+        return(NULL)
+    }
+    segments <- segments[seq_len(out_group)]
+    segment_lengths <- vapply(
+        segments, function(segment) length(segment$x), integer(1L)
+    )
+
+    grid::polylineGrob(
+        x = grid::unit(
+            unlist(lapply(segments, `[[`, "x"), use.names = FALSE), "in"
+        ),
+        y = grid::unit(
+            unlist(lapply(segments, `[[`, "y"), use.names = FALSE), "in"
+        ),
+        id = rep.int(seq_along(segments), segment_lengths),
+        arrow = grob$arrow,
+        name = grob$name,
+        gp = grob$gp %||% grid::gpar()
+    )
+}
+
+# Map the stored npc panel polygon into the panel-local inch coordinates that
+# the textpath renderer used for its stroke child.
+psychro_panel_path_in <- function(panel, grob) {
+    width <- attr(grob, "psychro_panel_width_in", exact = TRUE)
+    height <- attr(grob, "psychro_panel_height_in", exact = TRUE)
+    if (length(width) && length(height) &&
+            is.finite(width) && is.finite(height) &&
+            width > 0 && height > 0) {
+        return(list(list(
+            x = grid::convertX(panel$x, "npc", valueOnly = TRUE) * width,
+            y = grid::convertY(panel$y, "npc", valueOnly = TRUE) * height
+        )))
+    }
+
+    list(list(
+        x = grid::convertX(panel$x, "in", valueOnly = TRUE),
+        y = grid::convertY(panel$y, "in", valueOnly = TRUE)
+    ))
 }
 
 psychro_line_grob <- function(grob) {
@@ -649,14 +743,27 @@ psychro_split_polyline_grob <- function(grob) {
 
     lapply(seq_along(ids), function(i) {
         keep <- id == ids[[i]]
-        grid::polylineGrob(
+        child <- grid::polylineGrob(
             grob$x[keep], grob$y[keep],
             id = rep(1L, sum(keep)),
             arrow = grob$arrow,
             name = paste0(grob$name %||% "polyline", "-", i),
             gp = psychro_gpar_at(grob$gp, i, n)
         )
+        psychro_copy_panel_size(child, grob)
     })
+}
+
+# Preserve textpath panel dimensions across styled polyline splitting so later
+# open-line clipping still uses the correct panel-local coordinate frame.
+psychro_copy_panel_size <- function(child, parent) {
+    for (name in c("psychro_panel_width_in", "psychro_panel_height_in")) {
+        value <- attr(parent, name, exact = TRUE)
+        if (!is.null(value)) {
+            attr(child, name) <- value
+        }
+    }
+    child
 }
 
 psychro_split_polygon_grob <- function(grob) {
