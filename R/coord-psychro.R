@@ -87,7 +87,7 @@ psychro_grid_label_text <- function(label, type, breaks, scale, units) {
 coord_grid_lines <- function(coord, panel_params, tdb, range_tdb, range_hum) {
     grid_types <- c("relhum", "wetbulb", "vappres", "specvol", "enthalpy")
     stats::setNames(lapply(grid_types, function(type) {
-        breaks <- grid_breaks(panel_params, type)
+        breaks <- coord_grid_breaks(panel_params, type)
         list(
             minor = if (psychro_grid_enabled(coord$grids, type)) {
                 coord$trans_grid_vert(
@@ -106,7 +106,7 @@ coord_grid_lines <- function(coord, panel_params, tdb, range_tdb, range_hum) {
 
 # Keep the per-grid break quirks in one switch: relative humidity excludes 0/1
 # while other psychrometric variables only need missing-value removal.
-grid_breaks <- function(panel_params, type) {
+coord_grid_breaks <- function(panel_params, type) {
     scale <- panel_params[[type]]
     if (identical(type, "relhum")) {
         major <- valid_relhum_grid_breaks(scale$get_breaks())
@@ -296,6 +296,8 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
     range_tdb = function(self, panel_params, cut = FALSE) {
         rng <- panel_params[[paste(self$pos_tdb(), "range", sep = ".")]]
         if (cut) {
+            # `cut` trims expanded panel ranges to the psychrolib-supported
+            # dry-bulb domain; it is not a second user-limit application.
             rng <- cut_oob(rng, get_tdb_limits(self$units))
         }
         rng
@@ -304,8 +306,9 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
     range_hum = function(self, panel_params, cut = FALSE) {
         rng <- panel_params[[paste(self$pos_hum(), "range", sep = ".")]]
         if (cut) {
-            # Panel ranges store humidity ratio in native units; user-facing
-            # limits are converted before clipping to avoid SI/IP scale drift.
+            # `cut` trims expanded panel ranges to the psychrolib-supported
+            # humidity domain. Panel ranges store humidity ratio in native units,
+            # so user-facing limits are converted before clipping.
             rng <- cut_oob(rng, narrow_hum(get_hum_limits(self$units), self$units))
         }
         rng

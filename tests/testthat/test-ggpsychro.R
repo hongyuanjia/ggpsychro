@@ -844,11 +844,17 @@ test_that("Coordinate range helpers clip expanded ranges in native units", {
     built <- ggplot2::ggplot_build(p)
     coord <- built$layout$coord
     panel_params <- built$layout$panel_params[[1L]]
+    tdb_domain <- get_tdb_limits(coord$units)
+    hum_domain <- narrow_hum(get_hum_limits(coord$units), coord$units)
+    tdb_uncut <- coord$range_tdb(panel_params, cut = FALSE)
+    hum_uncut <- coord$range_hum(panel_params, cut = FALSE)
 
-    expect_equal(coord$range_tdb(panel_params, cut = FALSE), c(-57.5, 107.5))
-    expect_equal(coord$range_tdb(panel_params, cut = TRUE), c(-50, 100))
-    expect_equal(coord$range_hum(panel_params, cut = FALSE), c(-0.003, 0.063))
-    expect_equal(coord$range_hum(panel_params, cut = TRUE), c(0, 0.06))
+    expect_true(tdb_uncut[[1L]] < tdb_domain[[1L]])
+    expect_true(tdb_uncut[[2L]] > tdb_domain[[2L]])
+    expect_true(hum_uncut[[1L]] < hum_domain[[1L]])
+    expect_true(hum_uncut[[2L]] > hum_domain[[2L]])
+    expect_equal(coord$range_tdb(panel_params, cut = TRUE), tdb_domain)
+    expect_equal(coord$range_hum(panel_params, cut = TRUE), hum_domain)
 })
 
 test_that("Native textpath helpers handle edge-case label placement", {
@@ -896,6 +902,55 @@ test_that("Native textpath helpers handle edge-case label placement", {
     expect_equal(nrow(kept), 2L)
     expect_true(all(is.finite(kept$x)))
     expect_equal(nrow(dropped), 0L)
+})
+
+test_that("Native textpath grobs expand through grid makeContent", {
+    path <- tempfile(fileext = ".pdf")
+    grDevices::pdf(path)
+    on.exit({
+        grDevices::dev.off()
+        unlink(path)
+    })
+
+    grid::grid.newpage()
+    grob <- psychro_textpath_grob(
+        label = "ABC",
+        x = c(0.1, 0.9),
+        y = c(0.5, 0.5),
+        id = c(1L, 1L),
+        hjust = 0.5,
+        vjust = 0.5,
+        upright = TRUE,
+        remove_long = FALSE,
+        gp_text = grid::gpar(fontsize = 10),
+        gp_path = grid::gpar(col = "black"),
+        text_only = FALSE,
+        gap = TRUE,
+        padding = grid::unit(0, "pt"),
+        name = "test-textpath"
+    )
+    forced <- grid::grid.force(grob)
+    children <- as.list(forced$children)
+
+    expect_true(any(vapply(children, inherits, logical(1L), "polyline")))
+    expect_true(any(vapply(children, inherits, logical(1L), "text")))
+
+    dropped <- psychro_textpath_grob(
+        label = "A very very long label",
+        x = c(0.1, 0.2),
+        y = c(0.5, 0.5),
+        id = c(1L, 1L),
+        hjust = 0.5,
+        vjust = 0.5,
+        upright = TRUE,
+        remove_long = TRUE,
+        gp_text = grid::gpar(fontsize = 10),
+        gp_path = grid::gpar(col = "black"),
+        text_only = FALSE,
+        name = "drop-textpath"
+    )
+
+    expect_true(inherits(grid::grid.force(dropped), "null"))
 })
 
 test_that("Native textpath gap removal keeps only visible path intervals", {

@@ -55,13 +55,13 @@ guide_grid_psychro <- function(theme, axis, saturation, grid, grid.labels,
         )
     }
 
-    axis_grobs <- axis_grid_grobs(
+    axis_grobs <- guide_axis_grobs(
         axis, nm_tdb, nm_hum, psychro_panel_clip, axis_grid
     )
-    grid_grobs <- curved_grid_grobs(
+    grid_grobs <- guide_curved_grid_grobs(
         grid, psychro_panel_clip, psychro_grid
     )
-    label_grobs <- curved_label_grobs(grid, psychro_grid_label)
+    label_grobs <- guide_curved_label_grobs(grid, psychro_grid_label)
 
     grill <- do.call(
         grid::grobTree,
@@ -83,8 +83,8 @@ guide_grid_psychro <- function(theme, axis, saturation, grid, grid.labels,
 
 # Assemble Cartesian panel grid lines from a data table so dry-bulb and humidity
 # major/minor guide order stays explicit without four duplicated branches.
-axis_grid_grobs <- function(axis, nm_tdb, nm_hum, panel_clip,
-                            render_axis) {
+guide_axis_grobs <- function(axis, nm_tdb, nm_hum, panel_clip,
+                             render_axis) {
     spec <- list(
         list(values = axis$hum$minor, type = "minor", var = nm_hum),
         list(values = axis$tdb$minor, type = "minor", var = nm_tdb),
@@ -92,7 +92,7 @@ axis_grid_grobs <- function(axis, nm_tdb, nm_hum, panel_clip,
         list(values = axis$tdb$major, type = "major", var = nm_tdb)
     )
 
-    compact_grobs(lapply(spec, function(item) {
+    guide_compact_grobs(lapply(spec, function(item) {
         if (!length(item$values)) return(NULL)
         clip_grob(
             panel_clip,
@@ -103,20 +103,21 @@ axis_grid_grobs <- function(axis, nm_tdb, nm_hum, panel_clip,
 
 # Assemble psychrometric curved grids in the same visual order as the previous
 # hand-written branches: all line families first, labels later.
-curved_grid_grobs <- function(grid, panel_clip, render_grid) {
-    compact_grobs(unlist(lapply(names(grid), function(var) {
+guide_curved_grid_grobs <- function(grid, panel_clip, render_grid) {
+    pieces <- lapply(names(grid), function(var) {
         lapply(c("minor", "major"), function(type) {
             lines <- grid[[var]][[type]]
             if (!length(lines)) return(NULL)
             clip_grob(panel_clip, render_grid(lines, type, var))
         })
-    }), recursive = FALSE))
+    })
+    guide_compact_grobs(do.call(c, pieces))
 }
 
 # Labels attach only to major psychrometric grids, matching the drawn line data
 # produced by coord setup.
-curved_label_grobs <- function(grid, render_label) {
-    compact_grobs(lapply(names(grid), function(var) {
+guide_curved_label_grobs <- function(grid, render_label) {
+    guide_compact_grobs(lapply(names(grid), function(var) {
         lines <- grid[[var]]$major
         if (!length(lines)) return(NULL)
         render_label(lines, var)
@@ -125,7 +126,7 @@ curved_label_grobs <- function(grid, render_label) {
 
 # grid::grobTree() accepts grobs, not placeholder NULLs. Compacting in one
 # helper keeps the data-driven guide assembly readable.
-compact_grobs <- function(grobs) {
+guide_compact_grobs <- function(grobs) {
     grobs[!vapply(grobs, is.null, logical(1L))]
 }
 
