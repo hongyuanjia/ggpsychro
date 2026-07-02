@@ -18,5 +18,5 @@ Useful links:
 
 ## Author
 
-**Maintainer**: Hongyuan Jia <hongyuan.jia@bears-berkeley.sg>
+**Maintainer**: Hongyuan Jia <hongyuanjia@cqust.edu.cn>
 ([ORCID](https://orcid.org/0000-0002-0075-8183)) \[copyright holder\]

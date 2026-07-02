@@ -423,11 +423,12 @@ ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
     scale_fill_comfort_pmv(name = "PMV")
 
 
-# Draw PMV contour lines.
+# Draw labelled PMV contour lines.
 ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
     geom_comfort_contour(
         breaks = c(-1, 0, 1),
-        n = 50
+        label = TRUE,
+        n = 80
     )
 
 
@@ -437,6 +438,41 @@ ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
         range = c(-0.5, 0.5),
         n = c(45, 30),
         alpha = 0.3
+    )
+
+
+# Draw PMV curves and thermal sensation labels.
+ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+    geom_comfort_pmv_lines(levels = seq(-2, 2, by = 1), n = 100)
+
+
+# Draw a PMV-based comfort standard zone.
+ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+    geom_comfort_standard_zone(
+        standard = comfort_standard_ashrae55_2017(),
+        n = 80
+    )
+
+
+# Draw heat-index categories on hot conditions.
+ggpsychro(tdb_lim = c(25, 45), hum_lim = c(0, 32)) +
+    geom_comfort_heat_index(n = c(55, 35), show_labels = FALSE)
+
+
+# Draw Givoni bioclimatic strategy zones.
+ggpsychro(tdb_lim = c(5, 45), hum_lim = c(0, 30)) +
+    geom_comfort_givoni(show_labels = FALSE)
+
+
+# Evaluate PMV at supplied state points.
+states <- data.frame(
+    tdb = c(24, 28, 31),
+    relhum = c(45, 55, 65)
+)
+ggpsychro(states, tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+    stat_comfort_state(
+        aes(tdb = tdb, relhum = relhum, colour = after_stat(pmv)),
+        size = 3
     )
 
 
