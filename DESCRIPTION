@@ -19,7 +19,6 @@ Depends:
 Imports:
     gridGeometry,
     polyclip,
-    geomtextpath,
     isoband,
     checkmate,
     psychrolib,
@@ -55,6 +54,7 @@ Collate:
     'coord-psychro.R'
     'ggpsychro-package.R'
     'ggpsychro.R'
+    'grid-label-renderer.R'
     'grid-layer.R'
     'guides-grid.R'
     'labels.R'

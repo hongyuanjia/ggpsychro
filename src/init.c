@@ -11,6 +11,8 @@ extern SEXP C_comfort_pmv_saturation_roots(SEXP, SEXP, SEXP, SEXP, SEXP,
                                            SEXP, SEXP, SEXP, SEXP, SEXP,
                                            SEXP);
 extern SEXP C_dew_point_from_hum_ratio(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_psychro_textpath_place(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP,
+                                          SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
     {"C_comfort_pmv_vec", (DL_FUNC) &C_comfort_pmv_vec, 7},
@@ -19,6 +21,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_comfort_pmv_saturation_roots",
         (DL_FUNC) &C_comfort_pmv_saturation_roots, 11},
     {"C_dew_point_from_hum_ratio", (DL_FUNC) &C_dew_point_from_hum_ratio, 4},
+    {"C_psychro_textpath_place",
+        (DL_FUNC) &C_psychro_textpath_place, 12},
     {NULL, NULL, 0}
 };
 
