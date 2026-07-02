@@ -152,6 +152,22 @@ test_that("Psychrometric chart creation", {
     )
 })
 
+test_that("Unit labels and IP humidity limits match display units", {
+    expect_equal(get_hum_limits("IP"), c(0, 420))
+    expect_no_error(ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(32, 122), hum_lim = c(0, 420), units = "IP")
+    ))
+
+    expect_equal(
+        label_vappres(units = "SI")(c(1000, 2000)),
+        c("Vappres 1 kPa", "2 kPa")
+    )
+    expect_equal(
+        label_vappres(units = "IP")(c(0.1, 0.2)),
+        c("Vappres 0.1 psi", "0.2 psi")
+    )
+})
+
 test_that("Empty psychrometric charts train display ranges", {
     expect_trained_panel_ranges(ggpsychro())
     expect_trained_panel_ranges(ggpsychro(mollier = TRUE))
@@ -855,6 +871,110 @@ test_that("Coordinate range helpers clip expanded ranges in native units", {
     expect_true(hum_uncut[[2L]] > hum_domain[[2L]])
     expect_equal(coord$range_tdb(panel_params, cut = TRUE), tdb_domain)
     expect_equal(coord$range_hum(panel_params, cut = TRUE), hum_domain)
+})
+
+test_that("Coordinate calculations inverse custom position transforms before psychrolib", {
+    p <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(1, 50)) +
+        geom_grid_relhum() +
+        scale_humratio_continuous(transform = "log10")
+
+    built <- ggplot2::ggplot_build(p)
+    coord <- built$layout$coord
+    panel_params <- built$layout$panel_params[[1L]]
+    hum_scale <- panel_params[[coord$pos_hum()]]$scale
+
+    expect_equal(coord$range_hum_physical(panel_params), c(0.001, 0.05),
+        tolerance = 1e-8)
+
+    sat <- psychro_coord_saturation_native(coord, panel_params)
+    sat_hum <- narrow_hum(hum_scale$trans$inverse(sat$hum), coord$units)
+
+    expect_true(all(is.finite(sat_hum)))
+    expect_lte(max(sat_hum), 0.05 + 1e-8)
+    expect_gt(max(sat_hum), 0.04)
+    expect_no_error(ggplot2::ggplotGrob(p))
+})
+
+test_that("Psychrolib calculations inverse custom psychrometric scale transforms", {
+    pressure <- with_units("SI", psychrolib::GetStandardAtmPressure(0))
+
+    wetbulb_plot <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+        stat_wetbulb(
+            ggplot2::aes(x = tdb, wetbulb = wetbulb),
+            data = data.frame(tdb = 25, wetbulb = 20)
+        ) +
+        scale_wetbulb_continuous(transform = "log10")
+    expect_equal(
+        first_built_data(ggplot2::ggplot_build(wetbulb_plot))$y,
+        with_units("SI", psychrolib::GetHumRatioFromTWetBulb(25, 20, pressure)),
+        tolerance = 1e-8
+    )
+
+    state_plot <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
+        stat_psychro_state(
+            ggplot2::aes(tdb = tdb, relhum = relhum),
+            data = data.frame(tdb = 25, relhum = 50)
+        ) +
+        scale_relhum_continuous(transform = "identity")
+    expect_equal(
+        first_built_data(ggplot2::ggplot_build(state_plot))$y,
+        with_units("SI", psychrolib::GetHumRatioFromRelHum(25, 0.5, pressure)),
+        tolerance = 1e-8
+    )
+
+    grid_break_values <- function(plot, type) {
+        built <- ggplot2::ggplot_build(plot)
+        coord <- built$layout$coord
+        panel_params <- built$layout$panel_params[[1L]]
+        scale <- panel_params[[coord$pos_tdb()]]$scale
+        limits <- scale$trans$inverse(
+            panel_params[[coord$pos_tdb()]]$continuous_range
+        )
+        tdb <- scale$trans$breaks(limits, 100L)
+        grid <- coord_grid_lines(
+            coord, panel_params, tdb,
+            coord$range_tdb(panel_params),
+            coord$range_hum(panel_params)
+        )
+        unique(grid[[type]]$major$value)
+    }
+
+    expect_equal(
+        grid_break_values(
+            ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+                geom_grid_wetbulb() +
+                scale_wetbulb_continuous(
+                    transform = "log10", breaks = c(10, 20, 30)
+                ),
+            "wetbulb"
+        ),
+        c(10, 20, 30),
+        tolerance = 1e-8
+    )
+    expect_equal(
+        grid_break_values(
+            ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+                geom_grid_vappres() +
+                scale_vappres_continuous(
+                    transform = "log10", breaks = c(1000, 2000, 3000)
+                ),
+            "vappres"
+        ),
+        c(1000, 2000, 3000),
+        tolerance = 1e-8
+    )
+    expect_equal(
+        grid_break_values(
+            ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+                geom_grid_relhum() +
+                scale_relhum_continuous(
+                    transform = "log10", breaks = c(25, 50, 75)
+                ),
+            "relhum"
+        ),
+        c(0.25, 0.50, 0.75),
+        tolerance = 1e-8
+    )
 })
 
 test_that("Native textpath helpers handle edge-case label placement", {

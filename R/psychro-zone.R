@@ -185,7 +185,8 @@ psychro_curve_humratio <- function(tdb, value, type, units, pres) {
     )))
 }
 
-psychro_zone_polygon_data <- function(row, tdb, lower, upper, mollier, group) {
+psychro_zone_polygon_data <- function(row, tdb, lower, upper, mollier, group,
+                                      psychro_scales = NULL, units = NULL) {
     keep <- is.finite(tdb) & is.finite(lower) & is.finite(upper) & lower <= upper
     tdb <- tdb[keep]
     lower <- lower[keep]
@@ -202,13 +203,16 @@ psychro_zone_polygon_data <- function(row, tdb, lower, upper, mollier, group) {
         out,
         c(tdb, rev(tdb)),
         c(lower, rev(upper)),
-        mollier
+        mollier,
+        psychro_scales = psychro_scales,
+        units = units
     )
     row.names(out) <- NULL
     out
 }
 
-psychro_zone_dbt_rh <- function(row, units, pres, mollier, n, group, na.rm) {
+psychro_zone_dbt_rh <- function(row, units, pres, mollier, n, group, na.rm,
+                                psychro_scales = NULL) {
     cols <- c("tdb_min", "tdb_max", "relhum_min", "relhum_max")
     if (!psychro_zone_complete(row, cols, na.rm)) return(row[0, , drop = FALSE])
 
@@ -219,11 +223,13 @@ psychro_zone_dbt_rh <- function(row, units, pres, mollier, n, group, na.rm) {
     upper <- pmin(upper, psychro_saturation_humratio(tdb, units, pres))
     lower <- pmax(lower, 0)
 
-    psychro_zone_polygon_data(row, tdb, lower, upper, mollier, group)
+    psychro_zone_polygon_data(row, tdb, lower, upper, mollier, group,
+        psychro_scales = psychro_scales, units = units)
 }
 
 psychro_zone_property_rh <- function(row, property, units, pres, mollier, n,
-                                     group, na.rm, tdb_lim) {
+                                     group, na.rm, tdb_lim,
+                                     psychro_scales = NULL) {
     min_col <- paste0(property, "_min")
     max_col <- paste0(property, "_max")
     cols <- c(min_col, max_col, "relhum_min", "relhum_max")
@@ -246,10 +252,12 @@ psychro_zone_property_rh <- function(row, property, units, pres, mollier, n,
     lower <- pmax(pmin(prop_low, prop_high), rh_low, 0)
     upper <- pmin(pmax(prop_low, prop_high), rh_high, saturation)
 
-    psychro_zone_polygon_data(row, tdb, lower, upper, mollier, group)
+    psychro_zone_polygon_data(row, tdb, lower, upper, mollier, group,
+        psychro_scales = psychro_scales, units = units)
 }
 
-psychro_zone_dbt_wmax <- function(row, units, pres, mollier, n, group, na.rm) {
+psychro_zone_dbt_wmax <- function(row, units, pres, mollier, n, group, na.rm,
+                                  psychro_scales = NULL) {
     cols <- c("tdb_min", "tdb_max", "humratio_max")
     if (!"humratio_min" %in% names(row)) {
         row$humratio_min <- 0
@@ -268,7 +276,8 @@ psychro_zone_dbt_wmax <- function(row, units, pres, mollier, n, group, na.rm) {
     upper <- pmin(upper, psychro_saturation_humratio(tdb, units, pres))
     lower <- pmax(lower, 0)
 
-    psychro_zone_polygon_data(row, tdb, lower, upper, mollier, group)
+    psychro_zone_polygon_data(row, tdb, lower, upper, mollier, group,
+        psychro_scales = psychro_scales, units = units)
 }
 
 psychro_close_xy_group <- function(data) {
@@ -288,7 +297,8 @@ psychro_close_xy_group <- function(data) {
     data
 }
 
-psychro_zone_xy_points <- function(data, units, mollier, na.rm) {
+psychro_zone_xy_points <- function(data, units, mollier, na.rm,
+                                   psychro_scales = NULL) {
     cols <- c("tdb", "humratio")
     psychro_required_columns(data, cols)
     data <- psychro_check_finite(data, cols, na.rm = na.rm)
@@ -302,14 +312,15 @@ psychro_zone_xy_points <- function(data, units, mollier, na.rm) {
     out <- lapply(groups, function(group_data) {
         group_data <- psychro_close_xy_group(group_data)
         humratio <- narrow_hum(group_data$humratio, units)
-        psychro_output_xy(group_data, group_data$tdb, humratio, mollier)
+        psychro_output_xy(group_data, group_data$tdb, humratio, mollier,
+            psychro_scales = psychro_scales, units = units)
     })
 
     do.call(rbind, out)
 }
 
 psychro_compute_zone <- function(data, type, n, units, pres, mollier, tdb_lim,
-                                 na.rm = FALSE) {
+                                 na.rm = FALSE, psychro_scales = NULL) {
     type <- standardize_psychro_zone_type(type)
     n <- as.integer(n)
     if (length(n) != 1L || is.na(n) || n < 2L) {
@@ -317,8 +328,13 @@ psychro_compute_zone <- function(data, type, n, units, pres, mollier, tdb_lim,
             call. = FALSE)
     }
 
+    # Zone aesthetics have already passed through their scales by this point, so
+    # restore public units before constructing psychrometric boundaries.
+    data <- psychro_stat_inverse_columns(data, psychro_scales)
+
     if (identical(type, "xy-points")) {
-        return(psychro_zone_xy_points(data, units, mollier, na.rm))
+        return(psychro_zone_xy_points(data, units, mollier, na.rm,
+            psychro_scales = psychro_scales))
     }
 
     zones <- lapply(seq_len(nrow(data)), function(i) {
@@ -327,19 +343,23 @@ psychro_compute_zone <- function(data, type, n, units, pres, mollier, tdb_lim,
         switch(type,
             `dbt-rh` = {
                 psychro_required_columns(row, c("tdb_min", "tdb_max", "relhum_min", "relhum_max"))
-                psychro_zone_dbt_rh(row, units, pres, mollier, n, group, na.rm)
+                psychro_zone_dbt_rh(row, units, pres, mollier, n, group, na.rm,
+                    psychro_scales = psychro_scales)
             },
             `enthalpy-rh` = {
                 psychro_required_columns(row, c("enthalpy_min", "enthalpy_max", "relhum_min", "relhum_max"))
-                psychro_zone_property_rh(row, "enthalpy", units, pres, mollier, n, group, na.rm, tdb_lim)
+                psychro_zone_property_rh(row, "enthalpy", units, pres, mollier,
+                    n, group, na.rm, tdb_lim, psychro_scales = psychro_scales)
             },
             `specvol-rh` = {
                 psychro_required_columns(row, c("specvol_min", "specvol_max", "relhum_min", "relhum_max"))
-                psychro_zone_property_rh(row, "specvol", units, pres, mollier, n, group, na.rm, tdb_lim)
+                psychro_zone_property_rh(row, "specvol", units, pres, mollier,
+                    n, group, na.rm, tdb_lim, psychro_scales = psychro_scales)
             },
             `dbt-wmax` = {
                 psychro_required_columns(row, c("tdb_min", "tdb_max", "humratio_max"))
-                psychro_zone_dbt_wmax(row, units, pres, mollier, n, group, na.rm)
+                psychro_zone_dbt_wmax(row, units, pres, mollier, n, group, na.rm,
+                    psychro_scales = psychro_scales)
             },
             stop("Invalid psychrometric zone type.", call. = FALSE)
         )
@@ -367,11 +387,15 @@ StatPsychroZone <- ggplot2::ggproto(
         "enthalpy_max", "specvol_min", "specvol_max"
     ),
 
-    extra_params = c("na.rm", "type", "n", "units", "pres", "mollier", "tdb_lim"),
+    extra_params = c(
+        "na.rm", "type", "n", "units", "pres", "mollier", "tdb_lim",
+        "psychro_scales"
+    ),
 
     compute_panel = function(self, data, scales, type = "dbt-rh", n = 100L,
                              units, pres, mollier = FALSE, tdb_lim = NULL,
-                             na.rm = FALSE) {
-        psychro_compute_zone(data, type, n, units, pres, mollier, tdb_lim, na.rm)
+                             na.rm = FALSE, psychro_scales = NULL) {
+        psychro_compute_zone(data, type, n, units, pres, mollier, tdb_lim,
+            na.rm, psychro_scales = psychro_scales)
     }
 )

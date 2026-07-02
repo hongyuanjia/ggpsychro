@@ -128,8 +128,8 @@ psychro_humratio_from_property <- function(tdb, value, property, units, pres) {
     with_units(units, switch(property,
         humratio = narrow_hum(value, units),
         relhum = {
-            psychro_check_relhum_fraction(value)
-            psychrolib::GetHumRatioFromRelHum(tdb, value, pres)
+            psychro_check_relhum_percent(value)
+            psychrolib::GetHumRatioFromRelHum(tdb, value / 100, pres)
         },
         wetbulb = psychrolib::GetHumRatioFromTWetBulb(tdb, value, pres),
         vappres = psychrolib::GetHumRatioFromVapPres(value, pres),
@@ -139,7 +139,17 @@ psychro_humratio_from_property <- function(tdb, value, property, units, pres) {
     ))
 }
 
-psychro_output_xy <- function(data, tdb, humratio, mollier = FALSE) {
+psychro_output_xy <- function(data, tdb, humratio, mollier = FALSE,
+                              psychro_scales = NULL, units = NULL) {
+    # Computed coordinates are physical values; when scale context is available,
+    # move them back into the active chart scale before ggplot2 maps positions.
+    if (!is.null(psychro_scales) && !is.null(units)) {
+        tdb <- psychro_scale_transform(psychro_scales$pos_tdb, tdb)
+        humratio <- psychro_stat_scale_humratio(
+            humratio, units, psychro_scales$pos_hum
+        )
+    }
+
     if (isTRUE(mollier)) {
         data$x <- humratio
         data$y <- tdb
@@ -151,7 +161,8 @@ psychro_output_xy <- function(data, tdb, humratio, mollier = FALSE) {
     data
 }
 
-psychro_compute_state <- function(data, units, pres, mollier, na.rm = FALSE) {
+psychro_compute_state <- function(data, units, pres, mollier, na.rm = FALSE,
+                                  psychro_scales = NULL) {
     if (!"tdb" %in% names(data)) {
         stop("`tdb` must be supplied.", call. = FALSE)
     }
@@ -162,6 +173,7 @@ psychro_compute_state <- function(data, units, pres, mollier, na.rm = FALSE) {
         return(data)
     }
 
+    data <- psychro_stat_inverse_columns(data, psychro_scales)
     humratio <- psychro_humratio_from_property(
         data$tdb, data[[property]], property, units, pres
     )
@@ -172,7 +184,8 @@ psychro_compute_state <- function(data, units, pres, mollier, na.rm = FALSE) {
         return(data)
     }
 
-    psychro_output_xy(data, data$tdb, data$humratio, mollier)
+    psychro_output_xy(data, data$tdb, data$humratio, mollier,
+        psychro_scales = psychro_scales, units = units)
 }
 
 #' @rdname ggpsychro-extensions
@@ -190,10 +203,11 @@ StatPsychroState <- ggplot2::ggproto(
 
     optional_aes = psychro_state_properties(),
 
-    extra_params = c("na.rm", "units", "pres", "mollier"),
+    extra_params = c("na.rm", "units", "pres", "mollier", "psychro_scales"),
 
     compute_group = function(self, data, scales, units, pres, mollier = FALSE,
-                             na.rm = FALSE) {
-        psychro_compute_state(data, units, pres, mollier, na.rm)
+                             na.rm = FALSE, psychro_scales = NULL) {
+        psychro_compute_state(data, units, pres, mollier, na.rm,
+            psychro_scales = psychro_scales)
     }
 )

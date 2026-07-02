@@ -32,7 +32,7 @@ GGPSY_OPT$hum_aes <- sub("tdb", "hum", GGPSY_OPT$tdb_aes)
         humratio = "gr[m] * ' / ' * lb[da]",
         relhum = "%",
         wetbulb = "degree * F",
-        vappres = "kPsi",
+        vappres = "psi",
         specvol = "ft^3 * ' / ' * lb",
         enthalpy = "Btu * ' / ' * lb"
     ),

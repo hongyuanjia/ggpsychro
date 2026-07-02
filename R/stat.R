@@ -150,11 +150,124 @@ init_stat_data <- function (data, params) {
     data
 }
 
-finish_stat_humratio <- function(data, humratio) {
+# Resolve either a raw ggplot2 scale or a panel view scale to the underlying
+# scale object so stat and coord code can share the same transform helpers.
+psychro_scale_object <- function(scale) {
+    if (is.null(scale)) {
+        return(NULL)
+    }
+    scale$scale %||% scale
+}
+
+# Invert values that ggplot2 has already moved into scale space before stat
+# computation; psychrolib expects physical/public units instead.
+psychro_scale_inverse <- function(scale, x) {
+    scale <- psychro_scale_object(scale)
+    if (is.null(scale) || is.null(x)) {
+        return(x)
+    }
+    scale$trans$inverse(x)
+}
+
+# Apply a ggplot2 scale transform while quietly dropping values that the
+# transform itself cannot represent, such as negative humidity on a log scale.
+psychro_scale_transform <- function(scale, x) {
+    scale <- psychro_scale_object(scale)
+    if (is.null(scale) || is.null(x)) {
+        return(x)
+    }
+    out <- suppressWarnings(scale$transform(x))
+    out[!is.finite(out)] <- NA_real_
+    out
+}
+
+# Only columns actually owned by a scale have been transformed by ggplot2. Zone
+# bounds such as `relhum_min` remain public values unless a scale lists them.
+psychro_scale_has_aesthetic <- function(scale, aesthetic) {
+    scale <- psychro_scale_object(scale)
+    !is.null(scale) && aesthetic %in% scale$aesthetics
+}
+
+# Keep all psychrometric scales that may transform data before a stat runs; the
+# x/y entries are the actual chart position scales used for final coordinates.
+psychro_stat_scale_context <- function(scales, psychro) {
+    if (is.null(scales)) {
+        return(NULL)
+    }
+    pos_tdb <- if (isTRUE(psychro$mollier)) "y" else "x"
+    pos_hum <- if (isTRUE(psychro$mollier)) "x" else "y"
+
+    list(
+        x = scales$get_scales("x"),
+        y = scales$get_scales("y"),
+        pos_tdb = scales$get_scales(pos_tdb),
+        pos_hum = scales$get_scales(pos_hum),
+        tdb = scales$get_scales("tdb") %||% scales$get_scales(pos_tdb),
+        humratio = scales$get_scales("humratio") %||% scales$get_scales(pos_hum),
+        relhum = scales$get_scales("relhum"),
+        wetbulb = scales$get_scales("wetbulb"),
+        vappres = scales$get_scales("vappres"),
+        specvol = scales$get_scales("specvol"),
+        enthalpy = scales$get_scales("enthalpy")
+    )
+}
+
+# Public relative-humidity inputs are percentages; after inverse-transforming a
+# scale value, convert once to the 0-1 fraction required by psychrolib.
+psychro_stat_relhum_fraction <- function(relhum, psychro_scales = NULL,
+                                         aesthetic = "relhum") {
+    if (psychro_scale_has_aesthetic(psychro_scales$relhum, aesthetic)) {
+        relhum <- psychro_scale_inverse(psychro_scales$relhum, relhum)
+    }
+    psychro_check_relhum_percent(relhum)
+    relhum / 100
+}
+
+# Inverse-transform one psychrometric property column from scale space into the
+# public unit documented for that aesthetic.
+psychro_stat_inverse_property <- function(x, property, psychro_scales = NULL,
+                                          aesthetic = property) {
+    scale <- psychro_scales[[property]]
+    if (psychro_scale_has_aesthetic(scale, aesthetic)) {
+        return(psychro_scale_inverse(scale, x))
+    }
+    x
+}
+
+# Inverse-transform all known psychrometric columns that are present in a data
+# frame before downstream helpers do psychrolib math.
+psychro_stat_inverse_columns <- function(data, psychro_scales = NULL) {
+    scale_for <- c(
+        tdb = "tdb", tdb_min = "tdb", tdb_max = "tdb",
+        humratio = "humratio", humratio_min = "humratio",
+        humratio_max = "humratio",
+        relhum = "relhum", relhum_min = "relhum", relhum_max = "relhum",
+        wetbulb = "wetbulb",
+        vappres = "vappres",
+        specvol = "specvol", specvol_min = "specvol", specvol_max = "specvol",
+        enthalpy = "enthalpy", enthalpy_min = "enthalpy",
+        enthalpy_max = "enthalpy"
+    )
+    for (var in intersect(names(scale_for), names(data))) {
+        data[[var]] <- psychro_stat_inverse_property(
+            data[[var]], scale_for[[var]], psychro_scales, aesthetic = var
+        )
+    }
+    data
+}
+
+# Humidity ratios leave psychrolib in native kg/kg or lb/lb units; convert back
+# to the active chart scale before ggplot2 trains and maps the y position.
+psychro_stat_scale_humratio <- function(humratio, units, scale) {
+    psychro_scale_transform(scale, amplify_hum(humratio, units))
+}
+
+finish_stat_humratio <- function(data, humratio, units, scales) {
     ys <- names(data)[names(data) %in% GGPSY_OPT$y_aes]
 
     if (!length(ys)) ys <- "y"
 
+    humratio <- psychro_stat_scale_humratio(humratio, units, scales$y)
     for (var in ys) {
         data[[var]] <- humratio
     }
@@ -174,14 +287,16 @@ StatRelhum <- ggproto(
         init_stat_data(data, params)
     },
 
-    extra_params = c("na.rm", "label"),
+    extra_params = c("na.rm", "label", "psychro_scales"),
 
     required_aes = c("x", "relhum", "pres", "units"),
 
-    compute_group = function (self, data, scales) {
+    compute_group = function (self, data, scales, psychro_scales = NULL) {
         units <- get_units(data)
-        humratio <- with_units(units, GetHumRatioFromRelHum(data$x, data$relhum, data$pres))
-        finish_stat_humratio(data, humratio)
+        tdb <- psychro_scale_inverse(scales$x, data$x)
+        relhum <- psychro_stat_relhum_fraction(data$relhum, psychro_scales)
+        humratio <- with_units(units, GetHumRatioFromRelHum(tdb, relhum, data$pres))
+        finish_stat_humratio(data, humratio, units, scales)
     }
 )
 
@@ -197,14 +312,18 @@ StatWetbulb <- ggproto(
         init_stat_data(data, params)
     },
 
-    extra_params = c("na.rm", "label"),
+    extra_params = c("na.rm", "label", "psychro_scales"),
 
     required_aes = c("x", "wetbulb", "pres", "units"),
 
-    compute_group = function (self, data, scales) {
+    compute_group = function (self, data, scales, psychro_scales = NULL) {
         units <- get_units(data)
-        humratio <- with_units(units, GetHumRatioFromTWetBulb(data$x, data$wetbulb, data$pres))
-        finish_stat_humratio(data, humratio)
+        tdb <- psychro_scale_inverse(scales$x, data$x)
+        wetbulb <- psychro_stat_inverse_property(
+            data$wetbulb, "wetbulb", psychro_scales
+        )
+        humratio <- with_units(units, GetHumRatioFromTWetBulb(tdb, wetbulb, data$pres))
+        finish_stat_humratio(data, humratio, units, scales)
     }
 )
 
@@ -220,14 +339,17 @@ StatVappres <- ggproto(
         init_stat_data(data, params)
     },
 
-    extra_params = c("na.rm", "label"),
+    extra_params = c("na.rm", "label", "psychro_scales"),
 
     required_aes = c("x", "vappres", "pres", "units"),
 
-    compute_group = function (self, data, scales) {
+    compute_group = function (self, data, scales, psychro_scales = NULL) {
         units <- get_units(data)
-        humratio <- with_units(units, GetHumRatioFromVapPres(data$vappres, data$pres))
-        finish_stat_humratio(data, humratio)
+        vappres <- psychro_stat_inverse_property(
+            data$vappres, "vappres", psychro_scales
+        )
+        humratio <- with_units(units, GetHumRatioFromVapPres(vappres, data$pres))
+        finish_stat_humratio(data, humratio, units, scales)
     }
 )
 
@@ -242,14 +364,18 @@ StatSpecvol <- ggproto(
         init_stat_data(data, params)
     },
 
-    extra_params = c("na.rm", "label"),
+    extra_params = c("na.rm", "label", "psychro_scales"),
 
     required_aes = c("x", "specvol", "pres", "units"),
 
-    compute_group = function (self, data, scales) {
+    compute_group = function (self, data, scales, psychro_scales = NULL) {
         units <- get_units(data)
-        humratio <- with_units(units, GetHumRatioFromAirVolume(data$x, data$specvol, data$pres))
-        finish_stat_humratio(data, humratio)
+        tdb <- psychro_scale_inverse(scales$x, data$x)
+        specvol <- psychro_stat_inverse_property(
+            data$specvol, "specvol", psychro_scales
+        )
+        humratio <- with_units(units, GetHumRatioFromAirVolume(tdb, specvol, data$pres))
+        finish_stat_humratio(data, humratio, units, scales)
     }
 )
 
@@ -265,13 +391,17 @@ StatEnthalpy <- ggproto(
         init_stat_data(data, params)
     },
 
-    extra_params = c("na.rm", "label"),
+    extra_params = c("na.rm", "label", "psychro_scales"),
 
     required_aes = c("x", "enthalpy", "pres", "units"),
 
-    compute_group = function (self, data, scales) {
+    compute_group = function (self, data, scales, psychro_scales = NULL) {
         units <- get_units(data)
-        humratio <- with_units(units, GetHumRatioFromEnthalpyAndTDryBulb(data$enthalpy, data$x))
-        finish_stat_humratio(data, humratio)
+        tdb <- psychro_scale_inverse(scales$x, data$x)
+        enthalpy <- psychro_stat_inverse_property(
+            data$enthalpy, "enthalpy", psychro_scales
+        )
+        humratio <- with_units(units, GetHumRatioFromEnthalpyAndTDryBulb(enthalpy, tdb))
+        finish_stat_humratio(data, humratio, units, scales)
     }
 )

@@ -501,15 +501,18 @@ StatComfortState <- ggplot2::ggproto(
 
     optional_aes = psychro_state_properties(),
 
-    extra_params = c("na.rm", "model", "units", "pres", "mollier"),
+    extra_params = c(
+        "na.rm", "model", "units", "pres", "mollier", "psychro_scales"
+    ),
 
     compute_group = function(self, data, scales, model = comfort_model_pmv(),
                              units, pres, mollier = FALSE,
-                             na.rm = FALSE) {
+                             na.rm = FALSE, psychro_scales = NULL) {
         ctx <- comfort_stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
-        data <- psychro_compute_state(data, units, pres, mollier, na.rm = na.rm)
+        data <- psychro_compute_state(data, units, pres, mollier,
+            na.rm = na.rm, psychro_scales = psychro_scales)
         if (!nrow(data)) {
             return(data)
         }

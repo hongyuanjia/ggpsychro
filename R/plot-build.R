@@ -15,10 +15,10 @@ ggplot_build.ggpsychro <- function(plot, ...) {
     if (use_internal_saturation) {
         layers <- setup_psychro_saturation_layer(layers)
     }
-    layers <- setup_psychro_stat_params(layers, plot$psychro)
-    plot@layers <- layers
     data <- rep(list(NULL), length(layers))
     scales <- scales_add_default(plot)
+    layers <- setup_psychro_stat_params(layers, plot$psychro, scales)
+    plot@layers <- layers
 
     data <- ggplot2_by_layer(function(l, d) l$layer_data(plot@data),
         layers, data, "computing layer data")
@@ -288,12 +288,13 @@ scales_add_default<- function (plot) {
     scales
 }
 
-setup_psychro_stat_params <- function(layers, psychro) {
+setup_psychro_stat_params <- function(layers, psychro, scales = NULL) {
     state_classes <- psychro_state_stat_classes()
     panel_classes <- psychro_panel_stat_classes()
     chart_classes <- c(state_classes, panel_classes)
     stat_classes <- psychro_stat_classes()
     pressure <- with_units(psychro$units, GetStandardAtmPressure(psychro$altitude))
+    psychro_scales <- psychro_stat_scale_context(scales, psychro)
 
     lapply(layers, function(layer) {
         if (!any(vapply(stat_classes, inherits, logical(1L), x = layer$stat))) {
@@ -321,6 +322,11 @@ setup_psychro_stat_params <- function(layers, psychro) {
             if (is.null(layer$stat_params$hum_lim) || is.waive(layer$stat_params$hum_lim)) {
                 layer$stat_params$hum_lim <- psychro$hum_lim
             }
+        }
+        if (psychro_layer_needs_scale_context(layer)) {
+            # Scale transforms have already affected stat input data by compute
+            # time; pass their inverses explicitly to psychrolib-backed stats.
+            layer$stat_params$psychro_scales <- psychro_scales
         }
 
         layer
@@ -413,6 +419,25 @@ psychro_marker_stat_classes <- function() {
         "StatRelhum", "StatWetbulb", "StatVappres", "StatSpecvol",
         "StatEnthalpy", "StatPsychroState", "StatComfortState"
     )
+}
+
+# Stats in this set consume psychrometric inputs after ggplot2 scale transforms,
+# so they need the active scale context to recover physical values.
+psychro_scale_context_stat_classes <- function() {
+    c(
+        "StatRelhum", "StatWetbulb", "StatVappres", "StatSpecvol",
+        "StatEnthalpy", "StatPsychroState", "StatPsychroZone",
+        "StatComfortState"
+    )
+}
+
+# Keep scale-context injection targeted so generated comfort grids and other
+# stat-only layers do not receive irrelevant ggproto scale objects.
+psychro_layer_needs_scale_context <- function(layer) {
+    any(vapply(
+        psychro_scale_context_stat_classes(), inherits, logical(1L),
+        x = layer$stat
+    ))
 }
 
 psychro_panel_stat_classes <- function() {

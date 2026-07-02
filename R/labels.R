@@ -169,7 +169,7 @@ label_unit <- function (x, accuracy = NULL, scale = 1, type, units,
 
     function (x) {
         if (type == "relhum") x <- x * 100.0
-        if (type == "vappres") x <- x / 1000.0
+        if (type == "vappres" && units == "SI") x <- x / 1000.0
         if (type == "enthalpy") x <- x / 1000.0
         num <- number(x, accuracy = accuracy, scale = scale,
             prefix = "", suffix = suffix,

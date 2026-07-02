@@ -26,7 +26,7 @@ a default display range will be used. Default: \code{NULL}.}
 \item{hum_lim}{A numeric vector of length-2 indicating the humidity ratio
 limits. Should be in range
 \verb{[0, 60]} g_H20 kg_Air-1 [SI] or
-\verb{[0, 350]} gr_H20 lb_Air-1 [IP].
+\verb{[0, 420]} gr_H20 lb_Air-1 [IP].
 If \code{NULL}, trained data ranges will be used when available, otherwise
 a default display range will be used. Default: \code{NULL}.}
 
