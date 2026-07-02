@@ -1,21 +1,13 @@
 #' Draw drybulb and hum ratio grid lines
 #'
 #' @param theme A ggplot [theme][ggplot2::theme]
-#' @param tdb.minor,tdb.major A numeric vector of dry-bulb temperature
-#'        minor/major breaks in **native** units.
-#' @param hum.minor,hum.major A numeric vector of humidity ratio minor/major
-#'        breaks in **native** units.
-#' @param saturation,rh.minor,rh.major,twb.minor,twb.major,vappres.minor,
-#'        vappres.major,specvol.minor,specvol.major,enthalpy.minor, enthalpy.major
-#'        A list of 4 elements, i.e. `tdb`, `hum`, `len`, and `n`.
+#' @param axis A list of dry-bulb and humidity axis major/minor positions.
+#' @param saturation A list of panel saturation polygon coordinates.
+#' @param grid A named list of psychrometric grid major/minor line data.
 #' @param mollier A single logical value indicating whether a Mollier plot is
 #'        desired
 #' @noRd
-guide_grid_psychro <- function(theme, tdb.minor, tdb.major, hum.minor, hum.major,
-                               saturation,
-                               rh.minor, rh.major, twb.minor, twb.major,
-                               vappres.minor, vappres.major, specvol.minor, specvol.major,
-                               enthalpy.minor, enthalpy.major, grid.labels,
+guide_grid_psychro <- function(theme, axis, saturation, grid, grid.labels,
                                mollier) {
     # create psychrometric chart panel
     panel <- psychro_panel_polygon(saturation, mollier)
@@ -36,7 +28,7 @@ guide_grid_psychro <- function(theme, tdb.minor, tdb.major, hum.minor, hum.major
         nm_hum <- "y"
     }
 
-    grid_elem <- function(x, type, var) {
+    axis_grid <- function(x, type, var) {
         vx <- rep(x, each = 2L)
         vy <- rep(0:1, length(x))
         v <- if (var == "x") list(x = vx, y = vy) else list(x = vy, y = vx)
@@ -47,7 +39,7 @@ guide_grid_psychro <- function(theme, tdb.minor, tdb.major, hum.minor, hum.major
         )
     }
 
-    psy_grid_elem <- function(x, type, var) {
+    psychro_grid <- function(x, type, var) {
         ggplot2::element_render(
             theme, paste("psychro.panel.grid", type, var, sep = "."),
             x = x[[c("tdb", "hum")[c(!mollier, mollier)]]],
@@ -56,99 +48,85 @@ guide_grid_psychro <- function(theme, tdb.minor, tdb.major, hum.minor, hum.major
         )
     }
 
-    psy_grid_label <- function(x, var) {
+    psychro_grid_label <- function(x, var) {
         psychro_grid_label_grob(
             x, grid.labels[[var]], var, theme, mollier,
             panel_x, panel_y
         )
     }
 
-    grill <- grid::grobTree(
-        ggplot2::element_render(theme, "panel.background"),
+    axis_grobs <- axis_grid_grobs(
+        axis, nm_tdb, nm_hum, psychro_panel_clip, axis_grid
+    )
+    grid_grobs <- curved_grid_grobs(
+        grid, psychro_panel_clip, psychro_grid
+    )
+    label_grobs <- curved_label_grobs(grid, psychro_grid_label)
 
-        psychro_mask,
-
-        psychro_panel,
-
-        if (length(hum.minor)) {
-            clip_grob(psychro_panel_clip, grid_elem(hum.minor, "minor", nm_hum))
-        },
-
-        if (length(tdb.minor)) {
-            clip_grob(psychro_panel_clip, grid_elem(tdb.minor, "minor", nm_tdb))
-        },
-
-        if (length(hum.major)) {
-            clip_grob(psychro_panel_clip, grid_elem(hum.major, "major", nm_hum))
-        },
-
-        if (length(tdb.major)) {
-            clip_grob(psychro_panel_clip, grid_elem(tdb.major, "major", nm_tdb))
-        },
-
-        if (length(rh.minor)) {
-            clip_grob(psychro_panel_clip, psy_grid_elem(rh.minor, "minor", "relhum"))
-        },
-
-        if (length(rh.major)) {
-            clip_grob(psychro_panel_clip, psy_grid_elem(rh.major, "major", "relhum"))
-        },
-
-        if (length(twb.minor)) {
-            clip_grob(psychro_panel_clip, psy_grid_elem(twb.minor, "minor", "wetbulb"))
-        },
-
-        if (length(twb.major)) {
-            clip_grob(psychro_panel_clip, psy_grid_elem(twb.major, "major", "wetbulb"))
-        },
-
-        if (length(vappres.minor)) {
-            clip_grob(psychro_panel_clip, psy_grid_elem(vappres.minor, "minor", "vappres"))
-        },
-
-        if (length(vappres.major)) {
-            clip_grob(psychro_panel_clip, psy_grid_elem(vappres.major, "major", "vappres"))
-        },
-
-        if (length(specvol.minor)) {
-            clip_grob(psychro_panel_clip, psy_grid_elem(specvol.minor, "minor", "specvol"))
-        },
-
-        if (length(specvol.major)) {
-            clip_grob(psychro_panel_clip, psy_grid_elem(specvol.major, "major", "specvol"))
-        },
-
-        if (length(enthalpy.minor)) {
-            clip_grob(psychro_panel_clip, psy_grid_elem(enthalpy.minor, "minor", "enthalpy"))
-        },
-
-        if (length(enthalpy.major)) {
-            clip_grob(psychro_panel_clip, psy_grid_elem(enthalpy.major, "major", "enthalpy"))
-        },
-
-        if (length(rh.major)) {
-            psy_grid_label(rh.major, "relhum")
-        },
-
-        if (length(twb.major)) {
-            psy_grid_label(twb.major, "wetbulb")
-        },
-
-        if (length(vappres.major)) {
-            psy_grid_label(vappres.major, "vappres")
-        },
-
-        if (length(specvol.major)) {
-            psy_grid_label(specvol.major, "specvol")
-        },
-
-        if (length(enthalpy.major)) {
-            psy_grid_label(enthalpy.major, "enthalpy")
-        }
+    grill <- do.call(
+        grid::grobTree,
+        c(
+            list(
+                ggplot2::element_render(theme, "panel.background"),
+                psychro_mask,
+                psychro_panel
+            ),
+            axis_grobs,
+            grid_grobs,
+            label_grobs
+        )
     )
 
     grill$name <- grid::grobName(grill, "grill")
     grill
+}
+
+# Assemble Cartesian panel grid lines from a data table so dry-bulb and humidity
+# major/minor guide order stays explicit without four duplicated branches.
+axis_grid_grobs <- function(axis, nm_tdb, nm_hum, panel_clip,
+                            render_axis) {
+    spec <- list(
+        list(values = axis$hum$minor, type = "minor", var = nm_hum),
+        list(values = axis$tdb$minor, type = "minor", var = nm_tdb),
+        list(values = axis$hum$major, type = "major", var = nm_hum),
+        list(values = axis$tdb$major, type = "major", var = nm_tdb)
+    )
+
+    compact_grobs(lapply(spec, function(item) {
+        if (!length(item$values)) return(NULL)
+        clip_grob(
+            panel_clip,
+            render_axis(item$values, item$type, item$var)
+        )
+    }))
+}
+
+# Assemble psychrometric curved grids in the same visual order as the previous
+# hand-written branches: all line families first, labels later.
+curved_grid_grobs <- function(grid, panel_clip, render_grid) {
+    compact_grobs(unlist(lapply(names(grid), function(var) {
+        lapply(c("minor", "major"), function(type) {
+            lines <- grid[[var]][[type]]
+            if (!length(lines)) return(NULL)
+            clip_grob(panel_clip, render_grid(lines, type, var))
+        })
+    }), recursive = FALSE))
+}
+
+# Labels attach only to major psychrometric grids, matching the drawn line data
+# produced by coord setup.
+curved_label_grobs <- function(grid, render_label) {
+    compact_grobs(lapply(names(grid), function(var) {
+        lines <- grid[[var]]$major
+        if (!length(lines)) return(NULL)
+        render_label(lines, var)
+    }))
+}
+
+# grid::grobTree() accepts grobs, not placeholder NULLs. Compacting in one
+# helper keeps the data-driven guide assembly readable.
+compact_grobs <- function(grobs) {
+    grobs[!vapply(grobs, is.null, logical(1L))]
 }
 
 psychro_panel_polygon <- function(saturation, mollier = FALSE) {

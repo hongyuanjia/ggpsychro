@@ -835,6 +835,88 @@ test_that("Psychrometric grid labels are rendered only for explicit helpers", {
     )
 })
 
+test_that("Coordinate range helpers clip expanded ranges in native units", {
+    p <- ggpsychro(tdb_lim = c(-50, 100), hum_lim = c(0, 60)) +
+        coord_psychro(
+            tdb_lim = c(-50, 100), hum_lim = c(0, 60),
+            expand = TRUE
+        )
+    built <- ggplot2::ggplot_build(p)
+    coord <- built$layout$coord
+    panel_params <- built$layout$panel_params[[1L]]
+
+    expect_equal(coord$range_tdb(panel_params, cut = FALSE), c(-57.5, 107.5))
+    expect_equal(coord$range_tdb(panel_params, cut = TRUE), c(-50, 100))
+    expect_equal(coord$range_hum(panel_params, cut = FALSE), c(-0.003, 0.063))
+    expect_equal(coord$range_hum(panel_params, cut = TRUE), c(0, 0.06))
+})
+
+test_that("Native textpath helpers handle edge-case label placement", {
+    path <- tempfile(fileext = ".pdf")
+    grDevices::pdf(path)
+    on.exit({
+        grDevices::dev.off()
+        unlink(path)
+    })
+
+    gp <- grid::gpar(fontsize = 10)
+    expr <- textpath_measure(expression(alpha + beta), gp, vjust = 0.5)
+    multiline <- textpath_measure_chr("a\nb", gp, vjust = 0.5)
+
+    expect_equal(expr$n_label, 1L)
+    expect_equal(length(expr$piece_label), 1L)
+    expect_equal(length(multiline$piece_label), 1L)
+
+    line_path <- new_data_frame(list(
+        x = c(0, 1),
+        y = c(0, 0),
+        id = c(1L, 1L)
+    ))
+    measured <- list(
+        piece_label = c("A", "B"),
+        piece_id = c(1L, 1L),
+        # Piece midpoints are in label arclength units; the label is longer
+        # than the one-inch path so remove_long branches are exercised directly.
+        piece_mid = c(0.5, 1.5),
+        piece_width = c(1, 1),
+        label_width = 2,
+        label_offset = 0,
+        n_label = 1L
+    )
+
+    kept <- textpath_place(
+        line_path, measured, hjust = 0.5, upright = TRUE,
+        remove_long = FALSE
+    )
+    dropped <- textpath_place(
+        line_path, measured, hjust = 0.5, upright = TRUE,
+        remove_long = TRUE
+    )
+
+    expect_equal(nrow(kept), 2L)
+    expect_true(all(is.finite(kept$x)))
+    expect_equal(nrow(dropped), 0L)
+})
+
+test_that("Native textpath gap removal keeps only visible path intervals", {
+    path <- new_data_frame(list(
+        x = c(0, 1, 2),
+        y = c(0, 0, 0),
+        id = c(1L, 1L, 1L)
+    ))
+    placed <- new_data_frame(list(
+        label = 1L,
+        left = 0.8,
+        right = 1.2
+    ))
+
+    gap_path <- textpath_gap_path(path, placed, padding = 0)
+
+    expect_equal(range(gap_path$x), c(0, 2))
+    expect_false(any(gap_path$x > 0.8 & gap_path$x < 1.2))
+    expect_equal(length(unique(gap_path$id)), 2L)
+})
+
 test_that("Psychrometric presets configure themes and grids", {
     expect_s3_class(theme_psychro_ashrae(), "theme")
     expect_s3_class(theme_psychro_minimal(), "theme")
@@ -1125,55 +1207,6 @@ test_that("Psychrometric stats draw retained aesthetics in common plots", {
         "psychro stat mixed aesthetics",
         p_mixed
     )
-})
-
-test_that("building ggpsychro plots does not mutate source plot state", {
-    p <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
-        geom_psychro_tile(
-            ggplot2::aes(x, y),
-            data = data.frame(x = 20, y = 10)
-        )
-
-    # Guard against build-time psychro metadata leaking back onto the user-held plot.
-    stat_param_names <- names(p@layers[[1L]]$stat_params)
-    expect_null(p@layers[[1L]]$geom_params$psychro.theme)
-    expect_null(p@coordinates$pressure)
-
-    invisible(ggplot2::ggplot_build(p))
-
-    expect_equal(names(p@layers[[1L]]$stat_params), stat_param_names)
-    expect_false(any(c("units", "pres", "mollier", "tdb_lim", "hum_lim") %in%
-        names(p@layers[[1L]]$stat_params)))
-    expect_null(p@coordinates$pressure)
-
-    invisible(ggplot2::ggplotGrob(p))
-
-    expect_equal(names(p@layers[[1L]]$stat_params), stat_param_names)
-    expect_null(p@layers[[1L]]$geom_params$psychro.theme)
-    expect_null(p@coordinates$pressure)
-})
-
-test_that("rebuilt plots do not reuse stale inherited psychro params", {
-    d <- data.frame(tdb = 77, relhum = 50)
-    p <- ggpsychro(d, tdb_lim = c(50, 100), hum_lim = c(0, 60)) +
-        stat_psychro_state(ggplot2::aes(tdb = tdb, relhum = relhum))
-
-    invisible(ggplot2::ggplot_build(p))
-    suppressMessages(
-        rebuilt <- p + coord_psychro(
-            tdb_lim = c(50, 100), hum_lim = c(0, 140), units = "IP"
-        )
-    )
-    fresh <- ggpsychro(
-        d, tdb_lim = c(50, 100), hum_lim = c(0, 140), units = "IP"
-    ) +
-        stat_psychro_state(ggplot2::aes(tdb = tdb, relhum = relhum))
-
-    rebuilt_data <- ggplot2::ggplot_build(rebuilt)$data[[1L]]
-    fresh_data <- ggplot2::ggplot_build(fresh)$data[[1L]]
-
-    expect_null(p@layers[[1L]]$stat_params$units)
-    expect_equal(rebuilt_data$y, fresh_data$y, tolerance = 1e-8)
 })
 
 test_that("building ggpsychro plots does not mutate source plot state", {

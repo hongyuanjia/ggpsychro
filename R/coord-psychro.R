@@ -82,6 +82,55 @@ psychro_grid_label_text <- function(label, type, breaks, scale, units) {
     all_labels[loc]
 }
 
+# Build major/minor grid data through one path so every psychrometric grid
+# family uses the same break filtering, enable flag, and label-break source.
+coord_grid_lines <- function(coord, panel_params, tdb, range_tdb, range_hum) {
+    grid_types <- c("relhum", "wetbulb", "vappres", "specvol", "enthalpy")
+    stats::setNames(lapply(grid_types, function(type) {
+        breaks <- grid_breaks(panel_params, type)
+        list(
+            minor = if (psychro_grid_enabled(coord$grids, type)) {
+                coord$trans_grid_vert(
+                    tdb, type, breaks$minor, range_tdb, range_hum
+                )
+            },
+            major = if (psychro_grid_enabled(coord$grids, type)) {
+                coord$trans_grid_vert(
+                    tdb, type, breaks$major, range_tdb, range_hum
+                )
+            },
+            major_breaks = breaks$major
+        )
+    }), grid_types)
+}
+
+# Keep the per-grid break quirks in one switch: relative humidity excludes 0/1
+# while other psychrometric variables only need missing-value removal.
+grid_breaks <- function(panel_params, type) {
+    scale <- panel_params[[type]]
+    if (identical(type, "relhum")) {
+        major <- valid_relhum_grid_breaks(scale$get_breaks())
+        minor <- valid_relhum_grid_breaks(scale$get_breaks_minor())
+    } else {
+        major <- remove_na(scale$get_breaks())
+        minor <- remove_na(scale$get_breaks_minor())
+    }
+
+    list(major = major, minor = setdiff(minor, major))
+}
+
+# Label specs are derived from the same major breaks used to draw grid lines so
+# labels cannot drift from the visible guide geometry.
+coord_grid_labels <- function(grid, labels, panel_params, units) {
+    grid_types <- names(grid)
+    stats::setNames(lapply(grid_types, function(type) {
+        psychro_grid_label_spec(
+            labels, type, grid[[type]]$major_breaks,
+            panel_params[[type]], units
+        )
+    }), grid_types)
+}
+
 psychro_format_shr_labels <- function(x) {
     labels <- sprintf("%.1f", x)
     labels[abs(x) <= 1e-8] <- "0"
@@ -246,13 +295,19 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
 
     range_tdb = function(self, panel_params, cut = FALSE) {
         rng <- panel_params[[paste(self$pos_tdb(), "range", sep = ".")]]
-        if (cut) cut_oob(rng, get_tdb_limits(self$units))
+        if (cut) {
+            rng <- cut_oob(rng, get_tdb_limits(self$units))
+        }
         rng
     },
 
     range_hum = function(self, panel_params, cut = FALSE) {
         rng <- panel_params[[paste(self$pos_hum(), "range", sep = ".")]]
-        if (cut) cut_oob(rng, get_hum_limits(self$units))
+        if (cut) {
+            # Panel ranges store humidity ratio in native units; user-facing
+            # limits are converted before clipping to avoid SI/IP scale drift.
+            rng <- cut_oob(rng, narrow_hum(get_hum_limits(self$units), self$units))
+        }
         rng
     },
 
@@ -326,76 +381,27 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
             return(ggplot2::ggproto_parent(CoordCartesian, self)$render_bg(panel_params, theme))
         }
 
-        # RELHUM GRID LINE
-        grid_labels <- self$grid_labels
-        if (is.null(grid_labels)) grid_labels <- list()
-
-        bk_rh_major <- valid_relhum_grid_breaks(panel_params$relhum$get_breaks())
-        bk_rh_minor <- setdiff(valid_relhum_grid_breaks(panel_params$relhum$get_breaks_minor()), bk_rh_major)
-        rh_major <- if (psychro_grid_enabled(self$grids, "relhum")) {
-            self$trans_grid_vert(tdb, "relhum", bk_rh_major, range_tdb, range_hum)
-        }
-        rh_minor <- if (psychro_grid_enabled(self$grids, "relhum")) {
-            self$trans_grid_vert(tdb, "relhum", bk_rh_minor, range_tdb, range_hum)
-        }
-
-        # WETBULB GRID LINE
-        bk_twb_major <- remove_na(panel_params$wetbulb$get_breaks())
-        bk_twb_minor <- setdiff(remove_na(panel_params$wetbulb$get_breaks_minor()), bk_twb_major)
-        twb_major <- if (psychro_grid_enabled(self$grids, "wetbulb")) {
-            self$trans_grid_vert(tdb, "wetbulb", bk_twb_major, range_tdb, range_hum)
-        }
-        twb_minor <- if (psychro_grid_enabled(self$grids, "wetbulb")) {
-            self$trans_grid_vert(tdb, "wetbulb", bk_twb_minor, range_tdb, range_hum)
-        }
-
-        # VAPPRES GRID LINE
-        bk_vap_major <- remove_na(panel_params$vappres$get_breaks())
-        bk_vap_minor <- setdiff(remove_na(panel_params$vappres$get_breaks_minor()), bk_vap_major)
-        vap_major <- if (psychro_grid_enabled(self$grids, "vappres")) {
-            self$trans_grid_vert(tdb, "vappres", bk_vap_major, range_tdb, range_hum)
-        }
-        vap_minor <- if (psychro_grid_enabled(self$grids, "vappres")) {
-            self$trans_grid_vert(tdb, "vappres", bk_vap_minor, range_tdb, range_hum)
-        }
-
-        # SPECVOL GRID LINE
-        bk_vol_major <- remove_na(panel_params$specvol$get_breaks())
-        bk_vol_minor <- setdiff(remove_na(panel_params$specvol$get_breaks_minor()), bk_vol_major)
-        vol_major <- if (psychro_grid_enabled(self$grids, "specvol")) {
-            self$trans_grid_vert(tdb, "specvol", bk_vol_major, range_tdb, range_hum)
-        }
-        vol_minor <- if (psychro_grid_enabled(self$grids, "specvol")) {
-            self$trans_grid_vert(tdb, "specvol", bk_vol_minor, range_tdb, range_hum)
-        }
-
-        # ENTHALPY GRID LINE
-        bk_enth_major <- remove_na(panel_params$enthalpy$get_breaks())
-        bk_enth_minor <- setdiff(remove_na(panel_params$enthalpy$get_breaks_minor()), bk_enth_major)
-        enth_major <- if (psychro_grid_enabled(self$grids, "enthalpy")) {
-            self$trans_grid_vert(tdb, "enthalpy", bk_enth_major, range_tdb, range_hum)
-        }
-        enth_minor <- if (psychro_grid_enabled(self$grids, "enthalpy")) {
-            self$trans_grid_vert(tdb, "enthalpy", bk_enth_minor, range_tdb, range_hum)
-        }
-
-        labels <- list(
-            relhum = psychro_grid_label_spec(grid_labels, "relhum", bk_rh_major, panel_params$relhum, self$units),
-            wetbulb = psychro_grid_label_spec(grid_labels, "wetbulb", bk_twb_major, panel_params$wetbulb, self$units),
-            vappres = psychro_grid_label_spec(grid_labels, "vappres", bk_vap_major, panel_params$vappres, self$units),
-            specvol = psychro_grid_label_spec(grid_labels, "specvol", bk_vol_major, panel_params$specvol, self$units),
-            enthalpy = psychro_grid_label_spec(grid_labels, "enthalpy", bk_enth_major, panel_params$enthalpy, self$units)
+        grid_labels <- self$grid_labels %||% list()
+        grid <- coord_grid_lines(
+            self, panel_params, tdb, range_tdb, range_hum
+        )
+        labels <- coord_grid_labels(
+            grid, grid_labels, panel_params, self$units
         )
 
         guide_grid_psychro(
             theme,
-            panel_params[[self$pos_tdb()]]$break_positions_minor(),
-            panel_params[[self$pos_tdb()]]$break_positions(),
-            panel_params[[self$pos_hum()]]$break_positions_minor(),
-            panel_params[[self$pos_hum()]]$break_positions(),
-            sat, rh_minor, rh_major, twb_minor, twb_major,
-            vap_minor, vap_major, vol_minor, vol_major,
-            enth_minor, enth_major, labels, self$mollier
+            list(
+                tdb = list(
+                    minor = panel_params[[self$pos_tdb()]]$break_positions_minor(),
+                    major = panel_params[[self$pos_tdb()]]$break_positions()
+                ),
+                hum = list(
+                    minor = panel_params[[self$pos_hum()]]$break_positions_minor(),
+                    major = panel_params[[self$pos_hum()]]$break_positions()
+                )
+            ),
+            sat, grid, labels, self$mollier
         )
     },
 
@@ -901,9 +907,10 @@ psychro_coord_panel_polygon_data <- function(coord, panel_params) {
 }
 
 psychro_coord_saturation_native <- function(coord, panel_params) {
-    range_tdb <- coord$range_tdb(panel_params)
     range_hum <- coord$range_hum(panel_params)
 
+    # The saturation curve samples dry-bulb values from the trained scale
+    # interval; the caller still uses range_tdb() to close the panel polygon.
     scale <- panel_params[[coord$pos_tdb()]]$scale
     limits <- scale$trans$inverse(panel_params[[coord$pos_tdb()]]$continuous_range)
     tdb <- scale$trans$breaks(limits, 100L)

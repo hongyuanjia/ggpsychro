@@ -59,7 +59,7 @@ makeContent.psychro_textpath <- function(x) {
     x$psychro_textpath <- NULL
     class(x) <- setdiff(class(x), "psychro_textpath")
 
-    measured <- psychro_textpath_measure(
+    measured <- textpath_measure(
         spec$label, spec$gp_text, spec$vjust, spec$straight
     )
     if (is.null(measured) || !length(measured$piece_label)) {
@@ -74,7 +74,7 @@ makeContent.psychro_textpath <- function(x) {
         id = spec$id
     ))
 
-    placed <- psychro_textpath_place(
+    placed <- textpath_place(
         path, measured, spec$hjust, spec$upright, spec$remove_long,
         spec$keep_path_side
     )
@@ -86,7 +86,7 @@ makeContent.psychro_textpath <- function(x) {
     if (!is.null(spec$gp_path) && !isTRUE(spec$text_only)) {
         # The path child is built from the same placement result so the visual
         # gap, when requested, matches the measured label span.
-        path_grob <- psychro_textpath_path_grob(
+        path_grob <- textpath_path_grob(
             path, placed, spec$gp_path, spec$gap, spec$padding, x$name
         )
         if (!is.null(path_grob)) {
@@ -146,7 +146,7 @@ GeomPsychroTextpath <- ggplot2::ggproto(
 
         data <- coord$transform(data, panel_params)
         groups <- split(data, data$group, drop = TRUE)
-        grobs <- lapply(groups, psychro_textpath_group_grob,
+        grobs <- lapply(groups, textpath_group_grob,
                         text_only = text_only, upright = upright,
                         straight = straight, remove_long = remove_long,
                         gap = gap, padding = padding,
@@ -161,23 +161,23 @@ GeomPsychroTextpath <- ggplot2::ggproto(
 
 # Build one textpath grob per data group so per-contour colours, line
 # widths, and labels remain independent without vectorising grid parameters.
-psychro_textpath_group_grob <- function(data, text_only, upright, straight,
-                                        remove_long, gap, padding,
-                                        keep_path_side) {
-    label <- psychro_first(data$label, NA_character_)
+textpath_group_grob <- function(data, text_only, upright, straight,
+                                remove_long, gap, padding,
+                                keep_path_side) {
+    label <- first_value(data$label, NA_character_)
     if (is.na(label)) {
         return(NULL)
     }
 
-    alpha <- psychro_first(data$alpha, NA_real_)
-    colour <- psychro_alpha(psychro_first(data$colour, "black"), alpha)
-    linewidth <- psychro_first(data$linewidth, 0.5)
+    alpha <- first_value(data$alpha, NA_real_)
+    colour <- apply_alpha(first_value(data$colour, "black"), alpha)
+    linewidth <- first_value(data$linewidth, 0.5)
     gp_text <- grid::gpar(
         col = colour,
-        fontsize = psychro_first(data$size, 3.88) * ggplot2::.pt,
-        fontfamily = psychro_first(data$family, ""),
-        fontface = psychro_first(data$fontface, 1),
-        lineheight = psychro_first(data$lineheight, 1.2)
+        fontsize = first_value(data$size, 3.88) * ggplot2::.pt,
+        fontfamily = first_value(data$family, ""),
+        fontface = first_value(data$fontface, 1),
+        lineheight = first_value(data$lineheight, 1.2)
     )
     gp_path <- if (isTRUE(text_only)) {
         NULL
@@ -185,7 +185,7 @@ psychro_textpath_group_grob <- function(data, text_only, upright, straight,
         grid::gpar(
             col = colour,
             lwd = linewidth * ggplot2::.pt,
-            lty = psychro_first(data$linetype, 1),
+            lty = first_value(data$linetype, 1),
             lineend = "butt"
         )
     }
@@ -195,8 +195,8 @@ psychro_textpath_group_grob <- function(data, text_only, upright, straight,
         x = data$x,
         y = data$y,
         id = rep.int(1L, nrow(data)),
-        hjust = psychro_first(data$hjust, 0.5),
-        vjust = psychro_first(data$vjust, 0.5),
+        hjust = first_value(data$hjust, 0.5),
+        vjust = first_value(data$vjust, 0.5),
         upright = upright,
         straight = straight,
         remove_long = remove_long,
@@ -211,18 +211,18 @@ psychro_textpath_group_grob <- function(data, text_only, upright, straight,
 
 # Measure labels using grid's normal text metrics. Character labels are split
 # into drawable pieces, while plotmath labels stay as whole expressions.
-psychro_textpath_measure <- function(label, gp, vjust, straight = FALSE) {
+textpath_measure <- function(label, gp, vjust, straight = FALSE) {
     if (is.expression(label)) {
-        return(psychro_textpath_measure_expr(label, gp, vjust))
+        return(textpath_measure_expr(label, gp, vjust))
     }
-    psychro_textpath_measure_chr(label, gp, vjust, straight)
+    textpath_measure_chr(label, gp, vjust, straight)
 }
 
 # Plotmath expressions cannot be split into glyphs without reimplementing R's
 # expression renderer, so they are laid out as one rotated label per path.
-psychro_textpath_measure_expr <- function(label, gp, vjust) {
-    width <- psychro_text_width(label, gp)
-    height <- psychro_text_lineheight(label, gp)
+textpath_measure_expr <- function(label, gp, vjust) {
+    width <- text_width_in(label, gp)
+    height <- text_lineheight_in(label, gp)
     n <- length(label)
 
     list(
@@ -231,7 +231,7 @@ psychro_textpath_measure_expr <- function(label, gp, vjust) {
         piece_mid = width / 2,
         piece_width = width,
         label_width = width,
-        label_offset = psychro_textpath_offset(vjust, height, n),
+        label_offset = textpath_offset(vjust, height, n),
         n_label = n
     )
 }
@@ -239,10 +239,10 @@ psychro_textpath_measure_expr <- function(label, gp, vjust) {
 # Character labels use prefix widths rather than isolated glyph widths. This
 # keeps device kerning in the advances while avoiding a full Unicode glyph-index
 # cache.
-psychro_textpath_measure_chr <- function(label, gp, vjust,
-                                         straight = FALSE) {
-    label_height <- psychro_text_lineheight(label, gp)
-    label_offset <- psychro_textpath_offset(
+textpath_measure_chr <- function(label, gp, vjust,
+                                 straight = FALSE) {
+    label_height <- text_lineheight_in(label, gp)
+    label_offset <- textpath_offset(
         vjust, label_height, length(label)
     )
 
@@ -251,7 +251,7 @@ psychro_textpath_measure_chr <- function(label, gp, vjust,
         # Multiline labels must stay as one grid text grob so embedded line
         # breaks remain visible after rotation.
         if (isTRUE(straight) || grepl("\n", text, fixed = TRUE)) {
-            width <- psychro_text_width(text, gp)
+            width <- text_width_in(text, gp)
             return(list(
                 label = text,
                 id = i,
@@ -270,7 +270,7 @@ psychro_textpath_measure_chr <- function(label, gp, vjust,
         prefixes <- vapply(seq_along(chars), function(j) {
             paste0(chars[seq_len(j)], collapse = "")
         }, character(1L))
-        prefix_width <- psychro_text_width(prefixes, gp)
+        prefix_width <- text_width_in(prefixes, gp)
         char_width <- pmax(diff(c(0, prefix_width)), 0)
 
         list(
@@ -309,7 +309,7 @@ psychro_textpath_measure_chr <- function(label, gp, vjust,
 # Numeric vjust follows text hjust/vjust semantics; unit vjust is treated as an
 # absolute normal offset, matching the way ggpsychro uses point offsets for PMV
 # axis labels.
-psychro_textpath_offset <- function(vjust, height, n) {
+textpath_offset <- function(vjust, height, n) {
     if (grid::is.unit(vjust)) {
         idx <- rep(seq_along(vjust), length.out = n)
         unit_offset <- grid::convertHeight(vjust[idx], "in", valueOnly = TRUE)
@@ -321,7 +321,7 @@ psychro_textpath_offset <- function(vjust, height, n) {
 
 # Widths are measured through grid so the fast renderer follows the active
 # graphics device and font family without asking systemfonts for all glyphs.
-psychro_text_width <- function(label, gp) {
+text_width_in <- function(label, gp) {
     vapply(seq_along(label), function(i) {
         grid::convertWidth(
             grid::grobWidth(grid::textGrob(label = label[i], gp = gp)),
@@ -332,7 +332,7 @@ psychro_text_width <- function(label, gp) {
 }
 
 # Heights determine the normal offset produced by numeric label.vjust.
-psychro_text_height <- function(label, gp) {
+text_height_in <- function(label, gp) {
     vapply(seq_along(label), function(i) {
         grid::convertHeight(
             grid::grobHeight(grid::textGrob(label = label[i], gp = gp)),
@@ -345,8 +345,8 @@ psychro_text_height <- function(label, gp) {
 # Offset height uses the nominal font line height rather than only the ink
 # bounding box. That matches path-label spacing expectations for large numeric
 # vjust values used by comfort standards and Givoni labels.
-psychro_text_lineheight <- function(label, gp) {
-    actual <- psychro_text_height(label, gp)
+text_lineheight_in <- function(label, gp) {
+    actual <- text_height_in(label, gp)
     fontsize <- rep_len(gp$fontsize %||% 12, length(label))
     lineheight <- rep_len(gp$lineheight %||% 1.2, length(label))
     n_lines <- if (is.character(label)) {
@@ -364,8 +364,8 @@ psychro_text_lineheight <- function(label, gp) {
 
 # C handles the repeated arclength interpolation and tangent-angle calculation
 # after R has converted paths and text metrics to inches.
-psychro_textpath_place <- function(path, measured, hjust, upright,
-                                   remove_long, keep_path_side = FALSE) {
+textpath_place <- function(path, measured, hjust, upright,
+                           remove_long, keep_path_side = FALSE) {
     if (!nrow(path) || !length(measured$piece_id)) {
         return(new_data_frame(list(
             x = numeric(), y = numeric(), angle = numeric(),
@@ -394,10 +394,10 @@ psychro_textpath_place <- function(path, measured, hjust, upright,
 
 # Draw the underlying path, optionally deleting segments under label spans when
 # a comfort contour requests text gap behaviour.
-psychro_textpath_path_grob <- function(path, placed, gp_path, gap, padding,
-                                       name = NULL) {
+textpath_path_grob <- function(path, placed, gp_path, gap, padding,
+                               name = NULL) {
     if (isTRUE(gap) && nrow(placed)) {
-        path <- psychro_textpath_gap_path(path, placed, padding)
+        path <- textpath_gap_path(path, placed, padding)
     }
     if (!nrow(path)) {
         return(NULL)
@@ -425,7 +425,7 @@ psychro_textpath_path_grob <- function(path, placed, gp_path, gap, padding,
 # Gap clipping cuts paths at measured label-span boundaries. Keeping each
 # remaining continuous run under one id preserves dashed line patterns and
 # avoids text-over-line collisions on sparse contour paths.
-psychro_textpath_gap_path <- function(path, placed, padding) {
+textpath_gap_path <- function(path, placed, padding) {
     pad <- if (grid::is.unit(padding)) {
         grid::convertWidth(padding, "in", valueOnly = TRUE)
     } else {
@@ -458,13 +458,13 @@ psychro_textpath_gap_path <- function(path, placed, padding) {
         if (is.null(label_bounds)) {
             label_bounds <- bounds[0, , drop = FALSE]
         }
-        keep <- psychro_textpath_keep(arc, label_bounds, pad)
+        keep <- textpath_keep(arc, label_bounds, pad)
         for (i in seq_len(nrow(keep))) {
             if (keep$right[[i]] - keep$left[[i]] <= 1e-6) {
                 next
             }
 
-            run <- psychro_path_slice(x, y, arc, keep$left[[i]], keep$right[[i]])
+            run <- path_slice(x, y, arc, keep$left[[i]], keep$right[[i]])
             if (nrow(run) < 2L) {
                 next
             }
@@ -488,7 +488,7 @@ psychro_textpath_gap_path <- function(path, placed, padding) {
 
 # Convert label spans into the complementary path intervals that should remain
 # visible after gap removal.
-psychro_textpath_keep <- function(arc, label_bounds, pad) {
+textpath_keep <- function(arc, label_bounds, pad) {
     path_length <- max(arc)
     if (!nrow(label_bounds)) {
         return(new_data_frame(list(left = 0, right = path_length)))
@@ -524,30 +524,30 @@ psychro_textpath_keep <- function(arc, label_bounds, pad) {
 
 # Slice a polyline by arclength, interpolating boundary points when the label
 # gap cuts through the middle of an original segment.
-psychro_path_slice <- function(x, y, arc, left, right) {
+path_slice <- function(x, y, arc, left, right) {
     inside <- arc > left & arc < right
     xx <- c(
-        psychro_path_at(x, arc, left),
+        path_at(x, arc, left),
         x[inside],
-        psychro_path_at(x, arc, right)
+        path_at(x, arc, right)
     )
     yy <- c(
-        psychro_path_at(y, arc, left),
+        path_at(y, arc, left),
         y[inside],
-        psychro_path_at(y, arc, right)
+        path_at(y, arc, right)
     )
     keep <- c(TRUE, xx[-1L] != xx[-length(xx)] | yy[-1L] != yy[-length(yy)])
     new_data_frame(list(x = xx[keep], y = yy[keep]))
 }
 
 # Interpolate one coordinate vector on an arclength-parametrised polyline.
-psychro_path_at <- function(value, arc, target) {
+path_at <- function(value, arc, target) {
     stats::approx(arc, value, xout = target, rule = 2, ties = "ordered")$y
 }
 
 # Extract one group-level aesthetic value while preserving grid unit objects,
 # which behave differently from ordinary data-frame vectors.
-psychro_first <- function(x, default = NULL) {
+first_value <- function(x, default = NULL) {
     if (is.null(x) || !length(x)) {
         return(default)
     }
@@ -559,7 +559,7 @@ psychro_first <- function(x, default = NULL) {
 
 # Combine colour and alpha in the same late stage used for constructing grid
 # parameters, so the fast geom works for mapped alpha values.
-psychro_alpha <- function(colour, alpha) {
+apply_alpha <- function(colour, alpha) {
     if (length(alpha) && !is.na(alpha)) {
         return(grDevices::adjustcolor(colour, alpha.f = alpha))
     }

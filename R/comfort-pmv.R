@@ -199,7 +199,6 @@ comfort_set_one <- function(tdb, tr, v, rh, met, clo, wme,
         e_rsw <- 0.68 * reg_sw
         r_ea <- 1 / (lr * f_a_cl * h_cc)
         r_ecl <- r_clo / (lr * i_cl)
-        e_req <- rm - q_res - c_res - q_sensible
         e_max <- (comfort_p_sat_torr(temp_skin) - vapor_pressure) / (r_ea + r_ecl)
         if (e_max == 0) {
             e_max <- 0.001

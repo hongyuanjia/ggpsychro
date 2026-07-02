@@ -62,9 +62,8 @@ GetHumRatioFromMoistAirVolumeAndTDryBulb <- function(MoistAirVolume, TDryBulb, P
 
 GetHumRatioFromEnthalpyAndTDryBulb <- function(MoistAirEnthalpy, TDryBulb) {
     if (psychrolib::isIP()) {
-        HumRatio <- (MoistAirEnthalpy - 0.24 * TDryBulb)/(1061 + 0.444 * TDryBulb)
-    }
-    else {
-        HumRatio <- (MoistAirEnthalpy/1000 - 1.006 * TDryBulb)/(2501 + 1.86 * TDryBulb)
+        (MoistAirEnthalpy - 0.24 * TDryBulb) / (1061 + 0.444 * TDryBulb)
+    } else {
+        (MoistAirEnthalpy / 1000 - 1.006 * TDryBulb) / (2501 + 1.86 * TDryBulb)
     }
 }
