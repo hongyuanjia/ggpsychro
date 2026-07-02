@@ -161,6 +161,34 @@ psychro_output_xy <- function(data, tdb, humratio, mollier = FALSE,
     data
 }
 
+# Tile widths and heights are coordinate spans, so non-linear position scales
+# must transform the physical cell edges before the span is computed.
+psychro_output_tile_size <- function(data, tdb0, tdb1, hum0, hum1,
+                                     mollier = FALSE, psychro_scales = NULL,
+                                     units = NULL, gap = 0) {
+    gap_scale <- 1 - gap
+    if (!is.null(psychro_scales) && !is.null(units)) {
+        # Transform both edges with the same scale functions used by the tile
+        # center so geom_tile() receives dimensions in the active scale space.
+        tdb0 <- psychro_scale_transform(psychro_scales$pos_tdb, tdb0)
+        tdb1 <- psychro_scale_transform(psychro_scales$pos_tdb, tdb1)
+        hum0 <- psychro_stat_scale_humratio(hum0, units, psychro_scales$pos_hum)
+        hum1 <- psychro_stat_scale_humratio(hum1, units, psychro_scales$pos_hum)
+    }
+
+    tdb_width <- abs(tdb1 - tdb0) * gap_scale
+    hum_height <- abs(hum1 - hum0) * gap_scale
+    if (isTRUE(mollier)) {
+        data$width <- hum_height
+        data$height <- tdb_width
+    } else {
+        data$width <- tdb_width
+        data$height <- hum_height
+    }
+
+    data
+}
+
 psychro_compute_state <- function(data, units, pres, mollier, na.rm = FALSE,
                                   psychro_scales = NULL) {
     if (!"tdb" %in% names(data)) {

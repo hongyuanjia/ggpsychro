@@ -314,7 +314,8 @@ comfort_givoni_polygon <- function(zone, base, pressure_pa, tdb_max_si,
 }
 
 comfort_givoni_zone_data <- function(strategy, zone, units, pres, mollier,
-                                     tdb_lim, hum_lim) {
+                                     tdb_lim, hum_lim,
+                                     psychro_scales = NULL) {
     strategy <- comfort_check_givoni_strategy(strategy)
     specs <- comfort_givoni_zone_specs()
     if (is.null(zone)) {
@@ -351,7 +352,8 @@ comfort_givoni_zone_data <- function(strategy, zone, units, pres, mollier,
     out <- do.call(rbind, pieces)
     row.names(out) <- NULL
     out <- comfort_givoni_clip_humratio(out, lim$hum, units)
-    psychro_output_xy(out, out$tdb, out$humratio, mollier)
+    psychro_output_xy(out, out$tdb, out$humratio, mollier,
+        psychro_scales = psychro_scales, units = units)
 }
 
 comfort_givoni_label_path_entry <- function(zone, label, path,
@@ -509,7 +511,8 @@ comfort_givoni_label_point_specs <- function(base, pressure_pa, tdb_max_si,
 }
 
 comfort_givoni_label_data <- function(strategy, label_type, units, pres,
-                                      mollier, tdb_lim, hum_lim) {
+                                      mollier, tdb_lim, hum_lim,
+                                      psychro_scales = NULL) {
     label_type <- match.arg(label_type, c("path", "point"))
     strategy <- comfort_check_givoni_strategy(strategy)
     lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
@@ -533,7 +536,8 @@ comfort_givoni_label_data <- function(strategy, label_type, units, pres,
             group = labels$group
         ))
         out <- comfort_givoni_clip_humratio(out, lim$hum, units)
-        return(psychro_output_xy(out, out$tdb, out$humratio, mollier))
+        return(psychro_output_xy(out, out$tdb, out$humratio, mollier,
+            psychro_scales = psychro_scales, units = units))
     }
 
     labels <- comfort_givoni_label_point_specs(
@@ -550,7 +554,8 @@ comfort_givoni_label_data <- function(strategy, label_type, units, pres,
         group = seq_len(nrow(labels))
     ))
     out <- comfort_givoni_clip_humratio(out, lim$hum, units)
-    psychro_output_xy(out, out$tdb, out$humratio, mollier)
+    psychro_output_xy(out, out$tdb, out$humratio, mollier,
+        psychro_scales = psychro_scales, units = units)
 }
 
 comfort_givoni_clip_humratio <- function(data, hum_lim, units) {
@@ -587,7 +592,8 @@ comfort_givoni_mean_outdoor_marker <- function(mean_si, pressure_pa,
 }
 
 comfort_givoni_mean_outdoor_data <- function(strategy, units, pres, mollier,
-                                             tdb_lim, hum_lim) {
+                                             tdb_lim, hum_lim,
+                                             psychro_scales = NULL) {
     strategy <- comfort_check_givoni_strategy(strategy)
     lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
     pressure_pa <- comfort_pressure_pa(pres, units)
@@ -606,12 +612,14 @@ comfort_givoni_mean_outdoor_data <- function(strategy, units, pres, mollier,
         group = 1L,
         metric = "givoni_mean_outdoor"
     ))
-    psychro_output_xy(out, out$tdb, out$humratio, mollier)
+    psychro_output_xy(out, out$tdb, out$humratio, mollier,
+        psychro_scales = psychro_scales, units = units)
 }
 
 comfort_givoni_mean_outdoor_label_data <- function(strategy, units, pres,
                                                    mollier, tdb_lim,
-                                                   hum_lim) {
+                                                   hum_lim,
+                                                   psychro_scales = NULL) {
     strategy <- comfort_check_givoni_strategy(strategy)
     lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
     pressure_pa <- comfort_pressure_pa(pres, units)
@@ -636,5 +644,6 @@ comfort_givoni_mean_outdoor_label_data <- function(strategy, units, pres,
         vjust = comfort_givoni_mean_outdoor_label_vjust(mollier),
         group = 1L
     ))
-    psychro_output_xy(out, out$tdb, out$humratio, mollier)
+    psychro_output_xy(out, out$tdb, out$humratio, mollier,
+        psychro_scales = psychro_scales, units = units)
 }

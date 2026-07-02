@@ -188,6 +188,23 @@ psychro_scale_has_aesthetic <- function(scale, aesthetic) {
     !is.null(scale) && aesthetic %in% scale$aesthetics
 }
 
+# Summarize a scale for cache keys without retaining the ggproto object or its
+# enclosing environments.
+psychro_scale_cache_key <- function(scale) {
+    scale <- psychro_scale_object(scale)
+    if (is.null(scale)) {
+        return(NULL)
+    }
+
+    trans <- scale$trans
+    list(
+        aesthetics = scale$aesthetics,
+        scale_name = scale$scale_name %||% NULL,
+        trans_name = trans$name %||% class(trans)[[1L]],
+        trans_domain = trans$domain
+    )
+}
+
 # Keep all psychrometric scales that may transform data before a stat runs; the
 # x/y entries are the actual chart position scales used for final coordinates.
 psychro_stat_scale_context <- function(scales, psychro) {

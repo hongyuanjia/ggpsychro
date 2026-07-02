@@ -268,7 +268,8 @@ comfort_pmv_curve_data <- function(model, levels, n, units, pres, mollier,
                                    label = c("none", "sensation", "boundary",
                                        "comfort"),
                                    label_hjust = NULL, label_vjust = NULL,
-                                   reverse = FALSE, curve_cache = NULL) {
+                                   reverse = FALSE, curve_cache = NULL,
+                                   psychro_scales = NULL) {
     label <- match.arg(label)
     out <- comfort_pmv_curve_base_data(
         model, levels, n, units, pres, tdb_lim, hum_lim,
@@ -292,7 +293,8 @@ comfort_pmv_curve_data <- function(model, levels, n, units, pres, mollier,
     if (isTRUE(reverse)) {
         out <- comfort_pmv_reverse_groups(out)
     }
-    psychro_output_xy(out, out$tdb, out$humratio, mollier)
+    psychro_output_xy(out, out$tdb, out$humratio, mollier,
+        psychro_scales = psychro_scales, units = units)
 }
 
 comfort_pmv_curve_base_data <- function(model, levels, n, units, pres,
@@ -386,7 +388,8 @@ comfort_pmv_sensation_levels <- function(levels) {
 comfort_pmv_axis_label_data <- function(model, levels, n, units, pres,
                                         mollier, tdb_lim, hum_lim,
                                         axis_label_hjust = ggplot2::waiver(),
-                                        curve_cache = NULL) {
+                                        curve_cache = NULL,
+                                        psychro_scales = NULL) {
     levels <- comfort_check_breaks(levels, "`levels`", n_min = 1L)
     n <- comfort_pmv_curve_n(n)
     lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
@@ -432,7 +435,8 @@ comfort_pmv_axis_label_data <- function(model, levels, n, units, pres,
     out <- do.call(rbind, labels)
     row.names(out) <- NULL
     out <- comfort_pmv_reverse_groups(out)
-    psychro_output_xy(out, out$tdb, out$humratio, mollier)
+    psychro_output_xy(out, out$tdb, out$humratio, mollier,
+        psychro_scales = psychro_scales, units = units)
 }
 
 comfort_pmv_axis_label_segment <- function(curve, label_start, label_end) {
@@ -526,7 +530,8 @@ comfort_pmv_reverse_groups <- function(data) {
 
 comfort_pmv_rootband_data <- function(model, metric, levels, n, units, pres,
                                       mollier, tdb_lim, hum_lim,
-                                      rootband_cache = NULL) {
+                                      rootband_cache = NULL,
+                                      psychro_scales = NULL) {
     metric <- comfort_model_metric(model, metric)
     if (comfort_model_type(model) != "pmv" || metric != "pmv") {
         stop("Root-traced comfort overlay bands are only available for PMV.",
@@ -540,7 +545,9 @@ comfort_pmv_rootband_data <- function(model, metric, levels, n, units, pres,
     key <- comfort_pmv_cache_key(
         kind = "rootband", model = model, metric = metric, breaks = breaks,
         n = n, units = units, pres = pres, tdb = lim$tdb, hum = lim$hum,
-        mollier = mollier
+        mollier = mollier,
+        scale_tdb = psychro_scale_cache_key(psychro_scales$pos_tdb),
+        scale_hum = psychro_scale_cache_key(psychro_scales$pos_hum)
     )
     if (!is.null(rootband_cache) &&
             exists(key, envir = rootband_cache, inherits = FALSE)) {
@@ -668,7 +675,8 @@ comfort_pmv_rootband_data <- function(model, metric, levels, n, units, pres,
 
     out <- do.call(rbind, polys)
     row.names(out) <- NULL
-    out <- psychro_output_xy(out, out$tdb, out$humratio, mollier)
+    out <- psychro_output_xy(out, out$tdb, out$humratio, mollier,
+        psychro_scales = psychro_scales, units = units)
     if (!is.null(rootband_cache)) {
         assign(key, out, envir = rootband_cache)
     }
@@ -687,7 +695,8 @@ comfort_empty_pmv_curve <- function() {
 comfort_pmv_band_data <- function(model, range, n, units, pres, mollier,
                                   tdb_lim, hum_lim,
                                   rootband_levels = NULL,
-                                  rootband_cache = NULL) {
+                                  rootband_cache = NULL,
+                                  psychro_scales = NULL) {
     range <- comfort_check_breaks(range, "`range`", n_min = 2L)
     if (length(range) != 2L) {
         stop("`range` must contain exactly two PMV boundaries.", call. = FALSE)
@@ -704,7 +713,7 @@ comfort_pmv_band_data <- function(model, range, n, units, pres, mollier,
 
     bands <- comfort_pmv_rootband_data(
         model, "pmv", levels, n, units, pres, mollier, tdb_lim, hum_lim,
-        rootband_cache = rootband_cache
+        rootband_cache = rootband_cache, psychro_scales = psychro_scales
     )
     if (!nrow(bands)) {
         return(comfort_empty_band())

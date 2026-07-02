@@ -421,18 +421,18 @@ psychro_marker_stat_classes <- function() {
     )
 }
 
-# Stats in this set consume psychrometric inputs after ggplot2 scale transforms,
-# so they need the active scale context to recover physical values.
+# Stats in this set either consume transformed psychrometric inputs or generate
+# physical coordinates that must be returned to the active chart scale.
 psychro_scale_context_stat_classes <- function() {
     c(
         "StatRelhum", "StatWetbulb", "StatVappres", "StatSpecvol",
         "StatEnthalpy", "StatPsychroState", "StatPsychroZone",
-        "StatComfortState"
+        "StatComfortState", psychro_panel_stat_classes()
     )
 }
 
-# Keep scale-context injection targeted so generated comfort grids and other
-# stat-only layers do not receive irrelevant ggproto scale objects.
+# Keep scale-context injection targeted to psychrolib-backed layers so unrelated
+# stats do not receive private ggproto scale objects.
 psychro_layer_needs_scale_context <- function(layer) {
     any(vapply(
         psychro_scale_context_stat_classes(), inherits, logical(1L),

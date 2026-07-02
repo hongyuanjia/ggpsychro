@@ -122,7 +122,8 @@ comfort_adaptive_cooling_effect <- function(v, to) {
     ce
 }
 
-comfort_zone_adaptive <- function(model, units, mollier, tdb_lim, hum_lim) {
+comfort_zone_adaptive <- function(model, units, mollier, tdb_lim, hum_lim,
+                                  psychro_scales = NULL) {
     p <- model$params
     if (!is.null(p$tr)) {
         stop(
@@ -156,5 +157,6 @@ comfort_zone_adaptive <- function(model, units, mollier, tdb_lim, hum_lim) {
         width = NA_real_,
         height = NA_real_
     ))
-    psychro_output_xy(out, out$tdb, out$humratio, mollier)
+    psychro_output_xy(out, out$tdb, out$humratio, mollier,
+        psychro_scales = psychro_scales, units = units)
 }

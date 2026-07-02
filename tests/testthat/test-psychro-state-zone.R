@@ -88,13 +88,23 @@ test_that("Psychrometric state stat validates property inputs", {
         "Only one psychrometric state aesthetic"
     )
 
-    expect_warning(
-        ggplot2::ggplot_build(
+    invalid_relhum_warning <- NULL
+    withCallingHandlers(
+        invisible(ggplot2::ggplot_build(
             ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
                 geom_psychro_process(ggplot2::aes(tdb = tdb, relhum = relhum),
                     data = data.frame(tdb = 25, relhum = 150))
-        ),
-        "Computation failed"
+        )),
+        warning = function(cnd) {
+            invalid_relhum_warning <<- cnd
+            invokeRestart("muffleWarning")
+        }
+    )
+    expect_s3_class(invalid_relhum_warning, "warning")
+    expect_match(conditionMessage(invalid_relhum_warning), "Computation failed")
+    expect_match(
+        conditionMessage(invalid_relhum_warning$parent),
+        "`relhum` limits must be in the range \\[0, 100\\]"
     )
 })
 

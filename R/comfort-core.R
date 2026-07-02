@@ -265,7 +265,8 @@ comfort_grid_matrix <- function(model, metric, n, units, pres, tdb_lim, hum_lim,
 }
 
 comfort_grid_data <- function(model, metric, n, gap, units, pres, mollier,
-                              tdb_lim, hum_lim, na.rm = FALSE) {
+                              tdb_lim, hum_lim, na.rm = FALSE,
+                              psychro_scales = NULL) {
     m <- comfort_grid_matrix(model, metric, n, units, pres, tdb_lim, hum_lim)
     gap <- psychro_bin_gap(gap)
     sat <- psychro_saturation_humratio(m$tdb_edges, units, pres)
@@ -317,10 +318,15 @@ comfort_grid_data <- function(model, metric, n, gap, units, pres, mollier,
         metric = rep(m$metric, sum(keep)),
         group = seq_len(sum(keep))
     ))
-    psychro_output_xy(out, out$tdb, out$humratio, mollier)
+    out <- psychro_output_xy(out, out$tdb, out$humratio, mollier,
+        psychro_scales = psychro_scales, units = units)
+    psychro_output_tile_size(
+        out, x0[keep], x1[keep], y0[keep], y1[keep], mollier,
+        psychro_scales = psychro_scales, units = units, gap = gap
+    )
 }
 comfort_band_data <- function(model, metric, levels, n, units, pres, mollier,
-                              tdb_lim, hum_lim) {
+                              tdb_lim, hum_lim, psychro_scales = NULL) {
     # Filled bands are generated on node grids so isoband can preserve polygon
     # topology across adjacent cells.
     m <- comfort_grid_matrix(
@@ -339,7 +345,8 @@ comfort_band_data <- function(model, metric, levels, n, units, pres, mollier,
     )
     comfort_isoband_data(
         bands, breaks[-length(breaks)], breaks[-1L],
-        m$metric, mollier, geom = "polygon"
+        m$metric, mollier, geom = "polygon",
+        psychro_scales = psychro_scales, units = units
     )
 }
 
@@ -396,7 +403,8 @@ comfort_grid_boundary_values <- function(model, metric, units, pres,
 comfort_contour_data <- function(model, metric, breaks, n, units, pres,
                                  mollier, tdb_lim, hum_lim,
                                  contour_method = c("auto", "root", "isoband"),
-                                 label_path = FALSE) {
+                                 label_path = FALSE,
+                                 psychro_scales = NULL) {
     contour_method <- match.arg(contour_method)
     metric <- comfort_model_metric(model, metric)
     if (contour_method == "auto") {
@@ -420,7 +428,7 @@ comfort_contour_data <- function(model, metric, breaks, n, units, pres,
         # label code below can treat them like isoband isolines.
         out <- comfort_pmv_curve_data(
             model, breaks, n[[1L]], units, pres, mollier, tdb_lim, hum_lim,
-            label = "none"
+            label = "none", psychro_scales = psychro_scales
         )
         out <- comfort_add_contour_labels(out)
         if (isTRUE(label_path)) {
@@ -447,7 +455,10 @@ comfort_contour_data <- function(model, metric, breaks, n, units, pres,
     )
     # Normalize isoband's path representation to the columns expected by
     # ggplot stats and psychrometric coordinate transforms.
-    out <- comfort_isoband_data(lines, breaks, breaks, m$metric, mollier, geom = "path")
+    out <- comfort_isoband_data(
+        lines, breaks, breaks, m$metric, mollier, geom = "path",
+        psychro_scales = psychro_scales, units = units
+    )
     out <- comfort_add_contour_labels(out)
     if (isTRUE(label_path)) {
         out <- comfort_orient_contour_label_paths(out)
@@ -601,7 +612,8 @@ comfort_band_breaks <- function(metric, z, levels = NULL, units = "SI") {
 }
 
 comfort_isoband_data <- function(iso, low, high, metric, mollier,
-                                 geom = c("polygon", "path")) {
+                                 geom = c("polygon", "path"),
+                                 psychro_scales = NULL, units = NULL) {
     geom <- match.arg(geom)
     lengths <- vapply(iso, function(x) length(x$x), integer(1L))
     if (!any(lengths)) {
@@ -645,15 +657,18 @@ comfort_isoband_data <- function(iso, low, high, metric, mollier,
     }
     out <- do.call(rbind, out[!vapply(out, is.null, logical(1L))])
     row.names(out) <- NULL
-    psychro_output_xy(out, out$tdb, out$humratio, mollier)
+    psychro_output_xy(out, out$tdb, out$humratio, mollier,
+        psychro_scales = psychro_scales, units = units)
 }
 
 comfort_zone_data <- function(model, metric, range, n, gap, units, pres,
                               mollier, tdb_lim, hum_lim, na.rm = FALSE,
                               rootband_levels = NULL,
-                              rootband_cache = NULL) {
+                              rootband_cache = NULL,
+                              psychro_scales = NULL) {
     if (comfort_model_type(model) == "adaptive") {
-        return(comfort_zone_adaptive(model, units, mollier, tdb_lim, hum_lim))
+        return(comfort_zone_adaptive(model, units, mollier, tdb_lim, hum_lim,
+            psychro_scales = psychro_scales))
     }
 
     metric <- comfort_model_metric(model, metric)
@@ -661,11 +676,12 @@ comfort_zone_data <- function(model, metric, range, n, gap, units, pres,
     if (comfort_model_type(model) == "pmv" && metric == "pmv") {
         return(comfort_pmv_band_data(
             model, range, n[[1L]], units, pres, mollier, tdb_lim, hum_lim,
-            rootband_levels = rootband_levels, rootband_cache = rootband_cache
+            rootband_levels = rootband_levels, rootband_cache = rootband_cache,
+            psychro_scales = psychro_scales
         ))
     }
     comfort_band_data(model, metric, range, n, units, pres, mollier,
-        tdb_lim, hum_lim)
+        tdb_lim, hum_lim, psychro_scales = psychro_scales)
 }
 
 comfort_zone_range <- function(model, metric, range, units = "SI") {
