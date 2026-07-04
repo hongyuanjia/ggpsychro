@@ -198,12 +198,27 @@ clip_grob <- function(panel, grob, op = "intersection") {
     if (!identical(op, "intersection")) {
         return(gridGeometry::polyclipGrob(grob, panel, op, name = grob$name))
     }
-    split <- psychro_split_styled_grob(grob)
-    clipped <- lapply(split, psychro_polyclip_grob, panel = panel)
+    split <- coord_clip__split_styled_grob(grob)
+    clipped <- lapply(split, coord_clip__polyclip_grob, panel = panel)
     if (length(clipped) == 1L) {
         return(clipped[[1L]])
     }
     do.call(grid::grobTree, clipped)
+}
+
+# Match floating-point break values after inverse transforms and rescaling.
+guide__match_break_values <- function(x, table, tolerance = 1e-8) {
+    vapply(x, function(value) {
+        match <- which(abs(table - value) <= tolerance)
+        if (length(match)) match[[1L]] else NA_integer_
+    }, integer(1))
+}
+
+# Format sensible-heat-ratio labels without trailing decimal noise at zero.
+guide__format_shr_labels <- function(x) {
+    labels <- sprintf("%.1f", x)
+    labels[abs(x) <= 1e-8] <- "0"
+    labels
 }
 
 psychro_protractor_guide <- function(protractor) {
@@ -589,7 +604,7 @@ psychro_protractor_label_ticks <- function(ticks, labels) {
             size_scale = numeric()
         )))
     }
-    loc <- match_psychro_breaks(ticks$value, labels$breaks)
+    loc <- guide__match_break_values(ticks$value, labels$breaks)
     keep <- !is.na(loc)
     ticks <- ticks[keep, , drop = FALSE]
     loc <- loc[keep]
@@ -630,7 +645,7 @@ psychro_protractor_ratio_label_ticks <- function(ticks, labels) {
         )))
     }
 
-    loc <- match_psychro_breaks(ticks$value, labels$breaks)
+    loc <- guide__match_break_values(ticks$value, labels$breaks)
     keep <- !is.na(loc)
     ticks <- ticks[keep, , drop = FALSE]
     if (!nrow(ticks)) {
@@ -675,7 +690,7 @@ psychro_protractor_label_text <- function(breaks, labels, axis, units) {
     }
     if (is.waive(labels)) {
         if (identical(axis, "shr")) {
-            return(psychro_format_shr_labels(breaks))
+            return(guide__format_shr_labels(breaks))
         }
         return(psychro_format_heat_ratio_labels(breaks, units))
     }

@@ -236,7 +236,7 @@ test_that("Psychrometric grids and stat layers are clipped to the valid panel", 
             geom = "text"
         )
     built <- ggplot2::ggplot_build(psychro_text)
-    filtered <- psychro_filter_data_to_panel(
+    filtered <- coord_clip__filter_data_to_panel(
         first_built_data(built), built$layout$panel_params[[1L]], built$layout$coord
     )
 
@@ -352,7 +352,7 @@ test_that("Relative humidity grid breaks use psychrolib fractions", {
     expect_equal(breaks, c(0.25, 0.50, 0.75, 1.00), tolerance = 1e-8)
 
     expect_equal(
-        valid_relhum_grid_breaks(c(NA, 0, 0.25, 0.50, 1.00, 1.25)),
+        coord_psy__relhum_grid_breaks(c(NA, 0, 0.25, 0.50, 1.00, 1.25)),
         c(0.25, 0.50)
     )
 })
@@ -886,7 +886,7 @@ test_that("Coordinate calculations inverse custom position transforms before psy
     expect_equal(coord$range_hum_physical(panel_params), c(0.001, 0.05),
         tolerance = 1e-8)
 
-    sat <- psychro_coord_saturation_native(coord, panel_params)
+    sat <- coord_psy__saturation_scaled(coord, panel_params)
     sat_hum <- narrow_hum(hum_scale$trans$inverse(sat$hum), coord$units)
 
     expect_true(all(is.finite(sat_hum)))
@@ -931,7 +931,7 @@ test_that("Psychrolib calculations inverse custom psychrometric scale transforms
             panel_params[[coord$pos_tdb()]]$continuous_range
         )
         tdb <- scale$trans$breaks(limits, 100L)
-        grid <- coord_grid_lines(
+        grid <- coord_psy__grid_lines(
             coord, panel_params, tdb,
             coord$range_tdb(panel_params),
             coord$range_hum(panel_params)

@@ -519,14 +519,14 @@ psychro_clip_geom <- function(geom, filter_anchor = FALSE,
         },
         draw_panel = function(data, panel_params, coord, ...) {
             if (isTRUE(filter_anchor)) {
-                data <- psychro_filter_data_to_panel(data, panel_params, coord)
+                data <- coord_clip__filter_data_to_panel(data, panel_params, coord)
                 if (!nrow(data)) {
                     return(grid::nullGrob())
                 }
                 return(base_geom$draw_panel(data, panel_params, coord, ...))
             }
             if (isTRUE(clip_polygon)) {
-                data <- psychro_clip_polygon_data_to_panel(
+                data <- coord_clip__polygon_data_to_panel(
                     data, panel_params, coord
                 )
                 if (!nrow(data)) {
@@ -536,12 +536,12 @@ psychro_clip_geom <- function(geom, filter_anchor = FALSE,
             }
             if (isTRUE(clip_path)) {
                 grob <- base_geom$draw_panel(data, panel_params, coord, ...)
-                return(psychro_clip_textpath_to_panel(
+                return(coord_clip__textpath_to_panel(
                     grob, coord, panel_params
                 ))
             }
             grob <- base_geom$draw_panel(data, panel_params, coord, ...)
-            psychro_clip_grob_to_panel(grob, coord, panel_params)
+            coord_clip__grob_to_panel(grob, coord, panel_params)
         }
     )
 }

@@ -51,6 +51,8 @@ Collate:
     'comfort-stat.R'
     'comfort-layer.R'
     'coord-psychro.R'
+    'coord-clip.R'
+    'coord-foreground.R'
     'ggpsychro-package.R'
     'ggpsychro.R'
     'grid-label-renderer.R'
