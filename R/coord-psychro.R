@@ -5,7 +5,23 @@ NULL
 #'
 #' @inheritParams ggplot2::coord_cartesian
 #' @inheritParams ggpsychro
+#' @param altitude A single number of altitude in m \[SI\] or ft \[IP\]. If
+#'   `NULL`, inherits the altitude from the parent [ggpsychro()] plot.
+#' @param units Unit system, either `"SI"` or `"IP"`. If `NULL`, inherits the
+#'   unit system from the parent [ggpsychro()] plot.
+#' @param mollier If `TRUE`, use Mollier chart coordinates. If `NULL`, inherits
+#'   the chart type from the parent [ggpsychro()] plot.
+#' @param expand If `TRUE`, add a small expansion factor to the limits. Defaults
+#'   to `FALSE` for psychrometric charts.
+#' @param default Is this the default coordinate system? Defaults to `TRUE` so
+#'   replacing the coordinate system created by [ggpsychro()] does not emit a
+#'   ggplot2 replacement message.
 #' @return A ggplot2 coordinate system object for psychrometric charts.
+#' @details
+#' `coord_psychro()` is normally used with a [ggpsychro()] plot. When
+#' `altitude`, `units`, or `mollier` is `NULL`, the value is inherited from the
+#' parent plot. Supply these arguments explicitly when using the coordinate
+#' system outside that path.
 #' @examples
 #' ggpsychro() +
 #'     coord_psychro(tdb_lim = c(10, 35), hum_lim = c(0, 25))

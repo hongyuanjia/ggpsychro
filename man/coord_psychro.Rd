@@ -30,27 +30,21 @@ limits. Should be in range
 If \code{NULL}, trained data ranges will be used when available, otherwise
 a default display range will be used. Default: \code{NULL}.}
 
-\item{altitude}{A single number of altitude in m [SI] or ft [IP]. Default:
-\code{0}.}
+\item{altitude}{A single number of altitude in m [SI] or ft [IP]. If
+\code{NULL}, inherits the altitude from the parent \code{\link[=ggpsychro]{ggpsychro()}} plot.}
 
-\item{units}{A string indicating the system of units chosen. Should be either
-\code{"SI"} or \code{"IP"}.}
+\item{units}{Unit system, either \code{"SI"} or \code{"IP"}. If \code{NULL}, inherits the
+unit system from the parent \code{\link[=ggpsychro]{ggpsychro()}} plot.}
 
-\item{mollier}{If \code{TRUE}, a Mollier chart will be created instead of a
-psychrometric chart. Default: \code{FALSE}.}
+\item{mollier}{If \code{TRUE}, use Mollier chart coordinates. If \code{NULL}, inherits
+the chart type from the parent \code{\link[=ggpsychro]{ggpsychro()}} plot.}
 
-\item{expand}{If \code{TRUE}, the default, adds a small expansion factor to
-the limits to ensure that data and axes don't overlap. If \code{FALSE},
-limits are taken exactly from the data or \code{xlim}/\code{ylim}.
-Giving a logical vector will separately control the expansion for the four
-directions (top, left, bottom and right). The \code{expand} argument will be
-recycled to length 4 if necessary. Alternatively, can be a named logical
-vector to control a single direction, e.g. \code{expand = c(bottom = FALSE)}.}
+\item{expand}{If \code{TRUE}, add a small expansion factor to the limits. Defaults
+to \code{FALSE} for psychrometric charts.}
 
-\item{default}{Is this the default coordinate system? If \code{FALSE} (the default),
-then replacing this coordinate system with another one creates a message alerting
-the user that the coordinate system is being replaced. If \code{TRUE}, that warning
-is suppressed.}
+\item{default}{Is this the default coordinate system? Defaults to \code{TRUE} so
+replacing the coordinate system created by \code{\link[=ggpsychro]{ggpsychro()}} does not emit a
+ggplot2 replacement message.}
 
 \item{clip}{Should drawing be clipped to the extent of the plot panel? A
 setting of \code{"on"} (the default) means yes, and a setting of \code{"off"}
@@ -66,6 +60,12 @@ A ggplot2 coordinate system object for psychrometric charts.
 }
 \description{
 Psychrometric coordinates
+}
+\details{
+\code{coord_psychro()} is normally used with a \code{\link[=ggpsychro]{ggpsychro()}} plot. When
+\code{altitude}, \code{units}, or \code{mollier} is \code{NULL}, the value is inherited from the
+parent plot. Supply these arguments explicitly when using the coordinate
+system outside that path.
 }
 \examples{
 ggpsychro() +
