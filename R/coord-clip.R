@@ -24,17 +24,17 @@ coord_clip__textpath_to_panel <- function(grob, coord, panel_params) {
         return(grob)
     }
     grob$psychro_panel <- panel
-    class(grob) <- c("psychro_textpath_clip", class(grob))
+    class(grob) <- c("coord_clip_textpath", class(grob))
     grob
 }
 
-#' @method makeContent psychro_textpath_clip
+#' @method makeContent coord_clip_textpath
 #' @importFrom grid makeContent
 #' @export
-makeContent.psychro_textpath_clip <- function(x) {
+makeContent.coord_clip_textpath <- function(x) {
     panel <- x$psychro_panel
     x$psychro_panel <- NULL
-    class(x) <- setdiff(class(x), "psychro_textpath_clip")
+    class(x) <- setdiff(class(x), "coord_clip_textpath")
 
     # Path labels must lay out in their normal grid drawing context. Clipping
     # the input data, or forcing the grob from a wrapper, can flip contour
