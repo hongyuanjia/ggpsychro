@@ -1067,7 +1067,7 @@ test_that("PMV root-traced curves solve requested levels", {
             any(vapply(
                 cap_polys,
                 function(poly) {
-                    psychro_inside_polygon(
+                    util__inside_polygon(
                         cap_points$x[[i]],
                         cap_points$y[[i]],
                         poly$x,

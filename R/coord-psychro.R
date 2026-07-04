@@ -665,7 +665,7 @@ CoordPsychro <- ggproto(
             self$units
         )
 
-        guide_grid_psychro(
+        guide__grid_psychro(
             theme,
             list(
                 tdb = list(
@@ -706,7 +706,7 @@ CoordPsychro <- ggproto(
         }
 
         grid::grobTree(
-            psychro_protractor_grob(
+            protractor__grob(
                 self$protractor,
                 theme,
                 self$mollier,
@@ -771,7 +771,7 @@ coord_psy__panel_polygon_npc <- function(coord, panel_params) {
     if (is.null(sat)) {
         return(NULL)
     }
-    psychro_panel_polygon(sat, coord$mollier)
+    panel__polygon(sat, coord$mollier)
 }
 
 # Build an invisible polygon grob used as the clipping boundary.

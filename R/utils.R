@@ -1,3 +1,8 @@
+# Return a fallback only when the primary value is NULL.
+`%||%` <- function(x, y) {
+    if (is.null(x)) y else x
+}
+
 # Test whether a value is ggplot2's waiver sentinel without importing the helper.
 util__is_waive <- function(x) inherits(x, "waiver")
 
@@ -195,4 +200,49 @@ util__cut_oob <- function(x, limits) {
 # Rescale values linearly into [0, 1] using the supplied interval.
 util__rescale01 <- function(x, limits) {
     (x - limits[1L]) / (limits[2L] - limits[1L])
+}
+
+# Apply an optional alpha channel to grid and coord-owned foreground colours.
+util__apply_alpha <- function(colour, alpha) {
+    if (is.null(alpha) || length(alpha) == 0L || is.na(alpha)) {
+        return(colour)
+    }
+    grDevices::adjustcolor(colour, alpha.f = alpha)
+}
+
+# Test whether points are inside or on the boundary of a polygon.
+util__inside_polygon <- function(
+    x,
+    y,
+    polygon_x,
+    polygon_y,
+    tolerance = 1e-8
+) {
+    n <- length(polygon_x)
+    inside <- rep(FALSE, length(x))
+    on_boundary <- rep(FALSE, length(x))
+    j <- n
+
+    for (i in seq_len(n)) {
+        xi <- polygon_x[[i]]
+        yi <- polygon_y[[i]]
+        xj <- polygon_x[[j]]
+        yj <- polygon_y[[j]]
+
+        # Boundary points should survive clipping and label filtering, so they
+        # are tracked separately from the ray-casting inside flag.
+        cross <- (x - xi) * (yj - yi) - (y - yi) * (xj - xi)
+        within <- x >= min(xi, xj) - tolerance &
+            x <= max(xi, xj) + tolerance &
+            y >= min(yi, yj) - tolerance &
+            y <= max(yi, yj) + tolerance
+        on_boundary <- on_boundary | (abs(cross) <= tolerance & within)
+
+        intersects <- ((yi > y) != (yj > y)) &
+            (x < (xj - xi) * (y - yi) / (yj - yi) + xi)
+        inside[intersects] <- !inside[intersects]
+        j <- i
+    }
+
+    inside | on_boundary
 }

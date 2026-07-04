@@ -140,7 +140,7 @@ coord_fg__heat_index_label_grob <- function(coord, panel_params, spec) {
 
     data <- coord_psy__scale_xy(coord, panel_params, data)
     data <- coord$transform(data, panel_params)
-    colour <- psychro_grid_alpha(spec$colour %||% "#444444", spec$alpha)
+    colour <- util__apply_alpha(spec$colour %||% "#444444", spec$alpha)
     grid::textGrob(
         data$label,
         x = data$x,

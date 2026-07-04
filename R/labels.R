@@ -338,10 +338,10 @@ label__needs_parse <- function(type) {
 # Force lazy formatter arguments when creating the returned labelling function.
 label__force_all <- function(...) list(...)
 
-#' Demonstrate scales functions with ggplot2 code
+#' Demonstrate psychrometric label and scale functions
 #'
-#' This function generates ggplot2 code needed to use scales functions for real
-#' code.
+#' This helper builds a compact ggplot2 scale preview for label and scale
+#' functions.
 #'
 #' @param x A vector of data
 #' @param ... Other arguments pass to scale functions
@@ -350,7 +350,6 @@ label__force_all <- function(...) list(...)
 #' @examples
 #' demo_scale(0:10, labels = scales::label_number())
 #'
-#' @keywords internal
 #' @export
 # adopted from scales::demo_continuous
 demo_scale <- function(x, ...) {

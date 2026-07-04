@@ -350,7 +350,7 @@ coord_clip__filter_data_to_panel <- function(data, panel_params, coord) {
         return(data)
     }
     transformed <- coord$transform(data, panel_params)
-    keep <- psychro_inside_polygon(
+    keep <- util__inside_polygon(
         transformed$x,
         transformed$y,
         panel$x,

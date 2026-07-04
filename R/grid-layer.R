@@ -224,7 +224,7 @@ geom_psychro_protractor <- function(
 ) {
     assert_flag(show)
     assert_flag(label)
-    validate_psychro_protractor_annotation(annotation)
+    protractor__validate_annotation(annotation)
     assert_number(scale, lower = 0, .var.name = "scale")
     if (scale <= 0) {
         stop("`scale` must be a positive number.", call. = FALSE)
@@ -239,7 +239,7 @@ geom_psychro_protractor <- function(
         max.len = 2L,
         .var.name = "margin"
     )
-    validate_psychro_protractor_guide(guide)
+    protractor__validate_guide(guide)
 
     structure(
         list(
@@ -268,19 +268,19 @@ guide_psychro_protractor <- function(
     ratio_labels = waiver(),
     check_overlap = TRUE
 ) {
-    validate_psychro_protractor_breaks(shr_breaks, "shr_breaks")
-    validate_psychro_protractor_breaks(shr_minor_breaks, "shr_minor_breaks")
-    validate_psychro_protractor_breaks(ratio_breaks, "ratio_breaks")
-    validate_psychro_protractor_breaks(ratio_minor_breaks, "ratio_minor_breaks")
-    validate_psychro_protractor_labels(shr_labels, "shr_labels")
-    validate_psychro_protractor_labels(ratio_labels, "ratio_labels")
-    validate_psychro_protractor_break_labels(
+    protractor__validate_breaks(shr_breaks, "shr_breaks")
+    protractor__validate_breaks(shr_minor_breaks, "shr_minor_breaks")
+    protractor__validate_breaks(ratio_breaks, "ratio_breaks")
+    protractor__validate_breaks(ratio_minor_breaks, "ratio_minor_breaks")
+    protractor__validate_labels(shr_labels, "shr_labels")
+    protractor__validate_labels(ratio_labels, "ratio_labels")
+    protractor__validate_break_labels(
         shr_breaks,
         shr_labels,
         "shr_breaks",
         "shr_labels"
     )
-    validate_psychro_protractor_break_labels(
+    protractor__validate_break_labels(
         ratio_breaks,
         ratio_labels,
         "ratio_breaks",
@@ -302,7 +302,8 @@ guide_psychro_protractor <- function(
     )
 }
 
-validate_psychro_protractor_guide <- function(guide) {
+# Validate that a protractor guide came from the public constructor.
+protractor__validate_guide <- function(guide) {
     if (inherits(guide, "PsyProtractorGuide")) {
         return(invisible(guide))
     }
@@ -312,7 +313,8 @@ validate_psychro_protractor_guide <- function(guide) {
     )
 }
 
-validate_psychro_protractor_annotation <- function(annotation) {
+# Validate the default, disabled, character, or expression annotation forms.
+protractor__validate_annotation <- function(annotation) {
     if (
         is.logical(annotation) && length(annotation) == 1L && !is.na(annotation)
     ) {
@@ -334,14 +336,16 @@ validate_psychro_protractor_annotation <- function(annotation) {
     )
 }
 
-validate_psychro_protractor_breaks <- function(breaks, arg) {
+# Validate numeric or waived protractor break vectors.
+protractor__validate_breaks <- function(breaks, arg) {
     if (util__is_waive(breaks) || is.null(breaks)) {
         return(invisible(breaks))
     }
     assert_numeric(breaks, any.missing = FALSE, .var.name = arg)
 }
 
-validate_psychro_protractor_labels <- function(labels, arg) {
+# Validate literal, expression, function, NULL, or waived protractor labels.
+protractor__validate_labels <- function(labels, arg) {
     if (util__is_waive(labels) || is.null(labels) || is.function(labels)) {
         return(invisible(labels))
     }
@@ -360,7 +364,8 @@ validate_psychro_protractor_labels <- function(labels, arg) {
     )
 }
 
-validate_psychro_protractor_break_labels <- function(
+# Validate that literal labels have explicit breaks of the same length.
+protractor__validate_break_labels <- function(
     breaks,
     labels,
     breaks_arg,

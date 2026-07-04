@@ -653,7 +653,7 @@ test_that("Psychrometric protractor helper updates coord metadata", {
         tolerance = 0.2
     )
 
-    normal_center <- psychro_protractor_center(
+    normal_center <- protractor__center(
         0.1,
         c(0.05, 0.12),
         mollier = FALSE
@@ -669,7 +669,7 @@ test_that("Psychrometric protractor helper updates coord metadata", {
     expect_equal(normal_center_mm$x, normal_expected_mm$x, tolerance = 1e-8)
     expect_equal(normal_center_mm$y, normal_expected_mm$y, tolerance = 1e-8)
 
-    mollier_center <- psychro_protractor_center(
+    mollier_center <- protractor__center(
         0.1,
         c(0.05, 0.12),
         mollier = TRUE
@@ -776,7 +776,7 @@ test_that("Psychrometric protractor helper updates coord metadata", {
 })
 
 test_that("Psychrometric protractor tick angles use transformed humidity ratios", {
-    ticks <- psychro_protractor_shr_ticks(
+    ticks <- protractor__shr_ticks(
         c(-1, 0, 0.5, 1, 2),
         c(0, 50),
         c(0, 0.03),
@@ -795,37 +795,37 @@ test_that("Psychrometric protractor tick angles use transformed humidity ratios"
     expect_gt(ticks$angle[[5L]], 3 * pi / 2)
     expect_lt(ticks$angle[[5L]], 2 * pi)
 
-    endpoints <- psychro_protractor_add_sensible_endpoint(
+    endpoints <- protractor__add_sensible_endpoint(
         ticks[ticks$value == 1, ],
         1
     )
     expect_equal(endpoints$angle, c(pi, 2 * pi))
     expect_equal(
-        psychro_protractor_label_rotation(c(pi, 3 * pi / 2, 2 * pi)),
+        protractor__label_rotation(c(pi, 3 * pi / 2, 2 * pi)),
         c(0, 90, 0),
         tolerance = 1e-8
     )
     expect_equal(
-        psychro_protractor_label_rotation(c(pi, 2 * pi), -pi / 2),
+        protractor__label_rotation(c(pi, 2 * pi), -pi / 2),
         c(-90, 90),
         tolerance = 1e-8
     )
 
-    shr_spec <- psychro_protractor_label_spec(
-        psychro_protractor_shr_major_breaks(),
+    shr_spec <- protractor__label_spec(
+        protractor__shr_major_breaks(),
         waiver(),
         "shr",
         "SI"
     )
-    shr_label_ticks <- psychro_protractor_label_ticks(
-        psychro_protractor_add_sensible_endpoint(
-            psychro_protractor_shr_ticks(
-                psychro_protractor_shr_major_breaks(),
+    shr_label_ticks <- protractor__label_ticks(
+        protractor__add_sensible_endpoint(
+            protractor__shr_ticks(
+                protractor__shr_major_breaks(),
                 c(0, 50),
                 c(0, 0.03),
                 "SI"
             ),
-            psychro_protractor_shr_major_breaks()
+            protractor__shr_major_breaks()
         ),
         shr_spec
     )
@@ -836,7 +836,7 @@ test_that("Psychrometric protractor tick angles use transformed humidity ratios"
     expect_true(all(abs(shr_label_ticks$scale - 0.86) < 1e-8))
     expect_true(all(shr_label_ticks$anchor == "center"))
 
-    ratio_ticks <- psychro_protractor_ratio_ticks(
+    ratio_ticks <- protractor__ratio_ticks(
         c(10, 2501 / 1000, 0, -10),
         c(0, 50),
         c(0, 0.03),
@@ -848,15 +848,15 @@ test_that("Psychrometric protractor tick angles use transformed humidity ratios"
     expect_gt(ratio_ticks$angle[[3L]], 3 * pi / 2)
     expect_gt(ratio_ticks$angle[[4L]], ratio_ticks$angle[[3L]])
     expect_lt(ratio_ticks$angle[[4L]], 2 * pi)
-    ratio_spec <- psychro_protractor_label_spec(
-        psychro_protractor_ratio_major_breaks("SI"),
+    ratio_spec <- protractor__label_spec(
+        protractor__ratio_major_breaks("SI"),
         waiver(),
         "ratio",
         "SI"
     )
-    ratio_label_ticks <- psychro_protractor_ratio_label_ticks(
-        psychro_protractor_ratio_ticks(
-            psychro_protractor_ratio_major_breaks("SI"),
+    ratio_label_ticks <- protractor__ratio_label_ticks(
+        protractor__ratio_ticks(
+            protractor__ratio_major_breaks("SI"),
             c(0, 50),
             c(0, 0.03),
             "SI"
@@ -870,8 +870,8 @@ test_that("Psychrometric protractor tick angles use transformed humidity ratios"
         value = c(0, 0),
         angle = c(4, 5)
     ))
-    major_layout <- psychro_protractor_unique_ticks(raw_ticks, major = TRUE)
-    minor_layout <- psychro_protractor_unique_ticks(raw_ticks, major = FALSE)
+    major_layout <- protractor__unique_ticks(raw_ticks, major = TRUE)
+    minor_layout <- protractor__unique_ticks(raw_ticks, major = FALSE)
     major_shr <- major_layout[major_layout$axis == "shr", ]
     major_ratio <- major_layout[major_layout$axis == "ratio", ]
     minor_shr <- minor_layout[minor_layout$axis == "shr", ]
@@ -882,8 +882,8 @@ test_that("Psychrometric protractor tick angles use transformed humidity ratios"
     expect_gt(major_ratio$outer - 1, minor_ratio$outer - 1)
 
     ip_latent <- 1061 / 7000
-    expect_equal(psychro_protractor_ratio_divisor("IP"), 7000)
-    ip_ratio_ticks <- psychro_protractor_ratio_ticks(
+    expect_equal(protractor__ratio_divisor("IP"), 7000)
+    ip_ratio_ticks <- protractor__ratio_ticks(
         ip_latent,
         c(32, 122),
         c(0, 350),
