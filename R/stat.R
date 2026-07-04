@@ -1,6 +1,3 @@
-#' @include ggproto-classes.R
-NULL
-
 #' Calculate psychrometric properties of moist air
 #'
 #' @details
@@ -37,6 +34,10 @@ NULL
 #' @inheritParams ggplot2::geom_point
 #' @return A ggplot layer.
 #' @importFrom ggplot2 ggproto Stat Geom
+#' @importFrom psychrolib GetHumRatioFromRelHum
+#' @importFrom psychrolib GetHumRatioFromTWetBulb
+#' @importFrom psychrolib GetHumRatioFromVapPres
+#' @importFrom psychrolib GetHumRatioFromEnthalpyAndTDryBulb
 #' @rdname stat
 #' @examples
 #' states <- data.frame(
@@ -378,11 +379,7 @@ finish_stat_humratio <- function(data, humratio, units, scales) {
     data
 }
 
-#' @rdname ggpsychro-extensions
-#' @format NULL
-#' @usage NULL
-#' @importFrom psychrolib GetHumRatioFromRelHum
-#' @export
+# Internal ggproto backing stat_relhum(); the user-facing API is stat_relhum().
 StatRelhum <- ggproto(
     "StatRelhum",
     Stat,
@@ -407,11 +404,7 @@ StatRelhum <- ggproto(
     }
 )
 
-#' @rdname ggpsychro-extensions
-#' @format NULL
-#' @usage NULL
-#' @importFrom psychrolib GetHumRatioFromTWetBulb
-#' @export
+# Internal ggproto backing stat_wetbulb(); the user-facing API is stat_wetbulb().
 StatWetbulb <- ggproto(
     "StatWetbulb",
     Stat,
@@ -440,11 +433,7 @@ StatWetbulb <- ggproto(
     }
 )
 
-#' @rdname ggpsychro-extensions
-#' @format NULL
-#' @usage NULL
-#' @importFrom psychrolib GetHumRatioFromVapPres
-#' @export
+# Internal ggproto backing stat_vappres(); the user-facing API is stat_vappres().
 StatVappres <- ggproto(
     "StatVappres",
     Stat,
@@ -472,10 +461,7 @@ StatVappres <- ggproto(
     }
 )
 
-#' @rdname ggpsychro-extensions
-#' @format NULL
-#' @usage NULL
-#' @export
+# Internal ggproto backing stat_specvol(); the user-facing API is stat_specvol().
 StatSpecvol <- ggproto(
     "StatSpecvol",
     Stat,
@@ -504,11 +490,7 @@ StatSpecvol <- ggproto(
     }
 )
 
-#' @rdname ggpsychro-extensions
-#' @format NULL
-#' @usage NULL
-#' @importFrom psychrolib GetHumRatioFromEnthalpyAndTDryBulb
-#' @export
+# Internal ggproto backing stat_enthalpy(); the user-facing API is stat_enthalpy().
 StatEnthalpy <- ggproto(
     "StatEnthalpy",
     Stat,

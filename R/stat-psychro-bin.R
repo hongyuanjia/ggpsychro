@@ -1,4 +1,4 @@
-#' @include utils.R ggproto-classes.R stat.R
+#' @include utils.R stat.R
 NULL
 
 #' Bin data on psychrometric chart coordinates
@@ -235,10 +235,7 @@ GeomPsychroTile <- ggproto(
     }
 )
 
-#' @rdname ggpsychro-extensions
-#' @format NULL
-#' @usage NULL
-#' @export
+# Internal ggproto backing stat_psychro_bin() and geom_psychro_tile().
 StatPsychroBin <- ggproto(
     "StatPsychroBin",
     Stat,

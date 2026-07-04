@@ -36,7 +36,6 @@ RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
 Collate: 
     'aaa-.R'
-    'ggproto-classes.R'
     'stat.R'
     'utils.R'
     'stat-psychro-bin.R'

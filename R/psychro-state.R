@@ -281,10 +281,7 @@ psychro_compute_state <- function(
     )
 }
 
-#' @rdname ggpsychro-extensions
-#' @format NULL
-#' @usage NULL
-#' @export
+# Internal ggproto backing stat_psychro_state(); the user-facing API is stat_psychro_state().
 StatPsychroState <- ggplot2::ggproto(
     "StatPsychroState",
     ggplot2::Stat,

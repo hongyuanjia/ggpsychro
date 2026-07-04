@@ -53,11 +53,6 @@ reference:
   - element_polygon
   - element_comfort_zone
 
-- title: Extension API
-  contents:
-  - ggpsychro-extensions
-  - ggpsychro-ggproto
-
 articles:
 - title: Start
   navbar:

@@ -586,10 +586,7 @@ psychro_compute_zone <- function(
     do.call(rbind, zones)
 }
 
-#' @rdname ggpsychro-extensions
-#' @format NULL
-#' @usage NULL
-#' @export
+# Internal ggproto backing stat_psychro_zone() and geom_psychro_zone().
 StatPsychroZone <- ggplot2::ggproto(
     "StatPsychroZone",
     ggplot2::Stat,
