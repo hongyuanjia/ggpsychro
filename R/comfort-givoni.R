@@ -1,8 +1,127 @@
-#' @include comfort-api.R
+#' @include comfort-core.R
 NULL
 
 # Givoni strategy geometry is fixed-shape chart construction rather than a
 # continuous comfort model, so it lives outside the generic grid/contour helpers.
+
+#' Givoni bioclimatic strategy
+#'
+#' `comfort_strategy_givoni()` stores the fixed inputs used by
+#' `geom_comfort_givoni()`. The strategy geometry follows Marsh's Givoni
+#' Bioclimatic Chart overlay: the mean outdoor temperature shifts the base
+#' comfort zone, and zones are drawn in dry-bulb/relative-humidity space before
+#' conversion to humidity ratio.
+#'
+#' @param mean_outdoor Mean outdoor temperature.
+#' @param units Unit system for `mean_outdoor`, `"SI"` or `"IP"`.
+#'
+#' @return A Givoni comfort strategy object.
+#'
+#' @examples
+#' # Create a Givoni strategy for a warm outdoor mean.
+#' comfort_strategy_givoni(mean_outdoor = 22)
+#'
+#' # Draw the Givoni strategy overlay for that outdoor mean.
+#' ggpsychro(tdb_lim = c(5, 45), hum_lim = c(0, 30)) +
+#'     geom_comfort_givoni(
+#'         strategy = comfort_strategy_givoni(mean_outdoor = 22),
+#'         show_labels = FALSE
+#'     )
+#'
+#' @export
+comfort_strategy_givoni <- function(mean_outdoor = 19, units = c("SI", "IP")) {
+    units <- match.arg(units)
+    mean_outdoor <- as.numeric(mean_outdoor)
+    if (length(mean_outdoor) != 1L || !is.finite(mean_outdoor)) {
+        stop(
+            "`mean_outdoor` must be a single finite temperature.",
+            call. = FALSE
+        )
+    }
+    structure(
+        list(mean_outdoor = mean_outdoor, units = units),
+        class = c("PsyComfortGivoniStrategy", "list")
+    )
+}
+
+#' Comfort zone style element
+#'
+#' `element_comfort_zone()` creates a small style object for comfort strategy
+#' zones. It is used by `geom_comfort_givoni()` through the `zone_style`
+#' argument to override Marsh-style defaults for individual zones.
+#'
+#' @param fill,colour,color,linewidth,linetype,alpha,linejoin Zone drawing
+#'   properties. Values left as [ggplot2::waiver()] inherit the layer default.
+#'
+#' @return A comfort zone style element.
+#'
+#' @examples
+#' # Fill and outline the comfort zone with custom colours.
+#' ggpsychro(tdb_lim = c(5, 45), hum_lim = c(0, 30)) +
+#'     geom_comfort_givoni(
+#'         show_labels = FALSE,
+#'         zone_style = list(
+#'             comfort = element_comfort_zone(
+#'                 fill = "#6FCF97",
+#'                 colour = "#1B7F4A",
+#'                 alpha = 0.35
+#'             )
+#'         )
+#'     )
+#'
+#' # Emphasize the air-conditioning region with a light fill.
+#' ggpsychro(tdb_lim = c(5, 45), hum_lim = c(0, 30)) +
+#'     geom_comfort_givoni(
+#'         show_labels = FALSE,
+#'         zone_style = list(
+#'             air_conditioning = element_comfort_zone(
+#'                 fill = "#7BC8F6",
+#'                 colour = "#1B5E8C",
+#'                 alpha = 0.18,
+#'                 linetype = "solid"
+#'             )
+#'         )
+#'     )
+#'
+#' # Restyle a line-only region without filling it.
+#' ggpsychro(tdb_lim = c(5, 45), hum_lim = c(0, 30)) +
+#'     geom_comfort_givoni(
+#'         show_labels = FALSE,
+#'         zone_style = list(
+#'             winter = element_comfort_zone(
+#'                 colour = "#C44536",
+#'                 linewidth = 1.2,
+#'                 linetype = "dashed"
+#'             )
+#'         )
+#'     )
+#'
+#' @export
+element_comfort_zone <- function(
+    fill = ggplot2::waiver(),
+    colour = ggplot2::waiver(),
+    linewidth = ggplot2::waiver(),
+    linetype = ggplot2::waiver(),
+    alpha = ggplot2::waiver(),
+    linejoin = ggplot2::waiver(),
+    color = NULL
+) {
+    if (!is.null(color)) {
+        colour <- color
+    }
+    structure(
+        list(
+            fill = fill,
+            colour = colour,
+            linewidth = linewidth,
+            linetype = linetype,
+            alpha = alpha,
+            linejoin = linejoin
+        ),
+        class = c("PsyComfortZoneElement", "list")
+    )
+}
+
 # Store Givoni mean-outdoor foreground marker metadata for coord rendering.
 givoni__foreground_marker <- function(
     strategy,

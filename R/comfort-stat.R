@@ -1,4 +1,4 @@
-#' @include comfort-api.R comfort-core.R comfort-pmv.R comfort-heat-index.R comfort-givoni.R
+#' @include comfort-calc.R comfort-model.R comfort-core.R comfort-pmv.R comfort-heat-index.R comfort-givoni.R
 NULL
 
 # All comfort stats route setup_data() through init_stat_data() so units/pres
@@ -161,7 +161,6 @@ StatComfortContour <- ggplot2::ggproto(
         "metric",
         "breaks",
         "n",
-        "contour_method",
         "label_path",
         "units",
         "pres",
@@ -179,7 +178,6 @@ StatComfortContour <- ggplot2::ggproto(
         metric = NULL,
         breaks = NULL,
         n = NULL,
-        contour_method = "auto",
         label_path = FALSE,
         units,
         pres,
@@ -202,7 +200,6 @@ StatComfortContour <- ggplot2::ggproto(
             mollier,
             tdb_lim,
             hum_lim,
-            contour_method = contour_method,
             label_path = label_path,
             psychro_scales = psychro_scales
         )

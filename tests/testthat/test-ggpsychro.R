@@ -376,13 +376,19 @@ test_that("Comfort path labels use the internal textpath renderer", {
 
     expect_gt(
         count_textpath_shapes(
-            base + geom_comfort_pmv_lines(n = 80)
+            base + geom_comfort_pmv(bands = FALSE, n = 80)
         ),
         0L
     )
     expect_gt(
         count_textpath_shapes(
-            base + geom_comfort_standard_zone(n = 80)
+            base +
+                geom_comfort_pmv(
+                    standard = comfort_standard_ashrae55_2017(),
+                    bands = FALSE,
+                    curves = FALSE,
+                    n = 80
+                )
         ),
         0L
     )
@@ -1212,7 +1218,7 @@ test_that("Psychrolib calculations inverse custom psychrometric scale transforms
 
 test_that("Generated comfort stats return custom position scale coordinates", {
     tile_plot <- ggpsychro(tdb_lim = c(15, 35), hum_lim = c(1, 24)) +
-        geom_comfort_overlay(method = "tile", n = c(10, 8), gap = 0) +
+        geom_comfort_bands(render = "tile", n = c(10, 8), gap = 0) +
         scale_humratio_continuous(transform = "log10")
     tile <- first_built_data(ggplot2::ggplot_build(tile_plot))
     hum_edges <- seq(1, 24, length.out = 9) / 1000
@@ -1224,13 +1230,13 @@ test_that("Generated comfort stats return custom position scale coordinates", {
     expect_equal(tile$ymax - tile$ymin, hum_height[hum_index], tolerance = 1e-8)
 
     pmv_hum_plot <- ggpsychro(tdb_lim = c(15, 35), hum_lim = c(1, 24)) +
-        geom_comfort_pmv_lines(levels = 0, n = 40) +
+        geom_comfort_pmv(bands = FALSE, curve_levels = 0, n = 40) +
         scale_humratio_continuous(transform = "log10")
     pmv_hum <- first_built_data(ggplot2::ggplot_build(pmv_hum_plot))
     expect_equal(pmv_hum$y, log10(pmv_hum$humratio * 1000), tolerance = 1e-8)
 
     pmv_tdb_plot <- ggpsychro(tdb_lim = c(15, 35), hum_lim = c(1, 24)) +
-        geom_comfort_pmv_lines(levels = 0, n = 40) +
+        geom_comfort_pmv(bands = FALSE, curve_levels = 0, n = 40) +
         scale_drybulb_continuous(transform = "log10")
     pmv_tdb <- first_built_data(ggplot2::ggplot_build(pmv_tdb_plot))
     expect_equal(pmv_tdb$x, log10(pmv_tdb$tdb), tolerance = 1e-8)

@@ -36,7 +36,14 @@ reference:
 
 - title: Thermal comfort chart layers
   contents:
-  - geom_comfort_overlay
+  - geom_comfort_pmv
+  - geom_comfort_set
+  - geom_comfort_heat_index
+  - geom_comfort_adaptive
+  - geom_comfort_givoni
+  - geom_comfort_bands
+  - geom_comfort_contour
+  - geom_comfort_zone
   - scale_fill_comfort_pmv
 
 - title: Scales, labels, and transformations

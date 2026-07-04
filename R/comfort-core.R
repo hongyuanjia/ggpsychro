@@ -534,30 +534,14 @@ comfort_contour_data <- function(
     mollier,
     tdb_lim,
     hum_lim,
-    contour_method = c("auto", "root", "isoband"),
     label_path = FALSE,
     psychro_scales = NULL
 ) {
-    contour_method <- match.arg(contour_method)
     metric <- comfort_model_metric(model, metric)
-    if (contour_method == "auto") {
-        # PMV curves are root-traced because grid isolines can miss steep
-        # segments near saturation; other metrics use the cheaper grid path.
-        contour_method <- if (
-            comfort_model_type(model) == "pmv" && metric == "pmv"
-        ) {
-            "root"
-        } else {
-            "isoband"
-        }
-    }
-    if (contour_method == "root") {
-        if (comfort_model_type(model) != "pmv" || metric != "pmv") {
-            stop(
-                "Root-traced contours are only available for PMV.",
-                call. = FALSE
-            )
-        }
+    # PMV curves are root-traced because grid isolines can miss steep segments
+    # near saturation; other metrics keep the cheaper grid/isoband path.
+    use_root <- comfort_model_type(model) == "pmv" && metric == "pmv"
+    if (use_root) {
         if (is.null(breaks)) {
             breaks <- comfort_contour_breaks("pmv", numeric(), units)
         }
