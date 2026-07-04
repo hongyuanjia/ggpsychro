@@ -37,7 +37,7 @@ GGPSY_OPT$hum_aes <- sub("tdb", "hum", GGPSY_OPT$tdb_aes)
 
 # Unit labels and parsing flags are centralized so axes, legends, and helpers
 # use the same text for each psychrometric property.
-psychro_unit_specs <- list(
+GGPSY_UNIT_SPECS <- list(
     # SI display labels use plotmath strings for degree and subscript notation.
     SI = list(
         drybulb = "degree * C",

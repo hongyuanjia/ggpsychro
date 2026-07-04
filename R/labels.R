@@ -367,7 +367,7 @@ label_unit <- function(
 }
 
 get_unit <- function(unit, type) {
-    psychro_unit_specs[[unit]][[type]]
+    GGPSY_UNIT_SPECS[[unit]][[type]]
 }
 
 get_prefix <- function(type) {
@@ -380,7 +380,7 @@ get_prefix <- function(type) {
 }
 
 need_parse <- function(type) {
-    psychro_unit_specs$parse[[type]]
+    GGPSY_UNIT_SPECS$parse[[type]]
 }
 
 # reference r-lib/scales/R/utils.r
