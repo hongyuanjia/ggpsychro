@@ -1,4 +1,4 @@
-#' @include comfort-stat-field.R comfort-heat-index.R
+#' @include comfort-stat.R comfort-heat-index.R
 NULL
 
 # Heat-index stats build category regions, threshold contours, and foreground

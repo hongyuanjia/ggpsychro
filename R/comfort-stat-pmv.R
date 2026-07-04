@@ -1,4 +1,4 @@
-#' @include comfort-stat-field.R comfort-pmv.R
+#' @include comfort-stat.R comfort-pmv.R
 NULL
 
 # PMV-specific stats trace roots for curves, axis labels, and polygon bands.

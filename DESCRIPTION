@@ -57,7 +57,7 @@ Collate:
     'comfort-contour.R'
     'comfort-givoni.R'
     'comfort-zone.R'
-    'comfort-stat-field.R'
+    'comfort-stat.R'
     'comfort-stat-pmv.R'
     'comfort-layer-field.R'
     'scale-comfort.R'

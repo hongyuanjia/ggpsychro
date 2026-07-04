@@ -1,4 +1,4 @@
-#' @include comfort-stat-field.R comfort-givoni.R
+#' @include comfort-stat.R comfort-givoni.R
 NULL
 
 # Givoni stats adapt the strategy geometry and label anchors to the active

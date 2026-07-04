@@ -1,4 +1,4 @@
-#' @include comfort-stat-field.R comfort-stat-pmv.R comfort-model.R
+#' @include comfort-stat.R comfort-stat-pmv.R comfort-model.R
 NULL
 
 # Shared comfort field layer primitives for sampled bands, contours, zones,
