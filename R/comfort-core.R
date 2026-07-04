@@ -226,7 +226,8 @@ comfort_default_n <- function(model, n = NULL) {
     )
 }
 
-comfort_pmv_curve_n <- function(n) {
+# Validate the scalar sampling count used by PMV root-traced curves.
+pmv__curve_n <- function(n) {
     if (!is.numeric(n) || length(n) != 1L || !is.finite(n) || n < 8) {
         stop(
             "`n` must be a single finite number greater than or equal to 8.",
@@ -562,7 +563,7 @@ comfort_contour_data <- function(
         }
         # Root-traced PMV contours already return curve vertices; the common
         # label code below can treat them like isoband isolines.
-        out <- comfort_pmv_curve_data(
+        out <- pmv__curve_data(
             model,
             breaks,
             n[[1L]],
@@ -699,7 +700,7 @@ comfort_format_contour_level <- function(level, metric) {
     metric <- rep(metric, length.out = length(level))
     out <- scales::number(level, accuracy = NULL, trim = TRUE)
     pmv <- metric == "pmv"
-    out[pmv] <- comfort_format_pmv_level(level[pmv])
+    out[pmv] <- pmv__format_level(level[pmv])
     out
 }
 
@@ -884,7 +885,7 @@ comfort_zone_data <- function(
     metric <- comfort_model_metric(model, metric)
     range <- comfort_zone_range(model, metric, range, units)
     if (comfort_model_type(model) == "pmv" && metric == "pmv") {
-        return(comfort_pmv_band_data(
+        return(pmv__band_data(
             model,
             range,
             n[[1L]],

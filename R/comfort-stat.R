@@ -264,7 +264,7 @@ StatComfortPmvCurve <- ggplot2::ggproto(
         ctx <- comfort_stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
-        comfort_pmv_curve_data(
+        pmv__curve_data(
             model,
             levels,
             n,
@@ -331,7 +331,7 @@ StatComfortPmvAxisLabel <- ggplot2::ggproto(
         ctx <- comfort_stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
-        comfort_pmv_axis_label_data(
+        pmv__axis_label_data(
             model,
             levels,
             n,
@@ -397,7 +397,7 @@ StatComfortPmvRootBand <- ggplot2::ggproto(
         ctx <- comfort_stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
-        comfort_pmv_rootband_data(
+        pmv__root_band_data(
             model,
             metric,
             levels,

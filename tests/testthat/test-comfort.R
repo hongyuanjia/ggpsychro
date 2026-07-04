@@ -37,80 +37,12 @@ test_that("comfort PMV and PPD match fixed pythermalcomfort oracle values", {
     expect_equal(result$tsv, c("Neutral", "Neutral"))
 })
 
-test_that("native PMV kernel matches R scalar reference", {
-    tdb <- c(20, 25, 30, NA)
-    tr <- c(21, 25, 32, 25)
-    vr <- c(0.1, 0.2, 0.4, 0.1)
-    rh <- c(40, 50, 70, 50)
-    met <- c(1.0, 1.2, 1.6, 1.2)
-    clo <- c(0.5, 0.7, 0.3, 0.5)
-    wme <- c(0, 0, 0.1, 0)
-
-    native <- comfort_pmv_vec(tdb, tr, vr, rh, met, clo, wme)
-    reference <- mapply(
-        comfort_pmv_one,
-        tdb,
-        tr,
-        vr,
-        rh,
-        met,
-        clo,
-        wme,
-        SIMPLIFY = TRUE,
-        USE.NAMES = FALSE
-    )
-
-    expect_equal(native, reference, tolerance = 1e-10)
-})
-
 test_that("comfort SET matches fixed pythermalcomfort oracle value", {
     result <- comfort_set(25, tr = 25, v = 0.1, rh = 50, met = 1.2, clo = 0.5)
     expect_equal(
         result$set[[1L]],
         comfort_oracle("set", "gagge_default", "set")
     )
-})
-
-test_that("native SET kernel matches R scalar reference", {
-    tdb <- c(22, 25, 28, NA)
-    tr <- c(22, 26, 30, 25)
-    v <- c(0.1, 0.2, 0.6, 0.1)
-    rh <- c(40, 50, 70, 50)
-    met <- c(1.1, 1.2, 1.6, 1.2)
-    clo <- c(0.4, 0.5, 0.7, 0.5)
-    wme <- c(0, 0, 0.1, 0)
-
-    native <- comfort_set_vec(
-        tdb,
-        tr,
-        v,
-        rh,
-        met,
-        clo,
-        wme,
-        body_surface_area = 1.8258,
-        p_atm = 101325,
-        position = "standing"
-    )
-    reference <- mapply(
-        comfort_set_one,
-        tdb,
-        tr,
-        v,
-        rh,
-        met,
-        clo,
-        wme,
-        MoreArgs = list(
-            body_surface_area = 1.8258,
-            p_atm = 101325,
-            position = "standing"
-        ),
-        SIMPLIFY = TRUE,
-        USE.NAMES = FALSE
-    )
-
-    expect_equal(native, reference, tolerance = 1e-7)
 })
 
 test_that("comfort adaptive models match fixed pythermalcomfort oracle values", {
@@ -849,7 +781,7 @@ test_that("PMV root-traced curves solve requested levels", {
     model <- comfort_model_pmv()
 
     humratio <- seq(0, 0.02, length.out = 40)
-    native_roots <- comfort_pmv_curve_roots(
+    native_roots <- pmv__curve_roots(
         model,
         -0.5,
         humratio,
@@ -857,7 +789,7 @@ test_that("PMV root-traced curves solve requested levels", {
         "SI",
         pressure
     )
-    fallback_roots <- comfort_pmv_curve_roots_r(
+    fallback_roots <- pmv__curve_roots_r(
         model,
         -0.5,
         humratio,
@@ -867,7 +799,7 @@ test_that("PMV root-traced curves solve requested levels", {
     )
     expect_equal(native_roots, fallback_roots, tolerance = 1e-7)
 
-    native_sat_roots <- comfort_pmv_curve_saturation_roots(
+    native_sat_roots <- pmv__curve_saturation_roots(
         model,
         0,
         c(0, 35),
@@ -876,7 +808,7 @@ test_that("PMV root-traced curves solve requested levels", {
         pressure,
         120
     )
-    fallback_sat_roots <- comfort_pmv_curve_saturation_roots_r(
+    fallback_sat_roots <- pmv__curve_saturation_roots_r(
         model,
         0,
         c(0, 35),
@@ -887,7 +819,7 @@ test_that("PMV root-traced curves solve requested levels", {
     )
     expect_equal(native_sat_roots, fallback_sat_roots, tolerance = 1e-7)
 
-    curves <- comfort_pmv_curve_data(
+    curves <- pmv__curve_data(
         comfort_model_pmv(),
         c(-0.5, 0, 0.5),
         96,
@@ -920,7 +852,7 @@ test_that("PMV root-traced curves solve requested levels", {
     expect_lt(max(abs(pmv - curves$level), na.rm = TRUE), 0.02)
 
     curve_cache <- new.env(parent = emptyenv())
-    cached_curves <- comfort_pmv_curve_data(
+    cached_curves <- pmv__curve_data(
         comfort_model_pmv(),
         c(-0.5, 0, 0.5),
         96,
@@ -932,7 +864,7 @@ test_that("PMV root-traced curves solve requested levels", {
         label = "none",
         curve_cache = curve_cache
     )
-    cached_axis <- comfort_pmv_axis_label_data(
+    cached_axis <- pmv__axis_label_data(
         comfort_model_pmv(),
         c(-0.5, 0, 0.5),
         96,
@@ -947,7 +879,7 @@ test_that("PMV root-traced curves solve requested levels", {
     expect_gt(nrow(cached_axis), 0L)
     expect_equal(length(ls(curve_cache)), 3L)
 
-    saturated <- comfort_pmv_curve_data(
+    saturated <- pmv__curve_data(
         comfort_model_pmv(),
         c(-1, 0, 1),
         120,
@@ -962,7 +894,7 @@ test_that("PMV root-traced curves solve requested levels", {
         c(-1, 0, 1),
         function(level) {
             length(
-                comfort_pmv_curve_saturation_roots(
+                pmv__curve_saturation_roots(
                     comfort_model_pmv(),
                     level,
                     c(0, 35),
@@ -986,7 +918,7 @@ test_that("PMV root-traced curves solve requested levels", {
     )
     expect_true(all(reaches_saturation[sat_exists]))
 
-    labels <- comfort_pmv_curve_data(
+    labels <- pmv__curve_data(
         comfort_model_pmv(),
         -3:3,
         120,
@@ -1012,7 +944,7 @@ test_that("PMV root-traced curves solve requested levels", {
     expect_equal(unique(labels$linetype[labels$level == 0]), "dashed")
     expect_equal(unique(labels$vjust), 0.5)
 
-    rootband <- comfort_pmv_rootband_data(
+    rootband <- pmv__root_band_data(
         comfort_model_pmv(),
         NULL,
         c(-0.5, 0, 0.5),
@@ -1045,7 +977,7 @@ test_that("PMV root-traced curves solve requested levels", {
         expect_lt(max(abs(pmv - level), na.rm = TRUE), 0.02)
     }
 
-    marsh_rootband <- comfort_pmv_rootband_data(
+    marsh_rootband <- pmv__root_band_data(
         comfort_model_pmv(),
         NULL,
         NULL,
@@ -1081,7 +1013,7 @@ test_that("PMV root-traced curves solve requested levels", {
     )
     expect_true(all(cap_covered))
 
-    standard_band <- comfort_pmv_band_data(
+    standard_band <- pmv__band_data(
         comfort_model_pmv(),
         c(-0.5, 0.5),
         c(140, 90),
@@ -1096,7 +1028,7 @@ test_that("PMV root-traced curves solve requested levels", {
     expect_lt(abs(top$humratio - sat), 1e-6)
 
     rootband_cache <- new.env(parent = emptyenv())
-    uncached_first_band <- comfort_pmv_band_data(
+    uncached_first_band <- pmv__band_data(
         comfort_model_pmv(),
         c(-0.5, 0),
         c(140, 90),
@@ -1106,7 +1038,7 @@ test_that("PMV root-traced curves solve requested levels", {
         c(5, 35),
         c(0, 24)
     )
-    cached_standard_band <- comfort_pmv_band_data(
+    cached_standard_band <- pmv__band_data(
         comfort_model_pmv(),
         c(-0.5, 0),
         c(140, 90),
@@ -1117,7 +1049,7 @@ test_that("PMV root-traced curves solve requested levels", {
         c(0, 24),
         rootband_cache = rootband_cache
     )
-    cached_adjacent_band <- comfort_pmv_band_data(
+    cached_adjacent_band <- pmv__band_data(
         comfort_model_pmv(),
         c(0, 0.5),
         c(140, 90),
@@ -1162,7 +1094,7 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
     expect_equal(length(unique(round(axis_y, 6))), 1L)
     expect_gt(min(axis_y), 0.0003)
 
-    axis_default <- comfort_pmv_axis_label_data(
+    axis_default <- pmv__axis_label_data(
         comfort_model_pmv(),
         c(-1, 0, 1),
         80,
@@ -1174,13 +1106,13 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
     )
     expect_equal(unique(axis_default$hjust), 0.95)
     expect_equal(unique(axis_default$vjust), 0.5)
-    axis_vjust <- comfort_pmv_axis_label_text_vjust(ggplot2::waiver())
+    axis_vjust <- pmv__axis_label_text_vjust(ggplot2::waiver())
     expect_s3_class(axis_vjust, "unit")
     expect_equal(as.numeric(axis_vjust), 3.5)
-    axis_large_vjust <- comfort_pmv_axis_label_text_vjust(ggplot2::waiver(), 6)
+    axis_large_vjust <- pmv__axis_label_text_vjust(ggplot2::waiver(), 6)
     expect_gt(as.numeric(axis_large_vjust), as.numeric(axis_vjust))
 
-    axis_labels <- comfort_pmv_axis_label_data(
+    axis_labels <- pmv__axis_label_data(
         comfort_model_pmv(),
         c(-1, 0, 1),
         80,
@@ -1201,7 +1133,7 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
     expect_equal(unique(axis_labels$hjust), 0.985)
     expect_equal(unique(axis_labels$vjust), 0.5)
 
-    pmv_boundary <- comfort_pmv_curve_data(
+    pmv_boundary <- pmv__curve_data(
         comfort_model_pmv(),
         c(-0.5, 0.5),
         80,
@@ -1215,7 +1147,7 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
     expect_equal(unique(pmv_boundary$vjust[pmv_boundary$level < 0]), -0.25)
     expect_equal(unique(pmv_boundary$vjust[pmv_boundary$level > 0]), 1.25)
 
-    pmv_boundary_mollier <- comfort_pmv_curve_data(
+    pmv_boundary_mollier <- pmv__curve_data(
         comfort_model_pmv(),
         c(-0.5, 0.5),
         80,
@@ -1239,7 +1171,7 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
         -0.25
     )
 
-    pmv_sensation <- comfort_pmv_curve_data(
+    pmv_sensation <- pmv__curve_data(
         comfort_model_pmv(),
         c(-1, 0, 1),
         80,

@@ -1,10 +1,10 @@
 #' @include comfort-core.R
 NULL
 
-# PMV/SET scalar formulas, native bridges, and root tracing. The scalar R
-# formulas are kept as parity references; R root tracers remain as fallbacks
-# when the native tracer's scalar-parameter contract is not met.
-comfort_pmv_vec <- function(tdb, tr, vr, rh, met, clo, wme) {
+# PMV/SET native bridges and PMV root tracing. R root tracers remain as
+# fallbacks when the native tracer's scalar-parameter contract is not met.
+# Call the native vectorized PMV evaluator.
+pmv__vec <- function(tdb, tr, vr, rh, met, clo, wme) {
     .Call(
         C_comfort_pmv_vec,
         as.numeric(tdb),
@@ -17,7 +17,8 @@ comfort_pmv_vec <- function(tdb, tr, vr, rh, met, clo, wme) {
     )
 }
 
-comfort_set_vec <- function(
+# Call the native vectorized SET evaluator.
+set__vec <- function(
     tdb,
     tr,
     v,
@@ -44,58 +45,8 @@ comfort_set_vec <- function(
     )
 }
 
-comfort_pmv_one <- function(tdb, tr, vr, rh, met, clo, wme) {
-    if (!all(is.finite(c(tdb, tr, vr, rh, met, clo, wme)))) {
-        return(NA_real_)
-    }
-
-    # ISO 7730 PMV is evaluated in SI heat-balance units; vapor pressure,
-    # clothing insulation, and metabolic rate are converted before iteration.
-    pa <- rh * 10 * exp(16.6536 - 4030.183 / (tdb + 235))
-    icl <- 0.155 * clo
-    m <- met * 58.15
-    w <- wme * 58.15
-    mw <- m - w
-    f_cl <- if (icl <= 0.078) 1 + 1.29 * icl else 1.05 + 0.645 * icl
-    hcf <- 12.1 * sqrt(vr)
-    taa <- tdb + 273
-    tra <- tr + 273
-    t_cla <- taa + (35.5 - tdb) / (3.5 * icl + 0.1)
-
-    p1 <- icl * f_cl
-    p2 <- p1 * 3.96
-    p3 <- p1 * 100
-    p4 <- p1 * taa
-    p5 <- (308.7 - 0.028 * mw) + p2 * (tra / 100)^4
-    xn <- t_cla / 100
-    xf <- t_cla / 50
-
-    # Clothing surface temperature is implicit because radiation and convection
-    # both depend on it, so solve the fixed point before evaluating heat losses.
-    i <- 0L
-    while (abs(xn - xf) > 0.00015 && i < 150L) {
-        xf <- (xf + xn) / 2
-        hcn <- 2.38 * abs(100 * xf - taa)^0.25
-        hc <- max(hcf, hcn)
-        xn <- (p5 + p4 * hc - p2 * xf^4) / (100 + p3 * hc)
-        i <- i + 1L
-    }
-
-    tcl <- 100 * xn - 273
-    # Fanger heat-loss terms: skin diffusion, sweating, latent/dry respiration,
-    # radiation, and convection. Their residual is scaled into the PMV vote.
-    hl1 <- 3.05e-3 * (5733 - 6.99 * mw - pa)
-    hl2 <- if (mw > 58.15) 0.42 * (mw - 58.15) else 0
-    hl3 <- 1.7e-5 * m * (5867 - pa)
-    hl4 <- 0.0014 * m * (34 - tdb)
-    hl5 <- 3.96 * f_cl * (xn^4 - (tra / 100)^4)
-    hl6 <- f_cl * hc * (tcl - tdb)
-    ts <- 0.303 * exp(-0.036 * m) + 0.028
-
-    ts * (mw - hl1 - hl2 - hl3 - hl4 - hl5 - hl6)
-}
-
-comfort_pmv_tsv <- function(pmv) {
+# Convert PMV values into thermal sensation vote labels.
+pmv__thermal_sensation <- function(pmv) {
     labels <- c(
         "Cold",
         "Cool",
@@ -110,210 +61,8 @@ comfort_pmv_tsv <- function(pmv) {
     out
 }
 
-comfort_set_one <- function(
-    tdb,
-    tr,
-    v,
-    rh,
-    met,
-    clo,
-    wme,
-    body_surface_area,
-    p_atm,
-    position
-) {
-    if (
-        !all(is.finite(c(
-            tdb,
-            tr,
-            v,
-            rh,
-            met,
-            clo,
-            wme,
-            body_surface_area,
-            p_atm
-        )))
-    ) {
-        return(NA_real_)
-    }
-
-    # SET uses the Gagge two-node model: first simulate skin/core state in the
-    # actual environment, then solve the standard environment with equal strain.
-    air_speed <- max(v, 0.1)
-    k_clo <- 0.25
-    body_weight <- 70
-    met_factor <- 58.2
-    sbc <- 5.6697e-8
-    c_sw <- 170
-    c_dil <- 120
-    c_str <- 0.5
-    temp_skin_neutral <- 33.7
-    temp_core_neutral <- 36.8
-    temp_body_neutral <- 36.49
-    skin_blood_flow_neutral <- 6.3
-
-    temp_skin <- temp_skin_neutral
-    temp_core <- temp_core_neutral
-    m_bl <- skin_blood_flow_neutral
-    rm <- (met - wme) * met_factor
-    m <- met * met_factor
-    pressure_in_atmospheres <- p_atm / 101325
-    vapor_pressure <- rh * comfort_p_sat_torr(tdb) / 100
-    length_time_simulation <- 60
-    n_simulation <- 1L
-    alfa <- 0.1
-    e_skin <- 0.1 * met
-    r_clo <- 0.155 * clo
-    f_a_cl <- 1 + 0.15 * clo
-    lr <- 2.2 / pressure_in_atmospheres
-
-    if (clo <= 0) {
-        w_max <- 0.38 * air_speed^(-0.29)
-        i_cl <- 1
-    } else {
-        w_max <- 0.59 * air_speed^(-0.08)
-        i_cl <- 0.45
-    }
-
-    h_cc <- 3 * pressure_in_atmospheres^0.53
-    h_fc <- 8.600001 * (air_speed * pressure_in_atmospheres)^0.53
-    h_cc <- max(h_cc, h_fc)
-    if (met > 0.85) {
-        h_cc <- max(h_cc, 5.66 * (met - 0.85)^0.39)
-    }
-    h_r <- 4.7
-    h_t <- h_r + h_cc
-    r_a <- 1 / (f_a_cl * h_t)
-    t_op <- (h_r * tr + h_cc * tdb) / h_t
-    temp_body <- alfa * temp_skin + (1 - alfa) * temp_core
-    q_res <- 0.0023 * m * (44 - vapor_pressure)
-    c_res <- 0.0014 * m * (34 - tdb)
-    q_sensible <- 0
-    e_rsw <- 0
-    e_max <- 0
-    w <- 0
-
-    # Transient two-node simulation. Each minute updates clothing temperature,
-    # sensible exchange, stored heat, blood flow, sweating, and shivering.
-    while (n_simulation < length_time_simulation) {
-        n_simulation <- n_simulation + 1L
-
-        t_cl <- (r_a * temp_skin + r_clo * t_op) / (r_a + r_clo)
-        for (i in seq_len(150L)) {
-            if (isTRUE(position == "sitting")) {
-                h_r <- 4 * 0.95 * sbc * ((t_cl + tr) / 2 + 273.15)^3 * 0.7
-            } else {
-                h_r <- 4 * 0.95 * sbc * ((t_cl + tr) / 2 + 273.15)^3 * 0.73
-            }
-            h_t <- h_r + h_cc
-            r_a <- 1 / (f_a_cl * h_t)
-            t_op <- (h_r * tr + h_cc * tdb) / h_t
-            t_cl_new <- (r_a * temp_skin + r_clo * t_op) / (r_a + r_clo)
-            if (abs(t_cl_new - t_cl) <= 0.01) {
-                t_cl <- t_cl_new
-                break
-            }
-            t_cl <- t_cl_new
-        }
-
-        q_sensible <- (temp_skin - t_op) / (r_a + r_clo)
-        hf_cs <- (temp_core - temp_skin) * (5.28 + 1.163 * m_bl)
-        s_core <- m - hf_cs - q_res - c_res - wme
-        s_skin <- hf_cs - q_sensible - e_skin
-        tc_sk <- 0.97 * alfa * body_weight
-        tc_cr <- 0.97 * (1 - alfa) * body_weight
-        d_t_sk <- (s_skin * body_surface_area) / (tc_sk * 60)
-        d_t_cr <- (s_core * body_surface_area) / (tc_cr * 60)
-        temp_skin <- temp_skin + d_t_sk
-        temp_core <- temp_core + d_t_cr
-        temp_body <- alfa * temp_skin + (1 - alfa) * temp_core
-        # Thermoregulation signals drive vasodilation/constriction, regulatory
-        # sweating, and shivering before the next minute is integrated.
-        sk_sig <- temp_skin - temp_skin_neutral
-        warm_sk <- max(sk_sig, 0)
-        cold_sk <- max(-sk_sig, 0)
-        c_reg_sig <- temp_core - temp_core_neutral
-        c_warm <- max(c_reg_sig, 0)
-        c_cold <- max(-c_reg_sig, 0)
-        bdsig <- temp_body - temp_body_neutral
-        warm_b <- max(bdsig, 0)
-        m_bl <- (skin_blood_flow_neutral + c_dil * c_warm) /
-            (1 + c_str * cold_sk)
-        m_bl <- max(0.5, min(90, m_bl))
-        reg_sw <- c_sw * warm_b * exp(warm_sk / 10.7)
-        reg_sw <- min(reg_sw, 500)
-        e_rsw <- 0.68 * reg_sw
-        r_ea <- 1 / (lr * f_a_cl * h_cc)
-        r_ecl <- r_clo / (lr * i_cl)
-        e_max <- (comfort_p_sat_torr(temp_skin) - vapor_pressure) /
-            (r_ea + r_ecl)
-        if (e_max == 0) {
-            e_max <- 0.001
-        }
-        pr_sw <- e_rsw / e_max
-        w <- 0.06 + 0.94 * pr_sw
-        e_diff <- w * e_max - e_rsw
-        if (w > w_max) {
-            w <- w_max
-            pr_sw <- w_max / 0.94
-            e_rsw <- pr_sw * e_max
-            e_diff <- 0.06 * (1 - pr_sw) * e_max
-        }
-        if (e_max < 0) {
-            e_diff <- 0
-            e_rsw <- 0
-            w <- w_max
-        }
-        e_skin <- e_rsw + e_diff
-        m_shiv <- 19.4 * cold_sk * c_cold
-        m <- rm + m_shiv
-        alfa <- 0.0417737 + 0.7451833 / (m_bl + 0.585417)
-    }
-
-    q_skin <- q_sensible + e_skin
-    p_ssk <- comfort_p_sat_torr(temp_skin)
-    h_r_s <- h_r
-    h_c_s <- 3 * pressure_in_atmospheres^0.53
-    if (met > 0.85) {
-        h_c_s <- max(h_c_s, 5.66 * (met - 0.85)^0.39)
-    }
-    h_c_s <- max(h_c_s, 3.0)
-    h_t_s <- h_c_s + h_r_s
-    r_clo_s <- 1.52 / ((met - wme / met_factor) + 0.6944) - 0.1835
-    r_clo_s <- max(r_clo_s, 0)
-    r_cl_s <- 0.155 * r_clo_s
-    f_a_cl_s <- 1 + k_clo * r_clo_s
-    fcls <- 1 / (1 + 0.155 * f_a_cl_s * h_t_s * r_clo_s)
-    ims <- 0.45
-    i_m_s <- ims * h_c_s / h_t_s * (1 - fcls) / (h_c_s / h_t_s - fcls * ims)
-    r_a_s <- 1 / (f_a_cl_s * h_t_s)
-    r_ea_s <- 1 / (lr * f_a_cl_s * h_c_s)
-    r_ecl_s <- r_cl_s / (lr * i_m_s)
-    h_d_s <- 1 / (r_a_s + r_cl_s)
-    h_e_s <- 1 / (r_ea_s + r_ecl_s)
-
-    delta <- 0.0001
-    dx <- 100
-    set_old <- round(temp_skin - q_skin / h_d_s, 2L)
-    # Newton iteration for the standard effective temperature whose sensible
-    # and evaporative skin losses match the simulated actual environment.
-    while (abs(dx) > 0.01) {
-        err_1 <- q_skin -
-            h_d_s * (temp_skin - set_old) -
-            w * h_e_s * (p_ssk - 0.5 * comfort_p_sat_torr(set_old))
-        err_2 <- q_skin -
-            h_d_s * (temp_skin - (set_old + delta)) -
-            w * h_e_s * (p_ssk - 0.5 * comfort_p_sat_torr(set_old + delta))
-        set_new <- set_old - delta * err_1 / (err_2 - err_1)
-        dx <- set_new - set_old
-        set_old <- set_new
-    }
-
-    set_old
-}
-
-comfort_pmv_curve_data <- function(
+# Convert PMV curve roots into plot-ready line or label data.
+pmv__curve_data <- function(
     model,
     levels,
     n,
@@ -330,7 +79,7 @@ comfort_pmv_curve_data <- function(
     psychro_scales = NULL
 ) {
     label <- match.arg(label)
-    out <- comfort_pmv_curve_base_data(
+    out <- pmv__curve_base_data(
         model,
         levels,
         n,
@@ -341,18 +90,18 @@ comfort_pmv_curve_data <- function(
         curve_cache = curve_cache
     )
     if (!nrow(out)) {
-        return(comfort_empty_pmv_curve())
+        return(pmv__empty_curve())
     }
     out$label <- vapply(
         out$level,
-        comfort_pmv_curve_label,
+        pmv__curve_label,
         character(1L),
         label = label
     )
-    out$hjust <- comfort_pmv_curve_hjust(label, label_hjust)
+    out$hjust <- pmv__curve_hjust(label, label_hjust)
     out$vjust <- vapply(
         out$level,
-        comfort_pmv_curve_vjust,
+        pmv__curve_vjust,
         numeric(1L),
         label = label,
         override = label_vjust,
@@ -363,10 +112,10 @@ comfort_pmv_curve_data <- function(
         out <- out[!is.na(out$label), , drop = FALSE]
     }
     if (!nrow(out)) {
-        return(comfort_empty_pmv_curve())
+        return(pmv__empty_curve())
     }
     if (isTRUE(reverse)) {
-        out <- comfort_pmv_reverse_groups(out)
+        out <- pmv__reverse_groups(out)
     }
     psychro_output_xy(
         out,
@@ -378,7 +127,8 @@ comfort_pmv_curve_data <- function(
     )
 }
 
-comfort_pmv_curve_base_data <- function(
+# Trace base constant-PMV curves before coordinate transformation.
+pmv__curve_base_data <- function(
     model,
     levels,
     n,
@@ -389,8 +139,8 @@ comfort_pmv_curve_base_data <- function(
     curve_cache = NULL
 ) {
     levels <- comfort_check_breaks(levels, "`levels`", n_min = 1L)
-    n <- comfort_pmv_curve_n(n)
-    model <- comfort_pmv_curve_model(model)
+    n <- pmv__curve_n(n)
+    model <- pmv__curve_model(model)
     lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
     # Constant-PMV curves are traced by solving dry-bulb roots on humidity-ratio
     # samples, then adding saturation-boundary roots so curves close cleanly.
@@ -402,7 +152,7 @@ comfort_pmv_curve_base_data <- function(
 
     curves <- vector("list", length(levels))
     for (i in seq_along(levels)) {
-        roots <- comfort_pmv_curve_level_roots(
+        roots <- pmv__curve_level_roots(
             model,
             levels[[i]],
             humratio,
@@ -421,20 +171,21 @@ comfort_pmv_curve_base_data <- function(
             level = levels[[i]],
             value = levels[[i]],
             group = i,
-            linetype = comfort_pmv_linetype(levels[[i]]),
+            linetype = pmv__linetype(levels[[i]]),
             metric = "pmv"
         ))
     }
     curves <- curves[!vapply(curves, is.null, logical(1L))]
     if (!length(curves)) {
-        return(comfort_empty_pmv_curve_base())
+        return(pmv__empty_curve_base())
     }
     out <- do.call(rbind, curves)
     row.names(out) <- NULL
     out
 }
 
-comfort_pmv_cache_key <- function(...) {
+# Build a cache key for root-tracing work in one coordinate context.
+pmv__cache_key <- function(...) {
     # Root caches are local environments, not global memoization. The key still
     # includes model parameters and chart limits so sibling stats cannot reuse
     # roots computed for a different coordinate context.
@@ -444,7 +195,8 @@ comfort_pmv_cache_key <- function(...) {
     )
 }
 
-comfort_pmv_curve_level_roots <- function(
+# Return cached roots for one PMV level, including saturation intersections.
+pmv__curve_level_roots <- function(
     model,
     level,
     humratio,
@@ -454,7 +206,7 @@ comfort_pmv_curve_level_roots <- function(
     lim,
     curve_cache = NULL
 ) {
-    key <- comfort_pmv_cache_key(
+    key <- pmv__cache_key(
         kind = "curve_level",
         model = model,
         level = level,
@@ -471,7 +223,7 @@ comfort_pmv_curve_level_roots <- function(
         return(get(key, envir = curve_cache, inherits = FALSE))
     }
 
-    roots <- comfort_pmv_curve_roots(
+    roots <- pmv__curve_roots(
         model,
         level,
         humratio,
@@ -479,7 +231,7 @@ comfort_pmv_curve_level_roots <- function(
         units,
         pres
     )
-    sat_roots <- comfort_pmv_curve_saturation_roots(
+    sat_roots <- pmv__curve_saturation_roots(
         model,
         level,
         lim$tdb,
@@ -488,14 +240,15 @@ comfort_pmv_curve_level_roots <- function(
         pres,
         n
     )
-    roots <- comfort_pmv_curve_merge_roots(roots, sat_roots)
+    roots <- pmv__merge_roots(roots, sat_roots)
     if (!is.null(curve_cache)) {
         assign(key, roots, envir = curve_cache)
     }
     roots
 }
 
-comfort_empty_pmv_curve_base <- function() {
+# Return an empty untransformed PMV curve data frame.
+pmv__empty_curve_base <- function() {
     util__new_data_frame(list(
         tdb = numeric(),
         humratio = numeric(),
@@ -507,11 +260,13 @@ comfort_empty_pmv_curve_base <- function() {
     ))
 }
 
-comfort_pmv_sensation_levels <- function(levels) {
-    levels[!is.na(vapply(levels, comfort_pmv_sensation_label, character(1L)))]
+# Keep only integer PMV levels with named sensation labels.
+pmv__sensation_levels <- function(levels) {
+    levels[!is.na(vapply(levels, pmv__sensation_label, character(1L)))]
 }
 
-comfort_pmv_axis_label_data <- function(
+# Build plot-ready labels placed along PMV curves near the chart axis.
+pmv__axis_label_data <- function(
     model,
     levels,
     n,
@@ -525,14 +280,14 @@ comfort_pmv_axis_label_data <- function(
     psychro_scales = NULL
 ) {
     levels <- comfort_check_breaks(levels, "`levels`", n_min = 1L)
-    n <- comfort_pmv_curve_n(n)
+    n <- pmv__curve_n(n)
     lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
     hum_lim_narrow <- unit__hum_from_chart(lim$hum, units)
     label_start <- hum_lim_narrow[[1L]] +
-        diff(hum_lim_narrow) * comfort_pmv_axis_label_offset(axis_label_hjust)
+        diff(hum_lim_narrow) * pmv__axis_label_offset(axis_label_hjust)
     label_end <- hum_lim_narrow[[1L]] +
-        diff(hum_lim_narrow) * comfort_pmv_axis_label_end(axis_label_hjust)
-    curves <- comfort_pmv_curve_base_data(
+        diff(hum_lim_narrow) * pmv__axis_label_end(axis_label_hjust)
+    curves <- pmv__curve_base_data(
         model,
         levels,
         n,
@@ -543,14 +298,14 @@ comfort_pmv_axis_label_data <- function(
         curve_cache = curve_cache
     )
     if (!nrow(curves)) {
-        return(comfort_empty_pmv_curve())
+        return(pmv__empty_curve())
     }
 
     labels <- vector("list", length(levels))
     for (i in seq_along(levels)) {
         curve <- curves[curves$level == levels[[i]], , drop = FALSE]
         curve <- curve[order(curve$humratio, curve$tdb), , drop = FALSE]
-        segment <- comfort_pmv_axis_label_segment(
+        segment <- pmv__axis_label_segment(
             curve,
             label_start,
             label_end
@@ -564,19 +319,19 @@ comfort_pmv_axis_label_data <- function(
             level = levels[[i]],
             value = levels[[i]],
             group = i,
-            label = comfort_format_pmv_level(levels[[i]]),
-            hjust = comfort_pmv_axis_label_text_hjust(axis_label_hjust),
+            label = pmv__format_level(levels[[i]]),
+            hjust = pmv__axis_label_text_hjust(axis_label_hjust),
             vjust = 0.5,
             metric = "pmv"
         ))
     }
     labels <- labels[!vapply(labels, is.null, logical(1L))]
     if (!length(labels)) {
-        return(comfort_empty_pmv_curve())
+        return(pmv__empty_curve())
     }
     out <- do.call(rbind, labels)
     row.names(out) <- NULL
-    out <- comfort_pmv_reverse_groups(out)
+    out <- pmv__reverse_groups(out)
     psychro_output_xy(
         out,
         out$tdb,
@@ -587,7 +342,8 @@ comfort_pmv_axis_label_data <- function(
     )
 }
 
-comfort_pmv_axis_label_segment <- function(curve, label_start, label_end) {
+# Extract the PMV curve segment used for an axis-side label.
+pmv__axis_label_segment <- function(curve, label_start, label_end) {
     if (
         nrow(curve) < 2L ||
             !is.finite(label_start) ||
@@ -632,7 +388,8 @@ comfort_pmv_axis_label_segment <- function(curve, label_start, label_end) {
     list(tdb = tdb[keep], humratio = humratio[keep])
 }
 
-comfort_pmv_axis_label_text_hjust <- function(axis_label_hjust) {
+# Resolve horizontal justification for PMV axis-side labels.
+pmv__axis_label_text_hjust <- function(axis_label_hjust) {
     if (util__is_waive(axis_label_hjust)) {
         return(0.95)
     }
@@ -642,7 +399,8 @@ comfort_pmv_axis_label_text_hjust <- function(axis_label_hjust) {
     0.95
 }
 
-comfort_pmv_axis_label_text_vjust <- function(axis_label_vjust, size = NULL) {
+# Resolve vertical justification for PMV axis-side labels.
+pmv__axis_label_text_vjust <- function(axis_label_vjust, size = NULL) {
     if (util__is_waive(axis_label_vjust)) {
         size <- if (is.null(size)) 2.8 else as.numeric(size)[[1L]]
         offset <- max(3.5, size * ggplot2::.pt * 0.42)
@@ -657,7 +415,8 @@ comfort_pmv_axis_label_text_vjust <- function(axis_label_vjust, size = NULL) {
     0.5
 }
 
-comfort_pmv_axis_label_offset <- function(axis_label_hjust) {
+# Convert axis label hjust into the start offset along humidity ratio.
+pmv__axis_label_offset <- function(axis_label_hjust) {
     if (util__is_waive(axis_label_hjust)) {
         return(0.025)
     }
@@ -667,14 +426,16 @@ comfort_pmv_axis_label_offset <- function(axis_label_hjust) {
     0.025
 }
 
-comfort_pmv_axis_label_end <- function(axis_label_hjust) {
+# Convert axis label hjust into the end offset along humidity ratio.
+pmv__axis_label_end <- function(axis_label_hjust) {
     if (is.numeric(axis_label_hjust) && length(axis_label_hjust)) {
         return(min(0.16, max(0, axis_label_hjust[[1L]]) + 0.055))
     }
     0.07
 }
 
-comfort_pmv_reverse_groups <- function(data) {
+# Reverse each PMV group while preserving group membership.
+pmv__reverse_groups <- function(data) {
     pieces <- lapply(split(data, data$group), function(x) {
         x[rev(seq_len(nrow(x))), , drop = FALSE]
     })
@@ -683,7 +444,8 @@ comfort_pmv_reverse_groups <- function(data) {
     out
 }
 
-comfort_pmv_rootband_data <- function(
+# Build filled PMV bands by tracing roots instead of gridded isobands.
+pmv__root_band_data <- function(
     model,
     metric,
     levels,
@@ -704,11 +466,11 @@ comfort_pmv_rootband_data <- function(
         )
     }
 
-    model <- comfort_pmv_curve_model(model)
-    breaks <- comfort_pmv_rootband_breaks(levels)
+    model <- pmv__curve_model(model)
+    breaks <- pmv__root_band_breaks(levels)
     n <- comfort_grid_n(n)
     lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
-    key <- comfort_pmv_cache_key(
+    key <- pmv__cache_key(
         kind = "rootband",
         model = model,
         metric = metric,
@@ -730,7 +492,7 @@ comfort_pmv_rootband_data <- function(
     }
     # Saturation roots are shared by the humidity sampling grid and by each band
     # edge, avoiding duplicate solves on the curved upper boundary.
-    saturation_roots <- comfort_pmv_rootband_saturation_roots(
+    saturation_roots <- pmv__root_band_saturation_roots(
         model,
         breaks,
         lim$tdb,
@@ -740,7 +502,7 @@ comfort_pmv_rootband_data <- function(
         n[[1L]],
         rootband_cache = rootband_cache
     )
-    humratio <- comfort_pmv_rootband_humratio(
+    humratio <- pmv__root_band_humratio(
         model,
         breaks,
         n[[1L]],
@@ -750,7 +512,7 @@ comfort_pmv_rootband_data <- function(
         lim$hum,
         saturation_roots = saturation_roots
     )
-    domain <- comfort_pmv_rootband_domain(humratio, lim$tdb, units, pres)
+    domain <- pmv__root_band_domain(humratio, lim$tdb, units, pres)
     valid <- domain$valid
     if (!any(valid)) {
         out <- comfort_empty_band()
@@ -763,8 +525,8 @@ comfort_pmv_rootband_data <- function(
     humratio <- humratio[valid]
     xlo <- domain$xlo[valid]
     xhi <- domain$xhi[valid]
-    pmv_lo <- comfort_pmv_value_at(model, xlo, humratio, units, pres)
-    pmv_hi <- comfort_pmv_value_at(model, xhi, humratio, units, pres)
+    pmv_lo <- pmv__value_at(model, xlo, humratio, units, pres)
+    pmv_hi <- pmv__value_at(model, xhi, humratio, units, pres)
     valid <- is.finite(pmv_lo) & is.finite(pmv_hi) & pmv_lo <= pmv_hi
     if (!any(valid)) {
         out <- comfort_empty_band()
@@ -783,7 +545,7 @@ comfort_pmv_rootband_data <- function(
     # Build one root vector per PMV break on the shared humidity grid. When a
     # break intersects saturation exactly, overwrite the row with that root.
     roots <- lapply(breaks, function(level) {
-        roots <- comfort_pmv_curve_root_vector(
+        roots <- pmv__curve_root_vector(
             model,
             level,
             humratio,
@@ -814,7 +576,7 @@ comfort_pmv_rootband_data <- function(
     for (i in seq_along(values)) {
         low <- lows[[i]]
         high <- highs[[i]]
-        band <- comfort_pmv_rootband_edges(
+        band <- pmv__root_band_edges(
             low,
             high,
             breaks,
@@ -840,7 +602,7 @@ comfort_pmv_rootband_data <- function(
             left <- band$left[run]
             right <- band$right[run]
             y <- humratio[run]
-            width_tol <- comfort_pmv_rootband_width_tol(left, right)
+            width_tol <- pmv__root_band_width_tol(left, right)
             ok <- is.finite(left) &
                 is.finite(right) &
                 is.finite(y) &
@@ -866,8 +628,8 @@ comfort_pmv_rootband_data <- function(
                 ),
                 level = sprintf(
                     "%s:%s",
-                    comfort_format_band_level(low),
-                    comfort_format_band_level(high)
+                    pmv__format_band_level(low),
+                    pmv__format_band_level(high)
                 ),
                 level_low = low,
                 level_high = high,
@@ -904,7 +666,8 @@ comfort_pmv_rootband_data <- function(
     out
 }
 
-comfort_empty_pmv_curve <- function() {
+# Return an empty transformed PMV curve data frame.
+pmv__empty_curve <- function() {
     util__new_data_frame(list(
         tdb = numeric(),
         humratio = numeric(),
@@ -921,7 +684,8 @@ comfort_empty_pmv_curve <- function() {
     ))
 }
 
-comfort_pmv_band_data <- function(
+# Extract one PMV comfort band from a root-traced band set.
+pmv__band_data <- function(
     model,
     range,
     n,
@@ -951,7 +715,7 @@ comfort_pmv_band_data <- function(
         )
     }
 
-    bands <- comfort_pmv_rootband_data(
+    bands <- pmv__root_band_data(
         model,
         "pmv",
         levels,
@@ -981,7 +745,8 @@ comfort_pmv_band_data <- function(
     out
 }
 
-comfort_pmv_rootband_breaks <- function(levels) {
+# Normalize root-band levels into sorted PMV break points.
+pmv__root_band_breaks <- function(levels) {
     if (is.null(levels)) {
         return(seq(-3, 3, by = 0.25))
     }
@@ -998,14 +763,16 @@ comfort_pmv_rootband_breaks <- function(levels) {
     comfort_check_breaks(levels, "`levels`", n_min = 2L)
 }
 
-comfort_format_band_level <- function(level) {
+# Format root-band open-ended and finite PMV boundaries.
+pmv__format_band_level <- function(level) {
     if (!is.finite(level)) {
         return(if (level < 0) "-Inf" else "Inf")
     }
-    comfort_format_pmv_level(level)
+    pmv__format_level(level)
 }
 
-comfort_pmv_rootband_saturation_roots <- function(
+# Compute saturation-boundary roots for all PMV root-band breaks.
+pmv__root_band_saturation_roots <- function(
     model,
     breaks,
     tdb_lim,
@@ -1016,7 +783,7 @@ comfort_pmv_rootband_saturation_roots <- function(
     rootband_cache = NULL
 ) {
     roots <- lapply(breaks, function(level) {
-        comfort_pmv_saturation_roots_cached(
+        pmv__saturation_roots_cached(
             model,
             level,
             tdb_lim,
@@ -1031,7 +798,8 @@ comfort_pmv_rootband_saturation_roots <- function(
     roots
 }
 
-comfort_pmv_saturation_roots_cached <- function(
+# Return cached saturation-boundary roots for one PMV break.
+pmv__saturation_roots_cached <- function(
     model,
     level,
     tdb_lim,
@@ -1043,7 +811,7 @@ comfort_pmv_saturation_roots_cached <- function(
 ) {
     # Adjacent PMV bands share saturation-boundary intersections. Caching them
     # separately avoids resolving the same curved-boundary root for each band.
-    key <- comfort_pmv_cache_key(
+    key <- pmv__cache_key(
         kind = "saturation_roots",
         model = model,
         level = level,
@@ -1059,7 +827,7 @@ comfort_pmv_saturation_roots_cached <- function(
     ) {
         return(get(key, envir = rootband_cache, inherits = FALSE))
     }
-    roots <- comfort_pmv_curve_saturation_roots(
+    roots <- pmv__curve_saturation_roots(
         model,
         level,
         tdb_lim,
@@ -1074,7 +842,8 @@ comfort_pmv_saturation_roots_cached <- function(
     roots
 }
 
-comfort_pmv_rootband_humratio <- function(
+# Build the humidity-ratio sampling grid for root-traced PMV bands.
+pmv__root_band_humratio <- function(
     model,
     breaks,
     n,
@@ -1092,7 +861,7 @@ comfort_pmv_rootband_humratio <- function(
     sat <- psychro_saturation_humratio(tdb_lim, units, pres)
     hum <- c(hum, sat[is.finite(sat)])
     if (is.null(saturation_roots)) {
-        saturation_roots <- comfort_pmv_rootband_saturation_roots(
+        saturation_roots <- pmv__root_band_saturation_roots(
             model,
             breaks,
             tdb_lim,
@@ -1113,7 +882,8 @@ comfort_pmv_rootband_humratio <- function(
     hum[hum >= hum_lim[[1L]] & hum <= hum_lim[[2L]]]
 }
 
-comfort_pmv_rootband_domain <- function(humratio, tdb_lim, units, pres) {
+# Compute dry-bulb domain limits at each PMV band humidity sample.
+pmv__root_band_domain <- function(humratio, tdb_lim, units, pres) {
     xlo <- rep(tdb_lim[[1L]], length(humratio))
     positive <- humratio > 0
     if (any(positive)) {
@@ -1131,7 +901,8 @@ comfort_pmv_rootband_domain <- function(humratio, tdb_lim, units, pres) {
     list(xlo = xlo, xhi = xhi, valid = valid)
 }
 
-comfort_pmv_curve_root_vector <- function(
+# Convert sparse PMV roots into a vector aligned with the band sampling grid.
+pmv__curve_root_vector <- function(
     model,
     level,
     humratio,
@@ -1140,7 +911,7 @@ comfort_pmv_curve_root_vector <- function(
     pres
 ) {
     out <- rep(NA_real_, length(humratio))
-    roots <- comfort_pmv_curve_roots(
+    roots <- pmv__curve_roots(
         model,
         level,
         humratio,
@@ -1157,7 +928,8 @@ comfort_pmv_curve_root_vector <- function(
     out
 }
 
-comfort_pmv_rootband_edges <- function(
+# Compute left and right dry-bulb edges for one root-traced PMV band.
+pmv__root_band_edges <- function(
     low,
     high,
     breaks,
@@ -1222,7 +994,7 @@ comfort_pmv_rootband_edges <- function(
     # while keeping the computed edge level available for boundary validation.
     left[inner_left] <- pmax(xlo[inner_left], left[inner_left] - overlap)
     right[inner_right] <- pmin(xhi[inner_right], right[inner_right] + overlap)
-    width_tol <- comfort_pmv_rootband_width_tol(left, right)
+    width_tol <- pmv__root_band_width_tol(left, right)
     keep <- keep &
         is.finite(left) &
         is.finite(right) &
@@ -1237,7 +1009,8 @@ comfort_pmv_rootband_edges <- function(
     )
 }
 
-comfort_pmv_rootband_width_tol <- function(left, right) {
+# Return a scale-aware tolerance for comparing PMV band edge widths.
+pmv__root_band_width_tol <- function(left, right) {
     x <- c(left, right)
     x <- x[is.finite(x)]
     if (!length(x)) {
@@ -1246,7 +1019,8 @@ comfort_pmv_rootband_width_tol <- function(left, right) {
     sqrt(.Machine$double.eps) * max(1, max(abs(x)))
 }
 
-comfort_pmv_curve_model <- function(model) {
+# Validate that a model can be used for root-traced PMV curves.
+pmv__curve_model <- function(model) {
     comfort_check_model(model)
     if (model$type != "pmv") {
         stop(
@@ -1258,7 +1032,8 @@ comfort_pmv_curve_model <- function(model) {
     model
 }
 
-comfort_pmv_native_params <- function(model, units, pres) {
+# Convert scalar PMV model parameters into the native root-tracer contract.
+pmv__native_params <- function(model, units, pres) {
     p <- model$params
     if (isTRUE(p$limit_inputs)) {
         return(NULL)
@@ -1290,7 +1065,8 @@ comfort_pmv_native_params <- function(model, units, pres) {
     )
 }
 
-comfort_pmv_native_curve_roots <- function(
+# Trace PMV roots at fixed humidity ratios with the native implementation.
+pmv__native_curve_roots <- function(
     model,
     level,
     humratio,
@@ -1298,7 +1074,7 @@ comfort_pmv_native_curve_roots <- function(
     units,
     pres
 ) {
-    p <- comfort_pmv_native_params(model, units, pres)
+    p <- pmv__native_params(model, units, pres)
     if (is.null(p)) {
         return(NULL)
     }
@@ -1319,7 +1095,8 @@ comfort_pmv_native_curve_roots <- function(
     roots
 }
 
-comfort_pmv_native_saturation_roots <- function(
+# Trace PMV roots along saturation with the native implementation.
+pmv__native_saturation_roots <- function(
     model,
     level,
     tdb_lim,
@@ -1328,7 +1105,7 @@ comfort_pmv_native_saturation_roots <- function(
     pres,
     n
 ) {
-    p <- comfort_pmv_native_params(model, units, pres)
+    p <- pmv__native_params(model, units, pres)
     if (is.null(p)) {
         return(NULL)
     }
@@ -1350,7 +1127,8 @@ comfort_pmv_native_saturation_roots <- function(
     roots
 }
 
-comfort_pmv_curve_roots <- function(
+# Trace PMV roots at fixed humidity ratios, falling back to R when needed.
+pmv__curve_roots <- function(
     model,
     level,
     humratio,
@@ -1358,7 +1136,7 @@ comfort_pmv_curve_roots <- function(
     units,
     pres
 ) {
-    roots <- comfort_pmv_native_curve_roots(
+    roots <- pmv__native_curve_roots(
         model,
         level,
         humratio,
@@ -1369,10 +1147,11 @@ comfort_pmv_curve_roots <- function(
     if (!is.null(roots)) {
         return(roots)
     }
-    comfort_pmv_curve_roots_r(model, level, humratio, tdb_lim, units, pres)
+    pmv__curve_roots_r(model, level, humratio, tdb_lim, units, pres)
 }
 
-comfort_pmv_curve_roots_r <- function(
+# Trace PMV roots at fixed humidity ratios with the R fallback implementation.
+pmv__curve_roots_r <- function(
     model,
     level,
     humratio,
@@ -1408,8 +1187,8 @@ comfort_pmv_curve_roots_r <- function(
     lo <- xlo[valid]
     hi <- xhi[valid]
     hum <- humratio[valid]
-    flo <- comfort_pmv_value_at(model, lo, hum, units, pres) - level
-    fhi <- comfort_pmv_value_at(model, hi, hum, units, pres) - level
+    flo <- pmv__value_at(model, lo, hum, units, pres) - level
+    fhi <- pmv__value_at(model, hi, hum, units, pres) - level
     bracket <- is.finite(flo) & is.finite(fhi) & flo * fhi <= 0
     if (!any(bracket)) {
         return(list(tdb = numeric(), humratio = numeric()))
@@ -1436,7 +1215,7 @@ comfort_pmv_curve_roots_r <- function(
             break
         }
         mid <- (lo[active] + hi[active]) / 2
-        fmid <- comfort_pmv_value_at(model, mid, hum[active], units, pres) -
+        fmid <- pmv__value_at(model, mid, hum[active], units, pres) -
             level
         same <- sign(fmid) == sign(flo[active])
         same[!is.finite(same)] <- FALSE
@@ -1452,7 +1231,8 @@ comfort_pmv_curve_roots_r <- function(
     list(tdb = root[finite], humratio = hum[finite])
 }
 
-comfort_pmv_curve_saturation_roots <- function(
+# Trace PMV roots along saturation, falling back to R when needed.
+pmv__curve_saturation_roots <- function(
     model,
     level,
     tdb_lim,
@@ -1461,7 +1241,7 @@ comfort_pmv_curve_saturation_roots <- function(
     pres,
     n
 ) {
-    roots <- comfort_pmv_native_saturation_roots(
+    roots <- pmv__native_saturation_roots(
         model,
         level,
         tdb_lim,
@@ -1473,7 +1253,7 @@ comfort_pmv_curve_saturation_roots <- function(
     if (!is.null(roots)) {
         return(roots)
     }
-    comfort_pmv_curve_saturation_roots_r(
+    pmv__curve_saturation_roots_r(
         model,
         level,
         tdb_lim,
@@ -1484,7 +1264,8 @@ comfort_pmv_curve_saturation_roots <- function(
     )
 }
 
-comfort_pmv_curve_saturation_roots_r <- function(
+# Trace PMV roots along saturation with the R fallback implementation.
+pmv__curve_saturation_roots_r <- function(
     model,
     level,
     tdb_lim,
@@ -1507,7 +1288,7 @@ comfort_pmv_curve_saturation_roots_r <- function(
         return(list(tdb = numeric(), humratio = numeric()))
     }
 
-    value <- comfort_pmv_value_at(model, tdb, hum, units, pres) - level
+    value <- pmv__value_at(model, tdb, hum, units, pres) - level
     valid <- valid & is.finite(value)
     if (!any(valid)) {
         return(list(tdb = numeric(), humratio = numeric()))
@@ -1530,7 +1311,7 @@ comfort_pmv_curve_saturation_roots_r <- function(
                     flo <- value[[i]]
                     for (j in seq_len(44L)) {
                         mid <- (lo + hi) / 2
-                        fmid <- comfort_pmv_value_at(
+                        fmid <- pmv__value_at(
                             model,
                             mid,
                             psychro_saturation_humratio(mid, units, pres),
@@ -1565,7 +1346,8 @@ comfort_pmv_curve_saturation_roots_r <- function(
     list(tdb = roots[keep], humratio = hum[keep])
 }
 
-comfort_pmv_curve_merge_roots <- function(...) {
+# Merge multiple PMV root sets into a sorted de-duplicated root list.
+pmv__merge_roots <- function(...) {
     roots <- list(...)
     tdb <- unlist(lapply(roots, `[[`, "tdb"), use.names = FALSE)
     humratio <- unlist(lapply(roots, `[[`, "humratio"), use.names = FALSE)
@@ -1584,7 +1366,8 @@ comfort_pmv_curve_merge_roots <- function(...) {
     list(tdb = tdb[keep], humratio = humratio[keep])
 }
 
-comfort_pmv_value_at <- function(model, tdb, humratio, units, pres) {
+# Evaluate PMV at fixed dry-bulb and humidity-ratio coordinates.
+pmv__value_at <- function(model, tdb, humratio, units, pres) {
     rh <- comfort_relhum_from_humratio(tdb, humratio, units, pres)
     rh <- comfort_clip_grid_rh(rh)
     out <- rep(NA_real_, length(tdb))
@@ -1598,21 +1381,24 @@ comfort_pmv_value_at <- function(model, tdb, humratio, units, pres) {
     out
 }
 
-comfort_pmv_linetype <- function(level) {
+# Return the PMV contour linetype for a level.
+pmv__linetype <- function(level) {
     if (abs(level) < 1e-8) "dashed" else "solid"
 }
 
-comfort_pmv_curve_label <- function(level, label) {
+# Build the displayed PMV curve label for a level and label mode.
+pmv__curve_label <- function(level, label) {
     switch(
         label,
         none = NA_character_,
-        sensation = comfort_pmv_sensation_label(level),
-        boundary = paste("PMV", comfort_format_pmv_level(level)),
+        sensation = pmv__sensation_label(level),
+        boundary = paste("PMV", pmv__format_level(level)),
         comfort = "COMFORT"
     )
 }
 
-comfort_pmv_curve_hjust <- function(label, override = NULL) {
+# Resolve horizontal justification for PMV curve labels.
+pmv__curve_hjust <- function(label, override = NULL) {
     if (!is.null(override)) {
         return(override)
     }
@@ -1625,7 +1411,8 @@ comfort_pmv_curve_hjust <- function(label, override = NULL) {
     )
 }
 
-comfort_pmv_curve_vjust <- function(
+# Resolve vertical justification for PMV curve labels.
+pmv__curve_vjust <- function(
     level,
     label,
     override = NULL,
@@ -1649,7 +1436,8 @@ comfort_pmv_curve_vjust <- function(
     0.5
 }
 
-comfort_pmv_sensation_label <- function(level) {
+# Return the named thermal sensation label for an integer PMV level.
+pmv__sensation_label <- function(level) {
     if (abs(level - round(level)) > 1e-8) {
         return(NA_character_)
     }
@@ -1665,6 +1453,7 @@ comfort_pmv_sensation_label <- function(level) {
     labels[[as.character(as.integer(round(level)))]] %||% NA_character_
 }
 
-comfort_format_pmv_level <- function(level) {
+# Format a PMV level with an explicit sign for positive values.
+pmv__format_level <- function(level) {
     ifelse(level > 0, sprintf("+%.1f", level), sprintf("%.1f", level))
 }

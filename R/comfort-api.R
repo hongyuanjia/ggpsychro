@@ -61,7 +61,7 @@ comfort_pmv <- function(
     tr_si <- comfort_to_si_temp(x$tr, units)
     vr_si <- comfort_to_si_speed(x$vr, units)
 
-    pmv <- comfort_pmv_vec(tdb_si, tr_si, vr_si, x$rh, x$met, x$clo, x$wme)
+    pmv <- pmv__vec(tdb_si, tr_si, vr_si, x$rh, x$met, x$clo, x$wme)
 
     # ISO 7730 maps PMV to predicted percentage dissatisfied with an empirical
     # even-power curve, so warm and cool deviations are treated symmetrically.
@@ -87,7 +87,7 @@ comfort_pmv <- function(
     util__new_data_frame(list(
         pmv = pmv,
         ppd = ppd,
-        tsv = comfort_pmv_tsv(pmv)
+        tsv = pmv__thermal_sensation(pmv)
     ))
 }
 
@@ -127,7 +127,7 @@ comfort_set <- function(
     tr_si <- comfort_to_si_temp(x$tr, units)
     v_si <- comfort_to_si_speed(x$v, units)
 
-    set <- comfort_set_vec(
+    set <- set__vec(
         tdb_si,
         tr_si,
         v_si,

@@ -466,7 +466,7 @@ geom_comfort_pmv_lines <- function(
     # Lines, sensation labels, and axis labels are separate stats, but they all
     # trace the same PMV roots for a given level set inside this wrapper call.
     pmv_curve_cache <- new.env(parent = emptyenv())
-    sensation_levels <- comfort_pmv_sensation_levels(levels)
+    sensation_levels <- pmv__sensation_levels(levels)
     line_levels <- if (isTRUE(label_sensation)) {
         setdiff(levels, sensation_levels)
     } else {
@@ -547,8 +547,8 @@ geom_comfort_pmv_lines <- function(
                 list(
                     axis_label_hjust = axis_label_hjust,
                     curve_cache = pmv_curve_cache,
-                    hjust = comfort_pmv_axis_label_text_hjust(axis_label_hjust),
-                    vjust = comfort_pmv_axis_label_text_vjust(
+                    hjust = pmv__axis_label_text_hjust(axis_label_hjust),
+                    vjust = pmv__axis_label_text_vjust(
                         axis_label_vjust,
                         axis_label_size
                     ),
