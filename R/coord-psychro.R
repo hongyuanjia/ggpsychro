@@ -179,10 +179,7 @@ match_psychro_breaks <- function(x, table, tolerance = 1e-8) {
     }, integer(1))
 }
 
-#' @rdname ggpsychro-ggproto
-#' @format NULL
-#' @usage NULL
-#' @export
+#' @noRd
 CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
     setup_params = function(self, data) {
         self$grids <- merge_psychro_grids(self$grids)

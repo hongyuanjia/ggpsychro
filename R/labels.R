@@ -200,7 +200,7 @@ label_unit <- function (x, accuracy = NULL, scale = 1, type, units,
 }
 
 get_unit <- function (unit, type) {
-    .unit_list[[unit]][[type]]
+    psychro_unit_specs[[unit]][[type]]
 }
 
 get_prefix <- function (type) {
@@ -213,7 +213,7 @@ get_prefix <- function (type) {
 }
 
 need_parse <- function (type) {
-    .unit_list$parse[[type]]
+    psychro_unit_specs$parse[[type]]
 }
 
 # reference r-lib/scales/R/utils.r
