@@ -7,8 +7,14 @@
 #' @param mollier A single logical value indicating whether a Mollier plot is
 #'        desired
 #' @noRd
-guide_grid_psychro <- function(theme, axis, saturation, grid, grid.labels,
-                               mollier) {
+guide_grid_psychro <- function(
+    theme,
+    axis,
+    saturation,
+    grid,
+    grid.labels,
+    mollier
+) {
     # create psychrometric chart panel
     panel <- psychro_panel_polygon(saturation, mollier)
     panel_x <- panel$x
@@ -16,7 +22,9 @@ guide_grid_psychro <- function(theme, axis, saturation, grid, grid.labels,
     psychro_mask <- psychro_panel_mask_grob(theme, panel_x, panel_y)
     psychro_panel <- psychro_panel_background_grob(theme, panel_x, panel_y)
     psychro_panel_clip <- grid::polygonGrob(
-        panel_x, panel_y, gp = grid::gpar(col = NA, fill = NA),
+        panel_x,
+        panel_y,
+        gp = grid::gpar(col = NA, fill = NA),
         name = "psychro-panel-clip"
     )
 
@@ -34,14 +42,18 @@ guide_grid_psychro <- function(theme, axis, saturation, grid, grid.labels,
         v <- if (var == "x") list(x = vx, y = vy) else list(x = vy, y = vx)
 
         ggplot2::element_render(
-            theme, paste("panel.grid", type, var, sep = "."),
-            x = v$x, y = v$y, id.lengths = rep(2, length(x))
+            theme,
+            paste("panel.grid", type, var, sep = "."),
+            x = v$x,
+            y = v$y,
+            id.lengths = rep(2, length(x))
         )
     }
 
     psychro_grid <- function(x, type, var) {
         ggplot2::element_render(
-            theme, paste("psychro.panel.grid", type, var, sep = "."),
+            theme,
+            paste("psychro.panel.grid", type, var, sep = "."),
             x = x[[c("tdb", "hum")[c(!mollier, mollier)]]],
             y = x[[c("tdb", "hum")[c(mollier, !mollier)]]],
             id.lengths = rep(x$len, x$n)
@@ -50,16 +62,27 @@ guide_grid_psychro <- function(theme, axis, saturation, grid, grid.labels,
 
     psychro_grid_label <- function(x, var) {
         psychro_grid_label_grob(
-            x, grid.labels[[var]], var, theme, mollier,
-            panel_x, panel_y
+            x,
+            grid.labels[[var]],
+            var,
+            theme,
+            mollier,
+            panel_x,
+            panel_y
         )
     }
 
     axis_grobs <- guide_axis_grobs(
-        axis, nm_tdb, nm_hum, psychro_panel_clip, axis_grid
+        axis,
+        nm_tdb,
+        nm_hum,
+        psychro_panel_clip,
+        axis_grid
     )
     grid_grobs <- guide_curved_grid_grobs(
-        grid, psychro_panel_clip, psychro_grid
+        grid,
+        psychro_panel_clip,
+        psychro_grid
     )
     label_grobs <- guide_curved_label_grobs(grid, psychro_grid_label)
 
@@ -83,8 +106,7 @@ guide_grid_psychro <- function(theme, axis, saturation, grid, grid.labels,
 
 # Assemble Cartesian panel grid lines from a data table so dry-bulb and humidity
 # major/minor guide order stays explicit without four duplicated branches.
-guide_axis_grobs <- function(axis, nm_tdb, nm_hum, panel_clip,
-                             render_axis) {
+guide_axis_grobs <- function(axis, nm_tdb, nm_hum, panel_clip, render_axis) {
     spec <- list(
         list(values = axis$hum$minor, type = "minor", var = nm_hum),
         list(values = axis$tdb$minor, type = "minor", var = nm_tdb),
@@ -93,7 +115,9 @@ guide_axis_grobs <- function(axis, nm_tdb, nm_hum, panel_clip,
     )
 
     guide_compact_grobs(lapply(spec, function(item) {
-        if (!length(item$values)) return(NULL)
+        if (!length(item$values)) {
+            return(NULL)
+        }
         clip_grob(
             panel_clip,
             render_axis(item$values, item$type, item$var)
@@ -107,7 +131,9 @@ guide_curved_grid_grobs <- function(grid, panel_clip, render_grid) {
     pieces <- lapply(names(grid), function(var) {
         lapply(c("minor", "major"), function(type) {
             lines <- grid[[var]][[type]]
-            if (!length(lines)) return(NULL)
+            if (!length(lines)) {
+                return(NULL)
+            }
             clip_grob(panel_clip, render_grid(lines, type, var))
         })
     })
@@ -119,7 +145,9 @@ guide_curved_grid_grobs <- function(grid, panel_clip, render_grid) {
 guide_curved_label_grobs <- function(grid, render_label) {
     guide_compact_grobs(lapply(names(grid), function(var) {
         lines <- grid[[var]]$major
-        if (!length(lines)) return(NULL)
+        if (!length(lines)) {
+            return(NULL)
+        }
         render_label(lines, var)
     }))
 }
@@ -176,13 +204,17 @@ psychro_panel_background_grob <- function(theme, x, y) {
     }
     if (inherits(element, "element_polygon")) {
         return(ggplot2::element_render(
-            theme, "psychro.panel.background", x = x, y = y,
+            theme,
+            "psychro.panel.background",
+            x = x,
+            y = y,
             name = "psychro-panel-background"
         ))
     }
 
     grid::polygonGrob(
-        x, y,
+        x,
+        y,
         gp = grid::gpar(
             fill = element$fill,
             col = element$colour %||% element$color,
@@ -208,10 +240,14 @@ clip_grob <- function(panel, grob, op = "intersection") {
 
 # Match floating-point break values after inverse transforms and rescaling.
 guide__match_break_values <- function(x, table, tolerance = 1e-8) {
-    vapply(x, function(value) {
-        match <- which(abs(table - value) <= tolerance)
-        if (length(match)) match[[1L]] else NA_integer_
-    }, integer(1))
+    vapply(
+        x,
+        function(value) {
+            match <- which(abs(table - value) <= tolerance)
+            if (length(match)) match[[1L]] else NA_integer_
+        },
+        integer(1)
+    )
 }
 
 # Format sensible-heat-ratio labels without trailing decimal noise at zero.
@@ -242,22 +278,53 @@ psychro_protractor_breaks <- function(breaks, minor = FALSE) {
 
 psychro_protractor_shr_major_breaks <- function() {
     c(
-        -5, -2, -1, -0.5, -0.3, -0.2,
-        0, 0.2, 0.4, 0.6, 0.7, 0.8,
-        1, 1.5, 2, 4
+        -5,
+        -2,
+        -1,
+        -0.5,
+        -0.3,
+        -0.2,
+        0,
+        0.2,
+        0.4,
+        0.6,
+        0.7,
+        0.8,
+        1,
+        1.5,
+        2,
+        4
     )
 }
 
 psychro_protractor_shr_minor_breaks <- function() {
     c(
-        -10, -4, -3, -1.5, -0.1,
-        0.1, 0.3, 0.5, 0.9,
-        1.2, 1.8, 3, 5, 8, 10
+        -10,
+        -4,
+        -3,
+        -1.5,
+        -0.1,
+        0.1,
+        0.3,
+        0.5,
+        0.9,
+        1.2,
+        1.8,
+        3,
+        5,
+        8,
+        10
     )
 }
 
-psychro_protractor_grob <- function(protractor, theme, mollier,
-                                    range_tdb, range_hum, units) {
+psychro_protractor_grob <- function(
+    protractor,
+    theme,
+    mollier,
+    range_tdb,
+    range_hum,
+    units
+) {
     if (!is.list(protractor) || !isTRUE(protractor$show)) {
         return(NULL)
     }
@@ -273,10 +340,12 @@ psychro_protractor_grob <- function(protractor, theme, mollier,
     rotation <- if (mollier) -pi / 2 else 0
 
     line_style <- psychro_protractor_line_style_defaults(
-        theme, protractor$style %||% list()
+        theme,
+        protractor$style %||% list()
     )
     text_style <- psychro_protractor_text_style_defaults(
-        theme, protractor$label_style %||% list()
+        theme,
+        protractor$label_style %||% list()
     )
 
     gp_line <- grid::gpar(
@@ -301,38 +370,84 @@ psychro_protractor_grob <- function(protractor, theme, mollier,
 
     guide <- psychro_protractor_guide(protractor)
     shr_breaks <- psychro_protractor_breaks(guide$shr_breaks)
-    shr_minor_breaks <- psychro_protractor_breaks(guide$shr_minor_breaks, minor = TRUE)
-    ratio_major_breaks <- psychro_protractor_ratio_breaks(guide$ratio_breaks, units)
-    ratio_minor_breaks <- psychro_protractor_ratio_breaks(guide$ratio_minor_breaks, units, minor = TRUE)
+    shr_minor_breaks <- psychro_protractor_breaks(
+        guide$shr_minor_breaks,
+        minor = TRUE
+    )
+    ratio_major_breaks <- psychro_protractor_ratio_breaks(
+        guide$ratio_breaks,
+        units
+    )
+    ratio_minor_breaks <- psychro_protractor_ratio_breaks(
+        guide$ratio_minor_breaks,
+        units,
+        minor = TRUE
+    )
 
-    minor_data <- psychro_protractor_shr_ticks(shr_minor_breaks, range_tdb, range_hum, units)
-    major_data <- psychro_protractor_shr_ticks(shr_breaks, range_tdb, range_hum, units)
-    major_data <- psychro_protractor_add_sensible_endpoint(major_data, shr_breaks)
+    minor_data <- psychro_protractor_shr_ticks(
+        shr_minor_breaks,
+        range_tdb,
+        range_hum,
+        units
+    )
+    major_data <- psychro_protractor_shr_ticks(
+        shr_breaks,
+        range_tdb,
+        range_hum,
+        units
+    )
+    major_data <- psychro_protractor_add_sensible_endpoint(
+        major_data,
+        shr_breaks
+    )
     ratio_major_data <- psychro_protractor_ratio_ticks(
-        ratio_major_breaks, range_tdb, range_hum, units
+        ratio_major_breaks,
+        range_tdb,
+        range_hum,
+        units
     )
     ratio_minor_data <- psychro_protractor_ratio_ticks(
-        ratio_minor_breaks, range_tdb, range_hum, units
+        ratio_minor_breaks,
+        range_tdb,
+        range_hum,
+        units
     )
-    major_tick_data <- psychro_protractor_unique_ticks(rbind(
-        psychro_protractor_tick_data(major_data, "shr"),
-        psychro_protractor_tick_data(ratio_major_data, "ratio")
-    ), major = TRUE)
-    minor_tick_data <- psychro_protractor_unique_ticks(rbind(
-        psychro_protractor_tick_data(minor_data, "shr"),
-        psychro_protractor_tick_data(ratio_minor_data, "ratio")
-    ), major = FALSE)
-    minor_tick_data <- psychro_protractor_drop_tick_angles(minor_tick_data, major_tick_data)
+    major_tick_data <- psychro_protractor_unique_ticks(
+        rbind(
+            psychro_protractor_tick_data(major_data, "shr"),
+            psychro_protractor_tick_data(ratio_major_data, "ratio")
+        ),
+        major = TRUE
+    )
+    minor_tick_data <- psychro_protractor_unique_ticks(
+        rbind(
+            psychro_protractor_tick_data(minor_data, "shr"),
+            psychro_protractor_tick_data(ratio_minor_data, "ratio")
+        ),
+        major = FALSE
+    )
+    minor_tick_data <- psychro_protractor_drop_tick_angles(
+        minor_tick_data,
+        major_tick_data
+    )
     minor_ticks <- if (nrow(minor_tick_data)) {
         psychro_protractor_ticks(
-            center, radius, minor_tick_data$angle, rotation,
-            inner = minor_tick_data$inner, outer = minor_tick_data$outer
+            center,
+            radius,
+            minor_tick_data$angle,
+            rotation,
+            inner = minor_tick_data$inner,
+            outer = minor_tick_data$outer
         )
     }
     major_ticks <- if (nrow(major_tick_data)) {
         psychro_protractor_ticks(
-            center, radius, major_tick_data$angle, rotation,
-            inner = major_tick_data$inner, outer = major_tick_data$outer
+            center,
+            radius,
+            major_tick_data$angle,
+            rotation,
+            inner = major_tick_data$inner,
+            outer = major_tick_data$outer
         )
     }
 
@@ -340,57 +455,96 @@ psychro_protractor_grob <- function(protractor, theme, mollier,
     titles <- NULL
     if (isTRUE(protractor$label)) {
         shr_label_spec <- psychro_protractor_label_spec(
-            shr_breaks, guide$shr_labels, "shr", units
+            shr_breaks,
+            guide$shr_labels,
+            "shr",
+            units
         )
         ratio_label_spec <- psychro_protractor_label_spec(
-            ratio_major_breaks, guide$ratio_labels, "ratio", units
+            ratio_major_breaks,
+            guide$ratio_labels,
+            "ratio",
+            units
         )
 
-        label_ticks <- psychro_protractor_label_ticks(major_data, shr_label_spec)
+        label_ticks <- psychro_protractor_label_ticks(
+            major_data,
+            shr_label_spec
+        )
         shr_labels <- psychro_protractor_label_data(
-            center, radius, label_ticks$label, label_ticks$angle, rotation,
-            label_ticks$scale, anchor = label_ticks$anchor, rot = label_ticks$rot,
+            center,
+            radius,
+            label_ticks$label,
+            label_ticks$angle,
+            rotation,
+            label_ticks$scale,
+            anchor = label_ticks$anchor,
+            rot = label_ticks$rot,
             size_scale = label_ticks$size_scale
         )
         ratio_label_ticks <- psychro_protractor_ratio_label_ticks(
-            ratio_major_data, ratio_label_spec
+            ratio_major_data,
+            ratio_label_spec
         )
         ratio_labels <- psychro_protractor_label_data(
-            center, radius, ratio_label_ticks$label, ratio_label_ticks$angle, rotation,
-            ratio_label_ticks$scale, anchor = ratio_label_ticks$anchor,
+            center,
+            radius,
+            ratio_label_ticks$label,
+            ratio_label_ticks$angle,
+            rotation,
+            ratio_label_ticks$scale,
+            anchor = ratio_label_ticks$anchor,
             rot = ratio_label_ticks$rot,
             size_scale = ratio_label_ticks$size_scale
         )
         infinity_labels <- psychro_protractor_infinity_labels(
-            center, radius, rotation
+            center,
+            radius,
+            rotation
         )
         axis_labels <- psychro_protractor_combine_label_data(
-            shr_labels, ratio_labels, infinity_labels
+            shr_labels,
+            ratio_labels,
+            infinity_labels
         )
     }
     if (!isFALSE(protractor$annotation)) {
         titles <- psychro_protractor_titles(
-            center, radius, rotation, protractor$annotation
+            center,
+            radius,
+            rotation,
+            protractor$annotation
         )
     }
 
     grobs <- list(
         grid::polylineGrob(
-            arc$x, arc$y, gp = gp_line,
+            arc$x,
+            arc$y,
+            gp = gp_line,
             name = "psychro-protractor-arc"
         ),
         grid::segmentsGrob(
-            diameter$x[[1L]], diameter$y[[1L]], diameter$x[[2L]], diameter$y[[2L]],
+            diameter$x[[1L]],
+            diameter$y[[1L]],
+            diameter$x[[2L]],
+            diameter$y[[2L]],
             gp = gp_line,
             name = "psychro-protractor-diameter"
         ),
         grid::segmentsGrob(
-            endpoint_caps$x0, endpoint_caps$y0, endpoint_caps$x1, endpoint_caps$y1,
+            endpoint_caps$x0,
+            endpoint_caps$y0,
+            endpoint_caps$x1,
+            endpoint_caps$y1,
             gp = gp_line,
             name = "psychro-protractor-end-caps"
         ),
         grid::segmentsGrob(
-            center_mark$x0, center_mark$y0, center_mark$x1, center_mark$y1,
+            center_mark$x0,
+            center_mark$y0,
+            center_mark$x1,
+            center_mark$y1,
             gp = gp_line,
             name = "psychro-protractor-center-mark"
         ),
@@ -398,40 +552,65 @@ psychro_protractor_grob <- function(protractor, theme, mollier,
     )
 
     if (!is.null(minor_ticks)) {
-        grobs <- c(grobs, list(grid::segmentsGrob(
-            minor_ticks$x0, minor_ticks$y0, minor_ticks$x1, minor_ticks$y1,
-            gp = gp_line,
-            name = "psychro-protractor-minor-ticks"
-        )))
+        grobs <- c(
+            grobs,
+            list(grid::segmentsGrob(
+                minor_ticks$x0,
+                minor_ticks$y0,
+                minor_ticks$x1,
+                minor_ticks$y1,
+                gp = gp_line,
+                name = "psychro-protractor-minor-ticks"
+            ))
+        )
     }
     if (!is.null(major_ticks)) {
-        grobs <- c(grobs, list(grid::segmentsGrob(
-            major_ticks$x0, major_ticks$y0, major_ticks$x1, major_ticks$y1,
-            gp = gp_line,
-            name = "psychro-protractor-major-ticks"
-        )))
+        grobs <- c(
+            grobs,
+            list(grid::segmentsGrob(
+                major_ticks$x0,
+                major_ticks$y0,
+                major_ticks$x1,
+                major_ticks$y1,
+                gp = gp_line,
+                name = "psychro-protractor-major-ticks"
+            ))
+        )
     }
 
     if (!is.null(axis_labels)) {
         axis_gp <- gp_text
         axis_gp$fontsize <- gp_text$fontsize * axis_labels$size_scale
-        grobs <- c(grobs, list(grid::textGrob(
-            axis_labels$label, axis_labels$x, axis_labels$y,
-            hjust = axis_labels$hjust, vjust = axis_labels$vjust,
-            rot = axis_labels$rot,
-            check.overlap = isTRUE(guide$check_overlap),
-            gp = axis_gp,
-            name = "psychro-protractor-labels"
-        )))
+        grobs <- c(
+            grobs,
+            list(grid::textGrob(
+                axis_labels$label,
+                axis_labels$x,
+                axis_labels$y,
+                hjust = axis_labels$hjust,
+                vjust = axis_labels$vjust,
+                rot = axis_labels$rot,
+                check.overlap = isTRUE(guide$check_overlap),
+                gp = axis_gp,
+                name = "psychro-protractor-labels"
+            ))
+        )
     }
     if (!is.null(titles)) {
-        grobs <- c(grobs, list(grid::textGrob(
-            titles$label, titles$x, titles$y,
-            hjust = titles$hjust, vjust = titles$vjust, rot = titles$rot,
-            check.overlap = isTRUE(guide$check_overlap),
-            gp = gp_text,
-            name = "psychro-protractor-titles"
-        )))
+        grobs <- c(
+            grobs,
+            list(grid::textGrob(
+                titles$label,
+                titles$x,
+                titles$y,
+                hjust = titles$hjust,
+                vjust = titles$vjust,
+                rot = titles$rot,
+                check.overlap = isTRUE(guide$check_overlap),
+                gp = gp_text,
+                name = "psychro-protractor-titles"
+            ))
+        )
     }
 
     do.call(grid::grobTree, c(grobs, list(name = "psychro-protractor")))
@@ -460,7 +639,13 @@ psychro_protractor_center <- function(radius, margin, mollier = FALSE) {
     )
 }
 
-psychro_protractor_points <- function(center, radius, angle, rotation = 0, scale = 1) {
+psychro_protractor_points <- function(
+    center,
+    radius,
+    angle,
+    rotation = 0,
+    scale = 1
+) {
     dx <- radius * scale * cos(angle)
     dy <- radius * scale * sin(angle)
     psychro_protractor_cartesian_points(center, dx, dy, rotation)
@@ -486,10 +671,28 @@ psychro_protractor_rotate_offset <- function(dx, dy, angle) {
     )
 }
 
-psychro_protractor_ticks <- function(center, radius, angle, rotation = 0,
-                                     inner = 0.94, outer = 1.04) {
-    inner <- psychro_protractor_points(center, radius, angle, rotation, scale = inner)
-    outer <- psychro_protractor_points(center, radius, angle, rotation, scale = outer)
+psychro_protractor_ticks <- function(
+    center,
+    radius,
+    angle,
+    rotation = 0,
+    inner = 0.94,
+    outer = 1.04
+) {
+    inner <- psychro_protractor_points(
+        center,
+        radius,
+        angle,
+        rotation,
+        scale = inner
+    )
+    outer <- psychro_protractor_points(
+        center,
+        radius,
+        angle,
+        rotation,
+        scale = outer
+    )
 
     list(x0 = inner$x, y0 = inner$y, x1 = outer$x, y1 = outer$y)
 }
@@ -505,32 +708,62 @@ psychro_protractor_diameter <- function(center, radius, rotation = 0) {
 
 psychro_protractor_endpoint_caps <- function(center, radius, rotation = 0) {
     start <- psychro_protractor_cartesian_points(
-        center, c(-radius, radius), rep(-0.055 * radius, 2L), rotation
+        center,
+        c(-radius, radius),
+        rep(-0.055 * radius, 2L),
+        rotation
     )
     end <- psychro_protractor_cartesian_points(
-        center, c(-radius, radius), rep(0.105 * radius, 2L), rotation
+        center,
+        c(-radius, radius),
+        rep(0.105 * radius, 2L),
+        rotation
     )
 
     list(x0 = start$x, y0 = start$y, x1 = end$x, y1 = end$y)
 }
 
 psychro_protractor_center_mark <- function(center, radius, rotation = 0) {
-    start <- psychro_protractor_cartesian_points(center, 0, -0.055 * radius, rotation)
-    end <- psychro_protractor_cartesian_points(center, 0, 0.125 * radius, rotation)
+    start <- psychro_protractor_cartesian_points(
+        center,
+        0,
+        -0.055 * radius,
+        rotation
+    )
+    end <- psychro_protractor_cartesian_points(
+        center,
+        0,
+        0.125 * radius,
+        rotation
+    )
 
     list(x0 = start$x, y0 = start$y, x1 = end$x, y1 = end$y)
 }
 
-psychro_protractor_label_data <- function(center, radius, labels, angle, rotation = 0,
-                                          scale = 1.06, anchor = "outward",
-                                          rotate = TRUE, rot = NULL,
-                                          size_scale = 1) {
+psychro_protractor_label_data <- function(
+    center,
+    radius,
+    labels,
+    angle,
+    rotation = 0,
+    scale = 1.06,
+    anchor = "outward",
+    rotate = TRUE,
+    rot = NULL,
+    size_scale = 1
+) {
     if (!length(labels) || !length(angle)) {
         return(NULL)
     }
     scale <- scale %||% 1.06
     scale[is.na(scale)] <- 1.06
-    pts <- psychro_protractor_points(center, radius, angle, rotation, scale = scale)
+    pts <- psychro_protractor_points(
+        center,
+        radius,
+        angle,
+        rotation,
+        scale = scale
+    )
     offset <- psychro_protractor_rotate_offset(cos(angle), sin(angle), rotation)
     anchor <- rep_len(anchor, length(angle))
     hjust <- ifelse(offset$x < -0.15, 1, ifelse(offset$x > 0.15, 0, 0.5))
@@ -539,8 +772,16 @@ psychro_protractor_label_data <- function(center, radius, labels, angle, rotatio
     inward <- identical(anchor, "inward") | anchor == "inward"
     hjust[center] <- 0.5
     vjust[center] <- 0.5
-    hjust[inward] <- ifelse(offset$x[inward] < -0.15, 0, ifelse(offset$x[inward] > 0.15, 1, 0.5))
-    vjust[inward] <- ifelse(offset$y[inward] < -0.15, 0, ifelse(offset$y[inward] > 0.15, 1, 0.5))
+    hjust[inward] <- ifelse(
+        offset$x[inward] < -0.15,
+        0,
+        ifelse(offset$x[inward] > 0.15, 1, 0.5)
+    )
+    vjust[inward] <- ifelse(
+        offset$y[inward] < -0.15,
+        0,
+        ifelse(offset$y[inward] > 0.15, 1, 0.5)
+    )
 
     label_rot <- if (isTRUE(rotate)) {
         psychro_protractor_label_rotation(angle, rotation)
@@ -599,8 +840,12 @@ psychro_protractor_fixed_text_rotation <- function(rotation = 0) {
 psychro_protractor_label_ticks <- function(ticks, labels) {
     if (is.null(labels) || !nrow(ticks)) {
         return(new_data_frame(list(
-            value = numeric(), angle = numeric(), label = character(),
-            scale = numeric(), rot = numeric(), anchor = character(),
+            value = numeric(),
+            angle = numeric(),
+            label = character(),
+            scale = numeric(),
+            rot = numeric(),
+            anchor = character(),
             size_scale = numeric()
         )))
     }
@@ -616,8 +861,12 @@ psychro_protractor_label_ticks <- function(ticks, labels) {
     endpoint <- endpoint[tick_order]
     if (!nrow(ticks)) {
         return(new_data_frame(list(
-            value = numeric(), angle = numeric(), label = character(),
-            scale = numeric(), rot = numeric(), anchor = character(),
+            value = numeric(),
+            angle = numeric(),
+            label = character(),
+            scale = numeric(),
+            rot = numeric(),
+            anchor = character(),
             size_scale = numeric()
         )))
     }
@@ -632,15 +881,23 @@ psychro_protractor_label_ticks <- function(ticks, labels) {
 psychro_protractor_ratio_label_ticks <- function(ticks, labels) {
     if (!nrow(ticks)) {
         return(new_data_frame(list(
-            value = numeric(), angle = numeric(), label = character(),
-            scale = numeric(), rot = numeric(), anchor = character(),
+            value = numeric(),
+            angle = numeric(),
+            label = character(),
+            scale = numeric(),
+            rot = numeric(),
+            anchor = character(),
             size_scale = numeric()
         )))
     }
     if (is.null(labels)) {
         return(new_data_frame(list(
-            value = numeric(), angle = numeric(), label = character(),
-            scale = numeric(), rot = numeric(), anchor = character(),
+            value = numeric(),
+            angle = numeric(),
+            label = character(),
+            scale = numeric(),
+            rot = numeric(),
+            anchor = character(),
             size_scale = numeric()
         )))
     }
@@ -650,8 +907,12 @@ psychro_protractor_ratio_label_ticks <- function(ticks, labels) {
     ticks <- ticks[keep, , drop = FALSE]
     if (!nrow(ticks)) {
         return(new_data_frame(list(
-            value = numeric(), angle = numeric(), label = character(),
-            scale = numeric(), rot = numeric(), anchor = character(),
+            value = numeric(),
+            angle = numeric(),
+            label = character(),
+            scale = numeric(),
+            rot = numeric(),
+            anchor = character(),
             size_scale = numeric()
         )))
     }
@@ -714,17 +975,33 @@ psychro_format_heat_ratio_labels <- function(x, units = "SI") {
 
 psychro_protractor_infinity_labels <- function(center, radius, rotation = 0) {
     psychro_protractor_label_data(
-        center, radius, expression(+infinity, -infinity), c(pi, 2 * pi),
-        rotation, scale = 1.13, anchor = "center", size_scale = 1.45
+        center,
+        radius,
+        expression(+infinity, -infinity),
+        c(pi, 2 * pi),
+        rotation,
+        scale = 1.13,
+        anchor = "center",
+        size_scale = 1.45
     )
 }
 
-psychro_protractor_titles <- function(center, radius, rotation = 0, annotation = TRUE) {
+psychro_protractor_titles <- function(
+    center,
+    radius,
+    rotation = 0,
+    annotation = TRUE
+) {
     annotation <- psychro_protractor_annotation(annotation)
-    if (is.null(annotation)) return(NULL)
+    if (is.null(annotation)) {
+        return(NULL)
+    }
 
     pts <- psychro_protractor_cartesian_points(
-        center, c(0, 0), c(-0.32, -1.36) * radius, rotation
+        center,
+        c(0, 0),
+        c(-0.32, -1.36) * radius,
+        rotation
     )
 
     list(
@@ -794,16 +1071,40 @@ psychro_protractor_ratio_ticks <- function(ratio, range_tdb, range_hum, units) {
 }
 
 psychro_protractor_ratio_major_breaks <- function(units) {
-    latent <- (if (units == "IP") 1061 else 2501) / psychro_protractor_ratio_divisor(units)
+    latent <- (if (units == "IP") 1061 else 2501) /
+        psychro_protractor_ratio_divisor(units)
     if (identical(units, "IP")) {
-        return(c(0.60, 0.40, 0.30, 0.20, latent, 0.10, 0.05, 0, -0.10, -0.20, -0.50))
+        return(c(
+            0.60,
+            0.40,
+            0.30,
+            0.20,
+            latent,
+            0.10,
+            0.05,
+            0,
+            -0.10,
+            -0.20,
+            -0.50
+        ))
     }
     c(10, 5, 4, 3, latent, 2, 1.5, 1, 0, -1, -2, -5)
 }
 
 psychro_protractor_ratio_minor_breaks <- function(units) {
     if (identical(units, "IP")) {
-        return(c(0.50, 0.35, 0.25, 0.175, 0.15, 0.125, 0.075, -0.05, -0.15, -0.30))
+        return(c(
+            0.50,
+            0.35,
+            0.25,
+            0.175,
+            0.15,
+            0.125,
+            0.075,
+            -0.05,
+            -0.15,
+            -0.30
+        ))
     }
     c(8, 6, 4.5, 3.5, 2.25, 1.75, 1.25, 0.5, -0.5, -1.5, -3, -8, -10)
 }
@@ -828,7 +1129,9 @@ psychro_protractor_ratio_divisor <- function(units) {
 psychro_protractor_tick_data <- function(ticks, axis) {
     if (!nrow(ticks)) {
         return(new_data_frame(list(
-            axis = character(), value = numeric(), angle = numeric()
+            axis = character(),
+            value = numeric(),
+            angle = numeric()
         )))
     }
 
@@ -842,8 +1145,11 @@ psychro_protractor_tick_data <- function(ticks, axis) {
 psychro_protractor_unique_ticks <- function(ticks, major = FALSE) {
     if (!nrow(ticks)) {
         return(new_data_frame(list(
-            axis = character(), value = numeric(), angle = numeric(),
-            inner = numeric(), outer = numeric()
+            axis = character(),
+            value = numeric(),
+            angle = numeric(),
+            inner = numeric(),
+            outer = numeric()
         )))
     }
     ticks <- ticks[is.finite(ticks$angle), , drop = FALSE]
@@ -934,18 +1240,35 @@ psychro_protractor_text_style_defaults <- function(theme, style = list()) {
     utils::modifyList(defaults, style)
 }
 
-psychro_grid_label_grob <- function(grid, label, type, theme, mollier,
-                                    panel_x, panel_y) {
+psychro_grid_label_grob <- function(
+    grid,
+    label,
+    type,
+    theme,
+    mollier,
+    panel_x,
+    panel_y
+) {
     if (is.null(grid) || is.null(label) || !isTRUE(label$show)) {
         return(NULL)
     }
 
-    data <- psychro_grid_label_data(grid, label$labels, mollier, panel_x, panel_y)
-    if (!nrow(data$path)) return(NULL)
+    data <- psychro_grid_label_data(
+        grid,
+        label$labels,
+        mollier,
+        panel_x,
+        panel_y
+    )
+    if (!nrow(data$path)) {
+        return(NULL)
+    }
 
     style <- psychro_grid_label_style_defaults(type, theme, label$style)
     labels <- psychro_grid_normalise_labels(data$labels, label$label_parse)
-    if (!length(labels)) return(NULL)
+    if (!length(labels)) {
+        return(NULL)
+    }
 
     colour <- psychro_grid_alpha(style$colour, style$alpha)
     gp_text <- grid::gpar(
@@ -981,11 +1304,14 @@ psychro_grid_label_data <- function(grid, labels, mollier, panel_x, panel_y) {
 
     label_missing <- psychro_grid_label_missing(labels)
     keep_group <- seq_along(labels)[!label_missing]
-    inside <- psychro_inside_polygon(x, y, panel_x, panel_y) & id %in% keep_group
+    inside <- psychro_inside_polygon(x, y, panel_x, panel_y) &
+        id %in% keep_group
 
     pieces <- lapply(keep_group, function(group) {
         idx <- which(inside & id == group)
-        if (length(idx) < 2L) return(NULL)
+        if (length(idx) < 2L) {
+            return(NULL)
+        }
         new_data_frame(list(
             x = x[idx],
             y = y[idx],
@@ -1005,21 +1331,35 @@ psychro_grid_label_data <- function(grid, labels, mollier, panel_x, panel_y) {
 }
 
 psychro_grid_label_missing <- function(labels) {
-    if (is.null(labels)) return(TRUE)
-    if (is.atomic(labels)) return(is.na(labels))
+    if (is.null(labels)) {
+        return(TRUE)
+    }
+    if (is.atomic(labels)) {
+        return(is.na(labels))
+    }
 
-    vapply(labels, function(label) {
-        length(label) == 0L || anyNA(as.character(label))
-    }, logical(1))
+    vapply(
+        labels,
+        function(label) {
+            length(label) == 0L || anyNA(as.character(label))
+        },
+        logical(1)
+    )
 }
 
 psychro_grid_normalise_labels <- function(labels, parse = FALSE) {
-    if (is.null(labels)) return(labels)
-    if (is.expression(labels)) return(labels)
+    if (is.null(labels)) {
+        return(labels)
+    }
+    if (is.expression(labels)) {
+        return(labels)
+    }
     if (is.list(labels) && !is.data.frame(labels)) {
         return(as.expression(labels))
     }
-    if (!parse) return(labels)
+    if (!parse) {
+        return(labels)
+    }
 
     as.expression(lapply(as.character(labels), function(label) {
         parsed <- parse(text = label)
@@ -1057,7 +1397,13 @@ psychro_grid_alpha <- function(colour, alpha) {
     grDevices::adjustcolor(colour, alpha.f = alpha)
 }
 
-psychro_inside_polygon <- function(x, y, polygon_x, polygon_y, tolerance = 1e-8) {
+psychro_inside_polygon <- function(
+    x,
+    y,
+    polygon_x,
+    polygon_y,
+    tolerance = 1e-8
+) {
     n <- length(polygon_x)
     inside <- rep(FALSE, length(x))
     on_boundary <- rep(FALSE, length(x))

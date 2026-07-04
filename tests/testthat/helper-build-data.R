@@ -1,7 +1,11 @@
 built_data_layers <- function(built) {
-    keep <- !vapply(built$plot$layers, function(layer) {
-        inherits(layer$geom, "GeomPsychroSaturation")
-    }, logical(1L))
+    keep <- !vapply(
+        built$plot$layers,
+        function(layer) {
+            inherits(layer$geom, "GeomPsychroSaturation")
+        },
+        logical(1L)
+    )
     built$data[keep]
 }
 

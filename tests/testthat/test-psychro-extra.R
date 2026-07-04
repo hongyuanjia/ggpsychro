@@ -23,7 +23,9 @@ test_that("GetTDewPointFromHumRatioOnly()", {
         vap_pres <- psychrolib::GetVapPresFromHumRatio(hum_ratio, pressure) *
             6894.7572931783
         fallback <- vapply(vap_pres, GetTDewPointFromVapPresOnly, double(1L)) *
-            9 / 5 + 32
+            9 /
+            5 +
+            32
         native <- GetTDewPointFromHumRatioOnly(hum_ratio, pressure)
         expect_equal(native, fallback, tolerance = 1e-4)
     })
@@ -43,10 +45,13 @@ test_that("with_units restores an unset unit system", {
     psy_op <- psychrolib_options()
     old_units <- psy_op$UNITS
     old_tolerance <- psy_op$TOLERANCE
-    on.exit({
-        psy_op$UNITS <- old_units
-        psy_op$TOLERANCE <- old_tolerance
-    }, add = TRUE)
+    on.exit(
+        {
+            psy_op$UNITS <- old_units
+            psy_op$TOLERANCE <- old_tolerance
+        },
+        add = TRUE
+    )
 
     psy_op$UNITS <- NA_character_
     psy_op$TOLERANCE <- NA_real_

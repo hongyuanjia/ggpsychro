@@ -16,12 +16,14 @@ GGPSY_OPT$hum_max <- 60.0
 
 # ggplot2's known x-position aesthetics are reused for dry-bulb scale aliases.
 GGPSY_OPT$x_aes <- utils::getFromNamespace(
-    "ggplot_global", ns = asNamespace("ggplot2")
+    "ggplot_global",
+    ns = asNamespace("ggplot2")
 )$x_aes
 
 # ggplot2's known y-position aesthetics are reused for humidity scale aliases.
 GGPSY_OPT$y_aes <- utils::getFromNamespace(
-    "ggplot_global", ns = asNamespace("ggplot2")
+    "ggplot_global",
+    ns = asNamespace("ggplot2")
 )$y_aes
 
 # Dry-bulb aesthetics mirror ggplot2 x aesthetics with a psychrometric prefix.

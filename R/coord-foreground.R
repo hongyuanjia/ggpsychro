@@ -9,12 +9,17 @@ coord_fg__extra_foreground <- function(coord, panel_params, theme) {
     }
 
     grobs <- lapply(foreground, function(spec) {
-        switch(spec$type,
+        switch(
+            spec$type,
             givoni_mean_outdoor = coord_fg__givoni_mean_outdoor_grob(
-                coord, panel_params, spec
+                coord,
+                panel_params,
+                spec
             ),
             heat_index_labels = coord_fg__heat_index_label_grob(
-                coord, panel_params, spec
+                coord,
+                panel_params,
+                spec
             ),
             grid::nullGrob()
         )
@@ -28,22 +33,30 @@ coord_fg__givoni_mean_outdoor_grob <- function(coord, panel_params, spec) {
     range_hum <- coord$range_hum(panel_params)
     range_tdb_physical <- coord$range_tdb_physical(panel_params)
     range_hum_physical <- coord$range_hum_physical(panel_params)
-    mean_si <- comfort_to_si_temp(spec$strategy$mean_outdoor,
-        spec$strategy$units)
+    mean_si <- comfort_to_si_temp(
+        spec$strategy$mean_outdoor,
+        spec$strategy$units
+    )
     tdb <- comfort_from_si_temp(mean_si, coord$units)
-    if (!is.finite(tdb) || tdb < range_tdb_physical[[1L]] ||
-            tdb > range_tdb_physical[[2L]]) {
+    if (
+        !is.finite(tdb) ||
+            tdb < range_tdb_physical[[1L]] ||
+            tdb > range_tdb_physical[[2L]]
+    ) {
         return(grid::nullGrob())
     }
 
-    hum_sat <- with_units(coord$units,
+    hum_sat <- with_units(
+        coord$units,
         psychrolib::GetHumRatioFromRelHum(tdb, 1, coord$pressure)
     )
     if (!is.finite(hum_sat) || hum_sat >= range_hum_physical[[2L]]) {
         return(grid::nullGrob())
     }
-    hum_extension <- max(diff(range_hum_physical) * 0.08,
-        diff(range_hum_physical) / 25)
+    hum_extension <- max(
+        diff(range_hum_physical) * 0.08,
+        diff(range_hum_physical) / 25
+    )
     hum_top <- min(range_hum_physical[[2L]], hum_sat + hum_extension)
     if (!is.finite(hum_top) || hum_top <= hum_sat) {
         return(grid::nullGrob())
@@ -80,7 +93,8 @@ coord_fg__givoni_mean_outdoor_grob <- function(coord, panel_params, spec) {
 
     grid::grobTree(
         grid::linesGrob(
-            x = line_x, y = line_y,
+            x = line_x,
+            y = line_y,
             gp = grid::gpar(
                 col = colour,
                 lwd = linewidth * ggplot2::.pt,
@@ -89,8 +103,12 @@ coord_fg__givoni_mean_outdoor_grob <- function(coord, panel_params, spec) {
         ),
         if (isTRUE(spec$show_label)) {
             grid::textGrob(
-                label, x = label_x, y = label_y, rot = label_rot,
-                hjust = 0.5, vjust = label_vjust,
+                label,
+                x = label_x,
+                y = label_y,
+                rot = label_rot,
+                hjust = 0.5,
+                vjust = label_vjust,
                 gp = grid::gpar(
                     col = colour,
                     fontsize = label_size * ggplot2::.pt,
@@ -108,8 +126,13 @@ coord_fg__heat_index_label_grob <- function(coord, panel_params, spec) {
     range_tdb <- coord$range_tdb_physical(panel_params)
     range_hum <- coord$range_hum_physical(panel_params)
     data <- comfort_heat_index_label_data(
-        spec$model, comfort_grid_n(spec$n), coord$units, coord$pressure,
-        coord$mollier, range_tdb, amplify_hum(range_hum, coord$units)
+        spec$model,
+        comfort_grid_n(spec$n),
+        coord$units,
+        coord$pressure,
+        coord$mollier,
+        range_tdb,
+        amplify_hum(range_hum, coord$units)
     )
     if (!nrow(data)) {
         return(grid::nullGrob())
@@ -119,7 +142,10 @@ coord_fg__heat_index_label_grob <- function(coord, panel_params, spec) {
     data <- coord$transform(data, panel_params)
     colour <- psychro_grid_alpha(spec$colour %||% "#444444", spec$alpha)
     grid::textGrob(
-        data$label, x = data$x, y = data$y, rot = data$angle,
+        data$label,
+        x = data$x,
+        y = data$y,
+        rot = data$angle,
         hjust = spec$hjust %||% 0.5,
         vjust = spec$vjust %||% 0.5,
         gp = grid::gpar(

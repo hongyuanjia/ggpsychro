@@ -7,18 +7,39 @@ NULL
 comfort_pmv_vec <- function(tdb, tr, vr, rh, met, clo, wme) {
     .Call(
         C_comfort_pmv_vec,
-        as.numeric(tdb), as.numeric(tr), as.numeric(vr), as.numeric(rh),
-        as.numeric(met), as.numeric(clo), as.numeric(wme)
+        as.numeric(tdb),
+        as.numeric(tr),
+        as.numeric(vr),
+        as.numeric(rh),
+        as.numeric(met),
+        as.numeric(clo),
+        as.numeric(wme)
     )
 }
 
-comfort_set_vec <- function(tdb, tr, v, rh, met, clo, wme,
-                            body_surface_area, p_atm, position) {
+comfort_set_vec <- function(
+    tdb,
+    tr,
+    v,
+    rh,
+    met,
+    clo,
+    wme,
+    body_surface_area,
+    p_atm,
+    position
+) {
     .Call(
         C_comfort_set_vec,
-        as.numeric(tdb), as.numeric(tr), as.numeric(v), as.numeric(rh),
-        as.numeric(met), as.numeric(clo), as.numeric(wme),
-        as.numeric(body_surface_area), as.numeric(p_atm),
+        as.numeric(tdb),
+        as.numeric(tr),
+        as.numeric(v),
+        as.numeric(rh),
+        as.numeric(met),
+        as.numeric(clo),
+        as.numeric(wme),
+        as.numeric(body_surface_area),
+        as.numeric(p_atm),
         isTRUE(position == "sitting")
     )
 }
@@ -76,18 +97,44 @@ comfort_pmv_one <- function(tdb, tr, vr, rh, met, clo, wme) {
 
 comfort_pmv_tsv <- function(pmv) {
     labels <- c(
-        "Cold", "Cool", "Slightly Cool", "Neutral",
-        "Slightly Warm", "Warm", "Hot"
+        "Cold",
+        "Cool",
+        "Slightly Cool",
+        "Neutral",
+        "Slightly Warm",
+        "Warm",
+        "Hot"
     )
     out <- labels[findInterval(pmv, c(-2.5, -1.5, -0.5, 0.5, 1.5, 2.5)) + 1L]
     out[is.na(pmv)] <- NA_character_
     out
 }
 
-comfort_set_one <- function(tdb, tr, v, rh, met, clo, wme,
-                            body_surface_area, p_atm, position) {
-    if (!all(is.finite(c(tdb, tr, v, rh, met, clo, wme,
-            body_surface_area, p_atm)))) {
+comfort_set_one <- function(
+    tdb,
+    tr,
+    v,
+    rh,
+    met,
+    clo,
+    wme,
+    body_surface_area,
+    p_atm,
+    position
+) {
+    if (
+        !all(is.finite(c(
+            tdb,
+            tr,
+            v,
+            rh,
+            met,
+            clo,
+            wme,
+            body_surface_area,
+            p_atm
+        )))
+    ) {
         return(NA_real_)
     }
 
@@ -199,7 +246,8 @@ comfort_set_one <- function(tdb, tr, v, rh, met, clo, wme,
         e_rsw <- 0.68 * reg_sw
         r_ea <- 1 / (lr * f_a_cl * h_cc)
         r_ecl <- r_clo / (lr * i_cl)
-        e_max <- (comfort_p_sat_torr(temp_skin) - vapor_pressure) / (r_ea + r_ecl)
+        e_max <- (comfort_p_sat_torr(temp_skin) - vapor_pressure) /
+            (r_ea + r_ecl)
         if (e_max == 0) {
             e_max <- 0.001
         }
@@ -251,9 +299,11 @@ comfort_set_one <- function(tdb, tr, v, rh, met, clo, wme,
     # Newton iteration for the standard effective temperature whose sensible
     # and evaporative skin losses match the simulated actual environment.
     while (abs(dx) > 0.01) {
-        err_1 <- q_skin - h_d_s * (temp_skin - set_old) -
+        err_1 <- q_skin -
+            h_d_s * (temp_skin - set_old) -
             w * h_e_s * (p_ssk - 0.5 * comfort_p_sat_torr(set_old))
-        err_2 <- q_skin - h_d_s * (temp_skin - (set_old + delta)) -
+        err_2 <- q_skin -
+            h_d_s * (temp_skin - (set_old + delta)) -
             w * h_e_s * (p_ssk - 0.5 * comfort_p_sat_torr(set_old + delta))
         set_new <- set_old - delta * err_1 / (err_2 - err_1)
         dx <- set_new - set_old
@@ -263,26 +313,51 @@ comfort_set_one <- function(tdb, tr, v, rh, met, clo, wme,
     set_old
 }
 
-comfort_pmv_curve_data <- function(model, levels, n, units, pres, mollier,
-                                   tdb_lim, hum_lim,
-                                   label = c("none", "sensation", "boundary",
-                                       "comfort"),
-                                   label_hjust = NULL, label_vjust = NULL,
-                                   reverse = FALSE, curve_cache = NULL,
-                                   psychro_scales = NULL) {
+comfort_pmv_curve_data <- function(
+    model,
+    levels,
+    n,
+    units,
+    pres,
+    mollier,
+    tdb_lim,
+    hum_lim,
+    label = c("none", "sensation", "boundary", "comfort"),
+    label_hjust = NULL,
+    label_vjust = NULL,
+    reverse = FALSE,
+    curve_cache = NULL,
+    psychro_scales = NULL
+) {
     label <- match.arg(label)
     out <- comfort_pmv_curve_base_data(
-        model, levels, n, units, pres, tdb_lim, hum_lim,
+        model,
+        levels,
+        n,
+        units,
+        pres,
+        tdb_lim,
+        hum_lim,
         curve_cache = curve_cache
     )
     if (!nrow(out)) {
         return(comfort_empty_pmv_curve())
     }
-    out$label <- vapply(out$level, comfort_pmv_curve_label, character(1L),
-        label = label)
+    out$label <- vapply(
+        out$level,
+        comfort_pmv_curve_label,
+        character(1L),
+        label = label
+    )
     out$hjust <- comfort_pmv_curve_hjust(label, label_hjust)
-    out$vjust <- vapply(out$level, comfort_pmv_curve_vjust, numeric(1L),
-        label = label, override = label_vjust, mollier = mollier)
+    out$vjust <- vapply(
+        out$level,
+        comfort_pmv_curve_vjust,
+        numeric(1L),
+        label = label,
+        override = label_vjust,
+        mollier = mollier
+    )
 
     if (label != "none") {
         out <- out[!is.na(out$label), , drop = FALSE]
@@ -293,13 +368,26 @@ comfort_pmv_curve_data <- function(model, levels, n, units, pres, mollier,
     if (isTRUE(reverse)) {
         out <- comfort_pmv_reverse_groups(out)
     }
-    psychro_output_xy(out, out$tdb, out$humratio, mollier,
-        psychro_scales = psychro_scales, units = units)
+    psychro_output_xy(
+        out,
+        out$tdb,
+        out$humratio,
+        mollier,
+        psychro_scales = psychro_scales,
+        units = units
+    )
 }
 
-comfort_pmv_curve_base_data <- function(model, levels, n, units, pres,
-                                        tdb_lim, hum_lim,
-                                        curve_cache = NULL) {
+comfort_pmv_curve_base_data <- function(
+    model,
+    levels,
+    n,
+    units,
+    pres,
+    tdb_lim,
+    hum_lim,
+    curve_cache = NULL
+) {
     levels <- comfort_check_breaks(levels, "`levels`", n_min = 1L)
     n <- comfort_pmv_curve_n(n)
     model <- comfort_pmv_curve_model(model)
@@ -315,7 +403,13 @@ comfort_pmv_curve_base_data <- function(model, levels, n, units, pres,
     curves <- vector("list", length(levels))
     for (i in seq_along(levels)) {
         roots <- comfort_pmv_curve_level_roots(
-            model, levels[[i]], humratio, n, units, pres, lim,
+            model,
+            levels[[i]],
+            humratio,
+            n,
+            units,
+            pres,
+            lim,
             curve_cache = curve_cache
         )
         if (!length(roots$tdb)) {
@@ -350,21 +444,49 @@ comfort_pmv_cache_key <- function(...) {
     )
 }
 
-comfort_pmv_curve_level_roots <- function(model, level, humratio, n, units,
-                                          pres, lim, curve_cache = NULL) {
+comfort_pmv_curve_level_roots <- function(
+    model,
+    level,
+    humratio,
+    n,
+    units,
+    pres,
+    lim,
+    curve_cache = NULL
+) {
     key <- comfort_pmv_cache_key(
-        kind = "curve_level", model = model, level = level, n = n,
-        units = units, pres = pres, tdb = lim$tdb, hum = lim$hum
+        kind = "curve_level",
+        model = model,
+        level = level,
+        n = n,
+        units = units,
+        pres = pres,
+        tdb = lim$tdb,
+        hum = lim$hum
     )
-    if (!is.null(curve_cache) && exists(key, envir = curve_cache, inherits = FALSE)) {
+    if (
+        !is.null(curve_cache) &&
+            exists(key, envir = curve_cache, inherits = FALSE)
+    ) {
         return(get(key, envir = curve_cache, inherits = FALSE))
     }
 
     roots <- comfort_pmv_curve_roots(
-        model, level, humratio, lim$tdb, units, pres
+        model,
+        level,
+        humratio,
+        lim$tdb,
+        units,
+        pres
     )
     sat_roots <- comfort_pmv_curve_saturation_roots(
-        model, level, lim$tdb, lim$hum, units, pres, n
+        model,
+        level,
+        lim$tdb,
+        lim$hum,
+        units,
+        pres,
+        n
     )
     roots <- comfort_pmv_curve_merge_roots(roots, sat_roots)
     if (!is.null(curve_cache)) {
@@ -375,9 +497,13 @@ comfort_pmv_curve_level_roots <- function(model, level, humratio, n, units,
 
 comfort_empty_pmv_curve_base <- function() {
     new_data_frame(list(
-        tdb = numeric(), humratio = numeric(),
-        level = numeric(), value = numeric(), group = integer(),
-        linetype = character(), metric = character()
+        tdb = numeric(),
+        humratio = numeric(),
+        level = numeric(),
+        value = numeric(),
+        group = integer(),
+        linetype = character(),
+        metric = character()
     ))
 }
 
@@ -385,11 +511,19 @@ comfort_pmv_sensation_levels <- function(levels) {
     levels[!is.na(vapply(levels, comfort_pmv_sensation_label, character(1L)))]
 }
 
-comfort_pmv_axis_label_data <- function(model, levels, n, units, pres,
-                                        mollier, tdb_lim, hum_lim,
-                                        axis_label_hjust = ggplot2::waiver(),
-                                        curve_cache = NULL,
-                                        psychro_scales = NULL) {
+comfort_pmv_axis_label_data <- function(
+    model,
+    levels,
+    n,
+    units,
+    pres,
+    mollier,
+    tdb_lim,
+    hum_lim,
+    axis_label_hjust = ggplot2::waiver(),
+    curve_cache = NULL,
+    psychro_scales = NULL
+) {
     levels <- comfort_check_breaks(levels, "`levels`", n_min = 1L)
     n <- comfort_pmv_curve_n(n)
     lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
@@ -399,7 +533,13 @@ comfort_pmv_axis_label_data <- function(model, levels, n, units, pres,
     label_end <- hum_lim_narrow[[1L]] +
         diff(hum_lim_narrow) * comfort_pmv_axis_label_end(axis_label_hjust)
     curves <- comfort_pmv_curve_base_data(
-        model, levels, n, units, pres, tdb_lim, hum_lim,
+        model,
+        levels,
+        n,
+        units,
+        pres,
+        tdb_lim,
+        hum_lim,
         curve_cache = curve_cache
     )
     if (!nrow(curves)) {
@@ -411,7 +551,9 @@ comfort_pmv_axis_label_data <- function(model, levels, n, units, pres,
         curve <- curves[curves$level == levels[[i]], , drop = FALSE]
         curve <- curve[order(curve$humratio, curve$tdb), , drop = FALSE]
         segment <- comfort_pmv_axis_label_segment(
-            curve, label_start, label_end
+            curve,
+            label_start,
+            label_end
         )
         if (is.null(segment)) {
             next
@@ -435,18 +577,30 @@ comfort_pmv_axis_label_data <- function(model, levels, n, units, pres,
     out <- do.call(rbind, labels)
     row.names(out) <- NULL
     out <- comfort_pmv_reverse_groups(out)
-    psychro_output_xy(out, out$tdb, out$humratio, mollier,
-        psychro_scales = psychro_scales, units = units)
+    psychro_output_xy(
+        out,
+        out$tdb,
+        out$humratio,
+        mollier,
+        psychro_scales = psychro_scales,
+        units = units
+    )
 }
 
 comfort_pmv_axis_label_segment <- function(curve, label_start, label_end) {
-    if (nrow(curve) < 2L || !is.finite(label_start) ||
-        !is.finite(label_end) || label_end <= label_start) {
+    if (
+        nrow(curve) < 2L ||
+            !is.finite(label_start) ||
+            !is.finite(label_end) ||
+            label_end <= label_start
+    ) {
         return(NULL)
     }
 
     curve <- curve[order(curve$humratio, curve$tdb), , drop = FALSE]
-    if (label_start < min(curve$humratio) || label_start > max(curve$humratio)) {
+    if (
+        label_start < min(curve$humratio) || label_start > max(curve$humratio)
+    ) {
         return(NULL)
     }
 
@@ -457,13 +611,18 @@ comfort_pmv_axis_label_segment <- function(curve, label_start, label_end) {
 
     humratio <- unique(c(
         label_start,
-        curve$humratio[curve$humratio > label_start &
-            curve$humratio < label_end],
+        curve$humratio[
+            curve$humratio > label_start &
+                curve$humratio < label_end
+        ],
         label_end
     ))
     tdb <- stats::approx(
-        curve$humratio, curve$tdb, xout = humratio,
-        rule = 2, ties = "ordered"
+        curve$humratio,
+        curve$tdb,
+        xout = humratio,
+        rule = 2,
+        ties = "ordered"
     )$y
     keep <- is.finite(tdb) & is.finite(humratio)
     if (sum(keep) < 2L) {
@@ -528,14 +687,25 @@ comfort_pmv_reverse_groups <- function(data) {
     out
 }
 
-comfort_pmv_rootband_data <- function(model, metric, levels, n, units, pres,
-                                      mollier, tdb_lim, hum_lim,
-                                      rootband_cache = NULL,
-                                      psychro_scales = NULL) {
+comfort_pmv_rootband_data <- function(
+    model,
+    metric,
+    levels,
+    n,
+    units,
+    pres,
+    mollier,
+    tdb_lim,
+    hum_lim,
+    rootband_cache = NULL,
+    psychro_scales = NULL
+) {
     metric <- comfort_model_metric(model, metric)
     if (comfort_model_type(model) != "pmv" || metric != "pmv") {
-        stop("Root-traced comfort overlay bands are only available for PMV.",
-            call. = FALSE)
+        stop(
+            "Root-traced comfort overlay bands are only available for PMV.",
+            call. = FALSE
+        )
     }
 
     model <- comfort_pmv_curve_model(model)
@@ -543,24 +713,45 @@ comfort_pmv_rootband_data <- function(model, metric, levels, n, units, pres,
     n <- comfort_grid_n(n)
     lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
     key <- comfort_pmv_cache_key(
-        kind = "rootband", model = model, metric = metric, breaks = breaks,
-        n = n, units = units, pres = pres, tdb = lim$tdb, hum = lim$hum,
+        kind = "rootband",
+        model = model,
+        metric = metric,
+        breaks = breaks,
+        n = n,
+        units = units,
+        pres = pres,
+        tdb = lim$tdb,
+        hum = lim$hum,
         mollier = mollier,
         scale_tdb = psychro_scale_cache_key(psychro_scales$pos_tdb),
         scale_hum = psychro_scale_cache_key(psychro_scales$pos_hum)
     )
-    if (!is.null(rootband_cache) &&
-            exists(key, envir = rootband_cache, inherits = FALSE)) {
+    if (
+        !is.null(rootband_cache) &&
+            exists(key, envir = rootband_cache, inherits = FALSE)
+    ) {
         return(get(key, envir = rootband_cache, inherits = FALSE))
     }
     # Saturation roots are shared by the humidity sampling grid and by each band
     # edge, avoiding duplicate solves on the curved upper boundary.
     saturation_roots <- comfort_pmv_rootband_saturation_roots(
-        model, breaks, lim$tdb, lim$hum, units, pres, n[[1L]],
+        model,
+        breaks,
+        lim$tdb,
+        lim$hum,
+        units,
+        pres,
+        n[[1L]],
         rootband_cache = rootband_cache
     )
     humratio <- comfort_pmv_rootband_humratio(
-        model, breaks, n[[1L]], units, pres, lim$tdb, lim$hum,
+        model,
+        breaks,
+        n[[1L]],
+        units,
+        pres,
+        lim$tdb,
+        lim$hum,
         saturation_roots = saturation_roots
     )
     domain <- comfort_pmv_rootband_domain(humratio, lim$tdb, units, pres)
@@ -597,7 +788,12 @@ comfort_pmv_rootband_data <- function(model, metric, levels, n, units, pres,
     # break intersects saturation exactly, overwrite the row with that root.
     roots <- lapply(breaks, function(level) {
         roots <- comfort_pmv_curve_root_vector(
-            model, level, humratio, lim$tdb, units, pres
+            model,
+            level,
+            humratio,
+            lim$tdb,
+            units,
+            pres
         )
         sat_roots <- saturation_roots[[as.character(level)]]
         key <- match(round(sat_roots$humratio, 12L), round(humratio, 12L))
@@ -609,8 +805,11 @@ comfort_pmv_rootband_data <- function(model, metric, levels, n, units, pres,
 
     lows <- c(-Inf, breaks)
     highs <- c(breaks, Inf)
-    values <- c(breaks[[1L]], (breaks[-length(breaks)] + breaks[-1L]) / 2,
-        breaks[[length(breaks)]])
+    values <- c(
+        breaks[[1L]],
+        (breaks[-length(breaks)] + breaks[-1L]) / 2,
+        breaks[[length(breaks)]]
+    )
     overlap <- diff(range(lim$tdb)) / 10000
 
     # Bands are assembled row-wise between adjacent PMV roots, then contiguous
@@ -620,13 +819,24 @@ comfort_pmv_rootband_data <- function(model, metric, levels, n, units, pres,
         low <- lows[[i]]
         high <- highs[[i]]
         band <- comfort_pmv_rootband_edges(
-            low, high, breaks, roots, xlo, xhi, pmv_lo, pmv_hi, overlap
+            low,
+            high,
+            breaks,
+            roots,
+            xlo,
+            xhi,
+            pmv_lo,
+            pmv_hi,
+            overlap
         )
         if (!any(band$keep)) {
             next
         }
 
-        runs <- split(which(band$keep), cumsum(c(TRUE, diff(which(band$keep)) != 1L)))
+        runs <- split(
+            which(band$keep),
+            cumsum(c(TRUE, diff(which(band$keep)) != 1L))
+        )
         for (run in runs) {
             if (length(run) < 2L) {
                 next
@@ -635,7 +845,9 @@ comfort_pmv_rootband_data <- function(model, metric, levels, n, units, pres,
             right <- band$right[run]
             y <- humratio[run]
             width_tol <- comfort_pmv_rootband_width_tol(left, right)
-            ok <- is.finite(left) & is.finite(right) & is.finite(y) &
+            ok <- is.finite(left) &
+                is.finite(right) &
+                is.finite(y) &
                 left <= right + width_tol
             if (sum(ok) < 2L) {
                 next
@@ -648,9 +860,16 @@ comfort_pmv_rootband_data <- function(model, metric, levels, n, units, pres,
             polys[[group]] <- new_data_frame(list(
                 tdb = c(left, rev(right)),
                 humratio = c(y, rev(y)),
-                edge = c(rep("left", length(left)), rep("right", length(right))),
-                edge_level = c(band$left_level[run][ok], rev(band$right_level[run][ok])),
-                level = sprintf("%s:%s",
+                edge = c(
+                    rep("left", length(left)),
+                    rep("right", length(right))
+                ),
+                edge_level = c(
+                    band$left_level[run][ok],
+                    rev(band$right_level[run][ok])
+                ),
+                level = sprintf(
+                    "%s:%s",
                     comfort_format_band_level(low),
                     comfort_format_band_level(high)
                 ),
@@ -675,8 +894,14 @@ comfort_pmv_rootband_data <- function(model, metric, levels, n, units, pres,
 
     out <- do.call(rbind, polys)
     row.names(out) <- NULL
-    out <- psychro_output_xy(out, out$tdb, out$humratio, mollier,
-        psychro_scales = psychro_scales, units = units)
+    out <- psychro_output_xy(
+        out,
+        out$tdb,
+        out$humratio,
+        mollier,
+        psychro_scales = psychro_scales,
+        units = units
+    )
     if (!is.null(rootband_cache)) {
         assign(key, out, envir = rootband_cache)
     }
@@ -685,18 +910,34 @@ comfort_pmv_rootband_data <- function(model, metric, levels, n, units, pres,
 
 comfort_empty_pmv_curve <- function() {
     new_data_frame(list(
-        tdb = numeric(), humratio = numeric(), x = numeric(), y = numeric(),
-        level = numeric(), value = numeric(), group = integer(),
-        linetype = character(), label = character(), hjust = numeric(),
-        vjust = numeric(), metric = character()
+        tdb = numeric(),
+        humratio = numeric(),
+        x = numeric(),
+        y = numeric(),
+        level = numeric(),
+        value = numeric(),
+        group = integer(),
+        linetype = character(),
+        label = character(),
+        hjust = numeric(),
+        vjust = numeric(),
+        metric = character()
     ))
 }
 
-comfort_pmv_band_data <- function(model, range, n, units, pres, mollier,
-                                  tdb_lim, hum_lim,
-                                  rootband_levels = NULL,
-                                  rootband_cache = NULL,
-                                  psychro_scales = NULL) {
+comfort_pmv_band_data <- function(
+    model,
+    range,
+    n,
+    units,
+    pres,
+    mollier,
+    tdb_lim,
+    hum_lim,
+    rootband_levels = NULL,
+    rootband_cache = NULL,
+    psychro_scales = NULL
+) {
     range <- comfort_check_breaks(range, "`range`", n_min = 2L)
     if (length(range) != 2L) {
         stop("`range` must contain exactly two PMV boundaries.", call. = FALSE)
@@ -707,19 +948,32 @@ comfort_pmv_band_data <- function(model, range, n, units, pres, mollier,
     levels <- if (is.null(rootband_levels)) {
         range
     } else {
-        comfort_check_breaks(c(rootband_levels, range), "`rootband_levels`",
-            n_min = 2L)
+        comfort_check_breaks(
+            c(rootband_levels, range),
+            "`rootband_levels`",
+            n_min = 2L
+        )
     }
 
     bands <- comfort_pmv_rootband_data(
-        model, "pmv", levels, n, units, pres, mollier, tdb_lim, hum_lim,
-        rootband_cache = rootband_cache, psychro_scales = psychro_scales
+        model,
+        "pmv",
+        levels,
+        n,
+        units,
+        pres,
+        mollier,
+        tdb_lim,
+        hum_lim,
+        rootband_cache = rootband_cache,
+        psychro_scales = psychro_scales
     )
     if (!nrow(bands)) {
         return(comfort_empty_band())
     }
 
-    keep <- is.finite(bands$level_low) & is.finite(bands$level_high) &
+    keep <- is.finite(bands$level_low) &
+        is.finite(bands$level_high) &
         abs(bands$level_low - range[[1L]]) <= 1e-8 &
         abs(bands$level_high - range[[2L]]) <= 1e-8
     out <- bands[keep, , drop = FALSE]
@@ -738,8 +992,10 @@ comfort_pmv_rootband_breaks <- function(levels) {
     if (length(levels) == 1L) {
         n <- as.integer(levels[[1L]])
         if (!is.finite(n) || n < 1L) {
-            stop("`levels` must be a positive band count or numeric breaks.",
-                call. = FALSE)
+            stop(
+                "`levels` must be a positive band count or numeric breaks.",
+                call. = FALSE
+            )
         }
         return(seq(-3, 3, length.out = n + 1L))
     }
@@ -753,12 +1009,25 @@ comfort_format_band_level <- function(level) {
     comfort_format_pmv_level(level)
 }
 
-comfort_pmv_rootband_saturation_roots <- function(model, breaks, tdb_lim,
-                                                  hum_lim, units, pres, n,
-                                                  rootband_cache = NULL) {
+comfort_pmv_rootband_saturation_roots <- function(
+    model,
+    breaks,
+    tdb_lim,
+    hum_lim,
+    units,
+    pres,
+    n,
+    rootband_cache = NULL
+) {
     roots <- lapply(breaks, function(level) {
         comfort_pmv_saturation_roots_cached(
-            model, level, tdb_lim, hum_lim, units, pres, n,
+            model,
+            level,
+            tdb_lim,
+            hum_lim,
+            units,
+            pres,
+            n,
             rootband_cache = rootband_cache
         )
     })
@@ -766,21 +1035,42 @@ comfort_pmv_rootband_saturation_roots <- function(model, breaks, tdb_lim,
     roots
 }
 
-comfort_pmv_saturation_roots_cached <- function(model, level, tdb_lim, hum_lim,
-                                                units, pres, n,
-                                                rootband_cache = NULL) {
+comfort_pmv_saturation_roots_cached <- function(
+    model,
+    level,
+    tdb_lim,
+    hum_lim,
+    units,
+    pres,
+    n,
+    rootband_cache = NULL
+) {
     # Adjacent PMV bands share saturation-boundary intersections. Caching them
     # separately avoids resolving the same curved-boundary root for each band.
     key <- comfort_pmv_cache_key(
-        kind = "saturation_roots", model = model, level = level, n = n,
-        units = units, pres = pres, tdb = tdb_lim, hum = hum_lim
+        kind = "saturation_roots",
+        model = model,
+        level = level,
+        n = n,
+        units = units,
+        pres = pres,
+        tdb = tdb_lim,
+        hum = hum_lim
     )
-    if (!is.null(rootband_cache) &&
-            exists(key, envir = rootband_cache, inherits = FALSE)) {
+    if (
+        !is.null(rootband_cache) &&
+            exists(key, envir = rootband_cache, inherits = FALSE)
+    ) {
         return(get(key, envir = rootband_cache, inherits = FALSE))
     }
     roots <- comfort_pmv_curve_saturation_roots(
-        model, level, tdb_lim, hum_lim, units, pres, n
+        model,
+        level,
+        tdb_lim,
+        hum_lim,
+        units,
+        pres,
+        n
     )
     if (!is.null(rootband_cache)) {
         assign(key, roots, envir = rootband_cache)
@@ -788,9 +1078,16 @@ comfort_pmv_saturation_roots_cached <- function(model, level, tdb_lim, hum_lim,
     roots
 }
 
-comfort_pmv_rootband_humratio <- function(model, breaks, n, units, pres,
-                                          tdb_lim, hum_lim,
-                                          saturation_roots = NULL) {
+comfort_pmv_rootband_humratio <- function(
+    model,
+    breaks,
+    n,
+    units,
+    pres,
+    tdb_lim,
+    hum_lim,
+    saturation_roots = NULL
+) {
     hum <- seq(
         narrow_hum(hum_lim[[1L]], units),
         narrow_hum(hum_lim[[2L]], units),
@@ -800,7 +1097,13 @@ comfort_pmv_rootband_humratio <- function(model, breaks, n, units, pres,
     hum <- c(hum, sat[is.finite(sat)])
     if (is.null(saturation_roots)) {
         saturation_roots <- comfort_pmv_rootband_saturation_roots(
-            model, breaks, tdb_lim, hum_lim, units, pres, n
+            model,
+            breaks,
+            tdb_lim,
+            hum_lim,
+            units,
+            pres,
+            n
         )
     }
     for (level in breaks) {
@@ -818,9 +1121,13 @@ comfort_pmv_rootband_domain <- function(humratio, tdb_lim, units, pres) {
     xlo <- rep(tdb_lim[[1L]], length(humratio))
     positive <- humratio > 0
     if (any(positive)) {
-        dew <- with_units(units, GetTDewPointFromHumRatioOnly(
-            humratio[positive], rep(as.numeric(pres), length.out = sum(positive))
-        ))
+        dew <- with_units(
+            units,
+            GetTDewPointFromHumRatioOnly(
+                humratio[positive],
+                rep(as.numeric(pres), length.out = sum(positive))
+            )
+        )
         xlo[positive] <- pmax(xlo[positive], dew)
     }
     xhi <- rep(tdb_lim[[2L]], length(humratio))
@@ -828,10 +1135,23 @@ comfort_pmv_rootband_domain <- function(humratio, tdb_lim, units, pres) {
     list(xlo = xlo, xhi = xhi, valid = valid)
 }
 
-comfort_pmv_curve_root_vector <- function(model, level, humratio, tdb_lim,
-                                          units, pres) {
+comfort_pmv_curve_root_vector <- function(
+    model,
+    level,
+    humratio,
+    tdb_lim,
+    units,
+    pres
+) {
     out <- rep(NA_real_, length(humratio))
-    roots <- comfort_pmv_curve_roots(model, level, humratio, tdb_lim, units, pres)
+    roots <- comfort_pmv_curve_roots(
+        model,
+        level,
+        humratio,
+        tdb_lim,
+        units,
+        pres
+    )
     if (!length(roots$tdb)) {
         return(out)
     }
@@ -841,29 +1161,43 @@ comfort_pmv_curve_root_vector <- function(model, level, humratio, tdb_lim,
     out
 }
 
-comfort_pmv_rootband_edges <- function(low, high, breaks, roots,
-                                       xlo, xhi, pmv_lo, pmv_hi,
-                                       overlap = 0) {
+comfort_pmv_rootband_edges <- function(
+    low,
+    high,
+    breaks,
+    roots,
+    xlo,
+    xhi,
+    pmv_lo,
+    pmv_hi,
+    overlap = 0
+) {
     # Root tracing at saturation can differ from endpoint PMV by a few ulps;
     # keep those edge rows so filled bands do not show visible holes.
     value_tol <- 5e-5
-    keep <- is.finite(pmv_lo) & is.finite(pmv_hi) &
-        pmv_hi >= low - value_tol & pmv_lo <= high + value_tol
+    keep <- is.finite(pmv_lo) &
+        is.finite(pmv_hi) &
+        pmv_hi >= low - value_tol &
+        pmv_lo <= high + value_tol
     left <- rep(NA_real_, length(xlo))
     right <- rep(NA_real_, length(xlo))
     left_level <- rep(NA_real_, length(xlo))
     right_level <- rep(NA_real_, length(xlo))
     if (!any(keep)) {
         return(list(
-            left = left, right = right, keep = keep,
-            left_level = left_level, right_level = right_level
+            left = left,
+            right = right,
+            keep = keep,
+            left_level = left_level,
+            right_level = right_level
         ))
     }
 
     if (is.finite(low)) {
         low_root <- roots[[as.character(low)]]
         use_root <- pmv_lo < low - value_tol &
-            pmv_hi >= low - value_tol & is.finite(low_root)
+            pmv_hi >= low - value_tol &
+            is.finite(low_root)
         on_domain <- is.finite(pmv_lo) & abs(pmv_lo - low) <= value_tol
         left <- ifelse(use_root, low_root, xlo)
         left_level[use_root | on_domain] <- low
@@ -874,7 +1208,8 @@ comfort_pmv_rootband_edges <- function(low, high, breaks, roots,
     if (is.finite(high)) {
         high_root <- roots[[as.character(high)]]
         use_root <- pmv_lo <= high + value_tol &
-            pmv_hi > high + value_tol & is.finite(high_root)
+            pmv_hi > high + value_tol &
+            is.finite(high_root)
         on_domain <- is.finite(pmv_lo) & abs(pmv_lo - high) <= value_tol
         right <- ifelse(use_root, high_root, xhi)
         right[on_domain] <- xlo[on_domain]
@@ -884,18 +1219,25 @@ comfort_pmv_rootband_edges <- function(low, high, breaks, roots,
     }
 
     inner_left <- is.finite(low) & is.finite(left) & abs(left - xlo) > overlap
-    inner_right <- is.finite(high) & is.finite(right) & abs(right - xhi) > overlap
+    inner_right <- is.finite(high) &
+        is.finite(right) &
+        abs(right - xhi) > overlap
     # A tiny overlap avoids visual cracks between adjacent filled PMV bands
     # while keeping the computed edge level available for boundary validation.
     left[inner_left] <- pmax(xlo[inner_left], left[inner_left] - overlap)
     right[inner_right] <- pmin(xhi[inner_right], right[inner_right] + overlap)
     width_tol <- comfort_pmv_rootband_width_tol(left, right)
-    keep <- keep & is.finite(left) & is.finite(right) &
+    keep <- keep &
+        is.finite(left) &
+        is.finite(right) &
         left <= right + width_tol
     right[keep] <- pmax(right[keep], left[keep])
     list(
-        left = left, right = right, keep = keep,
-        left_level = left_level, right_level = right_level
+        left = left,
+        right = right,
+        keep = keep,
+        left_level = left_level,
+        right_level = right_level
     )
 }
 
@@ -911,8 +1253,10 @@ comfort_pmv_rootband_width_tol <- function(left, right) {
 comfort_pmv_curve_model <- function(model) {
     comfort_check_model(model)
     if (model$type != "pmv") {
-        stop("Root-traced PMV curves require `comfort_model_pmv()`.",
-            call. = FALSE)
+        stop(
+            "Root-traced PMV curves require `comfort_model_pmv()`.",
+            call. = FALSE
+        )
     }
     model$params$round_output <- FALSE
     model
@@ -950,26 +1294,44 @@ comfort_pmv_native_params <- function(model, units, pres) {
     )
 }
 
-comfort_pmv_native_curve_roots <- function(model, level, humratio, tdb_lim,
-                                           units, pres) {
+comfort_pmv_native_curve_roots <- function(
+    model,
+    level,
+    humratio,
+    tdb_lim,
+    units,
+    pres
+) {
     p <- comfort_pmv_native_params(model, units, pres)
     if (is.null(p)) {
         return(NULL)
     }
     roots <- .Call(
         C_comfort_pmv_curve_roots,
-        as.numeric(level), as.numeric(humratio),
+        as.numeric(level),
+        as.numeric(humratio),
         as.numeric(comfort_to_si_temp(tdb_lim, units)),
-        as.numeric(p$pressure), as.numeric(p$tr), as.numeric(p$vr),
-        as.numeric(p$met), as.numeric(p$clo), as.numeric(p$wme),
+        as.numeric(p$pressure),
+        as.numeric(p$tr),
+        as.numeric(p$vr),
+        as.numeric(p$met),
+        as.numeric(p$clo),
+        as.numeric(p$wme),
         as.numeric(p$min_hum_ratio)
     )
     roots$tdb <- comfort_from_si_temp(roots$tdb, units)
     roots
 }
 
-comfort_pmv_native_saturation_roots <- function(model, level, tdb_lim, hum_lim,
-                                                units, pres, n) {
+comfort_pmv_native_saturation_roots <- function(
+    model,
+    level,
+    tdb_lim,
+    hum_lim,
+    units,
+    pres,
+    n
+) {
     p <- comfort_pmv_native_params(model, units, pres)
     if (is.null(p)) {
         return(NULL)
@@ -980,18 +1342,33 @@ comfort_pmv_native_saturation_roots <- function(model, level, tdb_lim, hum_lim,
         as.numeric(comfort_to_si_temp(tdb_lim, units)),
         as.numeric(narrow_hum(hum_lim, units)),
         as.integer(max(as.integer(n), 80L)),
-        as.numeric(p$pressure), as.numeric(p$tr), as.numeric(p$vr),
-        as.numeric(p$met), as.numeric(p$clo), as.numeric(p$wme),
+        as.numeric(p$pressure),
+        as.numeric(p$tr),
+        as.numeric(p$vr),
+        as.numeric(p$met),
+        as.numeric(p$clo),
+        as.numeric(p$wme),
         as.numeric(p$min_hum_ratio)
     )
     roots$tdb <- comfort_from_si_temp(roots$tdb, units)
     roots
 }
 
-comfort_pmv_curve_roots <- function(model, level, humratio, tdb_lim,
-                                    units, pres) {
+comfort_pmv_curve_roots <- function(
+    model,
+    level,
+    humratio,
+    tdb_lim,
+    units,
+    pres
+) {
     roots <- comfort_pmv_native_curve_roots(
-        model, level, humratio, tdb_lim, units, pres
+        model,
+        level,
+        humratio,
+        tdb_lim,
+        units,
+        pres
     )
     if (!is.null(roots)) {
         return(roots)
@@ -999,22 +1376,35 @@ comfort_pmv_curve_roots <- function(model, level, humratio, tdb_lim,
     comfort_pmv_curve_roots_r(model, level, humratio, tdb_lim, units, pres)
 }
 
-comfort_pmv_curve_roots_r <- function(model, level, humratio, tdb_lim,
-                                      units, pres) {
+comfort_pmv_curve_roots_r <- function(
+    model,
+    level,
+    humratio,
+    tdb_lim,
+    units,
+    pres
+) {
     # At a fixed humidity ratio, valid dry-bulb temperatures start at the
     # dew-point line and end at the chart limit; roots are bracketed there.
     xlo <- rep(tdb_lim[[1L]], length(humratio))
     positive <- humratio > 0
     if (any(positive)) {
-        dew <- with_units(units, GetTDewPointFromHumRatioOnly(
-            humratio[positive], rep(as.numeric(pres), length.out = sum(positive))
-        ))
+        dew <- with_units(
+            units,
+            GetTDewPointFromHumRatioOnly(
+                humratio[positive],
+                rep(as.numeric(pres), length.out = sum(positive))
+            )
+        )
         xlo[positive] <- pmax(xlo[positive], dew)
     }
     xhi <- rep(tdb_lim[[2L]], length(humratio))
     saturation_hi <- psychro_saturation_humratio(xhi, units, pres)
-    valid <- is.finite(xlo) & is.finite(xhi) & xlo < xhi &
-        humratio >= 0 & humratio <= saturation_hi
+    valid <- is.finite(xlo) &
+        is.finite(xhi) &
+        xlo < xhi &
+        humratio >= 0 &
+        humratio <= saturation_hi
     if (!any(valid)) {
         return(list(tdb = numeric(), humratio = numeric()))
     }
@@ -1050,7 +1440,8 @@ comfort_pmv_curve_roots_r <- function(model, level, humratio, tdb_lim,
             break
         }
         mid <- (lo[active] + hi[active]) / 2
-        fmid <- comfort_pmv_value_at(model, mid, hum[active], units, pres) - level
+        fmid <- comfort_pmv_value_at(model, mid, hum[active], units, pres) -
+            level
         same <- sign(fmid) == sign(flo[active])
         same[!is.finite(same)] <- FALSE
         idx <- which(active)
@@ -1065,29 +1456,57 @@ comfort_pmv_curve_roots_r <- function(model, level, humratio, tdb_lim,
     list(tdb = root[finite], humratio = hum[finite])
 }
 
-comfort_pmv_curve_saturation_roots <- function(model, level, tdb_lim, hum_lim,
-                                               units, pres, n) {
+comfort_pmv_curve_saturation_roots <- function(
+    model,
+    level,
+    tdb_lim,
+    hum_lim,
+    units,
+    pres,
+    n
+) {
     roots <- comfort_pmv_native_saturation_roots(
-        model, level, tdb_lim, hum_lim, units, pres, n
+        model,
+        level,
+        tdb_lim,
+        hum_lim,
+        units,
+        pres,
+        n
     )
     if (!is.null(roots)) {
         return(roots)
     }
     comfort_pmv_curve_saturation_roots_r(
-        model, level, tdb_lim, hum_lim, units, pres, n
+        model,
+        level,
+        tdb_lim,
+        hum_lim,
+        units,
+        pres,
+        n
     )
 }
 
-comfort_pmv_curve_saturation_roots_r <- function(model, level, tdb_lim, hum_lim,
-                                                 units, pres, n) {
+comfort_pmv_curve_saturation_roots_r <- function(
+    model,
+    level,
+    tdb_lim,
+    hum_lim,
+    units,
+    pres,
+    n
+) {
     # Trace roots along the saturation curve so PMV contours and filled bands
     # can close against the psychrometric chart boundary instead of stopping.
     n <- max(as.integer(n), 80L)
     tdb <- seq(tdb_lim[[1L]], tdb_lim[[2L]], length.out = n)
     hum <- psychro_saturation_humratio(tdb, units, pres)
     hum_lim <- narrow_hum(hum_lim, units)
-    valid <- is.finite(tdb) & is.finite(hum) &
-        hum >= hum_lim[[1L]] & hum <= hum_lim[[2L]]
+    valid <- is.finite(tdb) &
+        is.finite(hum) &
+        hum >= hum_lim[[1L]] &
+        hum <= hum_lim[[2L]]
     if (!any(valid)) {
         return(list(tdb = numeric(), humratio = numeric()))
     }
@@ -1100,32 +1519,44 @@ comfort_pmv_curve_saturation_roots_r <- function(model, level, tdb_lim, hum_lim,
 
     roots <- tdb[valid & abs(value) < 1e-8]
     segment <- which(
-        valid[-length(valid)] & valid[-1L] &
+        valid[-length(valid)] &
+            valid[-1L] &
             value[-length(value)] * value[-1L] < 0
     )
     if (length(segment)) {
-        roots <- c(roots, vapply(segment, function(i) {
-            lo <- tdb[[i]]
-            hi <- tdb[[i + 1L]]
-            flo <- value[[i]]
-            for (j in seq_len(44L)) {
-                mid <- (lo + hi) / 2
-                fmid <- comfort_pmv_value_at(
-                    model, mid, psychro_saturation_humratio(mid, units, pres),
-                    units, pres
-                ) - level
-                if (!is.finite(fmid)) {
-                    break
-                }
-                if (sign(fmid) == sign(flo)) {
-                    lo <- mid
-                    flo <- fmid
-                } else {
-                    hi <- mid
-                }
-            }
-            (lo + hi) / 2
-        }, numeric(1L)))
+        roots <- c(
+            roots,
+            vapply(
+                segment,
+                function(i) {
+                    lo <- tdb[[i]]
+                    hi <- tdb[[i + 1L]]
+                    flo <- value[[i]]
+                    for (j in seq_len(44L)) {
+                        mid <- (lo + hi) / 2
+                        fmid <- comfort_pmv_value_at(
+                            model,
+                            mid,
+                            psychro_saturation_humratio(mid, units, pres),
+                            units,
+                            pres
+                        ) -
+                            level
+                        if (!is.finite(fmid)) {
+                            break
+                        }
+                        if (sign(fmid) == sign(flo)) {
+                            lo <- mid
+                            flo <- fmid
+                        } else {
+                            hi <- mid
+                        }
+                    }
+                    (lo + hi) / 2
+                },
+                numeric(1L)
+            )
+        )
     }
 
     roots <- roots[is.finite(roots)]
@@ -1176,7 +1607,8 @@ comfort_pmv_linetype <- function(level) {
 }
 
 comfort_pmv_curve_label <- function(level, label) {
-    switch(label,
+    switch(
+        label,
         none = NA_character_,
         sensation = comfort_pmv_sensation_label(level),
         boundary = paste("PMV", comfort_format_pmv_level(level)),
@@ -1188,7 +1620,8 @@ comfort_pmv_curve_hjust <- function(label, override = NULL) {
     if (!is.null(override)) {
         return(override)
     }
-    switch(label,
+    switch(
+        label,
         none = 0.5,
         sensation = 0.52,
         boundary = 0.045,
@@ -1196,8 +1629,12 @@ comfort_pmv_curve_hjust <- function(label, override = NULL) {
     )
 }
 
-comfort_pmv_curve_vjust <- function(level, label, override = NULL,
-                                    mollier = FALSE) {
+comfort_pmv_curve_vjust <- function(
+    level,
+    label,
+    override = NULL,
+    mollier = FALSE
+) {
     if (!is.null(override)) {
         return(override)
     }
@@ -1221,8 +1658,12 @@ comfort_pmv_sensation_label <- function(level) {
         return(NA_character_)
     }
     labels <- c(
-        "-3" = "COLD", "-2" = "COOL", "-1" = "SLIGHTLY COOL",
-        "0" = "NEUTRAL", "1" = "SLIGHTLY WARM", "2" = "WARM",
+        "-3" = "COLD",
+        "-2" = "COOL",
+        "-1" = "SLIGHTLY COOL",
+        "0" = "NEUTRAL",
+        "1" = "SLIGHTLY WARM",
+        "2" = "WARM",
         "3" = "HOT"
     )
     labels[[as.character(as.integer(round(level)))]] %||% NA_character_

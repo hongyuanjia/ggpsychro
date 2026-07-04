@@ -41,12 +41,21 @@ NULL
 #'         mollier = TRUE
 #'     )
 #' @export
-coord_psychro <- function(tdb_lim = NULL, hum_lim = NULL,
-                          altitude = NULL, units = NULL, mollier = NULL,
-                          expand = FALSE, default = TRUE, clip = "on") {
+coord_psychro <- function(
+    tdb_lim = NULL,
+    hum_lim = NULL,
+    altitude = NULL,
+    units = NULL,
+    mollier = NULL,
+    expand = FALSE,
+    default = TRUE,
+    clip = "on"
+) {
     # TODO: add a `n` param to specify the number of points used to draw
     # saturation line
-    ggproto(NULL, CoordPsychro,
+    ggproto(
+        NULL,
+        CoordPsychro,
         limits = list(tdb = tdb_lim, hum = hum_lim),
         altitude = altitude,
         units = units,
@@ -72,7 +81,9 @@ coord_psy__grid_label_spec <- function(labels, type, breaks, scale, units) {
     }
 
     text <- coord_psy__grid_label_text(label$label, type, breaks, scale, units)
-    if (is.null(text) || !length(text)) return(NULL)
+    if (is.null(text) || !length(text)) {
+        return(NULL)
+    }
 
     list(
         show = TRUE,
@@ -85,16 +96,22 @@ coord_psy__grid_label_spec <- function(labels, type, breaks, scale, units) {
 
 # Resolve grid labels against the scale breaks that survived coord filtering.
 coord_psy__grid_label_text <- function(label, type, breaks, scale, units) {
-    if (!isTRUE(label)) return(NULL)
+    if (!isTRUE(label)) {
+        return(NULL)
+    }
 
-    if (is.null(scale$scale$labels)) return(NULL)
+    if (is.null(scale$scale$labels)) {
+        return(NULL)
+    }
 
     if (identical(type, "relhum") && is.waive(scale$scale$labels)) {
         return(label_relhum(units = units)(breaks))
     }
 
     all_labels <- scale$get_labels()
-    if (is.null(all_labels)) return(NULL)
+    if (is.null(all_labels)) {
+        return(NULL)
+    }
 
     all_breaks <- scale$get_breaks()
     loc <- guide__match_break_values(breaks, all_breaks)
@@ -103,26 +120,43 @@ coord_psy__grid_label_text <- function(label, type, breaks, scale, units) {
 
 # Build major/minor grid data through one path so every psychrometric grid
 # family uses the same break filtering, enable flag, and label-break source.
-coord_psy__grid_lines <- function(coord, panel_params, tdb, range_tdb, range_hum) {
+coord_psy__grid_lines <- function(
+    coord,
+    panel_params,
+    tdb,
+    range_tdb,
+    range_hum
+) {
     grid_types <- c("relhum", "wetbulb", "vappres", "specvol", "enthalpy")
-    stats::setNames(lapply(grid_types, function(type) {
-        breaks <- coord_psy__grid_breaks(panel_params, type)
-        list(
-            minor = if (psychro_grid_enabled(coord$grids, type)) {
-                coord$trans_grid_vert(
-                    tdb, type, breaks$minor, range_tdb, range_hum,
-                    panel_params = panel_params
-                )
-            },
-            major = if (psychro_grid_enabled(coord$grids, type)) {
-                coord$trans_grid_vert(
-                    tdb, type, breaks$major, range_tdb, range_hum,
-                    panel_params = panel_params
-                )
-            },
-            major_breaks = breaks$major_breaks
-        )
-    }), grid_types)
+    stats::setNames(
+        lapply(grid_types, function(type) {
+            breaks <- coord_psy__grid_breaks(panel_params, type)
+            list(
+                minor = if (psychro_grid_enabled(coord$grids, type)) {
+                    coord$trans_grid_vert(
+                        tdb,
+                        type,
+                        breaks$minor,
+                        range_tdb,
+                        range_hum,
+                        panel_params = panel_params
+                    )
+                },
+                major = if (psychro_grid_enabled(coord$grids, type)) {
+                    coord$trans_grid_vert(
+                        tdb,
+                        type,
+                        breaks$major,
+                        range_tdb,
+                        range_hum,
+                        panel_params = panel_params
+                    )
+                },
+                major_breaks = breaks$major_breaks
+            )
+        }),
+        grid_types
+    )
 }
 
 # Convert internally generated psychrometric coordinates into the active scale
@@ -177,16 +211,24 @@ coord_psy__grid_breaks <- function(panel_params, type) {
 # labels cannot drift from the visible guide geometry.
 coord_psy__grid_labels <- function(grid, labels, panel_params, units) {
     grid_types <- names(grid)
-    stats::setNames(lapply(grid_types, function(type) {
-        coord_psy__grid_label_spec(
-            labels, type, grid[[type]]$major_breaks,
-            panel_params[[type]], units
-        )
-    }), grid_types)
+    stats::setNames(
+        lapply(grid_types, function(type) {
+            coord_psy__grid_label_spec(
+                labels,
+                type,
+                grid[[type]]$major_breaks,
+                panel_params[[type]],
+                units
+            )
+        }),
+        grid_types
+    )
 }
 
 #' @noRd
-CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
+CoordPsychro <- ggproto(
+    "CoordPsychro",
+    CoordCartesian,
     setup_params = function(self, data) {
         self$grids <- merge_psychro_grids(self$grids)
 
@@ -196,14 +238,28 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
         assert_number(self$altitude, .var.name = "altitude")
         assert_choice(self$units, c("SI", "IP"), .var.name = "units")
 
-        assert_numeric(self$limits$tdb, any.missing = FALSE, all.missing = FALSE,
-            len = 2L, unique = TRUE, sorted = TRUE, null.ok = TRUE,
-            lower = get_tdb_limits(self$units)[1L], upper = get_tdb_limits(self$units)[2L],
+        assert_numeric(
+            self$limits$tdb,
+            any.missing = FALSE,
+            all.missing = FALSE,
+            len = 2L,
+            unique = TRUE,
+            sorted = TRUE,
+            null.ok = TRUE,
+            lower = get_tdb_limits(self$units)[1L],
+            upper = get_tdb_limits(self$units)[2L],
             .var.name = "tdb_lim"
         )
-        assert_numeric(self$limits$hum, any.missing = FALSE, all.missing = FALSE,
-            len = 2, unique = TRUE, sorted = TRUE, null.ok = TRUE,
-            lower = get_hum_limits(self$units)[1], upper = get_hum_limits(self$units)[2],
+        assert_numeric(
+            self$limits$hum,
+            any.missing = FALSE,
+            all.missing = FALSE,
+            len = 2,
+            unique = TRUE,
+            sorted = TRUE,
+            null.ok = TRUE,
+            lower = get_hum_limits(self$units)[1],
+            upper = get_hum_limits(self$units)[2],
             .var.name = "hum_lim"
         )
 
@@ -216,14 +272,23 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
         }
 
         # calculate pressure
-        self$pressure <- with_units(self$units, GetStandardAtmPressure(self$altitude))
+        self$pressure <- with_units(
+            self$units,
+            GetStandardAtmPressure(self$altitude)
+        )
 
         self$limits[pos_tdb] <- list(self$limits$tdb)
         self$limits[pos_hum] <- list(self$limits$hum)
 
         limits <- self$limits[!(names(self$limits) %in% c("tdb", "hum"))]
 
-        list(pos_tdb = pos_tdb, pos_hum = pos_hum, pressure = self$pressure, limits = limits, units = self$units)
+        list(
+            pos_tdb = pos_tdb,
+            pos_hum = pos_hum,
+            pressure = self$pressure,
+            limits = limits,
+            units = self$units
+        )
     },
 
     setup_data = function(self, data, params = list()) {
@@ -234,19 +299,37 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
         lapply(data, function(d) {
             if (is.waive(d)) {
                 len <- lengths(params$limits[c("x", "y")])
-                if (all(!len)) return(d)
+                if (all(!len)) {
+                    return(d)
+                }
                 d <- as.data.frame(params$limits[c("x", "y")[len > 0]])
             }
             d
         })
     },
 
-    setup_panel_params = function(self, scale_x, scale_y,
-                                  scale_rh, scale_wb, scale_vp, scale_sv, scale_en,
-                                  params = list()) {
+    setup_panel_params = function(
+        self,
+        scale_x,
+        scale_y,
+        scale_rh,
+        scale_wb,
+        scale_vp,
+        scale_sv,
+        scale_en,
+        params = list()
+    ) {
         default_limits <- default_psychro_limits(self$units)
-        default_x <- if (self$mollier) default_limits$hum else default_limits$tdb
-        default_y <- if (self$mollier) default_limits$tdb else default_limits$hum
+        default_x <- if (self$mollier) {
+            default_limits$hum
+        } else {
+            default_limits$tdb
+        }
+        default_y <- if (self$mollier) {
+            default_limits$tdb
+        } else {
+            default_limits$hum
+        }
 
         empty_range <- function(range) {
             is.null(range) || length(range) == 0L || anyNA(range)
@@ -275,12 +358,18 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
             lim_hum <- narrow_hum(lim_y, self$units)
         }
 
-        tdp <- with_units(self$units,
-            psychrolib::GetTDewPointFromHumRatio(lim_tdb[1L], lim_hum[1L], self$pressure)
+        tdp <- with_units(
+            self$units,
+            psychrolib::GetTDewPointFromHumRatio(
+                lim_tdb[1L],
+                lim_hum[1L],
+                self$pressure
+            )
         )
         lim_tdb <- c(max(lim_tdb[1L], tdp), lim_tdb[2L])
 
-        hum <- with_units(self$units,
+        hum <- with_units(
+            self$units,
             psychrolib::GetHumRatioFromTDewPoint(lim_tdb[2L], self$pressure)
         )
         lim_hum <- c(lim_hum[1L], min(lim_hum[2L], hum))
@@ -301,13 +390,37 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
         }
 
         if (!is.null(lim_tdb) && !is.null(lim_hum)) {
-            lim_rh <- cut_oob(with_units(self$units,
-                psychrolib::GetRelHumFromHumRatio(rev(lim_tdb), lim_hum, params$pressure)
-            ), c(0, 1))
-            lim_wb <- with_units(self$units, psychrolib::GetTWetBulbFromHumRatio(lim_tdb, lim_hum, params$pressure))
-            lim_vp <- with_units(self$units, psychrolib::GetVapPresFromHumRatio(lim_hum, params$pressure))
-            lim_sv <- with_units(self$units, psychrolib::GetMoistAirVolume(lim_tdb, lim_hum, params$pressure))
-            lim_en <- with_units(self$units, psychrolib::GetMoistAirEnthalpy(lim_tdb, lim_hum))
+            lim_rh <- cut_oob(
+                with_units(
+                    self$units,
+                    psychrolib::GetRelHumFromHumRatio(
+                        rev(lim_tdb),
+                        lim_hum,
+                        params$pressure
+                    )
+                ),
+                c(0, 1)
+            )
+            lim_wb <- with_units(
+                self$units,
+                psychrolib::GetTWetBulbFromHumRatio(
+                    lim_tdb,
+                    lim_hum,
+                    params$pressure
+                )
+            )
+            lim_vp <- with_units(
+                self$units,
+                psychrolib::GetVapPresFromHumRatio(lim_hum, params$pressure)
+            )
+            lim_sv <- with_units(
+                self$units,
+                psychrolib::GetMoistAirVolume(lim_tdb, lim_hum, params$pressure)
+            )
+            lim_en <- with_units(
+                self$units,
+                psychrolib::GetMoistAirEnthalpy(lim_tdb, lim_hum)
+            )
 
             # train scales
             scale_rh$train(lim_rh * 100)
@@ -372,9 +485,15 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
     # native kg/kg or lb/lb ratio.
     range_hum_physical = function(self, panel_params, cut = FALSE) {
         scale <- panel_params[[self$pos_hum()]]$scale
-        hum <- narrow_hum(scale$trans$inverse(self$range_hum(panel_params)), self$units)
+        hum <- narrow_hum(
+            scale$trans$inverse(self$range_hum(panel_params)),
+            self$units
+        )
         if (cut) {
-            hum <- cut_oob(hum, narrow_hum(get_hum_limits(self$units), self$units))
+            hum <- cut_oob(
+                hum,
+                narrow_hum(get_hum_limits(self$units), self$units)
+            )
         }
         hum
     },
@@ -391,11 +510,20 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
         psychro_scale_transform(scale, amplify_hum(hum, self$units))
     },
 
-    trans_grid_vert = function(self, tdb, type, breaks, range_tdb = NULL,
-                              range_hum = NULL, panel_params = NULL,
-                              cut = FALSE) {
+    trans_grid_vert = function(
+        self,
+        tdb,
+        type,
+        breaks,
+        range_tdb = NULL,
+        range_hum = NULL,
+        panel_params = NULL,
+        cut = FALSE
+    ) {
         n <- length(breaks)
-        if (n == 0L) return(NULL)
+        if (n == 0L) {
+            return(NULL)
+        }
 
         if (type != "wetbulb") {
             len <- length(tdb)
@@ -414,21 +542,44 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
             # only use the range
             line_breaks <- breaks[not_empty]
             n <- length(breaks[not_empty])
-            if (n == 0L) return(NULL)
+            if (n == 0L) {
+                return(NULL)
+            }
             tdb <- unlist(lapply(lst[not_empty], base::range), FALSE)
             breaks <- rep(breaks[not_empty], each = 2L)
             group <- rep(seq_len(n), each = 2L)
             len <- 2L
         }
 
-        no_hum_limit <- function(expr) with_units(self$units, with_no_hum_limit(expr))
+        no_hum_limit <- function(expr) {
+            with_units(self$units, with_no_hum_limit(expr))
+        }
 
-        hum <- switch(type,
-            relhum = no_hum_limit(psychrolib::GetHumRatioFromRelHum(tdb, breaks, self$pressure)),
-            wetbulb = no_hum_limit(psychrolib::GetHumRatioFromTWetBulb(tdb, breaks, self$pressure)),
-            vappres = no_hum_limit(psychrolib::GetHumRatioFromVapPres(breaks, self$pressure)),
-            specvol = no_hum_limit(GetHumRatioFromMoistAirVolumeAndTDryBulb(breaks, tdb, self$pressure)),
-            enthalpy = no_hum_limit(GetHumRatioFromEnthalpyAndTDryBulb(breaks, tdb)),
+        hum <- switch(
+            type,
+            relhum = no_hum_limit(psychrolib::GetHumRatioFromRelHum(
+                tdb,
+                breaks,
+                self$pressure
+            )),
+            wetbulb = no_hum_limit(psychrolib::GetHumRatioFromTWetBulb(
+                tdb,
+                breaks,
+                self$pressure
+            )),
+            vappres = no_hum_limit(psychrolib::GetHumRatioFromVapPres(
+                breaks,
+                self$pressure
+            )),
+            specvol = no_hum_limit(GetHumRatioFromMoistAirVolumeAndTDryBulb(
+                breaks,
+                tdb,
+                self$pressure
+            )),
+            enthalpy = no_hum_limit(GetHumRatioFromEnthalpyAndTDryBulb(
+                breaks,
+                tdb
+            )),
             stop("Invalid grid type found")
         )
 
@@ -452,15 +603,26 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
         hum <- rescale01(hum, range_hum)
 
         list(
-            tdb = tdb, hum = hum, len = len, n = n,
-            breaks = line_breaks, value = breaks, group = group
+            tdb = tdb,
+            hum = hum,
+            len = len,
+            n = n,
+            breaks = line_breaks,
+            value = breaks,
+            group = group
         )
     },
 
     render_bg = function(self, panel_params, theme) {
         # only process if both tdb and hum ranges have been trained
-        if (is.null(panel_params$x$scale$range$range) || is.null(panel_params$y$scale$range$range)) {
-            return(ggplot2::ggproto_parent(CoordCartesian, self)$render_bg(panel_params, theme))
+        if (
+            is.null(panel_params$x$scale$range$range) ||
+                is.null(panel_params$y$scale$range$range)
+        ) {
+            return(ggplot2::ggproto_parent(CoordCartesian, self)$render_bg(
+                panel_params,
+                theme
+            ))
         }
 
         range_tdb <- self$range_tdb(panel_params)
@@ -469,20 +631,32 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
         # get initial tdb for grid line
         # NOTE: here we should use the continuous_range instead of the limits
         scale <- panel_params[[self$pos_tdb()]]$scale
-        limits <- scale$trans$inverse(panel_params[[self$pos_tdb()]]$continuous_range)
+        limits <- scale$trans$inverse(
+            panel_params[[self$pos_tdb()]]$continuous_range
+        )
         tdb <- scale$trans$breaks(limits, 100L)
 
         sat <- coord_psy__saturation_npc(self, panel_params)
         if (is.null(sat)) {
-            return(ggplot2::ggproto_parent(CoordCartesian, self)$render_bg(panel_params, theme))
+            return(ggplot2::ggproto_parent(CoordCartesian, self)$render_bg(
+                panel_params,
+                theme
+            ))
         }
 
         grid_labels <- self$grid_labels %||% list()
         grid <- coord_psy__grid_lines(
-            self, panel_params, tdb, range_tdb, range_hum
+            self,
+            panel_params,
+            tdb,
+            range_tdb,
+            range_hum
         )
         labels <- coord_psy__grid_labels(
-            grid, grid_labels, panel_params, self$units
+            grid,
+            grid_labels,
+            panel_params,
+            self$units
         )
 
         guide_grid_psychro(
@@ -497,7 +671,10 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
                     major = panel_params[[self$pos_hum()]]$break_positions()
                 )
             ),
-            sat, grid, labels, self$mollier
+            sat,
+            grid,
+            labels,
+            self$mollier
         )
     },
 
@@ -508,7 +685,8 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
             coord_psy__saturation_npc(self, panel_params)
         }
         border <- ggplot2::ggproto_parent(CoordCartesian, self)$render_fg(
-            panel_params, theme
+            panel_params,
+            theme
         )
         range_tdb <- self$range_tdb(panel_params)
         range_hum <- self$range_hum(panel_params)
@@ -523,13 +701,19 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
 
         grid::grobTree(
             psychro_protractor_grob(
-                self$protractor, theme, self$mollier, range_tdb, range_hum,
+                self$protractor,
+                theme,
+                self$mollier,
+                range_tdb,
+                range_hum,
                 self$units
             ),
             if (!is.null(sat)) {
                 ggplot2::element_render(
-                    theme, "psychro.panel.grid.saturation",
-                    x = line_x, y = line_y
+                    theme,
+                    "psychro.panel.grid.saturation",
+                    x = line_x,
+                    y = line_y
                 )
             },
             coord_fg__extra_foreground(self, panel_params, theme),
@@ -539,13 +723,20 @@ CoordPsychro <- ggproto("CoordPsychro", CoordCartesian,
 )
 
 GeomPsychroSaturation <- ggplot2::ggproto(
-    "GeomPsychroSaturation", ggplot2::Geom,
+    "GeomPsychroSaturation",
+    ggplot2::Geom,
     required_aes = character(),
     default_aes = ggplot2::aes(),
     draw_key = ggplot2::draw_key_blank,
     extra_params = c("na.rm", "psychro.theme"),
 
-    draw_panel = function(data, panel_params, coord, psychro.theme = NULL, ...) {
+    draw_panel = function(
+        data,
+        panel_params,
+        coord,
+        psychro.theme = NULL,
+        ...
+    ) {
         sat <- coord_psy__saturation_npc(coord, panel_params)
         if (is.null(sat)) {
             return(grid::nullGrob())
@@ -562,7 +753,8 @@ GeomPsychroSaturation <- ggplot2::ggproto(
         ggplot2::element_render(
             psychro.theme %||% coord$psychro_theme %||% ggplot2::theme_get(),
             "psychro.panel.grid.saturation",
-            x = line_x, y = line_y
+            x = line_x,
+            y = line_y
         )
     }
 )
@@ -583,7 +775,9 @@ coord_psy__panel_grob <- function(coord, panel_params) {
         return(NULL)
     }
     grid::polygonGrob(
-        panel$x, panel$y, gp = grid::gpar(col = NA, fill = NA),
+        panel$x,
+        panel$y,
+        gp = grid::gpar(col = NA, fill = NA),
         name = "psychro-panel-clip"
     )
 }
@@ -599,18 +793,32 @@ coord_psy__panel_polygon_scaled <- function(coord, panel_params) {
 
     if (coord$mollier) {
         return(list(
-            x = c(range_hum[1L], range_hum[1L], range_hum[2L],
-                rev(sat$hum), sat$hum[1L]),
-            y = c(range_tdb[1L], range_tdb[2L], range_tdb[2L],
-                rev(sat$tdb), range_tdb[1L])
+            x = c(
+                range_hum[1L],
+                range_hum[1L],
+                range_hum[2L],
+                rev(sat$hum),
+                sat$hum[1L]
+            ),
+            y = c(
+                range_tdb[1L],
+                range_tdb[2L],
+                range_tdb[2L],
+                rev(sat$tdb),
+                range_tdb[1L]
+            )
         ))
     }
 
     list(
-        x = c(range_tdb[1L], range_tdb[1L], sat$tdb,
-            range_tdb[2L], range_tdb[2L]),
-        y = c(range_hum[1L], sat$hum[1L], sat$hum,
-            range_hum[2L], range_hum[1L])
+        x = c(
+            range_tdb[1L],
+            range_tdb[1L],
+            sat$tdb,
+            range_tdb[2L],
+            range_tdb[2L]
+        ),
+        y = c(range_hum[1L], sat$hum[1L], sat$hum, range_hum[2L], range_hum[1L])
     )
 }
 
@@ -621,7 +829,9 @@ coord_psy__saturation_scaled <- function(coord, panel_params) {
     # The saturation curve samples dry-bulb values from the trained scale
     # interval; the caller still uses range_tdb() to close the panel polygon.
     scale <- panel_params[[coord$pos_tdb()]]$scale
-    limits <- scale$trans$inverse(panel_params[[coord$pos_tdb()]]$continuous_range)
+    limits <- scale$trans$inverse(
+        panel_params[[coord$pos_tdb()]]$continuous_range
+    )
     tdb <- scale$trans$breaks(limits, 100L)
     hum <- with_units(
         coord$units,
@@ -637,15 +847,23 @@ coord_psy__saturation_scaled <- function(coord, panel_params) {
     sat_app_end <- FALSE
     sat_tdb <- c(
         if (range_hum[1L] > 0.0) {
-            with_units(coord$units, GetTDewPointFromHumRatioOnly(
-                range_hum[1L], coord$pressure
-            ))
+            with_units(
+                coord$units,
+                GetTDewPointFromHumRatioOnly(
+                    range_hum[1L],
+                    coord$pressure
+                )
+            )
         },
         sat_tdb,
         if (range_hum[2L] > 0.0) {
-            sat_tdb_max <- with_units(coord$units, GetTDewPointFromHumRatioOnly(
-                range_hum[2L], coord$pressure
-            ))
+            sat_tdb_max <- with_units(
+                coord$units,
+                GetTDewPointFromHumRatioOnly(
+                    range_hum[2L],
+                    coord$pressure
+                )
+            )
             sat_app_end <- sat_tdb_max > max(sat_tdb)
             sat_tdb_max[sat_app_end]
         }
@@ -667,7 +885,9 @@ coord_psy__saturation_npc <- function(coord, panel_params) {
     range_tdb <- coord$range_tdb(panel_params)
     range_hum <- coord$range_hum(panel_params)
     sat <- coord_psy__saturation_scaled(coord, panel_params)
-    if (is.null(sat)) return(NULL)
+    if (is.null(sat)) {
+        return(NULL)
+    }
 
     list(
         tdb = rescale01(sat$tdb, range_tdb),

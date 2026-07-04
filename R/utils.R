@@ -13,7 +13,9 @@ new_data_frame <- function(x = list(), n = NULL) {
         n <- if (length(x) == 0 || min(lengths) == 0) 0 else max(lengths)
     }
     for (i in seq_along(x)) {
-        if (lengths[i] == n) next
+        if (lengths[i] == n) {
+            next
+        }
         if (lengths[i] != 1) {
             stop("Elements must equal the number of rows or 1")
         }
@@ -32,22 +34,25 @@ psychrolib_options <- function() {
 }
 
 # Evaluate an expression under a temporary psychrolib unit system and restore it.
-with_units <- function (units, expr) {
+with_units <- function(units, expr) {
     psy_op <- psychrolib_options()
     old_units <- psy_op$UNITS
     old_tolerance <- psy_op$TOLERANCE
     # SetUnitSystem() rejects NA, so restore psychrolib's internal options
     # directly and avoid leaking ggpsychro's temporary unit context.
-    on.exit({
-        psy_op$UNITS <- old_units
-        psy_op$TOLERANCE <- old_tolerance
-    }, add = TRUE)
+    on.exit(
+        {
+            psy_op$UNITS <- old_units
+            psy_op$TOLERANCE <- old_tolerance
+        },
+        add = TRUE
+    )
     psychrolib::SetUnitSystem(units)
     force(expr)
 }
 
 # Evaluate an expression with psychrolib's lower humidity-ratio clamp disabled.
-with_no_hum_limit <- function (expr) {
+with_no_hum_limit <- function(expr) {
     psy_op <- psychrolib_options()
     old <- psy_op$MIN_HUM_RATIO
     psy_op$MIN_HUM_RATIO <- -Inf
@@ -56,12 +61,17 @@ with_no_hum_limit <- function (expr) {
 }
 
 # Encode public unit names into compact integer codes used by native routines.
-encode_units <- function (units) {
-    switch(units, "SI" = 1L, "IP" = 2L, stop("'units' can only be either 'SI' or 'IP'."))
+encode_units <- function(units) {
+    switch(
+        units,
+        "SI" = 1L,
+        "IP" = 2L,
+        stop("'units' can only be either 'SI' or 'IP'.")
+    )
 }
 
 # Decode native integer unit codes back to public unit names.
-decode_units <- function (code) {
+decode_units <- function(code) {
     c("SI", "IP")[code]
 }
 
@@ -83,8 +93,9 @@ get_units <- function(data) {
 }
 
 # Convert between the SI and IP display units used by chart limits.
-bid_conv <- function (x, to) {
-    switch(to,
+bid_conv <- function(x, to) {
+    switch(
+        to,
         "F" = get_f_from_c(x),
         "C" = get_c_from_f(x),
         "Gr" = get_gr_from_g(x),
@@ -93,19 +104,19 @@ bid_conv <- function (x, to) {
 }
 
 # Convert Celsius dry-bulb temperatures to Fahrenheit.
-get_f_from_c <- function (x) x * 9. / 5. + 32.
+get_f_from_c <- function(x) x * 9. / 5. + 32.
 
 # Convert Fahrenheit dry-bulb temperatures to Celsius.
-get_c_from_f <- function (x) (x - 32) * 5. / 9.
+get_c_from_f <- function(x) (x - 32) * 5. / 9.
 
 # Convert IP humidity grains per lb_dry_air to SI g per kg_dry_air.
-get_g_from_gr <- function (x) x / 7.
+get_g_from_gr <- function(x) x / 7.
 
 # Convert SI humidity g per kg_dry_air to IP grains per lb_dry_air.
-get_gr_from_g <- function (x) x * 7.
+get_gr_from_g <- function(x) x * 7.
 
 # Return dry-bulb domain limits in the requested public unit system.
-get_tdb_limits <- function (units) {
+get_tdb_limits <- function(units) {
     if (units == "SI") {
         c(GGPSY_OPT$tdb_min, GGPSY_OPT$tdb_max)
     } else if (units == "IP") {
@@ -114,7 +125,7 @@ get_tdb_limits <- function (units) {
 }
 
 # Return humidity-ratio display limits in the requested public unit system.
-get_hum_limits <- function (units) {
+get_hum_limits <- function(units) {
     if (units == "SI") {
         c(GGPSY_OPT$hum_min, GGPSY_OPT$hum_max)
     } else if (units == "IP") {
@@ -146,19 +157,19 @@ default_psychro_protractor <- function() {
 }
 
 # Compute Euclidean distance between paired start and end coordinates.
-dist_euclid <- function (x, y, xend, yend) {
-    sqrt((xend - x) ^2 + (yend - y)^2)
+dist_euclid <- function(x, y, xend, yend) {
+    sqrt((xend - x)^2 + (yend - y)^2)
 }
 
 # Repeat a data frame n times and row-bind the repeated copies.
-rep_dataframe <- function (df, n) {
+rep_dataframe <- function(df, n) {
     do.call(rbind, replicate(n, df, simplify = FALSE))
 }
 
 # The units of humidity ratio is lb_H2O lb_Air-1 [IP] or kg_H2O kg_Air-1 [SI],
 # but for Psychrometric Chart, we use gr_H2O lb_Air-1 [IP] or g_H2O kg_Air-1
 # [SI]. Should amplify before plotting or do reversely during calculation
-amplify_hum <- function (hum, units) {
+amplify_hum <- function(hum, units) {
     if (units == "SI") {
         hum * 1000.0
     } else {
@@ -167,7 +178,7 @@ amplify_hum <- function (hum, units) {
 }
 
 # Convert chart display humidity ratios back to native psychrolib ratios.
-narrow_hum <- function (hum, units) {
+narrow_hum <- function(hum, units) {
     if (units == "SI") {
         hum / 1000.0
     } else {
@@ -177,7 +188,7 @@ narrow_hum <- function (hum, units) {
 
 # The units of enthalpy is J kg-1 [SI], but for Psychrometric Chart, we use kJ
 # kg-1 [SI]. Should amplify before plotting or do reversely during calculation
-amplify_enth <- function (enth, units) {
+amplify_enth <- function(enth, units) {
     if (units == "SI") {
         enth * 1000.0
     } else {
@@ -188,14 +199,14 @@ amplify_enth <- function (enth, units) {
 # Convert chart display enthalpy back to native psychrolib enthalpy.
 narrow_enth <- function(enth, units) {
     if (units == "SI") {
-         enth / 1000.0
+        enth / 1000.0
     } else {
-         enth
+        enth
     }
 }
 
 # Compute the slope of a segment from start and end coordinates.
-slope <- function (x, y, xend, yend) {
+slope <- function(x, y, xend, yend) {
     (yend - y) / (xend - x)
 }
 

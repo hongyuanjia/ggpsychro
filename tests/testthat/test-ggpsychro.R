@@ -9,41 +9,62 @@ collect_grobs <- function(grob) {
 
 count_line_shapes <- function(plot) {
     grobs <- collect_grobs(ggplot2::ggplotGrob(plot))
-    sum(vapply(grobs, function(grob) {
-        inherits(grob, "polyline") || inherits(grob, "polygon") ||
-            inherits(grob, "polyclipgrob")
-    }, logical(1)))
+    sum(vapply(
+        grobs,
+        function(grob) {
+            inherits(grob, "polyline") ||
+                inherits(grob, "polygon") ||
+                inherits(grob, "polyclipgrob")
+        },
+        logical(1)
+    ))
 }
 
 count_textpath_shapes <- function(plot) {
     grobs <- collect_grobs(ggplot2::ggplotGrob(plot))
-    sum(vapply(grobs, function(grob) {
-        inherits(grob, "psychro_textpath")
-    }, logical(1)))
+    sum(vapply(
+        grobs,
+        function(grob) {
+            inherits(grob, "psychro_textpath")
+        },
+        logical(1)
+    ))
 }
 
 count_named_grobs <- function(plot, pattern) {
     grobs <- collect_grobs(ggplot2::ggplotGrob(plot))
-    sum(vapply(grobs, function(grob) {
-        name <- grob$name
-        !is.null(name) && grepl(pattern, name)
-    }, logical(1)))
+    sum(vapply(
+        grobs,
+        function(grob) {
+            name <- grob$name
+            !is.null(name) && grepl(pattern, name)
+        },
+        logical(1)
+    ))
 }
 
 find_named_grobs <- function(plot, pattern) {
     grobs <- collect_grobs(ggplot2::ggplotGrob(plot))
-    grobs[vapply(grobs, function(grob) {
-        name <- grob$name
-        !is.null(name) && grepl(pattern, name)
-    }, logical(1))]
+    grobs[vapply(
+        grobs,
+        function(grob) {
+            name <- grob$name
+            !is.null(name) && grepl(pattern, name)
+        },
+        logical(1)
+    )]
 }
 
 find_named_grobs_in <- function(grob, pattern) {
     grobs <- collect_grobs(grob)
-    grobs[vapply(grobs, function(grob) {
-        name <- grob$name
-        !is.null(name) && grepl(pattern, name)
-    }, logical(1))]
+    grobs[vapply(
+        grobs,
+        function(grob) {
+            name <- grob$name
+            !is.null(name) && grepl(pattern, name)
+        },
+        logical(1)
+    )]
 }
 
 panel_child_index <- function(plot, pattern) {
@@ -60,7 +81,10 @@ convert_units_in_rectangular_viewport <- function(x, y) {
     path <- tempfile(fileext = ".pdf")
     grDevices::pdf(path, width = 8, height = 4)
     grid::grid.newpage()
-    grid::pushViewport(grid::viewport(width = grid::unit(8, "cm"), height = grid::unit(4, "cm")))
+    grid::pushViewport(grid::viewport(
+        width = grid::unit(8, "cm"),
+        height = grid::unit(4, "cm")
+    ))
     out <- list(
         x = grid::convertX(x, "mm", valueOnly = TRUE),
         y = grid::convertY(y, "mm", valueOnly = TRUE)
@@ -182,35 +206,60 @@ test_that("Psychrometric panel backgrounds keep ggplot and psychro semantics", {
     default_grobs <- collect_grobs(ggplot2::ggplotGrob(
         ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50))
     ))
-    default_name <- vapply(default_grobs, function(grob) {
-        grob$name %||% ""
-    }, character(1))
+    default_name <- vapply(
+        default_grobs,
+        function(grob) {
+            grob$name %||% ""
+        },
+        character(1)
+    )
     expect_false(any(grepl("psychro[.-]panel[.-]mask", default_name)))
 
     p <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
         ggplot2::theme(
-            plot.background = ggplot2::element_rect(fill = "#F0F0A0", colour = NA),
-            panel.background = ggplot2::element_rect(fill = "#F0A0A0", colour = NA),
-            psychro.panel.background = element_polygon(fill = "#A0F0A0", color = NA),
+            plot.background = ggplot2::element_rect(
+                fill = "#F0F0A0",
+                colour = NA
+            ),
+            panel.background = ggplot2::element_rect(
+                fill = "#F0A0A0",
+                colour = NA
+            ),
+            psychro.panel.background = element_polygon(
+                fill = "#A0F0A0",
+                color = NA
+            ),
             psychro.panel.mask = element_polygon(fill = "#A0A0F0", color = NA),
             plot.margin = ggplot2::margin(6, 6, 6, 6)
         )
     grobs <- collect_grobs(ggplot2::ggplotGrob(p))
-    fill <- vapply(grobs, function(grob) {
-        fill <- grob$gp$fill
-        if (is.null(fill) || !length(fill)) {
-            return(NA_character_)
-        }
-        as.character(fill)[[1L]]
-    }, character(1))
-    name <- vapply(grobs, function(grob) {
-        grob$name %||% ""
-    }, character(1))
+    fill <- vapply(
+        grobs,
+        function(grob) {
+            fill <- grob$gp$fill
+            if (is.null(fill) || !length(fill)) {
+                return(NA_character_)
+            }
+            as.character(fill)[[1L]]
+        },
+        character(1)
+    )
+    name <- vapply(
+        grobs,
+        function(grob) {
+            grob$name %||% ""
+        },
+        character(1)
+    )
 
     expect_true(any(fill == "#F0F0A0", na.rm = TRUE))
     expect_true(any(grepl("panel.background", name) & fill == "#F0A0A0"))
-    expect_true(any(grepl("psychro[.-]panel[.-]background", name) & fill == "#A0F0A0"))
-    expect_true(any(grepl("psychro[.-]panel[.-]mask", name) & fill == "#A0A0F0"))
+    expect_true(any(
+        grepl("psychro[.-]panel[.-]background", name) & fill == "#A0F0A0"
+    ))
+    expect_true(any(
+        grepl("psychro[.-]panel[.-]mask", name) & fill == "#A0A0F0"
+    ))
 })
 
 test_that("Psychrometric grids and stat layers are clipped to the valid panel", {
@@ -237,7 +286,9 @@ test_that("Psychrometric grids and stat layers are clipped to the valid panel", 
         )
     built <- ggplot2::ggplot_build(psychro_text)
     filtered <- coord_clip__filter_data_to_panel(
-        first_built_data(built), built$layout$panel_params[[1L]], built$layout$coord
+        first_built_data(built),
+        built$layout$panel_params[[1L]],
+        built$layout$coord
     )
 
     expect_equal(filtered$label, "in")
@@ -249,12 +300,15 @@ test_that("Ordinary text can render in the psychrometric mask area", {
             ggplot2::aes(x = 5, y = 45, label = "mask area text"),
             inherit.aes = FALSE
         )
-    labels <- unlist(lapply(collect_grobs(ggplot2::ggplotGrob(p)), function(grob) {
-        if (is.null(grob$label)) {
-            return(character())
+    labels <- unlist(lapply(
+        collect_grobs(ggplot2::ggplotGrob(p)),
+        function(grob) {
+            if (is.null(grob$label)) {
+                return(character())
+            }
+            as.character(grob$label)
         }
-        as.character(grob$label)
-    }))
+    ))
 
     expect_true("mask area text" %in% labels)
 
@@ -320,15 +374,24 @@ test_that("Saturation is drawn between psychro boundaries and markers", {
 test_that("Comfort path labels use the internal textpath renderer", {
     base <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 35))
 
-    expect_gt(count_textpath_shapes(
-        base + geom_comfort_pmv_lines(n = 80)
-    ), 0L)
-    expect_gt(count_textpath_shapes(
-        base + geom_comfort_standard_zone(n = 80)
-    ), 0L)
-    expect_gt(count_textpath_shapes(
-        base + geom_comfort_contour(label = TRUE, n = c(30, 20))
-    ), 0L)
+    expect_gt(
+        count_textpath_shapes(
+            base + geom_comfort_pmv_lines(n = 80)
+        ),
+        0L
+    )
+    expect_gt(
+        count_textpath_shapes(
+            base + geom_comfort_standard_zone(n = 80)
+        ),
+        0L
+    )
+    expect_gt(
+        count_textpath_shapes(
+            base + geom_comfort_contour(label = TRUE, n = c(30, 20))
+        ),
+        0L
+    )
 })
 
 test_that("Relative humidity grid breaks use psychrolib fractions", {
@@ -416,14 +479,20 @@ test_that("Psychrometric protractor helper updates coord metadata", {
     expect_lt(diff(range(diameter_mm$x)), diff(range(arc_mm$x)) * 0.82)
     expect_gt(diff(range(diameter_mm$x)), diff(range(arc_mm$x)) * 0.74)
 
-    p_mollier <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50), mollier = TRUE) +
+    p_mollier <- ggpsychro(
+        tdb_lim = c(0, 50),
+        hum_lim = c(0, 50),
+        mollier = TRUE
+    ) +
         geom_psychro_protractor(label = FALSE)
     expect_true(p_mollier$psychro$protractor$show)
     expect_false(p_mollier$psychro$protractor$label)
     expect_gt(count_named_grobs(p_mollier, "psychro-protractor"), 0L)
     expect_equal(count_named_grobs(p_mollier, "psychro-protractor-labels"), 0L)
     expect_equal(count_named_grobs(p_mollier, "psychro-protractor-titles"), 1L)
-    mollier_titles <- find_named_grobs(p_mollier, "psychro-protractor-titles")[[1L]]
+    mollier_titles <- find_named_grobs(p_mollier, "psychro-protractor-titles")[[
+        1L
+    ]]
     expect_equal(mollier_titles$rot, c(-90, -90), tolerance = 1e-8)
 
     p_hidden <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
@@ -449,22 +518,54 @@ test_that("Psychrometric protractor helper updates coord metadata", {
 
     p_default <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
         geom_psychro_protractor()
-    default_labels <- find_named_grobs(p_default, "psychro-protractor-labels")[[1L]]
+    default_labels <- find_named_grobs(p_default, "psychro-protractor-labels")[[
+        1L
+    ]]
     default_label_pos <- convert_units_in_rectangular_viewport(
-        default_labels$x, default_labels$y
+        default_labels$x,
+        default_labels$y
     )
     default_label_text <- as.character(default_labels$label)
-    expect_true(all(c(
-        "-5.0", "-2.0", "-1.0", "-0.5", "-0.3", "-0.2",
-        "0", "0.2", "0.4", "0.6", "0.7", "0.8",
-        "1.0", "1.5", "2.0", "4.0"
-    ) %in% default_label_text))
+    expect_true(all(
+        c(
+            "-5.0",
+            "-2.0",
+            "-1.0",
+            "-0.5",
+            "-0.3",
+            "-0.2",
+            "0",
+            "0.2",
+            "0.4",
+            "0.6",
+            "0.7",
+            "0.8",
+            "1.0",
+            "1.5",
+            "2.0",
+            "4.0"
+        ) %in%
+            default_label_text
+    ))
     expect_true(any(abs(default_labels$rot) > 1))
     expect_true(any(abs(default_labels$rot) < 1))
-    expect_true(all(c(
-        "10.0", "5.0", "4.0", "3.0", "2.5", "2.0",
-        "1.5", "1.0", "0", "-1.0", "-2.0", "-5.0"
-    ) %in% default_label_text))
+    expect_true(all(
+        c(
+            "10.0",
+            "5.0",
+            "4.0",
+            "3.0",
+            "2.5",
+            "2.0",
+            "1.5",
+            "1.0",
+            "0",
+            "-1.0",
+            "-2.0",
+            "-5.0"
+        ) %in%
+            default_label_text
+    ))
     expect_equal(default_label_text[seq_len(2L)], c("1.0", "1.0"))
     expect_true(all(c("+infinity", "-infinity") %in% default_label_text))
     expect_type(default_labels$label, "expression")
@@ -473,25 +574,52 @@ test_that("Psychrometric protractor helper updates coord metadata", {
         min(default_labels$gp$fontsize[infinity_loc]),
         max(default_labels$gp$fontsize[-infinity_loc])
     )
-    expect_equal(count_named_grobs(p_default, "psychro-protractor-end-caps"), 1L)
-    expect_equal(count_named_grobs(p_default, "psychro-protractor-center-mark"), 1L)
+    expect_equal(
+        count_named_grobs(p_default, "psychro-protractor-end-caps"),
+        1L
+    )
+    expect_equal(
+        count_named_grobs(p_default, "psychro-protractor-center-mark"),
+        1L
+    )
     expect_gte(sum(default_label_text == "1.0"), 2L)
     loc_zero <- match("0", default_label_text)
     loc_two_tenths <- match("0.2", default_label_text)
-    expect_gt(dist_euclid(
-        default_label_pos$x[[loc_zero]], default_label_pos$y[[loc_zero]],
-        default_label_pos$x[[loc_two_tenths]], default_label_pos$y[[loc_two_tenths]]
-    ), 2)
+    expect_gt(
+        dist_euclid(
+            default_label_pos$x[[loc_zero]],
+            default_label_pos$y[[loc_zero]],
+            default_label_pos$x[[loc_two_tenths]],
+            default_label_pos$y[[loc_two_tenths]]
+        ),
+        2
+    )
     p_mollier_default <- ggpsychro(
-        tdb_lim = c(0, 50), hum_lim = c(0, 30), mollier = TRUE
-    ) + geom_psychro_protractor()
-    mollier_labels <- find_named_grobs(p_mollier_default, "psychro-protractor-labels")[[1L]]
+        tdb_lim = c(0, 50),
+        hum_lim = c(0, 30),
+        mollier = TRUE
+    ) +
+        geom_psychro_protractor()
+    mollier_labels <- find_named_grobs(
+        p_mollier_default,
+        "psychro-protractor-labels"
+    )[[1L]]
     expect_equal(mollier_labels$rot[seq_len(2L)], c(-90, 90), tolerance = 1e-8)
 
     p_base_scale <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
-        geom_psychro_protractor(radius = 0.1, scale = 1, linewidth = 0.4, label.size = 2)
+        geom_psychro_protractor(
+            radius = 0.1,
+            scale = 1,
+            linewidth = 0.4,
+            label.size = 2
+        )
     p_scaled_scale <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
-        geom_psychro_protractor(radius = 0.1, scale = 2, linewidth = 0.4, label.size = 2)
+        geom_psychro_protractor(
+            radius = 0.1,
+            scale = 2,
+            linewidth = 0.4,
+            label.size = 2
+        )
     expect_equal(
         protractor_arc_radius_mm(p_scaled_scale),
         protractor_arc_radius_mm(p_base_scale) * 2,
@@ -499,12 +627,18 @@ test_that("Psychrometric protractor helper updates coord metadata", {
     )
     expect_equal(
         find_named_grobs(p_scaled_scale, "psychro-protractor-arc")[[1L]]$gp$lwd,
-        find_named_grobs(p_base_scale, "psychro-protractor-arc")[[1L]]$gp$lwd * 2,
+        find_named_grobs(p_base_scale, "psychro-protractor-arc")[[1L]]$gp$lwd *
+            2,
         tolerance = 1e-8
     )
     expect_equal(
-        find_named_grobs(p_scaled_scale, "psychro-protractor-labels")[[1L]]$gp$fontsize,
-        find_named_grobs(p_base_scale, "psychro-protractor-labels")[[1L]]$gp$fontsize * 2,
+        find_named_grobs(p_scaled_scale, "psychro-protractor-labels")[[
+            1L
+        ]]$gp$fontsize,
+        find_named_grobs(p_base_scale, "psychro-protractor-labels")[[
+            1L
+        ]]$gp$fontsize *
+            2,
         tolerance = 1e-8
     )
     p_half_radius <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
@@ -515,9 +649,14 @@ test_that("Psychrometric protractor helper updates coord metadata", {
         tolerance = 0.2
     )
 
-    normal_center <- psychro_protractor_center(0.1, c(0.05, 0.12), mollier = FALSE)
+    normal_center <- psychro_protractor_center(
+        0.1,
+        c(0.05, 0.12),
+        mollier = FALSE
+    )
     normal_center_mm <- convert_units_in_rectangular_viewport(
-        normal_center$x, normal_center$y
+        normal_center$x,
+        normal_center$y
     )
     normal_expected_mm <- convert_units_in_rectangular_viewport(
         grid::unit(0, "npc") + grid::unit(0.15, "snpc"),
@@ -526,9 +665,14 @@ test_that("Psychrometric protractor helper updates coord metadata", {
     expect_equal(normal_center_mm$x, normal_expected_mm$x, tolerance = 1e-8)
     expect_equal(normal_center_mm$y, normal_expected_mm$y, tolerance = 1e-8)
 
-    mollier_center <- psychro_protractor_center(0.1, c(0.05, 0.12), mollier = TRUE)
+    mollier_center <- psychro_protractor_center(
+        0.1,
+        c(0.05, 0.12),
+        mollier = TRUE
+    )
     mollier_center_mm <- convert_units_in_rectangular_viewport(
-        mollier_center$x, mollier_center$y
+        mollier_center$x,
+        mollier_center$y
     )
     mollier_expected_mm <- convert_units_in_rectangular_viewport(
         grid::unit(1, "npc") - grid::unit(0.05, "snpc"),
@@ -539,7 +683,10 @@ test_that("Psychrometric protractor helper updates coord metadata", {
 
     p_no_annotation <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
         geom_psychro_protractor(annotation = FALSE)
-    expect_equal(count_named_grobs(p_no_annotation, "psychro-protractor-titles"), 0L)
+    expect_equal(
+        count_named_grobs(p_no_annotation, "psychro-protractor-titles"),
+        0L
+    )
 
     expect_error(
         ggplot2::ggplot() + geom_psychro_protractor(),
@@ -583,8 +730,13 @@ test_that("Psychrometric protractor helper updates coord metadata", {
                 ratio_labels = c("warm", "flat", "cool")
             )
         )
-    ratio_scaled <- find_named_grobs(p_ratio_scaled, "psychro-protractor-labels")[[1L]]
-    expect_true(all(c("warm", "flat", "cool") %in% as.character(ratio_scaled$label)))
+    ratio_scaled <- find_named_grobs(
+        p_ratio_scaled,
+        "psychro-protractor-labels"
+    )[[1L]]
+    expect_true(all(
+        c("warm", "flat", "cool") %in% as.character(ratio_scaled$label)
+    ))
 
     p_empty_guide <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
         geom_psychro_protractor(
@@ -598,7 +750,10 @@ test_that("Psychrometric protractor helper updates coord metadata", {
             )
         )
     expect_no_error(ggplot2::ggplotGrob(p_empty_guide))
-    expect_equal(count_named_grobs(p_empty_guide, "psychro-protractor-major-ticks"), 0L)
+    expect_equal(
+        count_named_grobs(p_empty_guide, "psychro-protractor-major-ticks"),
+        0L
+    )
 
     p_expr <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
         geom_psychro_protractor(
@@ -617,7 +772,12 @@ test_that("Psychrometric protractor helper updates coord metadata", {
 })
 
 test_that("Psychrometric protractor tick angles use transformed humidity ratios", {
-    ticks <- psychro_protractor_shr_ticks(c(-1, 0, 0.5, 1, 2), c(0, 50), c(0, 0.03), "SI")
+    ticks <- psychro_protractor_shr_ticks(
+        c(-1, 0, 0.5, 1, 2),
+        c(0, 50),
+        c(0, 0.03),
+        "SI"
+    )
     expected <- pi + atan(1.006 / 2501 * 50 / 0.03)
 
     expect_equal(ticks$value, c(-1, 0, 0.5, 1, 2))
@@ -631,7 +791,10 @@ test_that("Psychrometric protractor tick angles use transformed humidity ratios"
     expect_gt(ticks$angle[[5L]], 3 * pi / 2)
     expect_lt(ticks$angle[[5L]], 2 * pi)
 
-    endpoints <- psychro_protractor_add_sensible_endpoint(ticks[ticks$value == 1, ], 1)
+    endpoints <- psychro_protractor_add_sensible_endpoint(
+        ticks[ticks$value == 1, ],
+        1
+    )
     expect_equal(endpoints$angle, c(pi, 2 * pi))
     expect_equal(
         psychro_protractor_label_rotation(c(pi, 3 * pi / 2, 2 * pi)),
@@ -645,12 +808,18 @@ test_that("Psychrometric protractor tick angles use transformed humidity ratios"
     )
 
     shr_spec <- psychro_protractor_label_spec(
-        psychro_protractor_shr_major_breaks(), waiver(), "shr", "SI"
+        psychro_protractor_shr_major_breaks(),
+        waiver(),
+        "shr",
+        "SI"
     )
     shr_label_ticks <- psychro_protractor_label_ticks(
         psychro_protractor_add_sensible_endpoint(
             psychro_protractor_shr_ticks(
-                psychro_protractor_shr_major_breaks(), c(0, 50), c(0, 0.03), "SI"
+                psychro_protractor_shr_major_breaks(),
+                c(0, 50),
+                c(0, 0.03),
+                "SI"
             ),
             psychro_protractor_shr_major_breaks()
         ),
@@ -663,7 +832,12 @@ test_that("Psychrometric protractor tick angles use transformed humidity ratios"
     expect_true(all(abs(shr_label_ticks$scale - 0.86) < 1e-8))
     expect_true(all(shr_label_ticks$anchor == "center"))
 
-    ratio_ticks <- psychro_protractor_ratio_ticks(c(10, 2501 / 1000, 0, -10), c(0, 50), c(0, 0.03), "SI")
+    ratio_ticks <- psychro_protractor_ratio_ticks(
+        c(10, 2501 / 1000, 0, -10),
+        c(0, 50),
+        c(0, 0.03),
+        "SI"
+    )
     expect_gt(ratio_ticks$angle[[1L]], pi)
     expect_lt(ratio_ticks$angle[[1L]], 3 * pi / 2)
     expect_equal(ratio_ticks$angle[[2L]], 3 * pi / 2)
@@ -671,11 +845,17 @@ test_that("Psychrometric protractor tick angles use transformed humidity ratios"
     expect_gt(ratio_ticks$angle[[4L]], ratio_ticks$angle[[3L]])
     expect_lt(ratio_ticks$angle[[4L]], 2 * pi)
     ratio_spec <- psychro_protractor_label_spec(
-        psychro_protractor_ratio_major_breaks("SI"), waiver(), "ratio", "SI"
+        psychro_protractor_ratio_major_breaks("SI"),
+        waiver(),
+        "ratio",
+        "SI"
     )
     ratio_label_ticks <- psychro_protractor_ratio_label_ticks(
         psychro_protractor_ratio_ticks(
-            psychro_protractor_ratio_major_breaks("SI"), c(0, 50), c(0, 0.03), "SI"
+            psychro_protractor_ratio_major_breaks("SI"),
+            c(0, 50),
+            c(0, 0.03),
+            "SI"
         ),
         ratio_spec
     )
@@ -699,19 +879,31 @@ test_that("Psychrometric protractor tick angles use transformed humidity ratios"
 
     ip_latent <- 1061 / 7000
     expect_equal(psychro_protractor_ratio_divisor("IP"), 7000)
-    ip_ratio_ticks <- psychro_protractor_ratio_ticks(ip_latent, c(32, 122), c(0, 350), "IP")
+    ip_ratio_ticks <- psychro_protractor_ratio_ticks(
+        ip_latent,
+        c(32, 122),
+        c(0, 350),
+        "IP"
+    )
     expect_equal(ip_ratio_ticks$value, ip_latent)
     expect_equal(ip_ratio_ticks$angle, 3 * pi / 2)
 
     expect_false("scale_shr_continuous" %in% getNamespaceExports("ggpsychro"))
     expect_false("shr_trans" %in% getNamespaceExports("ggpsychro"))
-    expect_true("guide_psychro_protractor" %in% getNamespaceExports("ggpsychro"))
+    expect_true(
+        "guide_psychro_protractor" %in% getNamespaceExports("ggpsychro")
+    )
 })
 
 test_that("Psychrometric charts build with common ggplot features", {
     expect_no_error(
         ggplot2::ggplot_build(
-            ggpsychro(tdb_lim = c(10, 30), hum_lim = c(10, 20), units = "IP", altitude = -10) +
+            ggpsychro(
+                tdb_lim = c(10, 30),
+                hum_lim = c(10, 20),
+                units = "IP",
+                altitude = -10
+            ) +
                 geom_grid_relhum() +
                 geom_grid_wetbulb()
         )
@@ -727,11 +919,16 @@ test_that("Psychrometric charts build with common ggplot features", {
     d <- data.frame(x = 20:25, y = 5:10)
     expect_no_error(
         ggplot2::ggplot_build(
-            ggpsychro(d, ggplot2::aes(x, y), tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
+            ggpsychro(
+                d,
+                ggplot2::aes(x, y),
+                tdb_lim = c(0, 50),
+                hum_lim = c(0, 50)
+            ) +
                 geom_grid_relhum() +
                 ggplot2::geom_point() +
                 ggplot2::facet_wrap(~ y > 7)
-            )
+        )
     )
 
     expect_no_error(
@@ -771,7 +968,10 @@ test_that("ggplot2 build internal signature checks report actionable problems", 
 
 test_that("Psychrometric grid labels are rendered only for explicit helpers", {
     expect_equal(
-        count_textpath_shapes(ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50))),
+        count_textpath_shapes(ggpsychro(
+            tdb_lim = c(0, 50),
+            hum_lim = c(0, 50)
+        )),
         0L
     )
     expect_gt(
@@ -821,7 +1021,12 @@ test_that("Psychrometric grid labels are rendered only for explicit helpers", {
             geom_grid_relhum(),
         "psychro-grid-label-relhum"
     )
-    expect_true(any(vapply(fast_labels, inherits, logical(1L), "psychro_textpath")))
+    expect_true(any(vapply(
+        fast_labels,
+        inherits,
+        logical(1L),
+        "psychro_textpath"
+    )))
     expect_true(psychro_textpath_supported("label", vjust = 0.5))
 
     # Text-on-path glyph positions depend on platform font metrics. Keep these
@@ -854,7 +1059,8 @@ test_that("Psychrometric grid labels are rendered only for explicit helpers", {
 test_that("Coordinate range helpers clip expanded ranges in native units", {
     p <- ggpsychro(tdb_lim = c(-50, 100), hum_lim = c(0, 60)) +
         coord_psychro(
-            tdb_lim = c(-50, 100), hum_lim = c(0, 60),
+            tdb_lim = c(-50, 100),
+            hum_lim = c(0, 60),
             expand = TRUE
         )
     built <- ggplot2::ggplot_build(p)
@@ -883,8 +1089,11 @@ test_that("Coordinate calculations inverse custom position transforms before psy
     panel_params <- built$layout$panel_params[[1L]]
     hum_scale <- panel_params[[coord$pos_hum()]]$scale
 
-    expect_equal(coord$range_hum_physical(panel_params), c(0.001, 0.05),
-        tolerance = 1e-8)
+    expect_equal(
+        coord$range_hum_physical(panel_params),
+        c(0.001, 0.05),
+        tolerance = 1e-8
+    )
 
     sat <- coord_psy__saturation_scaled(coord, panel_params)
     sat_hum <- narrow_hum(hum_scale$trans$inverse(sat$hum), coord$units)
@@ -932,7 +1141,9 @@ test_that("Psychrolib calculations inverse custom psychrometric scale transforms
         )
         tdb <- scale$trans$breaks(limits, 100L)
         grid <- coord_psy__grid_lines(
-            coord, panel_params, tdb,
+            coord,
+            panel_params,
+            tdb,
             coord$range_tdb(panel_params),
             coord$range_hum(panel_params)
         )
@@ -944,7 +1155,8 @@ test_that("Psychrolib calculations inverse custom psychrometric scale transforms
             ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
                 geom_grid_wetbulb() +
                 scale_wetbulb_continuous(
-                    transform = "log10", breaks = c(10, 20, 30)
+                    transform = "log10",
+                    breaks = c(10, 20, 30)
                 ),
             "wetbulb"
         ),
@@ -956,7 +1168,8 @@ test_that("Psychrolib calculations inverse custom psychrometric scale transforms
             ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
                 geom_grid_vappres() +
                 scale_vappres_continuous(
-                    transform = "log10", breaks = c(1000, 2000, 3000)
+                    transform = "log10",
+                    breaks = c(1000, 2000, 3000)
                 ),
             "vappres"
         ),
@@ -968,7 +1181,8 @@ test_that("Psychrolib calculations inverse custom psychrometric scale transforms
             ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
                 geom_grid_relhum() +
                 scale_relhum_continuous(
-                    transform = "log10", breaks = c(25, 50, 75)
+                    transform = "log10",
+                    breaks = c(25, 50, 75)
                 ),
             "relhum"
         ),
@@ -1037,11 +1251,17 @@ test_that("Native textpath helpers handle edge-case label placement", {
     )
 
     kept <- textpath_place(
-        line_path, measured, hjust = 0.5, upright = TRUE,
+        line_path,
+        measured,
+        hjust = 0.5,
+        upright = TRUE,
         remove_long = FALSE
     )
     dropped <- textpath_place(
-        line_path, measured, hjust = 0.5, upright = TRUE,
+        line_path,
+        measured,
+        hjust = 0.5,
+        upright = TRUE,
         remove_long = TRUE
     )
 
@@ -1144,7 +1364,10 @@ test_that("Psychrometric presets configure themes and grids", {
     expect_no_error(built_ashrae <- ggplot2::ggplot_build(p_ashrae))
     panel_ashrae <- built_ashrae$layout$panel_params[[1L]]
     expect_equal(remove_na(panel_ashrae$x$get_breaks()), seq(0, 50, by = 5))
-    expect_equal(remove_na(panel_ashrae$x$get_breaks_minor()), seq(0, 50, by = 1))
+    expect_equal(
+        remove_na(panel_ashrae$x$get_breaks_minor()),
+        seq(0, 50, by = 1)
+    )
     expect_equal(
         remove_na(panel_ashrae$y$get_breaks()),
         seq(0, 0.03, by = 0.005),
@@ -1161,7 +1384,10 @@ test_that("Psychrometric presets configure themes and grids", {
         tolerance = 1e-8
     )
     expect_length(remove_na(panel_ashrae$relhum$get_breaks_minor()), 0L)
-    expect_equal(remove_na(panel_ashrae$wetbulb$get_breaks()), seq(0, 30, by = 5))
+    expect_equal(
+        remove_na(panel_ashrae$wetbulb$get_breaks()),
+        seq(0, 30, by = 5)
+    )
     expect_equal(
         remove_na(panel_ashrae$specvol$get_breaks()),
         seq(0.80, 0.95, by = 0.05),
@@ -1203,8 +1429,14 @@ test_that("Psychrometric presets configure themes and grids", {
         tolerance = 1e-8
     )
     expect_length(remove_na(panel_minimal$relhum$get_breaks_minor()), 0L)
-    expect_equal(remove_na(panel_minimal$wetbulb$get_breaks()), seq(10, 30, by = 10))
-    expect_true(all(seq(5, 35, by = 5) %in% remove_na(panel_minimal$wetbulb$get_breaks_minor())))
+    expect_equal(
+        remove_na(panel_minimal$wetbulb$get_breaks()),
+        seq(10, 30, by = 10)
+    )
+    expect_true(all(
+        seq(5, 35, by = 5) %in%
+            remove_na(panel_minimal$wetbulb$get_breaks_minor())
+    ))
     expect_equal(
         remove_na(panel_minimal$specvol$get_breaks()),
         seq(0.86, 0.98, by = 0.04),
@@ -1371,8 +1603,12 @@ test_that("Psychrometric stats draw retained aesthetics in common plots", {
         geom_grid_wetbulb(label = FALSE) +
         ggplot2::geom_line(
             ggplot2::aes(
-                tdb, wetbulb = wetbulb, colour = process,
-                linetype = process, linewidth = load, group = process
+                tdb,
+                wetbulb = wetbulb,
+                colour = process,
+                linetype = process,
+                linewidth = load,
+                group = process
             ),
             data = line_data,
             stat = "wetbulb"
@@ -1425,8 +1661,10 @@ test_that("building ggpsychro plots does not mutate source plot state", {
     invisible(ggplot2::ggplot_build(p))
 
     expect_equal(names(p@layers[[1L]]$stat_params), stat_param_names)
-    expect_false(any(c("units", "pres", "mollier", "tdb_lim", "hum_lim") %in%
-        names(p@layers[[1L]]$stat_params)))
+    expect_false(any(
+        c("units", "pres", "mollier", "tdb_lim", "hum_lim") %in%
+            names(p@layers[[1L]]$stat_params)
+    ))
     expect_null(p@coordinates$pressure)
 
     invisible(ggplot2::ggplotGrob(p))
@@ -1443,12 +1681,18 @@ test_that("rebuilt plots do not reuse stale inherited psychro params", {
 
     invisible(ggplot2::ggplot_build(p))
     suppressMessages(
-        rebuilt <- p + coord_psychro(
-            tdb_lim = c(50, 100), hum_lim = c(0, 140), units = "IP"
-        )
+        rebuilt <- p +
+            coord_psychro(
+                tdb_lim = c(50, 100),
+                hum_lim = c(0, 140),
+                units = "IP"
+            )
     )
     fresh <- ggpsychro(
-        d, tdb_lim = c(50, 100), hum_lim = c(0, 140), units = "IP"
+        d,
+        tdb_lim = c(50, 100),
+        hum_lim = c(0, 140),
+        units = "IP"
     ) +
         stat_psychro_state(ggplot2::aes(tdb = tdb, relhum = relhum))
 

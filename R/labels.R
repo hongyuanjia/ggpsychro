@@ -1,10 +1,10 @@
 default_labs <- function(units = "SI", mollier = FALSE) {
     if (units == "SI") {
-        lab_x <- expression("Dry-bulb temperature ("*degree*C*")")
-        lab_y <- expression("Humidity ratio ("*g[m]*"/"*kg[da]*")")
+        lab_x <- expression("Dry-bulb temperature (" * degree * C * ")")
+        lab_y <- expression("Humidity ratio (" * g[m] * "/" * kg[da] * ")")
     } else if (units == "IP") {
-        lab_x <- expression("Dry-bulb temperature ("*degree*F*")")
-        lab_y <- expression("Humidity ratio ("*gr[m]*"/"*lb[da]*")")
+        lab_x <- expression("Dry-bulb temperature (" * degree * F * ")")
+        lab_y <- expression("Humidity ratio (" * gr[m] * "/" * lb[da] * ")")
     }
 
     if (mollier) {
@@ -58,58 +58,191 @@ default_labs <- function(units = "SI", mollier = FALSE) {
 #'
 #' @rdname label
 #' @export
-label_drybulb <- function(x, accuracy = NULL, scale = 1, units,
-                         big.mark = ",", decimal.mark = ".", trim = TRUE, parse = FALSE, ...) {
-    label_unit(x, accuracy = accuracy, scale = scale, type = "drybulb", units = units,
-        big.mark, decimal.mark, trim, parse, ...)
+label_drybulb <- function(
+    x,
+    accuracy = NULL,
+    scale = 1,
+    units,
+    big.mark = ",",
+    decimal.mark = ".",
+    trim = TRUE,
+    parse = FALSE,
+    ...
+) {
+    label_unit(
+        x,
+        accuracy = accuracy,
+        scale = scale,
+        type = "drybulb",
+        units = units,
+        big.mark,
+        decimal.mark,
+        trim,
+        parse,
+        ...
+    )
 }
 
 #' @rdname label
 #' @export
-label_humratio <- function(x, accuracy = NULL, scale = 1, units,
-                         big.mark = ",", decimal.mark = ".", trim = TRUE, parse = FALSE, ...) {
-    label_unit(x, accuracy = accuracy, scale = scale, type = "humratio", units = units,
-        big.mark, decimal.mark, trim, parse, ...)
+label_humratio <- function(
+    x,
+    accuracy = NULL,
+    scale = 1,
+    units,
+    big.mark = ",",
+    decimal.mark = ".",
+    trim = TRUE,
+    parse = FALSE,
+    ...
+) {
+    label_unit(
+        x,
+        accuracy = accuracy,
+        scale = scale,
+        type = "humratio",
+        units = units,
+        big.mark,
+        decimal.mark,
+        trim,
+        parse,
+        ...
+    )
 }
 
 #' @rdname label
 #' @export
-label_relhum <- function(x, accuracy = NULL, scale = 1, units,
-                         big.mark = ",", decimal.mark = ".", trim = TRUE, parse = FALSE, ...) {
-    label_unit(x, accuracy = accuracy, scale = scale, type = "relhum", units = units,
-        big.mark, decimal.mark, trim, parse, ...)
+label_relhum <- function(
+    x,
+    accuracy = NULL,
+    scale = 1,
+    units,
+    big.mark = ",",
+    decimal.mark = ".",
+    trim = TRUE,
+    parse = FALSE,
+    ...
+) {
+    label_unit(
+        x,
+        accuracy = accuracy,
+        scale = scale,
+        type = "relhum",
+        units = units,
+        big.mark,
+        decimal.mark,
+        trim,
+        parse,
+        ...
+    )
 }
 
 #' @rdname label
 #' @export
-label_wetbulb <- function(x, accuracy = NULL, scale = 1, units,
-                         big.mark = ",", decimal.mark = ".", trim = TRUE, parse = FALSE, ...) {
-    label_unit(x, accuracy = accuracy, scale = scale, type = "wetbulb", units = units,
-        big.mark, decimal.mark, trim, parse, ...)
+label_wetbulb <- function(
+    x,
+    accuracy = NULL,
+    scale = 1,
+    units,
+    big.mark = ",",
+    decimal.mark = ".",
+    trim = TRUE,
+    parse = FALSE,
+    ...
+) {
+    label_unit(
+        x,
+        accuracy = accuracy,
+        scale = scale,
+        type = "wetbulb",
+        units = units,
+        big.mark,
+        decimal.mark,
+        trim,
+        parse,
+        ...
+    )
 }
 
 #' @rdname label
 #' @export
-label_vappres <- function(x, accuracy = NULL, scale = 1, units,
-                         big.mark = ",", decimal.mark = ".", trim = TRUE, parse = FALSE, ...) {
-    label_unit(x, accuracy = accuracy, scale = scale, type = "vappres", units = units,
-        big.mark, decimal.mark, trim, parse, ...)
+label_vappres <- function(
+    x,
+    accuracy = NULL,
+    scale = 1,
+    units,
+    big.mark = ",",
+    decimal.mark = ".",
+    trim = TRUE,
+    parse = FALSE,
+    ...
+) {
+    label_unit(
+        x,
+        accuracy = accuracy,
+        scale = scale,
+        type = "vappres",
+        units = units,
+        big.mark,
+        decimal.mark,
+        trim,
+        parse,
+        ...
+    )
 }
 
 #' @rdname label
 #' @export
-label_specvol <- function(x, accuracy = NULL, scale = 1, units,
-                         big.mark = ",", decimal.mark = ".", trim = TRUE, parse = FALSE, ...) {
-    label_unit(x, accuracy = accuracy, scale = scale, type = "specvol", units = units,
-        big.mark, decimal.mark, trim, parse, ...)
+label_specvol <- function(
+    x,
+    accuracy = NULL,
+    scale = 1,
+    units,
+    big.mark = ",",
+    decimal.mark = ".",
+    trim = TRUE,
+    parse = FALSE,
+    ...
+) {
+    label_unit(
+        x,
+        accuracy = accuracy,
+        scale = scale,
+        type = "specvol",
+        units = units,
+        big.mark,
+        decimal.mark,
+        trim,
+        parse,
+        ...
+    )
 }
 
 #' @rdname label
 #' @export
-label_enthalpy <- function(x, accuracy = NULL, scale = 1, units,
-                         big.mark = ",", decimal.mark = ".", trim = TRUE, parse = FALSE, ...) {
-    label_unit(x, accuracy = accuracy, scale = scale, type = "enthalpy", units = units,
-        big.mark, decimal.mark, trim, parse, ...)
+label_enthalpy <- function(
+    x,
+    accuracy = NULL,
+    scale = 1,
+    units,
+    big.mark = ",",
+    decimal.mark = ".",
+    trim = TRUE,
+    parse = FALSE,
+    ...
+) {
+    label_unit(
+        x,
+        accuracy = accuracy,
+        scale = scale,
+        type = "enthalpy",
+        units = units,
+        big.mark,
+        decimal.mark,
+        trim,
+        parse,
+        ...
+    )
 }
 
 #' @rdname label
@@ -141,9 +274,18 @@ specvol_format <- label_specvol
 enthalpy_format <- label_enthalpy
 
 #' @importFrom scales number
-label_unit <- function (x, accuracy = NULL, scale = 1, type, units,
-                        big.mark = ",", decimal.mark = ".", trim = TRUE, parse = FALSE,
-                        ...) {
+label_unit <- function(
+    x,
+    accuracy = NULL,
+    scale = 1,
+    type,
+    units,
+    big.mark = ",",
+    decimal.mark = ".",
+    trim = TRUE,
+    parse = FALSE,
+    ...
+) {
     force_all(
         accuracy,
         scale,
@@ -158,7 +300,9 @@ label_unit <- function (x, accuracy = NULL, scale = 1, type, units,
 
     prefix <- get_prefix(type)
     suffix <- paste0(" ", get_unit(units, type))
-    if (parse && suffix == " %") suffix <- paste0("'", suffix, "'")
+    if (parse && suffix == " %") {
+        suffix <- paste0("'", suffix, "'")
+    }
 
     fmt_big_mark <- big.mark
     fmt_decimal_mark <- decimal.mark
@@ -167,21 +311,44 @@ label_unit <- function (x, accuracy = NULL, scale = 1, type, units,
         suffix <- paste("*~", suffix)
     }
 
-    function (x) {
-        if (type == "relhum") x <- x * 100.0
-        if (type == "vappres" && units == "SI") x <- x / 1000.0
-        if (type == "enthalpy") x <- x / 1000.0
-        num <- number(x, accuracy = accuracy, scale = scale,
-            prefix = "", suffix = suffix,
-            big.mark = fmt_big_mark, decimal.mark = fmt_decimal_mark,
-            trim = trim, ...)
+    function(x) {
+        if (type == "relhum") {
+            x <- x * 100.0
+        }
+        if (type == "vappres" && units == "SI") {
+            x <- x / 1000.0
+        }
+        if (type == "enthalpy") {
+            x <- x / 1000.0
+        }
+        num <- number(
+            x,
+            accuracy = accuracy,
+            scale = scale,
+            prefix = "",
+            suffix = suffix,
+            big.mark = fmt_big_mark,
+            decimal.mark = fmt_decimal_mark,
+            trim = trim,
+            ...
+        )
 
         if (parse || need_parse(type)) {
             if (nzchar(fmt_big_mark)) {
-                num <- gsub(fmt_big_mark, paste0("*'", fmt_big_mark, "'*"), num, fixed = TRUE)
+                num <- gsub(
+                    fmt_big_mark,
+                    paste0("*'", fmt_big_mark, "'*"),
+                    num,
+                    fixed = TRUE
+                )
             }
             if (nzchar(fmt_decimal_mark)) {
-                num <- gsub(fmt_decimal_mark, paste0("*'", fmt_decimal_mark, "'*"), num, fixed = TRUE)
+                num <- gsub(
+                    fmt_decimal_mark,
+                    paste0("*'", fmt_decimal_mark, "'*"),
+                    num,
+                    fixed = TRUE
+                )
             }
         }
 
@@ -199,11 +366,11 @@ label_unit <- function (x, accuracy = NULL, scale = 1, type, units,
     }
 }
 
-get_unit <- function (unit, type) {
+get_unit <- function(unit, type) {
     psychro_unit_specs[[unit]][[type]]
 }
 
-get_prefix <- function (type) {
+get_prefix <- function(type) {
     if (type == "relhum") {
         "RH"
     } else {
@@ -212,12 +379,12 @@ get_prefix <- function (type) {
     }
 }
 
-need_parse <- function (type) {
+need_parse <- function(type) {
     psychro_unit_specs$parse[[type]]
 }
 
 # reference r-lib/scales/R/utils.r
-force_all <- function (...) list(...)
+force_all <- function(...) list(...)
 
 #' Demonstrate scales functions with ggplot2 code
 #'
@@ -234,7 +401,7 @@ force_all <- function (...) list(...)
 #' @keywords internal
 #' @export
 # adopted from scales::demo_continuous
-demo_scale <- function (x, ...) {
+demo_scale <- function(x, ...) {
     df <- data.frame(x = x, stringsAsFactors = FALSE)
     ggplot2::ggplot(df, ggplot2::aes(x, 1)) +
         ggplot2::geom_blank() +

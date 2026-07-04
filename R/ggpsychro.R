@@ -53,8 +53,15 @@
 #' @importFrom ggplot2 ggplot aes waiver
 #' @author Hongyuan Jia
 #' @export
-ggpsychro <- function (data = NULL, mapping = aes(), tdb_lim = NULL, hum_lim = NULL,
-                       altitude = 0L, units = "SI", mollier = FALSE) {
+ggpsychro <- function(
+    data = NULL,
+    mapping = aes(),
+    tdb_lim = NULL,
+    hum_lim = NULL,
+    altitude = 0L,
+    units = "SI",
+    mollier = FALSE
+) {
     assert_flag(mollier)
     assert_number(altitude)
     assert_choice(units, c("SI", "IP"))
@@ -79,15 +86,19 @@ ggpsychro <- function (data = NULL, mapping = aes(), tdb_lim = NULL, hum_lim = N
 
     # set coordinate system
     p$coordinates <- coord_psychro(
-        tdb_lim = tdb_lim, hum_lim = hum_lim,
-        altitude = altitude, units = units, mollier = mollier
+        tdb_lim = tdb_lim,
+        hum_lim = hum_lim,
+        altitude = altitude,
+        units = units,
+        mollier = mollier
     )
     p$coordinates$grids <- p$psychro$grids
     p$coordinates$grid_labels <- p$psychro$grid_labels
     p$coordinates$protractor <- p$psychro$protractor
 
     # set default axis label
-    p <- p + do.call(ggplot2::labs, default_labs(units = units, mollier = mollier))
+    p <- p +
+        do.call(ggplot2::labs, default_labs(units = units, mollier = mollier))
 
     p + theme_psychro()
 }
@@ -102,6 +113,6 @@ ggpsychro <- function (data = NULL, mapping = aes(), tdb_lim = NULL, hum_lim = N
 #'
 #' @keywords internal
 #' @export
-is.ggpsychro <- function (x) {
+is.ggpsychro <- function(x) {
     inherits(x, "ggpsychro")
 }

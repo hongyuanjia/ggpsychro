@@ -83,60 +83,125 @@ NULL
 #'     stat_enthalpy(aes(x = tdb, enthalpy = enthalpy), data = enthalpy)
 #'
 #' @export
-stat_relhum <- function (mapping = NULL, data = NULL, geom = "point", position = "identity",
-                         ..., na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+stat_relhum <- function(
+    mapping = NULL,
+    data = NULL,
+    geom = "point",
+    position = "identity",
+    ...,
+    na.rm = FALSE,
+    show.legend = NA,
+    inherit.aes = TRUE
+) {
     psychro_layer(
-        stat = StatRelhum, data = data, mapping = mapping, geom = geom,
-        position = position, show.legend = show.legend, inherit.aes = inherit.aes,
+        stat = StatRelhum,
+        data = data,
+        mapping = mapping,
+        geom = geom,
+        position = position,
+        show.legend = show.legend,
+        inherit.aes = inherit.aes,
         params = list(na.rm = na.rm, ...)
     )
 }
 
 #' @export
 #' @rdname stat
-stat_wetbulb <- function (mapping = NULL, data = NULL, geom = "point", position = "identity",
-                         ..., na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+stat_wetbulb <- function(
+    mapping = NULL,
+    data = NULL,
+    geom = "point",
+    position = "identity",
+    ...,
+    na.rm = FALSE,
+    show.legend = NA,
+    inherit.aes = TRUE
+) {
     psychro_layer(
-        stat = StatWetbulb, data = data, mapping = mapping, geom = geom,
-        position = position, show.legend = show.legend, inherit.aes = inherit.aes,
+        stat = StatWetbulb,
+        data = data,
+        mapping = mapping,
+        geom = geom,
+        position = position,
+        show.legend = show.legend,
+        inherit.aes = inherit.aes,
         params = list(na.rm = na.rm, ...)
     )
 }
 
 #' @export
 #' @rdname stat
-stat_vappres <- function (mapping = NULL, data = NULL, geom = "point", position = "identity",
-                         ..., na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+stat_vappres <- function(
+    mapping = NULL,
+    data = NULL,
+    geom = "point",
+    position = "identity",
+    ...,
+    na.rm = FALSE,
+    show.legend = NA,
+    inherit.aes = TRUE
+) {
     psychro_layer(
-        stat = StatVappres, data = data, mapping = mapping, geom = geom,
-        position = position, show.legend = show.legend, inherit.aes = inherit.aes,
+        stat = StatVappres,
+        data = data,
+        mapping = mapping,
+        geom = geom,
+        position = position,
+        show.legend = show.legend,
+        inherit.aes = inherit.aes,
         params = list(na.rm = na.rm, ...)
     )
 }
 
 #' @export
 #' @rdname stat
-stat_specvol <- function (mapping = NULL, data = NULL, geom = "point", position = "identity",
-                          ..., na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+stat_specvol <- function(
+    mapping = NULL,
+    data = NULL,
+    geom = "point",
+    position = "identity",
+    ...,
+    na.rm = FALSE,
+    show.legend = NA,
+    inherit.aes = TRUE
+) {
     psychro_layer(
-        stat = StatSpecvol, data = data, mapping = mapping, geom = geom,
-        position = position, show.legend = show.legend, inherit.aes = inherit.aes,
+        stat = StatSpecvol,
+        data = data,
+        mapping = mapping,
+        geom = geom,
+        position = position,
+        show.legend = show.legend,
+        inherit.aes = inherit.aes,
         params = list(na.rm = na.rm, ...)
     )
 }
 
 #' @export
 #' @rdname stat
-stat_enthalpy <- function (mapping = NULL, data = NULL, geom = "point", position = "identity",
-                         ..., na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+stat_enthalpy <- function(
+    mapping = NULL,
+    data = NULL,
+    geom = "point",
+    position = "identity",
+    ...,
+    na.rm = FALSE,
+    show.legend = NA,
+    inherit.aes = TRUE
+) {
     psychro_layer(
-        stat = StatEnthalpy, data = data, mapping = mapping, geom = geom,
-        position = position, show.legend = show.legend, inherit.aes = inherit.aes,
+        stat = StatEnthalpy,
+        data = data,
+        mapping = mapping,
+        geom = geom,
+        position = position,
+        show.legend = show.legend,
+        inherit.aes = inherit.aes,
         params = list(na.rm = na.rm, ...)
     )
 }
 
-init_stat_data <- function (data, params) {
+init_stat_data <- function(data, params) {
     if (!"units" %in% names(data)) {
         data$units <- encode_units(params$units)
     } else {
@@ -220,7 +285,8 @@ psychro_stat_scale_context <- function(scales, psychro) {
         pos_tdb = scales$get_scales(pos_tdb),
         pos_hum = scales$get_scales(pos_hum),
         tdb = scales$get_scales("tdb") %||% scales$get_scales(pos_tdb),
-        humratio = scales$get_scales("humratio") %||% scales$get_scales(pos_hum),
+        humratio = scales$get_scales("humratio") %||%
+            scales$get_scales(pos_hum),
         relhum = scales$get_scales("relhum"),
         wetbulb = scales$get_scales("wetbulb"),
         vappres = scales$get_scales("vappres"),
@@ -231,8 +297,11 @@ psychro_stat_scale_context <- function(scales, psychro) {
 
 # Public relative-humidity inputs are percentages; after inverse-transforming a
 # scale value, convert once to the 0-1 fraction required by psychrolib.
-psychro_stat_relhum_fraction <- function(relhum, psychro_scales = NULL,
-                                         aesthetic = "relhum") {
+psychro_stat_relhum_fraction <- function(
+    relhum,
+    psychro_scales = NULL,
+    aesthetic = "relhum"
+) {
     if (psychro_scale_has_aesthetic(psychro_scales$relhum, aesthetic)) {
         relhum <- psychro_scale_inverse(psychro_scales$relhum, relhum)
     }
@@ -242,8 +311,12 @@ psychro_stat_relhum_fraction <- function(relhum, psychro_scales = NULL,
 
 # Inverse-transform one psychrometric property column from scale space into the
 # public unit documented for that aesthetic.
-psychro_stat_inverse_property <- function(x, property, psychro_scales = NULL,
-                                          aesthetic = property) {
+psychro_stat_inverse_property <- function(
+    x,
+    property,
+    psychro_scales = NULL,
+    aesthetic = property
+) {
     scale <- psychro_scales[[property]]
     if (psychro_scale_has_aesthetic(scale, aesthetic)) {
         return(psychro_scale_inverse(scale, x))
@@ -255,19 +328,30 @@ psychro_stat_inverse_property <- function(x, property, psychro_scales = NULL,
 # frame before downstream helpers do psychrolib math.
 psychro_stat_inverse_columns <- function(data, psychro_scales = NULL) {
     scale_for <- c(
-        tdb = "tdb", tdb_min = "tdb", tdb_max = "tdb",
-        humratio = "humratio", humratio_min = "humratio",
+        tdb = "tdb",
+        tdb_min = "tdb",
+        tdb_max = "tdb",
+        humratio = "humratio",
+        humratio_min = "humratio",
         humratio_max = "humratio",
-        relhum = "relhum", relhum_min = "relhum", relhum_max = "relhum",
+        relhum = "relhum",
+        relhum_min = "relhum",
+        relhum_max = "relhum",
         wetbulb = "wetbulb",
         vappres = "vappres",
-        specvol = "specvol", specvol_min = "specvol", specvol_max = "specvol",
-        enthalpy = "enthalpy", enthalpy_min = "enthalpy",
+        specvol = "specvol",
+        specvol_min = "specvol",
+        specvol_max = "specvol",
+        enthalpy = "enthalpy",
+        enthalpy_min = "enthalpy",
         enthalpy_max = "enthalpy"
     )
     for (var in intersect(names(scale_for), names(data))) {
         data[[var]] <- psychro_stat_inverse_property(
-            data[[var]], scale_for[[var]], psychro_scales, aesthetic = var
+            data[[var]],
+            scale_for[[var]],
+            psychro_scales,
+            aesthetic = var
         )
     }
     data
@@ -282,7 +366,9 @@ psychro_stat_scale_humratio <- function(humratio, units, scale) {
 finish_stat_humratio <- function(data, humratio, units, scales) {
     ys <- names(data)[names(data) %in% GGPSY_OPT$y_aes]
 
-    if (!length(ys)) ys <- "y"
+    if (!length(ys)) {
+        ys <- "y"
+    }
 
     humratio <- psychro_stat_scale_humratio(humratio, units, scales$y)
     for (var in ys) {
@@ -298,9 +384,10 @@ finish_stat_humratio <- function(data, humratio, units, scales) {
 #' @importFrom psychrolib GetHumRatioFromRelHum
 #' @export
 StatRelhum <- ggproto(
-    "StatRelhum", Stat,
+    "StatRelhum",
+    Stat,
 
-    setup_data = function (self, data, params) {
+    setup_data = function(self, data, params) {
         init_stat_data(data, params)
     },
 
@@ -308,11 +395,14 @@ StatRelhum <- ggproto(
 
     required_aes = c("x", "relhum", "pres", "units"),
 
-    compute_group = function (self, data, scales, psychro_scales = NULL) {
+    compute_group = function(self, data, scales, psychro_scales = NULL) {
         units <- get_units(data)
         tdb <- psychro_scale_inverse(scales$x, data$x)
         relhum <- psychro_stat_relhum_fraction(data$relhum, psychro_scales)
-        humratio <- with_units(units, GetHumRatioFromRelHum(tdb, relhum, data$pres))
+        humratio <- with_units(
+            units,
+            GetHumRatioFromRelHum(tdb, relhum, data$pres)
+        )
         finish_stat_humratio(data, humratio, units, scales)
     }
 )
@@ -323,9 +413,10 @@ StatRelhum <- ggproto(
 #' @importFrom psychrolib GetHumRatioFromTWetBulb
 #' @export
 StatWetbulb <- ggproto(
-    "StatWetbulb", Stat,
+    "StatWetbulb",
+    Stat,
 
-    setup_data = function (self, data, params) {
+    setup_data = function(self, data, params) {
         init_stat_data(data, params)
     },
 
@@ -333,13 +424,18 @@ StatWetbulb <- ggproto(
 
     required_aes = c("x", "wetbulb", "pres", "units"),
 
-    compute_group = function (self, data, scales, psychro_scales = NULL) {
+    compute_group = function(self, data, scales, psychro_scales = NULL) {
         units <- get_units(data)
         tdb <- psychro_scale_inverse(scales$x, data$x)
         wetbulb <- psychro_stat_inverse_property(
-            data$wetbulb, "wetbulb", psychro_scales
+            data$wetbulb,
+            "wetbulb",
+            psychro_scales
         )
-        humratio <- with_units(units, GetHumRatioFromTWetBulb(tdb, wetbulb, data$pres))
+        humratio <- with_units(
+            units,
+            GetHumRatioFromTWetBulb(tdb, wetbulb, data$pres)
+        )
         finish_stat_humratio(data, humratio, units, scales)
     }
 )
@@ -350,9 +446,10 @@ StatWetbulb <- ggproto(
 #' @importFrom psychrolib GetHumRatioFromVapPres
 #' @export
 StatVappres <- ggproto(
-    "StatVappres", Stat,
+    "StatVappres",
+    Stat,
 
-    setup_data = function (self, data, params) {
+    setup_data = function(self, data, params) {
         init_stat_data(data, params)
     },
 
@@ -360,12 +457,17 @@ StatVappres <- ggproto(
 
     required_aes = c("x", "vappres", "pres", "units"),
 
-    compute_group = function (self, data, scales, psychro_scales = NULL) {
+    compute_group = function(self, data, scales, psychro_scales = NULL) {
         units <- get_units(data)
         vappres <- psychro_stat_inverse_property(
-            data$vappres, "vappres", psychro_scales
+            data$vappres,
+            "vappres",
+            psychro_scales
         )
-        humratio <- with_units(units, GetHumRatioFromVapPres(vappres, data$pres))
+        humratio <- with_units(
+            units,
+            GetHumRatioFromVapPres(vappres, data$pres)
+        )
         finish_stat_humratio(data, humratio, units, scales)
     }
 )
@@ -375,9 +477,10 @@ StatVappres <- ggproto(
 #' @usage NULL
 #' @export
 StatSpecvol <- ggproto(
-    "StatSpecvol", Stat,
+    "StatSpecvol",
+    Stat,
 
-    setup_data = function (self, data, params) {
+    setup_data = function(self, data, params) {
         init_stat_data(data, params)
     },
 
@@ -385,13 +488,18 @@ StatSpecvol <- ggproto(
 
     required_aes = c("x", "specvol", "pres", "units"),
 
-    compute_group = function (self, data, scales, psychro_scales = NULL) {
+    compute_group = function(self, data, scales, psychro_scales = NULL) {
         units <- get_units(data)
         tdb <- psychro_scale_inverse(scales$x, data$x)
         specvol <- psychro_stat_inverse_property(
-            data$specvol, "specvol", psychro_scales
+            data$specvol,
+            "specvol",
+            psychro_scales
         )
-        humratio <- with_units(units, GetHumRatioFromAirVolume(tdb, specvol, data$pres))
+        humratio <- with_units(
+            units,
+            GetHumRatioFromAirVolume(tdb, specvol, data$pres)
+        )
         finish_stat_humratio(data, humratio, units, scales)
     }
 )
@@ -402,9 +510,10 @@ StatSpecvol <- ggproto(
 #' @importFrom psychrolib GetHumRatioFromEnthalpyAndTDryBulb
 #' @export
 StatEnthalpy <- ggproto(
-    "StatEnthalpy", Stat,
+    "StatEnthalpy",
+    Stat,
 
-    setup_data = function (self, data, params) {
+    setup_data = function(self, data, params) {
         init_stat_data(data, params)
     },
 
@@ -412,13 +521,18 @@ StatEnthalpy <- ggproto(
 
     required_aes = c("x", "enthalpy", "pres", "units"),
 
-    compute_group = function (self, data, scales, psychro_scales = NULL) {
+    compute_group = function(self, data, scales, psychro_scales = NULL) {
         units <- get_units(data)
         tdb <- psychro_scale_inverse(scales$x, data$x)
         enthalpy <- psychro_stat_inverse_property(
-            data$enthalpy, "enthalpy", psychro_scales
+            data$enthalpy,
+            "enthalpy",
+            psychro_scales
         )
-        humratio <- with_units(units, GetHumRatioFromEnthalpyAndTDryBulb(enthalpy, tdb))
+        humratio <- with_units(
+            units,
+            GetHumRatioFromEnthalpyAndTDryBulb(enthalpy, tdb)
+        )
         finish_stat_humratio(data, humratio, units, scales)
     }
 )

@@ -3,8 +3,15 @@ NULL
 
 # Adaptive comfort helpers keep the standard-specific equations separate from
 # the plotting/stat layer code that consumes them.
-comfort_adaptive_ashrae <- function(tdb, tr, t_running, v, category,
-                                    limit_inputs, round_output) {
+comfort_adaptive_ashrae <- function(
+    tdb,
+    tr,
+    t_running,
+    v,
+    category,
+    limit_inputs,
+    round_output
+) {
     category <- comfort_adaptive_category(category, c("80", "90"), "80")
     to <- comfort_operative_temp(tdb, tr, v, standard = "ashrae")
     # ASHRAE 55 neutral operative temperature is a linear function of running
@@ -44,10 +51,22 @@ comfort_adaptive_ashrae <- function(tdb, tr, t_running, v, category,
     out
 }
 
-comfort_adaptive_en <- function(tdb, tr, t_running, v, category,
-                                limit_inputs, round_output) {
+comfort_adaptive_en <- function(
+    tdb,
+    tr,
+    t_running,
+    v,
+    category,
+    limit_inputs,
+    round_output
+) {
     category <- comfort_adaptive_category(category, c("I", "II", "III"), "II")
-    category_key <- switch(category, I = "cat_i", II = "cat_ii", III = "cat_iii")
+    category_key <- switch(
+        category,
+        I = "cat_i",
+        II = "cat_ii",
+        III = "cat_iii"
+    )
     to <- comfort_operative_temp(tdb, tr, v, standard = "iso")
     # EN adaptive comfort uses a different neutral-temperature fit and
     # asymmetric category bands around that comfort temperature.
@@ -64,9 +83,12 @@ comfort_adaptive_en <- function(tdb, tr, t_running, v, category,
         tmp_cmf_cat_iii_low = t_cmf - 5.0,
         tmp_cmf_cat_iii_up = t_cmf + 4.0 + ce
     ))
-    out$acceptability_cat_i <- to >= out$tmp_cmf_cat_i_low & to <= out$tmp_cmf_cat_i_up
-    out$acceptability_cat_ii <- to >= out$tmp_cmf_cat_ii_low & to <= out$tmp_cmf_cat_ii_up
-    out$acceptability_cat_iii <- to >= out$tmp_cmf_cat_iii_low & to <= out$tmp_cmf_cat_iii_up
+    out$acceptability_cat_i <- to >= out$tmp_cmf_cat_i_low &
+        to <= out$tmp_cmf_cat_i_up
+    out$acceptability_cat_ii <- to >= out$tmp_cmf_cat_ii_low &
+        to <= out$tmp_cmf_cat_ii_up
+    out$acceptability_cat_iii <- to >= out$tmp_cmf_cat_iii_low &
+        to <= out$tmp_cmf_cat_iii_up
     out$lower <- out[[paste0("tmp_cmf_", category_key, "_low")]]
     out$upper <- out[[paste0("tmp_cmf_", category_key, "_up")]]
     out$acceptability <- out[[paste0("acceptability_", category_key)]]
@@ -122,8 +144,14 @@ comfort_adaptive_cooling_effect <- function(v, to) {
     ce
 }
 
-comfort_zone_adaptive <- function(model, units, mollier, tdb_lim, hum_lim,
-                                  psychro_scales = NULL) {
+comfort_zone_adaptive <- function(
+    model,
+    units,
+    mollier,
+    tdb_lim,
+    hum_lim,
+    psychro_scales = NULL
+) {
     p <- model$params
     if (!is.null(p$tr)) {
         stop(
@@ -137,13 +165,24 @@ comfort_zone_adaptive <- function(model, units, mollier, tdb_lim, hum_lim,
     mid <- mean(lim$tdb)
     # Adaptive comfort has no humidity dependence, so the zone is a vertical
     # operative-temperature band spanning the visible humidity range.
-    zone <- comfort_apply_model(model, mid, rh = 50, units = units, pres = 101325)
+    zone <- comfort_apply_model(
+        model,
+        mid,
+        rh = 50,
+        units = units,
+        pres = 101325
+    )
     lower <- max(zone$lower[[1L]], lim$tdb[[1L]])
     upper <- min(zone$upper[[1L]], lim$tdb[[2L]])
     if (!is.finite(lower) || !is.finite(upper) || lower >= upper) {
         return(new_data_frame(list(
-            tdb = numeric(), humratio = numeric(), x = numeric(), y = numeric(),
-            group = character(), subgroup = integer(), value = numeric()
+            tdb = numeric(),
+            humratio = numeric(),
+            x = numeric(),
+            y = numeric(),
+            group = character(),
+            subgroup = integer(),
+            value = numeric()
         )))
     }
 
@@ -157,6 +196,12 @@ comfort_zone_adaptive <- function(model, units, mollier, tdb_lim, hum_lim,
         width = NA_real_,
         height = NA_real_
     ))
-    psychro_output_xy(out, out$tdb, out$humratio, mollier,
-        psychro_scales = psychro_scales, units = units)
+    psychro_output_xy(
+        out,
+        out$tdb,
+        out$humratio,
+        mollier,
+        psychro_scales = psychro_scales,
+        units = units
+    )
 }

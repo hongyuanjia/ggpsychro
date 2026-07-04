@@ -34,12 +34,27 @@ NULL
 #' comfort_heat_index(32, rh = 70)
 #'
 #' @export
-comfort_pmv <- function(tdb, tr = tdb, vr = 0.1, rh, met = 1.2,
-                        clo = 0.5, wme = 0, units = c("SI", "IP"),
-                        limit_inputs = TRUE, round_output = TRUE) {
+comfort_pmv <- function(
+    tdb,
+    tr = tdb,
+    vr = 0.1,
+    rh,
+    met = 1.2,
+    clo = 0.5,
+    wme = 0,
+    units = c("SI", "IP"),
+    limit_inputs = TRUE,
+    round_output = TRUE
+) {
     units <- match.arg(units)
     x <- comfort_recycle(
-        tdb = tdb, tr = tr, vr = vr, rh = rh, met = met, clo = clo, wme = wme
+        tdb = tdb,
+        tr = tr,
+        vr = vr,
+        rh = rh,
+        met = met,
+        clo = clo,
+        wme = wme
     )
 
     tdb_si <- comfort_to_si_temp(x$tdb, units)
@@ -81,15 +96,31 @@ comfort_pmv <- function(tdb, tr = tdb, vr = 0.1, rh, met = 1.2,
 #' @param p_atm Atmospheric pressure in Pa.
 #' @param position Body position, `"standing"` or `"sitting"`.
 #' @export
-comfort_set <- function(tdb, tr = tdb, v = 0.1, rh, met = 1.2,
-                        clo = 0.5, wme = 0, units = c("SI", "IP"),
-                        limit_inputs = TRUE, round_output = TRUE,
-                        body_surface_area = 1.8258, p_atm = 101325,
-                        position = c("standing", "sitting")) {
+comfort_set <- function(
+    tdb,
+    tr = tdb,
+    v = 0.1,
+    rh,
+    met = 1.2,
+    clo = 0.5,
+    wme = 0,
+    units = c("SI", "IP"),
+    limit_inputs = TRUE,
+    round_output = TRUE,
+    body_surface_area = 1.8258,
+    p_atm = 101325,
+    position = c("standing", "sitting")
+) {
     units <- match.arg(units)
     position <- match.arg(position)
     x <- comfort_recycle(
-        tdb = tdb, tr = tr, v = v, rh = rh, met = met, clo = clo, wme = wme
+        tdb = tdb,
+        tr = tr,
+        v = v,
+        rh = rh,
+        met = met,
+        clo = clo,
+        wme = wme
     )
 
     tdb_si <- comfort_to_si_temp(x$tdb, units)
@@ -97,7 +128,13 @@ comfort_set <- function(tdb, tr = tdb, v = 0.1, rh, met = 1.2,
     v_si <- comfort_to_si_speed(x$v, units)
 
     set <- comfort_set_vec(
-        tdb_si, tr_si, v_si, x$rh, x$met, x$clo, x$wme,
+        tdb_si,
+        tr_si,
+        v_si,
+        x$rh,
+        x$met,
+        x$clo,
+        x$wme,
         body_surface_area = body_surface_area,
         p_atm = p_atm,
         position = position
@@ -128,10 +165,17 @@ comfort_set <- function(tdb, tr = tdb, v = 0.1, rh, met = 1.2,
 #' @param category Comfort category. For ASHRAE 55 use `"80"` or `"90"`; for
 #'   EN 16798 use `"I"`, `"II"`, or `"III"`.
 #' @export
-comfort_adaptive <- function(tdb, tr = tdb, t_running, v = 0.1,
-                             standard = c("ashrae55", "en16798"),
-                             category = NULL, units = c("SI", "IP"),
-                             limit_inputs = TRUE, round_output = TRUE) {
+comfort_adaptive <- function(
+    tdb,
+    tr = tdb,
+    t_running,
+    v = 0.1,
+    standard = c("ashrae55", "en16798"),
+    category = NULL,
+    units = c("SI", "IP"),
+    limit_inputs = TRUE,
+    round_output = TRUE
+) {
     units <- match.arg(units)
     standard <- match.arg(standard)
     x <- comfort_recycle(tdb = tdb, tr = tr, t_running = t_running, v = v)
@@ -143,22 +187,38 @@ comfort_adaptive <- function(tdb, tr = tdb, t_running, v = 0.1,
 
     if (standard == "ashrae55") {
         out <- comfort_adaptive_ashrae(
-            tdb_si, tr_si, t_running_si, v_si,
-            category = category, limit_inputs = limit_inputs,
+            tdb_si,
+            tr_si,
+            t_running_si,
+            v_si,
+            category = category,
+            limit_inputs = limit_inputs,
             round_output = round_output
         )
     } else {
         out <- comfort_adaptive_en(
-            tdb_si, tr_si, t_running_si, v_si,
-            category = category, limit_inputs = limit_inputs,
+            tdb_si,
+            tr_si,
+            t_running_si,
+            v_si,
+            category = category,
+            limit_inputs = limit_inputs,
             round_output = round_output
         )
     }
 
-    temp_cols <- setdiff(names(out), c("standard", "acceptability",
-        "acceptability_80", "acceptability_90",
-        "acceptability_cat_i", "acceptability_cat_ii", "acceptability_cat_iii"
-    ))
+    temp_cols <- setdiff(
+        names(out),
+        c(
+            "standard",
+            "acceptability",
+            "acceptability_80",
+            "acceptability_90",
+            "acceptability_cat_i",
+            "acceptability_cat_ii",
+            "acceptability_cat_iii"
+        )
+    )
     for (col in temp_cols) {
         if (is.numeric(out[[col]])) {
             out[[col]] <- comfort_from_si_temp(out[[col]], units)
@@ -170,13 +230,19 @@ comfort_adaptive <- function(tdb, tr = tdb, t_running, v = 0.1,
 
 #' @rdname comfort_pmv
 #' @export
-comfort_heat_index <- function(tdb, rh, solar_exposure = 0,
-                               units = c("SI", "IP"),
-                               limit_inputs = TRUE,
-                               round_output = TRUE) {
+comfort_heat_index <- function(
+    tdb,
+    rh,
+    solar_exposure = 0,
+    units = c("SI", "IP"),
+    limit_inputs = TRUE,
+    round_output = TRUE
+) {
     units <- match.arg(units)
     x <- comfort_recycle(
-        tdb = tdb, rh = rh, solar_exposure = solar_exposure
+        tdb = tdb,
+        rh = rh,
+        solar_exposure = solar_exposure
     )
 
     tdb_si <- comfort_to_si_temp(x$tdb, units)
@@ -198,7 +264,11 @@ comfort_heat_index <- function(tdb, rh, solar_exposure = 0,
     }
 
     category <- comfort_heat_index_category(heat_index_f)
-    heat_index <- if (units == "IP") heat_index_f else get_c_from_f(heat_index_f)
+    heat_index <- if (units == "IP") {
+        heat_index_f
+    } else {
+        get_c_from_f(heat_index_f)
+    }
     if (isTRUE(round_output)) {
         heat_index <- round(heat_index, 1L)
     }
@@ -266,9 +336,16 @@ comfort_heat_index <- function(tdb, rh, solar_exposure = 0,
 #'         n = c(55, 35)
 #'     )
 #' @export
-comfort_model_pmv <- function(tr = NULL, vr = 0.1, met = 1.2, clo = 0.5,
-                              wme = 0, model = "7730-2005",
-                              limit_inputs = FALSE, round_output = FALSE) {
+comfort_model_pmv <- function(
+    tr = NULL,
+    vr = 0.1,
+    met = 1.2,
+    clo = 0.5,
+    wme = 0,
+    model = "7730-2005",
+    limit_inputs = FALSE,
+    round_output = FALSE
+) {
     model <- match.arg(model, "7730-2005")
     # Layer model objects hold fixed environmental assumptions for a whole
     # contour/grid evaluation; vectorized point inputs belong in comfort_pmv().
@@ -281,19 +358,33 @@ comfort_model_pmv <- function(tr = NULL, vr = 0.1, met = 1.2, clo = 0.5,
     round_output <- comfort_check_flag(round_output, "`round_output`")
     comfort_model(
         "pmv",
-        list(tr = tr, vr = vr, met = met, clo = clo, wme = wme,
-             model = model, limit_inputs = limit_inputs,
-             round_output = round_output)
+        list(
+            tr = tr,
+            vr = vr,
+            met = met,
+            clo = clo,
+            wme = wme,
+            model = model,
+            limit_inputs = limit_inputs,
+            round_output = round_output
+        )
     )
 }
 
 #' @rdname comfort_model_pmv
 #' @export
-comfort_model_set <- function(tr = NULL, v = 0.1, met = 1.2, clo = 0.5,
-                              wme = 0, limit_inputs = FALSE,
-                              body_surface_area = 1.8258, p_atm = NULL,
-                              position = c("standing", "sitting"),
-                              round_output = FALSE) {
+comfort_model_set <- function(
+    tr = NULL,
+    v = 0.1,
+    met = 1.2,
+    clo = 0.5,
+    wme = 0,
+    limit_inputs = FALSE,
+    body_surface_area = 1.8258,
+    p_atm = NULL,
+    position = c("standing", "sitting"),
+    round_output = FALSE
+) {
     position <- match.arg(position)
     tr <- comfort_check_scalar_finite(tr, "`tr`", allow_null = TRUE)
     v <- comfort_check_scalar_finite(v, "`v`")
@@ -301,16 +392,26 @@ comfort_model_set <- function(tr = NULL, v = 0.1, met = 1.2, clo = 0.5,
     clo <- comfort_check_scalar_finite(clo, "`clo`")
     wme <- comfort_check_scalar_finite(wme, "`wme`")
     body_surface_area <- comfort_check_scalar_finite(
-        body_surface_area, "`body_surface_area`"
+        body_surface_area,
+        "`body_surface_area`"
     )
     p_atm <- comfort_check_scalar_finite(p_atm, "`p_atm`", allow_null = TRUE)
     limit_inputs <- comfort_check_flag(limit_inputs, "`limit_inputs`")
     round_output <- comfort_check_flag(round_output, "`round_output`")
     comfort_model(
         "set",
-        list(tr = tr, v = v, met = met, clo = clo, wme = wme,
-             limit_inputs = limit_inputs, body_surface_area = body_surface_area,
-             p_atm = p_atm, position = position, round_output = round_output)
+        list(
+            tr = tr,
+            v = v,
+            met = met,
+            clo = clo,
+            wme = wme,
+            limit_inputs = limit_inputs,
+            body_surface_area = body_surface_area,
+            p_atm = p_atm,
+            position = position,
+            round_output = round_output
+        )
     )
 }
 
@@ -319,10 +420,15 @@ comfort_model_set <- function(tr = NULL, v = 0.1, met = 1.2, clo = 0.5,
 #' @param standard Adaptive comfort standard.
 #' @param category Adaptive comfort category.
 #' @export
-comfort_model_adaptive <- function(t_running, tr = NULL, v = 0.1,
-                                   standard = c("ashrae55", "en16798"),
-                                   category = NULL, limit_inputs = TRUE,
-                                   round_output = FALSE) {
+comfort_model_adaptive <- function(
+    t_running,
+    tr = NULL,
+    v = 0.1,
+    standard = c("ashrae55", "en16798"),
+    category = NULL,
+    limit_inputs = TRUE,
+    round_output = FALSE
+) {
     standard <- match.arg(standard)
     t_running <- comfort_check_scalar_finite(t_running, "`t_running`")
     tr <- comfort_check_scalar_finite(tr, "`tr`", allow_null = TRUE)
@@ -331,30 +437,44 @@ comfort_model_adaptive <- function(t_running, tr = NULL, v = 0.1,
     round_output <- comfort_check_flag(round_output, "`round_output`")
     comfort_model(
         "adaptive",
-        list(t_running = t_running, tr = tr, v = v, standard = standard,
-             category = category, limit_inputs = limit_inputs,
-             round_output = round_output)
+        list(
+            t_running = t_running,
+            tr = tr,
+            v = v,
+            standard = standard,
+            category = category,
+            limit_inputs = limit_inputs,
+            round_output = round_output
+        )
     )
 }
 
 #' @rdname comfort_model_pmv
 #' @export
-comfort_model_heat_index <- function(solar_exposure = 0,
-                                     limit_inputs = TRUE,
-                                     round_output = FALSE) {
+comfort_model_heat_index <- function(
+    solar_exposure = 0,
+    limit_inputs = TRUE,
+    round_output = FALSE
+) {
     solar_exposure <- comfort_check_scalar_finite(
-        solar_exposure, "`solar_exposure`"
+        solar_exposure,
+        "`solar_exposure`"
     )
     if (solar_exposure < 0 || solar_exposure > 1) {
-        stop("`solar_exposure` must be a single finite value from 0 to 1.",
-            call. = FALSE)
+        stop(
+            "`solar_exposure` must be a single finite value from 0 to 1.",
+            call. = FALSE
+        )
     }
     limit_inputs <- comfort_check_flag(limit_inputs, "`limit_inputs`")
     round_output <- comfort_check_flag(round_output, "`round_output`")
     comfort_model(
         "heat_index",
-        list(solar_exposure = solar_exposure, limit_inputs = limit_inputs,
-             round_output = round_output)
+        list(
+            solar_exposure = solar_exposure,
+            limit_inputs = limit_inputs,
+            round_output = round_output
+        )
     )
 }
 
@@ -444,13 +564,14 @@ comfort_standard_en15251_2007 <- function(breaks = c(-0.7, -0.2, 0.2, 0.7)) {
 #'     )
 #'
 #' @export
-comfort_strategy_givoni <- function(mean_outdoor = 19,
-                                    units = c("SI", "IP")) {
+comfort_strategy_givoni <- function(mean_outdoor = 19, units = c("SI", "IP")) {
     units <- match.arg(units)
     mean_outdoor <- as.numeric(mean_outdoor)
     if (length(mean_outdoor) != 1L || !is.finite(mean_outdoor)) {
-        stop("`mean_outdoor` must be a single finite temperature.",
-            call. = FALSE)
+        stop(
+            "`mean_outdoor` must be a single finite temperature.",
+            call. = FALSE
+        )
     }
     structure(
         list(mean_outdoor = mean_outdoor, units = units),
@@ -511,13 +632,15 @@ comfort_strategy_givoni <- function(mean_outdoor = 19,
 #'     )
 #'
 #' @export
-element_comfort_zone <- function(fill = ggplot2::waiver(),
-                                 colour = ggplot2::waiver(),
-                                 linewidth = ggplot2::waiver(),
-                                 linetype = ggplot2::waiver(),
-                                 alpha = ggplot2::waiver(),
-                                 linejoin = ggplot2::waiver(),
-                                 color = NULL) {
+element_comfort_zone <- function(
+    fill = ggplot2::waiver(),
+    colour = ggplot2::waiver(),
+    linewidth = ggplot2::waiver(),
+    linetype = ggplot2::waiver(),
+    alpha = ggplot2::waiver(),
+    linejoin = ggplot2::waiver(),
+    color = NULL
+) {
     if (!is.null(color)) {
         colour <- color
     }

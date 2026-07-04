@@ -16,8 +16,10 @@ comfort_model_type <- function(model) {
 }
 
 comfort_check_model <- function(model) {
-    if (!inherits(model, "PsyComfortModel") ||
-            !model$type %in% c("pmv", "set", "adaptive", "heat_index")) {
+    if (
+        !inherits(model, "PsyComfortModel") ||
+            !model$type %in% c("pmv", "set", "adaptive", "heat_index")
+    ) {
         stop("`model` must be created by comfort_model_*().", call. = FALSE)
     }
     invisible(model)
@@ -42,18 +44,24 @@ comfort_standard_alpha <- function(override, defaults, i) {
 }
 
 comfort_check_standard <- function(standard) {
-    if (!inherits(standard, "PsyComfortStandard") ||
-            !standard$name %in% c("ashrae55_2017", "en15251_2007")) {
-        stop("`standard` must be created by comfort_standard_*().",
-            call. = FALSE)
+    if (
+        !inherits(standard, "PsyComfortStandard") ||
+            !standard$name %in% c("ashrae55_2017", "en15251_2007")
+    ) {
+        stop(
+            "`standard` must be created by comfort_standard_*().",
+            call. = FALSE
+        )
     }
     standard
 }
 
 comfort_check_givoni_strategy <- function(strategy) {
     if (!inherits(strategy, "PsyComfortGivoniStrategy")) {
-        stop("`strategy` must be created by comfort_strategy_givoni().",
-            call. = FALSE)
+        stop(
+            "`strategy` must be created by comfort_strategy_givoni().",
+            call. = FALSE
+        )
     }
     strategy$units <- match.arg(strategy$units, c("SI", "IP"))
     strategy
@@ -82,8 +90,11 @@ comfort_check_flag <- function(x, name) {
 comfort_check_breaks <- function(x, name, n_min = 2L) {
     x <- sort(unique(as.numeric(x)))
     if (length(x) < n_min || any(!is.finite(x))) {
-        stop(name, " must contain finite increasing PMV boundaries.",
-            call. = FALSE)
+        stop(
+            name,
+            " must contain finite increasing PMV boundaries.",
+            call. = FALSE
+        )
     }
     x
 }
@@ -93,8 +104,11 @@ comfort_check_breaks <- function(x, name, n_min = 2L) {
 comfort_check_ordered_breaks <- function(x, name, n_min = 2L) {
     x <- as.numeric(x)
     if (length(x) < n_min || any(!is.finite(x)) || any(diff(x) <= 0)) {
-        stop(name, " must contain finite strictly increasing PMV boundaries.",
-            call. = FALSE)
+        stop(
+            name,
+            " must contain finite strictly increasing PMV boundaries.",
+            call. = FALSE
+        )
     }
     x
 }
@@ -165,7 +179,10 @@ comfort_stat_pressure <- function(data, pres) {
         pres <- unique(data$pres)
     }
     if (length(pres) != 1L || !is.finite(pres)) {
-        stop("`pres` must resolve to a single finite pressure value.", call. = FALSE)
+        stop(
+            "`pres` must resolve to a single finite pressure value.",
+            call. = FALSE
+        )
     }
     pres
 }
@@ -180,9 +197,17 @@ comfort_stat_context <- function(data, units, pres) {
 }
 
 comfort_grid_n <- function(n) {
-    if (!is.numeric(n) || length(n) < 1L || length(n) > 2L ||
-            any(!is.finite(n)) || any(n < 2)) {
-        stop("`n` must be one or two finite numbers greater than 1.", call. = FALSE)
+    if (
+        !is.numeric(n) ||
+            length(n) < 1L ||
+            length(n) > 2L ||
+            any(!is.finite(n)) ||
+            any(n < 2)
+    ) {
+        stop(
+            "`n` must be one or two finite numbers greater than 1.",
+            call. = FALSE
+        )
     }
     as.integer(rep(n, length.out = 2L))
 }
@@ -191,7 +216,8 @@ comfort_default_n <- function(model, n = NULL) {
     if (!is.null(n)) {
         return(n)
     }
-    switch(comfort_model_type(model),
+    switch(
+        comfort_model_type(model),
         pmv = c(360L, 220L),
         set = c(80L, 50L),
         adaptive = c(240L, 160L),
@@ -201,8 +227,10 @@ comfort_default_n <- function(model, n = NULL) {
 
 comfort_pmv_curve_n <- function(n) {
     if (!is.numeric(n) || length(n) != 1L || !is.finite(n) || n < 8) {
-        stop("`n` must be a single finite number greater than or equal to 8.",
-            call. = FALSE)
+        stop(
+            "`n` must be a single finite number greater than or equal to 8.",
+            call. = FALSE
+        )
     }
     as.integer(n)
 }
@@ -215,9 +243,17 @@ comfort_grid_limits <- function(units, tdb_lim, hum_lim) {
     )
 }
 
-comfort_grid_matrix <- function(model, metric, n, units, pres, tdb_lim, hum_lim,
-                                at = c("centers", "nodes"),
-                                boundary = c("na", "saturation")) {
+comfort_grid_matrix <- function(
+    model,
+    metric,
+    n,
+    units,
+    pres,
+    tdb_lim,
+    hum_lim,
+    at = c("centers", "nodes"),
+    boundary = c("na", "saturation")
+) {
     at <- match.arg(at)
     boundary <- match.arg(boundary)
     n <- comfort_grid_n(n)
@@ -225,15 +261,20 @@ comfort_grid_matrix <- function(model, metric, n, units, pres, tdb_lim, hum_lim,
     # Grid consumers need different sampling locations: nodes for isoband
     # topology, centers for tile values and label placement.
     tdb_edges <- seq(lim$tdb[[1L]], lim$tdb[[2L]], length.out = n[[1L]] + 1L)
-    hum_display_edges <- seq(lim$hum[[1L]], lim$hum[[2L]],
-        length.out = n[[2L]] + 1L)
+    hum_display_edges <- seq(
+        lim$hum[[1L]],
+        lim$hum[[2L]],
+        length.out = n[[2L]] + 1L
+    )
     humratio_edges <- narrow_hum(hum_display_edges, units)
     if (at == "nodes") {
         tdb <- tdb_edges
         humratio <- humratio_edges
     } else {
         tdb <- (tdb_edges[-1L] + tdb_edges[-length(tdb_edges)]) / 2
-        humratio <- (humratio_edges[-1L] + humratio_edges[-length(humratio_edges)]) / 2
+        humratio <- (humratio_edges[-1L] +
+            humratio_edges[-length(humratio_edges)]) /
+            2
     }
     grid <- expand.grid(tdb = tdb, humratio = humratio)
 
@@ -264,9 +305,19 @@ comfort_grid_matrix <- function(model, metric, n, units, pres, tdb_lim, hum_lim,
     )
 }
 
-comfort_grid_data <- function(model, metric, n, gap, units, pres, mollier,
-                              tdb_lim, hum_lim, na.rm = FALSE,
-                              psychro_scales = NULL) {
+comfort_grid_data <- function(
+    model,
+    metric,
+    n,
+    gap,
+    units,
+    pres,
+    mollier,
+    tdb_lim,
+    hum_lim,
+    na.rm = FALSE,
+    psychro_scales = NULL
+) {
     m <- comfort_grid_matrix(model, metric, n, units, pres, tdb_lim, hum_lim)
     gap <- psychro_bin_gap(gap)
     sat <- psychro_saturation_humratio(m$tdb_edges, units, pres)
@@ -285,8 +336,10 @@ comfort_grid_data <- function(model, metric, n, gap, units, pres, mollier,
     x_width <- x1 - x0
     y_height <- y1 - y0
 
-    keep <- is.finite(s0) & is.finite(s1) &
-        x_width > 0 & y_height > 0 &
+    keep <- is.finite(s0) &
+        is.finite(s1) &
+        x_width > 0 &
+        y_height > 0 &
         y0 < pmax(s0, s1)
     if (!any(keep)) {
         return(comfort_empty_tile())
@@ -298,9 +351,16 @@ comfort_grid_data <- function(model, metric, n, gap, units, pres, mollier,
         # Cell centers can lie above saturation even when part of the tile is
         # visible; resample near the valid saturated edge instead of dropping it.
         value[missing] <- comfort_grid_boundary_values(
-            model, m$metric, units, pres,
-            x0[missing], x1[missing], y0[missing], y1[missing],
-            s0[missing], s1[missing]
+            model,
+            m$metric,
+            units,
+            pres,
+            x0[missing],
+            x1[missing],
+            y0[missing],
+            y1[missing],
+            s0[missing],
+            s1[missing]
         )
     }
 
@@ -318,20 +378,50 @@ comfort_grid_data <- function(model, metric, n, gap, units, pres, mollier,
         metric = rep(m$metric, sum(keep)),
         group = seq_len(sum(keep))
     ))
-    out <- psychro_output_xy(out, out$tdb, out$humratio, mollier,
-        psychro_scales = psychro_scales, units = units)
+    out <- psychro_output_xy(
+        out,
+        out$tdb,
+        out$humratio,
+        mollier,
+        psychro_scales = psychro_scales,
+        units = units
+    )
     psychro_output_tile_size(
-        out, x0[keep], x1[keep], y0[keep], y1[keep], mollier,
-        psychro_scales = psychro_scales, units = units, gap = gap
+        out,
+        x0[keep],
+        x1[keep],
+        y0[keep],
+        y1[keep],
+        mollier,
+        psychro_scales = psychro_scales,
+        units = units,
+        gap = gap
     )
 }
-comfort_band_data <- function(model, metric, levels, n, units, pres, mollier,
-                              tdb_lim, hum_lim, psychro_scales = NULL) {
+comfort_band_data <- function(
+    model,
+    metric,
+    levels,
+    n,
+    units,
+    pres,
+    mollier,
+    tdb_lim,
+    hum_lim,
+    psychro_scales = NULL
+) {
     # Filled bands are generated on node grids so isoband can preserve polygon
     # topology across adjacent cells.
     m <- comfort_grid_matrix(
-        model, metric, n, units, pres, tdb_lim, hum_lim,
-        at = "nodes", boundary = "saturation"
+        model,
+        metric,
+        n,
+        units,
+        pres,
+        tdb_lim,
+        hum_lim,
+        at = "nodes",
+        boundary = "saturation"
     )
     breaks <- comfort_band_breaks(m$metric, m$value, levels, units)
     if (length(breaks) < 2L) {
@@ -339,36 +429,67 @@ comfort_band_data <- function(model, metric, levels, n, units, pres, mollier,
     }
 
     bands <- isoband::isobands(
-        x = m$tdb, y = m$humratio, z = t(m$value),
+        x = m$tdb,
+        y = m$humratio,
+        z = t(m$value),
         levels_low = breaks[-length(breaks)],
         levels_high = breaks[-1L]
     )
     comfort_isoband_data(
-        bands, breaks[-length(breaks)], breaks[-1L],
-        m$metric, mollier, geom = "polygon",
-        psychro_scales = psychro_scales, units = units
+        bands,
+        breaks[-length(breaks)],
+        breaks[-1L],
+        m$metric,
+        mollier,
+        geom = "polygon",
+        psychro_scales = psychro_scales,
+        units = units
     )
 }
 
 comfort_empty_band <- function() {
     new_data_frame(list(
-        tdb = numeric(), humratio = numeric(), x = numeric(), y = numeric(),
-        level = character(), level_low = numeric(), level_high = numeric(),
-        level_mid = numeric(), value = numeric(), group = character(),
-        subgroup = integer(), metric = character()
+        tdb = numeric(),
+        humratio = numeric(),
+        x = numeric(),
+        y = numeric(),
+        level = character(),
+        level_low = numeric(),
+        level_high = numeric(),
+        level_mid = numeric(),
+        value = numeric(),
+        group = character(),
+        subgroup = integer(),
+        metric = character()
     ))
 }
 
 comfort_empty_tile <- function() {
     new_data_frame(list(
-        tdb = numeric(), humratio = numeric(), x = numeric(), y = numeric(),
-        width = numeric(), height = numeric(),
-        value = numeric(), metric = character(), group = integer()
+        tdb = numeric(),
+        humratio = numeric(),
+        x = numeric(),
+        y = numeric(),
+        width = numeric(),
+        height = numeric(),
+        value = numeric(),
+        metric = character(),
+        group = integer()
     ))
 }
 
-comfort_grid_boundary_values <- function(model, metric, units, pres,
-                                         x0, x1, y0, y1, s0, s1) {
+comfort_grid_boundary_values <- function(
+    model,
+    metric,
+    units,
+    pres,
+    x0,
+    x1,
+    y0,
+    y1,
+    s0,
+    s1
+) {
     # For partially clipped tiles, choose a representative point inside the
     # valid psychrometric domain so the color reflects the visible fragment.
     tdb <- (x0 + x1) / 2
@@ -384,7 +505,8 @@ comfort_grid_boundary_values <- function(model, metric, units, pres,
             x0[outside_mid] + (x1[outside_mid] - x0[outside_mid]) * eps,
             x1[outside_mid] - (x1[outside_mid] - x0[outside_mid]) * eps
         )
-        humratio[outside_mid] <- y0[outside_mid] + (y1[outside_mid] - y0[outside_mid]) * eps
+        humratio[outside_mid] <- y0[outside_mid] +
+            (y1[outside_mid] - y0[outside_mid]) * eps
     }
 
     rh <- comfort_relhum_from_humratio(tdb, humratio, units, pres)
@@ -400,17 +522,28 @@ comfort_grid_boundary_values <- function(model, metric, units, pres,
     out
 }
 
-comfort_contour_data <- function(model, metric, breaks, n, units, pres,
-                                 mollier, tdb_lim, hum_lim,
-                                 contour_method = c("auto", "root", "isoband"),
-                                 label_path = FALSE,
-                                 psychro_scales = NULL) {
+comfort_contour_data <- function(
+    model,
+    metric,
+    breaks,
+    n,
+    units,
+    pres,
+    mollier,
+    tdb_lim,
+    hum_lim,
+    contour_method = c("auto", "root", "isoband"),
+    label_path = FALSE,
+    psychro_scales = NULL
+) {
     contour_method <- match.arg(contour_method)
     metric <- comfort_model_metric(model, metric)
     if (contour_method == "auto") {
         # PMV curves are root-traced because grid isolines can miss steep
         # segments near saturation; other metrics use the cheaper grid path.
-        contour_method <- if (comfort_model_type(model) == "pmv" && metric == "pmv") {
+        contour_method <- if (
+            comfort_model_type(model) == "pmv" && metric == "pmv"
+        ) {
             "root"
         } else {
             "isoband"
@@ -418,8 +551,10 @@ comfort_contour_data <- function(model, metric, breaks, n, units, pres,
     }
     if (contour_method == "root") {
         if (comfort_model_type(model) != "pmv" || metric != "pmv") {
-            stop("Root-traced contours are only available for PMV.",
-                call. = FALSE)
+            stop(
+                "Root-traced contours are only available for PMV.",
+                call. = FALSE
+            )
         }
         if (is.null(breaks)) {
             breaks <- comfort_contour_breaks("pmv", numeric(), units)
@@ -427,8 +562,16 @@ comfort_contour_data <- function(model, metric, breaks, n, units, pres,
         # Root-traced PMV contours already return curve vertices; the common
         # label code below can treat them like isoband isolines.
         out <- comfort_pmv_curve_data(
-            model, breaks, n[[1L]], units, pres, mollier, tdb_lim, hum_lim,
-            label = "none", psychro_scales = psychro_scales
+            model,
+            breaks,
+            n[[1L]],
+            units,
+            pres,
+            mollier,
+            tdb_lim,
+            hum_lim,
+            label = "none",
+            psychro_scales = psychro_scales
         )
         out <- comfort_add_contour_labels(out)
         if (isTRUE(label_path)) {
@@ -438,8 +581,15 @@ comfort_contour_data <- function(model, metric, breaks, n, units, pres,
     }
 
     m <- comfort_grid_matrix(
-        model, metric, n, units, pres, tdb_lim, hum_lim,
-        at = "nodes", boundary = "saturation"
+        model,
+        metric,
+        n,
+        units,
+        pres,
+        tdb_lim,
+        hum_lim,
+        at = "nodes",
+        boundary = "saturation"
     )
     z <- m$value
     if (is.null(breaks)) {
@@ -451,13 +601,22 @@ comfort_contour_data <- function(model, metric, breaks, n, units, pres,
     }
 
     lines <- isoband::isolines(
-        x = m$tdb, y = m$humratio, z = t(z), levels = breaks
+        x = m$tdb,
+        y = m$humratio,
+        z = t(z),
+        levels = breaks
     )
     # Normalize isoband's path representation to the columns expected by
     # ggplot stats and psychrometric coordinate transforms.
     out <- comfort_isoband_data(
-        lines, breaks, breaks, m$metric, mollier, geom = "path",
-        psychro_scales = psychro_scales, units = units
+        lines,
+        breaks,
+        breaks,
+        m$metric,
+        mollier,
+        geom = "path",
+        psychro_scales = psychro_scales,
+        units = units
     )
     out <- comfort_add_contour_labels(out)
     if (isTRUE(label_path)) {
@@ -468,9 +627,15 @@ comfort_contour_data <- function(model, metric, breaks, n, units, pres,
 
 comfort_empty_contour <- function() {
     new_data_frame(list(
-        tdb = numeric(), humratio = numeric(), x = numeric(), y = numeric(),
-        level = numeric(), value = numeric(), group = character(),
-        label = character(), metric = character()
+        tdb = numeric(),
+        humratio = numeric(),
+        x = numeric(),
+        y = numeric(),
+        level = numeric(),
+        value = numeric(),
+        group = character(),
+        label = character(),
+        metric = character()
     ))
 }
 
@@ -515,7 +680,11 @@ comfort_orient_contour_label_paths <- function(data) {
 
         reverse <- if (abs(dy) >= abs(dx)) dy < 0 else dx < 0
         if (isTRUE(reverse)) {
-            group_data <- group_data[rev(seq_len(nrow(group_data))), , drop = FALSE]
+            group_data <- group_data[
+                rev(seq_len(nrow(group_data))),
+                ,
+                drop = FALSE
+            ]
         }
         group_data
     })
@@ -587,15 +756,19 @@ comfort_band_breaks <- function(metric, z, levels = NULL, units = "SI") {
             comfort_heat_index_thresholds(units),
             z_range[[2L]] + eps
         )
-        breaks <- sort(unique(breaks[breaks > z_range[[1L]] - 2 * eps &
-            breaks < z_range[[2L]] + 2 * eps]))
+        breaks <- sort(unique(breaks[
+            breaks > z_range[[1L]] - 2 * eps &
+                breaks < z_range[[2L]] + 2 * eps
+        ]))
         return(breaks)
     }
 
     n <- if (is.null(levels)) 64L else as.integer(levels[[1L]])
     if (!is.finite(n) || n < 1L) {
-        stop("`levels` must be a positive count or a numeric break vector.",
-            call. = FALSE)
+        stop(
+            "`levels` must be a positive count or a numeric break vector.",
+            call. = FALSE
+        )
     }
 
     z_range <- range(z, finite = TRUE)
@@ -611,13 +784,26 @@ comfort_band_breaks <- function(metric, z, levels = NULL, units = "SI") {
     seq(z_range[[1L]], z_range[[2L]], length.out = n + 1L)
 }
 
-comfort_isoband_data <- function(iso, low, high, metric, mollier,
-                                 geom = c("polygon", "path"),
-                                 psychro_scales = NULL, units = NULL) {
+comfort_isoband_data <- function(
+    iso,
+    low,
+    high,
+    metric,
+    mollier,
+    geom = c("polygon", "path"),
+    psychro_scales = NULL,
+    units = NULL
+) {
     geom <- match.arg(geom)
     lengths <- vapply(iso, function(x) length(x$x), integer(1L))
     if (!any(lengths)) {
-        return(if (geom == "polygon") comfort_empty_band() else comfort_empty_contour())
+        return(
+            if (geom == "polygon") {
+                comfort_empty_band()
+            } else {
+                comfort_empty_contour()
+            }
+        )
     }
 
     out <- vector("list", length(iso))
@@ -657,42 +843,88 @@ comfort_isoband_data <- function(iso, low, high, metric, mollier,
     }
     out <- do.call(rbind, out[!vapply(out, is.null, logical(1L))])
     row.names(out) <- NULL
-    psychro_output_xy(out, out$tdb, out$humratio, mollier,
-        psychro_scales = psychro_scales, units = units)
+    psychro_output_xy(
+        out,
+        out$tdb,
+        out$humratio,
+        mollier,
+        psychro_scales = psychro_scales,
+        units = units
+    )
 }
 
-comfort_zone_data <- function(model, metric, range, n, gap, units, pres,
-                              mollier, tdb_lim, hum_lim, na.rm = FALSE,
-                              rootband_levels = NULL,
-                              rootband_cache = NULL,
-                              psychro_scales = NULL) {
+comfort_zone_data <- function(
+    model,
+    metric,
+    range,
+    n,
+    gap,
+    units,
+    pres,
+    mollier,
+    tdb_lim,
+    hum_lim,
+    na.rm = FALSE,
+    rootband_levels = NULL,
+    rootband_cache = NULL,
+    psychro_scales = NULL
+) {
     if (comfort_model_type(model) == "adaptive") {
-        return(comfort_zone_adaptive(model, units, mollier, tdb_lim, hum_lim,
-            psychro_scales = psychro_scales))
+        return(comfort_zone_adaptive(
+            model,
+            units,
+            mollier,
+            tdb_lim,
+            hum_lim,
+            psychro_scales = psychro_scales
+        ))
     }
 
     metric <- comfort_model_metric(model, metric)
     range <- comfort_zone_range(model, metric, range, units)
     if (comfort_model_type(model) == "pmv" && metric == "pmv") {
         return(comfort_pmv_band_data(
-            model, range, n[[1L]], units, pres, mollier, tdb_lim, hum_lim,
-            rootband_levels = rootband_levels, rootband_cache = rootband_cache,
+            model,
+            range,
+            n[[1L]],
+            units,
+            pres,
+            mollier,
+            tdb_lim,
+            hum_lim,
+            rootband_levels = rootband_levels,
+            rootband_cache = rootband_cache,
             psychro_scales = psychro_scales
         ))
     }
-    comfort_band_data(model, metric, range, n, units, pres, mollier,
-        tdb_lim, hum_lim, psychro_scales = psychro_scales)
+    comfort_band_data(
+        model,
+        metric,
+        range,
+        n,
+        units,
+        pres,
+        mollier,
+        tdb_lim,
+        hum_lim,
+        psychro_scales = psychro_scales
+    )
 }
 
 comfort_zone_range <- function(model, metric, range, units = "SI") {
     if (!is.null(range)) {
-        if (!is.numeric(range) || length(range) != 2L ||
-                any(!is.finite(range)) || range[[1L]] >= range[[2L]]) {
+        if (
+            !is.numeric(range) ||
+                length(range) != 2L ||
+                any(!is.finite(range)) ||
+                range[[1L]] >= range[[2L]]
+        ) {
             stop("`range` must be a finite increasing pair.", call. = FALSE)
         }
         return(range)
     }
-    switch(metric,
+    switch(
+        metric,
         pmv = c(-0.5, 0.5),
         set = c(22.2, 25.6),
         heat_index = comfort_heat_index_thresholds(units)[c(1L, 2L)],
@@ -704,7 +936,8 @@ comfort_model_metric <- function(model, metric = NULL) {
     if (!is.null(metric)) {
         return(as.character(metric)[[1L]])
     }
-    switch(model$type,
+    switch(
+        model$type,
         pmv = "pmv",
         set = "set",
         adaptive = "acceptability",
@@ -714,8 +947,12 @@ comfort_model_metric <- function(model, metric = NULL) {
 
 comfort_metric_value <- function(result, metric) {
     if (!metric %in% names(result)) {
-        stop("Metric `", metric, "` is not produced by this comfort model.",
-            call. = FALSE)
+        stop(
+            "Metric `",
+            metric,
+            "` is not produced by this comfort model.",
+            call. = FALSE
+        )
     }
     value <- result[[metric]]
     if (is.logical(value)) {
@@ -731,29 +968,56 @@ comfort_apply_model <- function(model, tdb, rh, units, pres) {
 
     # Layer stats operate in chart coordinates, so dispatch here converts fixed
     # model parameters to the calculator API while preserving unrounded outputs.
-    switch(model$type,
+    switch(
+        model$type,
         pmv = comfort_pmv(
-            tdb = tdb, tr = tr, vr = p$vr, rh = rh, met = p$met,
-            clo = p$clo, wme = p$wme, units = units,
-            limit_inputs = p$limit_inputs, round_output = p$round_output
+            tdb = tdb,
+            tr = tr,
+            vr = p$vr,
+            rh = rh,
+            met = p$met,
+            clo = p$clo,
+            wme = p$wme,
+            units = units,
+            limit_inputs = p$limit_inputs,
+            round_output = p$round_output
         ),
         set = comfort_set(
-            tdb = tdb, tr = tr, v = p$v, rh = rh, met = p$met,
-            clo = p$clo, wme = p$wme, units = units,
+            tdb = tdb,
+            tr = tr,
+            v = p$v,
+            rh = rh,
+            met = p$met,
+            clo = p$clo,
+            wme = p$wme,
+            units = units,
             limit_inputs = p$limit_inputs,
             round_output = p$round_output,
             body_surface_area = p$body_surface_area,
-            p_atm = if (is.null(p$p_atm)) comfort_pressure_pa(pres, units) else p$p_atm,
+            p_atm = if (is.null(p$p_atm)) {
+                comfort_pressure_pa(pres, units)
+            } else {
+                p$p_atm
+            },
             position = p$position
         ),
         adaptive = comfort_adaptive(
-            tdb = tdb, tr = tr, t_running = p$t_running, v = p$v,
-            standard = p$standard, category = p$category, units = units,
-            limit_inputs = p$limit_inputs, round_output = p$round_output
+            tdb = tdb,
+            tr = tr,
+            t_running = p$t_running,
+            v = p$v,
+            standard = p$standard,
+            category = p$category,
+            units = units,
+            limit_inputs = p$limit_inputs,
+            round_output = p$round_output
         ),
         heat_index = comfort_heat_index(
-            tdb = tdb, rh = rh, solar_exposure = p$solar_exposure,
-            units = units, limit_inputs = p$limit_inputs,
+            tdb = tdb,
+            rh = rh,
+            solar_exposure = p$solar_exposure,
+            units = units,
+            limit_inputs = p$limit_inputs,
             round_output = p$round_output
         )
     )

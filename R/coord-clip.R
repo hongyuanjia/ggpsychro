@@ -59,7 +59,9 @@ coord_clip__textpath_lines <- function(grob, panel, open_lines = FALSE) {
     if (coord_clip__is_line_grob(grob)) {
         split <- coord_clip__split_styled_grob(grob)
         clipped <- lapply(
-            split, coord_clip__polyclip_grob, panel = panel,
+            split,
+            coord_clip__polyclip_grob,
+            panel = panel,
             open_lines = open_lines
         )
         if (length(clipped) == 1L) {
@@ -70,7 +72,9 @@ coord_clip__textpath_lines <- function(grob, panel, open_lines = FALSE) {
     if (!is.null(grob$children)) {
         children <- as.list(grob$children)
         children <- lapply(
-            children, coord_clip__textpath_lines, panel = panel,
+            children,
+            coord_clip__textpath_lines,
+            panel = panel,
             open_lines = open_lines
         )
         grob$children <- do.call(grid::gList, children)
@@ -78,7 +82,9 @@ coord_clip__textpath_lines <- function(grob, panel, open_lines = FALSE) {
     }
     if (!is.null(grob$grobs)) {
         grob$grobs <- lapply(
-            grob$grobs, coord_clip__textpath_lines, panel = panel,
+            grob$grobs,
+            coord_clip__textpath_lines,
+            panel = panel,
             open_lines = open_lines
         )
     }
@@ -95,7 +101,9 @@ coord_clip__polyclip_grob <- function(grob, panel, open_lines = FALSE) {
             }
         }
         return(gridGeometry::polyclipGrob(
-            grob, panel, "intersection",
+            grob,
+            panel,
+            "intersection",
             closedFn = coord_clip__xy_list_to_null,
             name = grob$name,
             gp = grob$gp %||% grid::gpar()
@@ -130,7 +138,10 @@ coord_clip__open_line <- function(grob, panel) {
         # closed = FALSE is the important part: these are stroked contour
         # segments, not filled polygons, so boundary connector edges are invalid.
         clipped <- polyclip::polyclip(
-            line, panel_path, op = "intersection", closed = FALSE
+            line,
+            panel_path,
+            op = "intersection",
+            closed = FALSE
         )
         for (segment in clipped) {
             if (length(segment$x) < 2L || length(segment$y) < 2L) {
@@ -147,15 +158,19 @@ coord_clip__open_line <- function(grob, panel) {
     }
     segments <- segments[seq_len(out_group)]
     segment_lengths <- vapply(
-        segments, function(segment) length(segment$x), integer(1L)
+        segments,
+        function(segment) length(segment$x),
+        integer(1L)
     )
 
     grid::polylineGrob(
         x = grid::unit(
-            unlist(lapply(segments, `[[`, "x"), use.names = FALSE), "in"
+            unlist(lapply(segments, `[[`, "x"), use.names = FALSE),
+            "in"
         ),
         y = grid::unit(
-            unlist(lapply(segments, `[[`, "y"), use.names = FALSE), "in"
+            unlist(lapply(segments, `[[`, "y"), use.names = FALSE),
+            "in"
         ),
         id = rep.int(seq_along(segments), segment_lengths),
         arrow = grob$arrow,
@@ -169,9 +184,14 @@ coord_clip__open_line <- function(grob, panel) {
 coord_clip__panel_path_inches <- function(panel, grob) {
     width <- attr(grob, "psychro_panel_width_in", exact = TRUE)
     height <- attr(grob, "psychro_panel_height_in", exact = TRUE)
-    if (length(width) && length(height) &&
-            is.finite(width) && is.finite(height) &&
-            width > 0 && height > 0) {
+    if (
+        length(width) &&
+            length(height) &&
+            is.finite(width) &&
+            is.finite(height) &&
+            width > 0 &&
+            height > 0
+    ) {
         return(list(list(
             x = grid::convertX(panel$x, "npc", valueOnly = TRUE) * width,
             y = grid::convertY(panel$y, "npc", valueOnly = TRUE) * height
@@ -225,7 +245,8 @@ coord_clip__split_path_grob <- function(grob) {
         id <- grob$id[keep]
         id <- match(id, unique(id))
         grid::pathGrob(
-            grob$x[keep], grob$y[keep],
+            grob$x[keep],
+            grob$y[keep],
             id = id,
             pathId = rep(1L, sum(keep)),
             rule = grob$rule %||% "winding",
@@ -250,7 +271,8 @@ coord_clip__split_polyline_grob <- function(grob) {
     lapply(seq_along(ids), function(i) {
         keep <- id == ids[[i]]
         child <- grid::polylineGrob(
-            grob$x[keep], grob$y[keep],
+            grob$x[keep],
+            grob$y[keep],
             id = rep(1L, sum(keep)),
             arrow = grob$arrow,
             name = paste0(grob$name %||% "polyline", "-", i),
@@ -287,7 +309,8 @@ coord_clip__split_polygon_grob <- function(grob) {
     lapply(seq_along(ids), function(i) {
         keep <- id == ids[[i]]
         grid::polygonGrob(
-            grob$x[keep], grob$y[keep],
+            grob$x[keep],
+            grob$y[keep],
             id = rep(1L, sum(keep)),
             name = paste0(grob$name %||% "polygon", "-", i),
             gp = coord_clip__gpar_slice(grob$gp, i, n)
@@ -327,7 +350,12 @@ coord_clip__filter_data_to_panel <- function(data, panel_params, coord) {
         return(data)
     }
     transformed <- coord$transform(data, panel_params)
-    keep <- psychro_inside_polygon(transformed$x, transformed$y, panel$x, panel$y)
+    keep <- psychro_inside_polygon(
+        transformed$x,
+        transformed$y,
+        panel$x,
+        panel$y
+    )
     data[keep, , drop = FALSE]
 }
 
@@ -343,7 +371,12 @@ coord_clip__polygon_data_to_panel <- function(data, panel_params, coord) {
 
     group <- data$group
     if ("subgroup" %in% names(data)) {
-        group <- interaction(group, data$subgroup, drop = TRUE, lex.order = TRUE)
+        group <- interaction(
+            group,
+            data$subgroup,
+            drop = TRUE,
+            lex.order = TRUE
+        )
     }
     pieces <- split(data, group)
 

@@ -10,9 +10,8 @@ comfort_heat_index_f <- function(tdb_f, rh, solar_exposure) {
     if (any(warm)) {
         # NOAA heat index starts with the simple Steadman regression and only
         # switches to the Rothfusz regression when the apparent heat is high.
-        simple <- 0.5 * (
-            tdb_f[warm] + (61 + 1.2 * (tdb_f[warm] - 68) + 0.094 * rh[warm])
-        )
+        simple <- 0.5 *
+            (tdb_f[warm] + (61 + 1.2 * (tdb_f[warm] - 68) + 0.094 * rh[warm]))
         idx <- which(warm)
         hi[idx] <- simple
 
@@ -22,18 +21,23 @@ comfort_heat_index_f <- function(tdb_f, rh, solar_exposure) {
             r <- rh[roth]
             # Rothfusz regression is defined in degrees F and relative humidity
             # percent; callers convert SI temperatures before reaching here.
-            value <- 2.04901523 * t - 42.379 + 10.14333127 * r -
-                0.22475541 * t * r - 0.00683783 * t^2 -
-                0.05481717 * r^2 + 0.00122874 * t^2 * r +
-                0.00085282 * t * r^2 - 0.00000199 * t^2 * r^2
+            value <- 2.04901523 *
+                t -
+                42.379 +
+                10.14333127 * r -
+                0.22475541 * t * r -
+                0.00683783 * t^2 -
+                0.05481717 * r^2 +
+                0.00122874 * t^2 * r +
+                0.00085282 * t * r^2 -
+                0.00000199 * t^2 * r^2
 
             # NOAA applies small empirical corrections for very dry hot air and
             # very humid warm air after the base Rothfusz regression.
             low_rh <- r <= 13 & t >= 80 & t <= 112
             if (any(low_rh)) {
                 value[low_rh] <- value[low_rh] -
-                    (13 - r[low_rh]) / 4 *
-                    sqrt((17 - abs(t[low_rh] - 95)) / 17)
+                    (13 - r[low_rh]) / 4 * sqrt((17 - abs(t[low_rh] - 95)) / 17)
             }
             high_rh <- r > 85 & t >= 80 & t <= 87
             if (any(high_rh)) {
@@ -62,7 +66,11 @@ comfort_heat_index_thresholds <- function(units) {
 
 comfort_heat_index_category <- function(heat_index_f) {
     labels <- c(
-        "none", "caution", "extreme caution", "danger", "extreme danger"
+        "none",
+        "caution",
+        "extreme caution",
+        "danger",
+        "extreme danger"
     )
     id <- findInterval(heat_index_f, c(80, 90, 103, 125))
     id[!is.finite(heat_index_f)] <- NA_integer_
@@ -80,10 +88,18 @@ comfort_heat_index_zone_specs <- function() {
     )
 }
 
-comfort_heat_index_zone_data <- function(model, category_id = NULL, n, units, pres,
-                                         mollier, tdb_lim, hum_lim,
-                                         grid_cache = NULL,
-                                         psychro_scales = NULL) {
+comfort_heat_index_zone_data <- function(
+    model,
+    category_id = NULL,
+    n,
+    units,
+    pres,
+    mollier,
+    tdb_lim,
+    hum_lim,
+    grid_cache = NULL,
+    psychro_scales = NULL
+) {
     thresholds <- comfort_heat_index_thresholds(units)
     category_ids <- if (is.null(category_id)) {
         seq_along(thresholds)
@@ -98,7 +114,13 @@ comfort_heat_index_zone_data <- function(model, category_id = NULL, n, units, pr
     # Each category remains a separate ggplot layer, but all categories are cut
     # from the same node grid so repeated layers do not recompute heat index.
     m <- comfort_heat_index_grid_matrix(
-        model, n, units, pres, tdb_lim, hum_lim, grid_cache = grid_cache
+        model,
+        n,
+        units,
+        pres,
+        tdb_lim,
+        hum_lim,
+        grid_cache = grid_cache
     )
     z_range <- range(m$value, finite = TRUE)
     if (!all(is.finite(z_range))) {
@@ -108,8 +130,14 @@ comfort_heat_index_zone_data <- function(model, category_id = NULL, n, units, pr
     specs <- comfort_heat_index_zone_specs()
     zones <- lapply(category_ids, function(id) {
         comfort_heat_index_zone_from_grid(
-            m, id, thresholds, specs, z_range, mollier,
-            psychro_scales = psychro_scales, units = units
+            m,
+            id,
+            thresholds,
+            specs,
+            z_range,
+            mollier,
+            psychro_scales = psychro_scales,
+            units = units
         )
     })
     zones <- zones[vapply(zones, nrow, integer(1L)) > 0L]
@@ -127,18 +155,35 @@ comfort_heat_index_zone_data <- function(model, category_id = NULL, n, units, pr
     out
 }
 
-comfort_heat_index_grid_matrix <- function(model, n, units, pres, tdb_lim,
-                                           hum_lim, grid_cache = NULL) {
+comfort_heat_index_grid_matrix <- function(
+    model,
+    n,
+    units,
+    pres,
+    tdb_lim,
+    hum_lim,
+    grid_cache = NULL
+) {
     key <- comfort_heat_index_grid_key(model, n, units, pres, tdb_lim, hum_lim)
-    if (!is.null(grid_cache) && exists(key, envir = grid_cache, inherits = FALSE)) {
+    if (
+        !is.null(grid_cache) &&
+            exists(key, envir = grid_cache, inherits = FALSE)
+    ) {
         return(get(key, envir = grid_cache, inherits = FALSE))
     }
 
     # Heat-index zone layers all need the same node grid; the caller supplies a
     # short-lived environment so reuse stays local to one layer composition.
     m <- comfort_grid_matrix(
-        model, "heat_index", n, units, pres, tdb_lim, hum_lim,
-        at = "nodes", boundary = "saturation"
+        model,
+        "heat_index",
+        n,
+        units,
+        pres,
+        tdb_lim,
+        hum_lim,
+        at = "nodes",
+        boundary = "saturation"
     )
     if (!is.null(grid_cache)) {
         assign(key, m, envir = grid_cache)
@@ -146,20 +191,40 @@ comfort_heat_index_grid_matrix <- function(model, n, units, pres, tdb_lim,
     m
 }
 
-comfort_heat_index_grid_key <- function(model, n, units, pres, tdb_lim, hum_lim) {
+comfort_heat_index_grid_key <- function(
+    model,
+    n,
+    units,
+    pres,
+    tdb_lim,
+    hum_lim
+) {
     paste(
-        utils::capture.output(utils::str(list(
-            model = model, n = n, units = units, pres = pres,
-            tdb_lim = tdb_lim, hum_lim = hum_lim
-        ), give.attr = FALSE)),
+        utils::capture.output(utils::str(
+            list(
+                model = model,
+                n = n,
+                units = units,
+                pres = pres,
+                tdb_lim = tdb_lim,
+                hum_lim = hum_lim
+            ),
+            give.attr = FALSE
+        )),
         collapse = "\n"
     )
 }
 
-comfort_heat_index_zone_from_grid <- function(m, category_id, thresholds, specs,
-                                              z_range, mollier,
-                                              psychro_scales = NULL,
-                                              units = NULL) {
+comfort_heat_index_zone_from_grid <- function(
+    m,
+    category_id,
+    thresholds,
+    specs,
+    z_range,
+    mollier,
+    psychro_scales = NULL,
+    units = NULL
+) {
     low <- thresholds[[category_id]]
     high <- if (category_id < length(thresholds)) {
         thresholds[[category_id + 1L]]
@@ -172,12 +237,21 @@ comfort_heat_index_zone_from_grid <- function(m, category_id, thresholds, specs,
     high <- min(high, z_range[[2L]] + max(1, abs(z_range[[2L]])) * 1e-6)
 
     bands <- isoband::isobands(
-        x = m$tdb, y = m$humratio, z = t(m$value),
-        levels_low = low, levels_high = high
+        x = m$tdb,
+        y = m$humratio,
+        z = t(m$value),
+        levels_low = low,
+        levels_high = high
     )
     out <- comfort_isoband_data(
-        bands, low, high, m$metric, mollier, geom = "polygon",
-        psychro_scales = psychro_scales, units = units
+        bands,
+        low,
+        high,
+        m$metric,
+        mollier,
+        geom = "polygon",
+        psychro_scales = psychro_scales,
+        units = units
     )
     if (nrow(out)) {
         out$category_id <- category_id
@@ -187,34 +261,69 @@ comfort_heat_index_zone_from_grid <- function(m, category_id, thresholds, specs,
     out
 }
 
-comfort_heat_index_contour_data <- function(model, n, units, pres, mollier,
-                                            tdb_lim, hum_lim,
-                                            grid_cache = NULL,
-                                            psychro_scales = NULL) {
+comfort_heat_index_contour_data <- function(
+    model,
+    n,
+    units,
+    pres,
+    mollier,
+    tdb_lim,
+    hum_lim,
+    grid_cache = NULL,
+    psychro_scales = NULL
+) {
     # Contours use the same node grid as filled zones so threshold paths align
     # exactly with the zone polygons when a wrapper-local cache is supplied.
     m <- comfort_heat_index_grid_matrix(
-        model, n, units, pres, tdb_lim, hum_lim, grid_cache = grid_cache
+        model,
+        n,
+        units,
+        pres,
+        tdb_lim,
+        hum_lim,
+        grid_cache = grid_cache
     )
     thresholds <- comfort_heat_index_thresholds(units)
     lines <- isoband::isolines(
-        x = m$tdb, y = m$humratio, z = t(m$value),
+        x = m$tdb,
+        y = m$humratio,
+        z = t(m$value),
         levels = thresholds
     )
     out <- comfort_isoband_data(
-        lines, thresholds, thresholds, m$metric, mollier, geom = "path",
-        psychro_scales = psychro_scales, units = units
+        lines,
+        thresholds,
+        thresholds,
+        m$metric,
+        mollier,
+        geom = "path",
+        psychro_scales = psychro_scales,
+        units = units
     )
     out <- comfort_add_contour_labels(out)
     out
 }
 
-comfort_heat_index_label_data <- function(model, n, units, pres, mollier,
-                                          tdb_lim, hum_lim,
-                                          psychro_scales = NULL) {
+comfort_heat_index_label_data <- function(
+    model,
+    n,
+    units,
+    pres,
+    mollier,
+    tdb_lim,
+    hum_lim,
+    psychro_scales = NULL
+) {
     m <- comfort_grid_matrix(
-        model, "heat_index", n, units, pres, tdb_lim, hum_lim,
-        at = "centers", boundary = "saturation"
+        model,
+        "heat_index",
+        n,
+        units,
+        pres,
+        tdb_lim,
+        hum_lim,
+        at = "centers",
+        boundary = "saturation"
     )
     specs <- comfort_heat_index_zone_specs()
     thresholds <- comfort_heat_index_thresholds(units)
@@ -245,13 +354,25 @@ comfort_heat_index_label_data <- function(model, n, units, pres, mollier,
     labels <- labels[!vapply(labels, is.null, logical(1L))]
     if (!length(labels)) {
         return(new_data_frame(list(
-            tdb = numeric(), humratio = numeric(), x = numeric(), y = numeric(),
-            label = character(), category_id = integer(), category = character(),
-            angle = numeric(), group = integer()
+            tdb = numeric(),
+            humratio = numeric(),
+            x = numeric(),
+            y = numeric(),
+            label = character(),
+            category_id = integer(),
+            category = character(),
+            angle = numeric(),
+            group = integer()
         )))
     }
     out <- do.call(rbind, labels)
     row.names(out) <- NULL
-    psychro_output_xy(out, out$tdb, out$humratio, mollier,
-        psychro_scales = psychro_scales, units = units)
+    psychro_output_xy(
+        out,
+        out$tdb,
+        out$humratio,
+        mollier,
+        psychro_scales = psychro_scales,
+        units = units
+    )
 }
