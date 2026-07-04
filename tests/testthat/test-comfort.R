@@ -1,116 +1,448 @@
+# Read one typed pythermalcomfort oracle vector for a model/case metric.
 comfort_oracle <- function(model, case, metric) {
     path <- testthat::test_path("fixtures", "comfort-oracle.csv")
     oracle <- utils::read.csv(path, stringsAsFactors = FALSE)
-    value <- oracle$value[
-        oracle$model == model & oracle$case == case & oracle$metric == metric
+    rows <- oracle[
+        oracle$model == model & oracle$case == case & oracle$metric == metric,
+        ,
+        drop = FALSE
     ]
-    expect_length(value, 1L)
-    value
+    expect_gt(nrow(rows), 0L)
+    rows <- rows[order(rows$index), , drop = FALSE]
+    expect_equal(rows$index, seq_len(nrow(rows)))
+
+    values <- Map(comfort_oracle_value, rows$type, rows$value)
+    values <- unlist(values, use.names = FALSE)
+
+    if (all(rows$type == "numeric")) {
+        return(as.numeric(values))
+    }
+    if (all(rows$type == "logical")) {
+        return(as.logical(values))
+    }
+    if (all(rows$type == "character")) {
+        return(as.character(values))
+    }
+
+    stop("Mixed oracle value types are not supported.", call. = FALSE)
+}
+
+# Convert one serialized oracle cell back to the closest R scalar type.
+comfort_oracle_value <- function(type, value) {
+    switch(
+        type,
+        numeric = as.numeric(value),
+        logical = as.logical(value),
+        character = as.character(value),
+        stop("Unknown oracle value type: ", type, call. = FALSE)
+    )
+}
+
+# Compare a ggpsychro output column with the stored pythermalcomfort vector.
+expect_comfort_oracle <- function(
+    actual,
+    model,
+    case,
+    metric,
+    tolerance = 1e-8
+) {
+    expected <- comfort_oracle(model, case, metric)
+    actual <- actual[[metric]]
+    expect_equal(length(actual), length(expected))
+    # pythermalcomfort stores unavailable string fields as NaN; ggpsychro uses
+    # the natural R missing value for the public column type.
+    expect_equal(is.na(actual), is.na(expected))
+    keep <- !is.na(actual) & !is.na(expected)
+    if (!any(keep)) {
+        return(invisible(NULL))
+    }
+    if (is.numeric(expected)) {
+        expect_equal(actual[keep], expected[keep], tolerance = tolerance)
+    } else {
+        expect_equal(actual[keep], expected[keep])
+    }
 }
 
 test_that("comfort PMV and PPD match fixed pythermalcomfort oracle values", {
-    result <- comfort_pmv(
-        tdb = c(22, 25),
-        tr = 25,
-        vr = 0.1,
-        rh = 50,
-        met = 1.4,
-        clo = 0.5
+    cases <- list(
+        si_default_22 = list(
+            args = list(
+                tdb = 22,
+                tr = 25,
+                vr = 0.1,
+                rh = 50,
+                met = 1.4,
+                clo = 0.5
+            ),
+            tolerance = 1e-8
+        ),
+        si_default_25 = list(
+            args = list(
+                tdb = 25,
+                tr = 25,
+                vr = 0.1,
+                rh = 50,
+                met = 1.4,
+                clo = 0.5
+            ),
+            tolerance = 1e-8
+        ),
+        vector_mixed_inputs = list(
+            args = list(
+                tdb = c(22, 25, 28),
+                tr = c(25, 25, 26),
+                vr = c(0.1, 0.2, 0.3),
+                rh = c(50, 55, 60),
+                met = c(1.1, 1.4, 1.8),
+                clo = c(0.5, 0.6, 0.7)
+            ),
+            tolerance = 1e-8
+        ),
+        si_unrounded = list(
+            args = list(
+                tdb = 26,
+                tr = 25,
+                vr = 0.2,
+                rh = 60,
+                met = 1.2,
+                clo = 0.7,
+                round_output = FALSE
+            ),
+            tolerance = 1e-6
+        ),
+        ip_default = list(
+            args = list(
+                tdb = 77,
+                tr = 77,
+                vr = 0.328084,
+                rh = 50,
+                met = 1.2,
+                clo = 0.5,
+                units = "IP"
+            ),
+            tolerance = 1e-8
+        ),
+        limit_inputs_low_tdb = list(
+            args = list(
+                tdb = 5,
+                tr = 25,
+                vr = 0.1,
+                rh = 50,
+                met = 1.2,
+                clo = 0.5
+            ),
+            tolerance = 1e-8
+        ),
+        limit_inputs_false_low_tdb = list(
+            args = list(
+                tdb = 5,
+                tr = 25,
+                vr = 0.1,
+                rh = 50,
+                met = 1.2,
+                clo = 0.5,
+                limit_inputs = FALSE,
+                round_output = FALSE
+            ),
+            tolerance = 1e-6
+        ),
+        high_rh_clo = list(
+            args = list(
+                tdb = 24,
+                tr = 24,
+                vr = 0.1,
+                rh = 100,
+                met = 1.2,
+                clo = 1.5
+            ),
+            tolerance = 1e-8
+        ),
+        upper_tr_v_met = list(
+            args = list(
+                tdb = 28,
+                tr = 35,
+                vr = 1,
+                rh = 70,
+                met = 2,
+                clo = 0.3
+            ),
+            tolerance = 1e-8
+        )
     )
 
-    expect_equal(
-        result$pmv[[1L]],
-        comfort_oracle("pmv", "iso_vector_22", "pmv")
-    )
-    expect_equal(
-        result$ppd[[1L]],
-        comfort_oracle("pmv", "iso_vector_22", "ppd")
-    )
-    expect_equal(
-        result$pmv[[2L]],
-        comfort_oracle("pmv", "iso_vector_25", "pmv")
-    )
-    expect_equal(
-        result$ppd[[2L]],
-        comfort_oracle("pmv", "iso_vector_25", "ppd")
-    )
-    expect_equal(result$tsv, c("Neutral", "Neutral"))
+    for (case in names(cases)) {
+        result <- do.call(comfort_pmv, cases[[case]]$args)
+        for (metric in c("pmv", "ppd", "tsv")) {
+            expect_comfort_oracle(
+                result,
+                "pmv",
+                case,
+                metric,
+                tolerance = cases[[case]]$tolerance
+            )
+        }
+    }
 })
 
 test_that("comfort SET matches fixed pythermalcomfort oracle value", {
-    result <- comfort_set(25, tr = 25, v = 0.1, rh = 50, met = 1.2, clo = 0.5)
-    expect_equal(
-        result$set[[1L]],
-        comfort_oracle("set", "gagge_default", "set")
+    cases <- list(
+        gagge_default = list(
+            args = list(
+                tdb = 25,
+                tr = 25,
+                v = 0.1,
+                rh = 50,
+                met = 1.2,
+                clo = 0.5
+            ),
+            tolerance = 1e-8
+        ),
+        vector_mixed_inputs = list(
+            args = list(
+                tdb = c(24, 26, 28),
+                tr = c(24, 27, 30),
+                v = c(0.1, 0.4, 0.8),
+                rh = c(45, 60, 70),
+                met = c(1.1, 1.6, 2.0),
+                clo = c(0.5, 0.7, 0.8)
+            ),
+            tolerance = 1e-8
+        ),
+        standing_unrounded = list(
+            args = list(
+                tdb = 28,
+                tr = 30,
+                v = 0.6,
+                rh = 70,
+                met = 1.6,
+                clo = 0.7,
+                wme = 0.1,
+                round_output = FALSE
+            ),
+            tolerance = 1e-4
+        ),
+        sitting_low_pressure = list(
+            args = list(
+                tdb = 25,
+                tr = 26,
+                v = 0.2,
+                rh = 45,
+                met = 1.1,
+                clo = 0.6,
+                body_surface_area = 1.7,
+                p_atm = 90000,
+                position = "sitting"
+            ),
+            tolerance = 1e-8
+        ),
+        limit_inputs_low_tdb = list(
+            args = list(
+                tdb = 5,
+                tr = 25,
+                v = 0.1,
+                rh = 50,
+                met = 1.2,
+                clo = 0.5
+            ),
+            tolerance = 1e-8
+        ),
+        limit_inputs_false_low_tdb = list(
+            args = list(
+                tdb = 5,
+                tr = 25,
+                v = 0.1,
+                rh = 50,
+                met = 1.2,
+                clo = 0.5,
+                limit_inputs = FALSE,
+                round_output = FALSE
+            ),
+            tolerance = 1e-4
+        ),
+        boundary_low = list(
+            args = list(
+                tdb = 10,
+                tr = 10,
+                v = 0,
+                rh = 0,
+                met = 1,
+                clo = 0
+            ),
+            tolerance = 1e-8
+        ),
+        boundary_high = list(
+            args = list(
+                tdb = 35,
+                tr = 35,
+                v = 2,
+                rh = 100,
+                met = 4,
+                clo = 1.5
+            ),
+            tolerance = 1e-8
+        ),
+        wme_unrounded = list(
+            args = list(
+                tdb = 26,
+                tr = 27,
+                v = 0.4,
+                rh = 55,
+                met = 2,
+                clo = 0.6,
+                wme = 0.4,
+                round_output = FALSE
+            ),
+            tolerance = 1e-4
+        )
     )
+
+    for (case in names(cases)) {
+        result <- do.call(comfort_set, cases[[case]]$args)
+        expect_comfort_oracle(
+            result,
+            "set",
+            case,
+            "set",
+            tolerance = cases[[case]]$tolerance
+        )
+    }
 })
 
 test_that("comfort adaptive models match fixed pythermalcomfort oracle values", {
-    ashrae <- comfort_adaptive(
-        25,
-        tr = 25,
-        t_running = 20,
-        v = 0.1,
-        standard = "ashrae55"
+    ashrae_cases <- list(
+        default = list(
+            args = list(tdb = 25, tr = 25, t_running = 20, v = 0.1),
+            tolerance = 1e-8
+        ),
+        vector_mixed_inputs = list(
+            args = list(
+                tdb = c(24, 27, 30),
+                tr = c(24, 28, 30),
+                t_running = c(18, 24, 30),
+                v = c(0.1, 1.0, 1.3)
+            ),
+            tolerance = 1e-8
+        ),
+        high_air_speed = list(
+            args = list(tdb = 27, tr = 27, t_running = 24, v = 1.0),
+            tolerance = 1e-8
+        ),
+        ip_default = list(
+            args = list(
+                tdb = 77,
+                tr = 77,
+                t_running = 68,
+                v = 0.328084,
+                units = "IP"
+            ),
+            tolerance = 0.05
+        ),
+        limit_inputs_false_low_running = list(
+            args = list(
+                tdb = 25,
+                tr = 25,
+                t_running = 5,
+                v = 0.1,
+                limit_inputs = FALSE,
+                round_output = FALSE
+            ),
+            tolerance = 1e-8
+        )
     )
-    expect_equal(
-        ashrae$tmp_cmf[[1L]],
-        comfort_oracle("adaptive_ashrae", "default", "tmp_cmf")
+    ashrae_metrics <- c(
+        "tmp_cmf",
+        "tmp_cmf_80_low",
+        "tmp_cmf_80_up",
+        "tmp_cmf_90_low",
+        "tmp_cmf_90_up",
+        "acceptability_80",
+        "acceptability_90"
     )
-    expect_equal(
-        ashrae$tmp_cmf_80_low[[1L]],
-        comfort_oracle("adaptive_ashrae", "default", "tmp_cmf_80_low")
-    )
-    expect_equal(
-        ashrae$tmp_cmf_80_up[[1L]],
-        comfort_oracle("adaptive_ashrae", "default", "tmp_cmf_80_up")
-    )
-    expect_equal(
-        ashrae$tmp_cmf_90_low[[1L]],
-        comfort_oracle("adaptive_ashrae", "default", "tmp_cmf_90_low")
-    )
-    expect_equal(
-        ashrae$tmp_cmf_90_up[[1L]],
-        comfort_oracle("adaptive_ashrae", "default", "tmp_cmf_90_up")
-    )
-    expect_true(ashrae$acceptability[[1L]])
 
-    en <- comfort_adaptive(
-        25,
-        tr = 25,
-        t_running = 20,
-        v = 0.1,
-        standard = "en16798"
+    for (case in names(ashrae_cases)) {
+        result <- do.call(
+            comfort_adaptive,
+            c(ashrae_cases[[case]]$args, list(standard = "ashrae55"))
+        )
+        for (metric in ashrae_metrics) {
+            expect_comfort_oracle(
+                result,
+                "adaptive_ashrae",
+                case,
+                metric,
+                tolerance = ashrae_cases[[case]]$tolerance
+            )
+        }
+    }
+
+    en_cases <- list(
+        default = list(
+            args = list(tdb = 25, tr = 25, t_running = 20, v = 0.1),
+            tolerance = 1e-8
+        ),
+        vector_mixed_inputs = list(
+            args = list(
+                tdb = c(24, 27, 30),
+                tr = c(24, 28, 30),
+                t_running = c(18, 24, 30),
+                v = c(0.1, 1.0, 1.3)
+            ),
+            tolerance = 1e-8
+        ),
+        high_air_speed = list(
+            args = list(tdb = 27, tr = 27, t_running = 24, v = 1.0),
+            tolerance = 1e-8
+        ),
+        ip_default = list(
+            args = list(
+                tdb = 77,
+                tr = 77,
+                t_running = 68,
+                v = 0.328084,
+                units = "IP"
+            ),
+            tolerance = 0.05
+        ),
+        limit_inputs_false_low_running = list(
+            args = list(
+                tdb = 25,
+                tr = 25,
+                t_running = 5,
+                v = 0.1,
+                limit_inputs = FALSE,
+                round_output = FALSE
+            ),
+            tolerance = 1e-8
+        )
     )
-    expect_equal(
-        en$tmp_cmf[[1L]],
-        comfort_oracle("adaptive_en", "default", "tmp_cmf")
+    en_metrics <- c(
+        "tmp_cmf",
+        "tmp_cmf_cat_i_low",
+        "tmp_cmf_cat_i_up",
+        "tmp_cmf_cat_ii_low",
+        "tmp_cmf_cat_ii_up",
+        "tmp_cmf_cat_iii_low",
+        "tmp_cmf_cat_iii_up",
+        "acceptability_cat_i",
+        "acceptability_cat_ii",
+        "acceptability_cat_iii"
     )
-    expect_equal(
-        en$tmp_cmf_cat_i_low[[1L]],
-        comfort_oracle("adaptive_en", "default", "tmp_cmf_cat_i_low")
-    )
-    expect_equal(
-        en$tmp_cmf_cat_i_up[[1L]],
-        comfort_oracle("adaptive_en", "default", "tmp_cmf_cat_i_up")
-    )
-    expect_equal(
-        en$tmp_cmf_cat_ii_low[[1L]],
-        comfort_oracle("adaptive_en", "default", "tmp_cmf_cat_ii_low")
-    )
-    expect_equal(
-        en$tmp_cmf_cat_ii_up[[1L]],
-        comfort_oracle("adaptive_en", "default", "tmp_cmf_cat_ii_up")
-    )
-    expect_equal(
-        en$tmp_cmf_cat_iii_low[[1L]],
-        comfort_oracle("adaptive_en", "default", "tmp_cmf_cat_iii_low")
-    )
-    expect_equal(
-        en$tmp_cmf_cat_iii_up[[1L]],
-        comfort_oracle("adaptive_en", "default", "tmp_cmf_cat_iii_up")
-    )
-    expect_true(en$acceptability[[1L]])
+
+    for (case in names(en_cases)) {
+        result <- do.call(
+            comfort_adaptive,
+            c(en_cases[[case]]$args, list(standard = "en16798"))
+        )
+        for (metric in en_metrics) {
+            expect_comfort_oracle(
+                result,
+                "adaptive_en",
+                case,
+                metric,
+                tolerance = en_cases[[case]]$tolerance
+            )
+        }
+    }
 })
 
 test_that("comfort heat index matches Marsh and NOAA-style expected behavior", {
