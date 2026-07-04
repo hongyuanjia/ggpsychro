@@ -154,11 +154,11 @@ psychro_check_relhum_percent <- function(relhum) {
 }
 
 psychro_humratio_from_property <- function(tdb, value, property, units, pres) {
-    with_units(
+    psychrolib__with_units(
         units,
         switch(
             property,
-            humratio = narrow_hum(value, units),
+            humratio = unit__hum_from_chart(value, units),
             relhum = {
                 psychro_check_relhum_percent(value)
                 psychrolib::GetHumRatioFromRelHum(tdb, value / 100, pres)

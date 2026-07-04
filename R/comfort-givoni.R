@@ -34,7 +34,7 @@ comfort_givoni_base_temp <- function(strategy) {
 }
 
 comfort_givoni_zone_specs <- function() {
-    new_data_frame(list(
+    util__new_data_frame(list(
         zone = c(
             "comfort",
             "natural_ventilation",
@@ -214,7 +214,7 @@ comfort_givoni_zone_params <- function(
 }
 
 comfort_givoni_empty_zone <- function() {
-    new_data_frame(list(
+    util__new_data_frame(list(
         tdb = numeric(),
         humratio = numeric(),
         x = numeric(),
@@ -227,7 +227,7 @@ comfort_givoni_empty_zone <- function() {
 }
 
 comfort_givoni_empty_label <- function() {
-    new_data_frame(list(
+    util__new_data_frame(list(
         tdb = numeric(),
         humratio = numeric(),
         x = numeric(),
@@ -242,7 +242,7 @@ comfort_givoni_empty_label <- function() {
 }
 
 comfort_givoni_humratio <- function(tdb_si, rh, pressure_pa) {
-    with_units(
+    psychrolib__with_units(
         "SI",
         psychrolib::GetHumRatioFromRelHum(tdb_si, rh / 100, pressure_pa)
     )
@@ -253,7 +253,7 @@ comfort_givoni_hum_gkg <- function(tdb_si, rh, pressure_pa) {
 }
 
 comfort_givoni_point <- function(tdb_si, hum_gkg) {
-    new_data_frame(list(tdb_si = tdb_si, humratio = hum_gkg / 1000))
+    util__new_data_frame(list(tdb_si = tdb_si, humratio = hum_gkg / 1000))
 }
 
 comfort_givoni_rh_path <- function(
@@ -276,7 +276,7 @@ comfort_givoni_rh_path <- function(
         comfort_givoni_hum_gkg(tdb, rh, pressure_pa),
         max_gkg
     )
-    new_data_frame(list(tdb_si = tdb, humratio = hum_gkg / 1000))
+    util__new_data_frame(list(tdb_si = tdb, humratio = hum_gkg / 1000))
 }
 
 comfort_givoni_polygon <- function(
@@ -445,7 +445,7 @@ comfort_givoni_zone_data <- function(
     pressure_pa <- comfort_pressure_pa(pres, units)
     base <- comfort_givoni_base_temp(strategy)
     tdb_max_si <- comfort_to_si_temp(lim$tdb[[2L]], units)
-    hum_min_gkg <- narrow_hum(lim$hum[[1L]], units) * 1000
+    hum_min_gkg <- unit__hum_from_chart(lim$hum[[1L]], units) * 1000
 
     pieces <- vector("list", length(zone))
     for (i in seq_along(zone)) {
@@ -460,7 +460,7 @@ comfort_givoni_zone_data <- function(
             next
         }
         spec <- specs[match(zone[[i]], specs$zone), , drop = FALSE]
-        pieces[[i]] <- new_data_frame(list(
+        pieces[[i]] <- util__new_data_frame(list(
             tdb = comfort_from_si_temp(poly$tdb_si, units),
             humratio = poly$humratio,
             zone = spec$zone,
@@ -497,7 +497,7 @@ comfort_givoni_label_path_entry <- function(
     if (!nrow(path)) {
         return(comfort_givoni_empty_label())
     }
-    new_data_frame(list(
+    util__new_data_frame(list(
         tdb_si = path$tdb_si,
         humratio = path$humratio,
         zone = zone,
@@ -671,7 +671,7 @@ comfort_givoni_label_point_specs <- function(
         hum_min_gkg,
         comfort_givoni_hum_gkg(heating_x, 100, pressure_pa)
     ))
-    new_data_frame(list(
+    util__new_data_frame(list(
         zone = c(
             "comfort",
             "heating",
@@ -714,7 +714,7 @@ comfort_givoni_label_data <- function(
     pressure_pa <- comfort_pressure_pa(pres, units)
     base <- comfort_givoni_base_temp(strategy)
     tdb_max_si <- comfort_to_si_temp(lim$tdb[[2L]], units)
-    hum_min_gkg <- narrow_hum(lim$hum[[1L]], units) * 1000
+    hum_min_gkg <- unit__hum_from_chart(lim$hum[[1L]], units) * 1000
 
     if (label_type == "path") {
         labels <- comfort_givoni_label_path_specs(
@@ -723,7 +723,7 @@ comfort_givoni_label_data <- function(
             tdb_max_si,
             hum_min_gkg
         )
-        out <- new_data_frame(list(
+        out <- util__new_data_frame(list(
             tdb = comfort_from_si_temp(labels$tdb_si, units),
             humratio = labels$humratio,
             zone = labels$zone,
@@ -750,7 +750,7 @@ comfort_givoni_label_data <- function(
         tdb_max_si,
         hum_min_gkg
     )
-    out <- new_data_frame(list(
+    out <- util__new_data_frame(list(
         tdb = comfort_from_si_temp(labels$tdb_si, units),
         humratio = labels$hum_gkg / 1000,
         zone = labels$zone,
@@ -772,7 +772,7 @@ comfort_givoni_label_data <- function(
 }
 
 comfort_givoni_clip_humratio <- function(data, hum_lim, units) {
-    hum_lim <- narrow_hum(hum_lim, units)
+    hum_lim <- unit__hum_from_chart(hum_lim, units)
     data$humratio <- pmin(pmax(data$humratio, hum_lim[[1L]]), hum_lim[[2L]])
     data
 }
@@ -820,7 +820,7 @@ comfort_givoni_mean_outdoor_data <- function(
     lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
     pressure_pa <- comfort_pressure_pa(pres, units)
     mean_si <- comfort_to_si_temp(strategy$mean_outdoor, strategy$units)
-    hum_lim_narrow <- narrow_hum(lim$hum, units)
+    hum_lim_narrow <- unit__hum_from_chart(lim$hum, units)
     marker <- comfort_givoni_mean_outdoor_marker(
         mean_si,
         pressure_pa,
@@ -829,7 +829,7 @@ comfort_givoni_mean_outdoor_data <- function(
     if (is.null(marker)) {
         return(comfort_empty_contour())
     }
-    out <- new_data_frame(list(
+    out <- util__new_data_frame(list(
         tdb = comfort_from_si_temp(c(mean_si, mean_si), units),
         humratio = c(hum_lim_narrow[[1L]], marker$top),
         level = mean_si,
@@ -859,7 +859,7 @@ comfort_givoni_mean_outdoor_label_data <- function(
     lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
     pressure_pa <- comfort_pressure_pa(pres, units)
     mean_si <- comfort_to_si_temp(strategy$mean_outdoor, strategy$units)
-    hum_lim_narrow <- narrow_hum(lim$hum, units)
+    hum_lim_narrow <- unit__hum_from_chart(lim$hum, units)
     marker <- comfort_givoni_mean_outdoor_marker(
         mean_si,
         pressure_pa,
@@ -871,7 +871,7 @@ comfort_givoni_mean_outdoor_label_data <- function(
 
     label_temp <- comfort_from_si_temp(mean_si, units)
     unit_label <- if (units == "IP") "\u00b0F" else "\u00b0C"
-    out <- new_data_frame(list(
+    out <- util__new_data_frame(list(
         tdb = comfort_from_si_temp(mean_si, units),
         humratio = marker$label,
         zone = "mean_outdoor",

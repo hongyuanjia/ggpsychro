@@ -132,7 +132,7 @@ test_that("Psychrometric chart creation", {
             hum_lim = NULL,
             grids = default_psychro_grids(),
             grid_labels = list(),
-            protractor = default_psychro_protractor()
+            protractor = psychro__default_protractor()
         )
     )
     expect_s3_class(p$coordinates, "CoordPsychro")
@@ -177,7 +177,7 @@ test_that("Psychrometric chart creation", {
 })
 
 test_that("Unit labels and IP humidity limits match display units", {
-    expect_equal(get_hum_limits("IP"), c(0, 420))
+    expect_equal(psychro__hum_limits("IP"), c(0, 420))
     expect_no_error(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(32, 122), hum_lim = c(0, 420), units = "IP")
     ))
@@ -399,7 +399,9 @@ test_that("Relative humidity grid breaks use psychrolib fractions", {
         ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
             geom_grid_relhum()
     )
-    breaks <- remove_na(built$layout$panel_params[[1L]]$relhum$get_breaks())
+    breaks <- util__remove_na(built$layout$panel_params[[
+        1L
+    ]]$relhum$get_breaks())
     expect_equal(breaks, c(0.25, 0.50, 0.75, 1.00), tolerance = 1e-8)
 
     built <- ggplot2::ggplot_build(
@@ -411,7 +413,9 @@ test_that("Relative humidity grid breaks use psychrolib fractions", {
                 minor_breaks = NULL
             )
     )
-    breaks <- remove_na(built$layout$panel_params[[1L]]$relhum$get_breaks())
+    breaks <- util__remove_na(built$layout$panel_params[[
+        1L
+    ]]$relhum$get_breaks())
     expect_equal(breaks, c(0.25, 0.50, 0.75, 1.00), tolerance = 1e-8)
 
     expect_equal(
@@ -586,11 +590,11 @@ test_that("Psychrometric protractor helper updates coord metadata", {
     loc_zero <- match("0", default_label_text)
     loc_two_tenths <- match("0.2", default_label_text)
     expect_gt(
-        dist_euclid(
-            default_label_pos$x[[loc_zero]],
-            default_label_pos$y[[loc_zero]],
-            default_label_pos$x[[loc_two_tenths]],
-            default_label_pos$y[[loc_two_tenths]]
+        sqrt(
+            (default_label_pos$x[[loc_two_tenths]] -
+                default_label_pos$x[[loc_zero]])^2 +
+                (default_label_pos$y[[loc_two_tenths]] -
+                    default_label_pos$y[[loc_zero]])^2
         ),
         2
     )
@@ -861,7 +865,7 @@ test_that("Psychrometric protractor tick angles use transformed humidity ratios"
     )
     expect_true(all(abs(ratio_label_ticks$scale - 1.13) < 1e-8))
 
-    raw_ticks <- new_data_frame(list(
+    raw_ticks <- util__new_data_frame(list(
         axis = c("shr", "ratio"),
         value = c(0, 0),
         angle = c(4, 5)
@@ -1066,8 +1070,11 @@ test_that("Coordinate range helpers clip expanded ranges in native units", {
     built <- ggplot2::ggplot_build(p)
     coord <- built$layout$coord
     panel_params <- built$layout$panel_params[[1L]]
-    tdb_domain <- get_tdb_limits(coord$units)
-    hum_domain <- narrow_hum(get_hum_limits(coord$units), coord$units)
+    tdb_domain <- psychro__tdb_limits(coord$units)
+    hum_domain <- unit__hum_from_chart(
+        psychro__hum_limits(coord$units),
+        coord$units
+    )
     tdb_uncut <- coord$range_tdb(panel_params, cut = FALSE)
     hum_uncut <- coord$range_hum(panel_params, cut = FALSE)
 
@@ -1096,7 +1103,10 @@ test_that("Coordinate calculations inverse custom position transforms before psy
     )
 
     sat <- coord_psy__saturation_scaled(coord, panel_params)
-    sat_hum <- narrow_hum(hum_scale$trans$inverse(sat$hum), coord$units)
+    sat_hum <- unit__hum_from_chart(
+        hum_scale$trans$inverse(sat$hum),
+        coord$units
+    )
 
     expect_true(all(is.finite(sat_hum)))
     expect_lte(max(sat_hum), 0.05 + 1e-8)
@@ -1105,7 +1115,10 @@ test_that("Coordinate calculations inverse custom position transforms before psy
 })
 
 test_that("Psychrolib calculations inverse custom psychrometric scale transforms", {
-    pressure <- with_units("SI", psychrolib::GetStandardAtmPressure(0))
+    pressure <- psychrolib__with_units(
+        "SI",
+        psychrolib::GetStandardAtmPressure(0)
+    )
 
     wetbulb_plot <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
         stat_wetbulb(
@@ -1115,7 +1128,10 @@ test_that("Psychrolib calculations inverse custom psychrometric scale transforms
         scale_wetbulb_continuous(transform = "log10")
     expect_equal(
         first_built_data(ggplot2::ggplot_build(wetbulb_plot))$y,
-        with_units("SI", psychrolib::GetHumRatioFromTWetBulb(25, 20, pressure)),
+        psychrolib__with_units(
+            "SI",
+            psychrolib::GetHumRatioFromTWetBulb(25, 20, pressure)
+        ),
         tolerance = 1e-8
     )
 
@@ -1127,7 +1143,10 @@ test_that("Psychrolib calculations inverse custom psychrometric scale transforms
         scale_relhum_continuous(transform = "identity")
     expect_equal(
         first_built_data(ggplot2::ggplot_build(state_plot))$y,
-        with_units("SI", psychrolib::GetHumRatioFromRelHum(25, 0.5, pressure)),
+        psychrolib__with_units(
+            "SI",
+            psychrolib::GetHumRatioFromRelHum(25, 0.5, pressure)
+        ),
         tolerance = 1e-8
     )
 
@@ -1233,7 +1252,7 @@ test_that("Native textpath helpers handle edge-case label placement", {
     expect_equal(length(expr$piece_label), 1L)
     expect_equal(length(multiline$piece_label), 1L)
 
-    line_path <- new_data_frame(list(
+    line_path <- util__new_data_frame(list(
         x = c(0, 1),
         y = c(0, 0),
         id = c(1L, 1L)
@@ -1320,12 +1339,12 @@ test_that("Native textpath grobs expand through grid makeContent", {
 })
 
 test_that("Native textpath gap removal keeps only visible path intervals", {
-    path <- new_data_frame(list(
+    path <- util__new_data_frame(list(
         x = c(0, 1, 2),
         y = c(0, 0, 0),
         id = c(1L, 1L, 1L)
     ))
-    placed <- new_data_frame(list(
+    placed <- util__new_data_frame(list(
         label = 1L,
         left = 0.8,
         right = 1.2
@@ -1363,47 +1382,50 @@ test_that("Psychrometric presets configure themes and grids", {
     expect_true(p_ashrae$psychro$grid_labels$enthalpy$show)
     expect_no_error(built_ashrae <- ggplot2::ggplot_build(p_ashrae))
     panel_ashrae <- built_ashrae$layout$panel_params[[1L]]
-    expect_equal(remove_na(panel_ashrae$x$get_breaks()), seq(0, 50, by = 5))
     expect_equal(
-        remove_na(panel_ashrae$x$get_breaks_minor()),
+        util__remove_na(panel_ashrae$x$get_breaks()),
+        seq(0, 50, by = 5)
+    )
+    expect_equal(
+        util__remove_na(panel_ashrae$x$get_breaks_minor()),
         seq(0, 50, by = 1)
     )
     expect_equal(
-        remove_na(panel_ashrae$y$get_breaks()),
+        util__remove_na(panel_ashrae$y$get_breaks()),
         seq(0, 0.03, by = 0.005),
         tolerance = 1e-8
     )
     expect_equal(
-        remove_na(panel_ashrae$y$get_breaks_minor()),
+        util__remove_na(panel_ashrae$y$get_breaks_minor()),
         seq(0, 0.03, by = 0.0005),
         tolerance = 1e-8
     )
     expect_equal(
-        remove_na(panel_ashrae$relhum$get_breaks()),
+        util__remove_na(panel_ashrae$relhum$get_breaks()),
         seq(0.1, 0.9, by = 0.1),
         tolerance = 1e-8
     )
-    expect_length(remove_na(panel_ashrae$relhum$get_breaks_minor()), 0L)
+    expect_length(util__remove_na(panel_ashrae$relhum$get_breaks_minor()), 0L)
     expect_equal(
-        remove_na(panel_ashrae$wetbulb$get_breaks()),
+        util__remove_na(panel_ashrae$wetbulb$get_breaks()),
         seq(0, 30, by = 5)
     )
     expect_equal(
-        remove_na(panel_ashrae$specvol$get_breaks()),
+        util__remove_na(panel_ashrae$specvol$get_breaks()),
         seq(0.80, 0.95, by = 0.05),
         tolerance = 1e-8
     )
     expect_equal(
-        remove_na(panel_ashrae$specvol$get_breaks_minor()),
+        util__remove_na(panel_ashrae$specvol$get_breaks_minor()),
         seq(0.78, 0.96, by = 0.01),
         tolerance = 1e-8
     )
     expect_equal(
-        remove_na(panel_ashrae$enthalpy$get_breaks()),
+        util__remove_na(panel_ashrae$enthalpy$get_breaks()),
         c(50000, 100000)
     )
     expect_equal(
-        remove_na(panel_ashrae$enthalpy$get_breaks_minor()),
+        util__remove_na(panel_ashrae$enthalpy$get_breaks_minor()),
         seq(10000, 130000, by = 10000)
     )
     expect_gt(count_textpath_shapes(p_ashrae), 1L)
@@ -1421,29 +1443,32 @@ test_that("Psychrometric presets configure themes and grids", {
     expect_false(p_minimal$psychro$grid_labels$enthalpy$show)
     expect_no_error(built_minimal <- ggplot2::ggplot_build(p_minimal))
     panel_minimal <- built_minimal$layout$panel_params[[1L]]
-    expect_equal(remove_na(panel_minimal$x$get_breaks()), seq(0, 50, by = 5))
-    expect_length(remove_na(panel_minimal$x$get_breaks_minor()), 0L)
     expect_equal(
-        remove_na(panel_minimal$relhum$get_breaks()),
+        util__remove_na(panel_minimal$x$get_breaks()),
+        seq(0, 50, by = 5)
+    )
+    expect_length(util__remove_na(panel_minimal$x$get_breaks_minor()), 0L)
+    expect_equal(
+        util__remove_na(panel_minimal$relhum$get_breaks()),
         seq(0.2, 0.8, by = 0.2),
         tolerance = 1e-8
     )
-    expect_length(remove_na(panel_minimal$relhum$get_breaks_minor()), 0L)
+    expect_length(util__remove_na(panel_minimal$relhum$get_breaks_minor()), 0L)
     expect_equal(
-        remove_na(panel_minimal$wetbulb$get_breaks()),
+        util__remove_na(panel_minimal$wetbulb$get_breaks()),
         seq(10, 30, by = 10)
     )
     expect_true(all(
         seq(5, 35, by = 5) %in%
-            remove_na(panel_minimal$wetbulb$get_breaks_minor())
+            util__remove_na(panel_minimal$wetbulb$get_breaks_minor())
     ))
     expect_equal(
-        remove_na(panel_minimal$specvol$get_breaks()),
+        util__remove_na(panel_minimal$specvol$get_breaks()),
         seq(0.86, 0.98, by = 0.04),
         tolerance = 1e-8
     )
     expect_equal(
-        remove_na(panel_minimal$enthalpy$get_breaks()),
+        util__remove_na(panel_minimal$enthalpy$get_breaks()),
         c(20000, 60000, 100000)
     )
     expect_gt(count_textpath_shapes(p_minimal), 0L)
@@ -1489,8 +1514,11 @@ test_that("Psychrometric stats inherit units and pressure from the plot", {
                 stat = "relhum"
             )
     )
-    pressure <- with_units("SI", psychrolib::GetStandardAtmPressure(0))
-    expected <- with_units(
+    pressure <- psychrolib__with_units(
+        "SI",
+        psychrolib::GetStandardAtmPressure(0)
+    )
+    expected <- psychrolib__with_units(
         "SI",
         psychrolib::GetHumRatioFromRelHum(
             d$dry_bulb_temperature,
@@ -1716,7 +1744,7 @@ test_that("Enthalpy stat creates y output without an explicit y aesthetic", {
                 data = d
             )
     )
-    expected <- with_units(
+    expected <- psychrolib__with_units(
         "SI",
         GetHumRatioFromEnthalpyAndTDryBulb(d$enthalpy, d$dry_bulb_temperature)
     )

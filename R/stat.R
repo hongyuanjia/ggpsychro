@@ -204,9 +204,9 @@ stat_enthalpy <- function(
 
 init_stat_data <- function(data, params) {
     if (!"units" %in% names(data)) {
-        data$units <- encode_units(params$units)
+        data$units <- unit__encode(params$units)
     } else {
-        data$units <- encode_units(unique(data$units))
+        data$units <- unit__encode(unique(data$units))
     }
 
     if (!"pres" %in% names(data)) {
@@ -361,7 +361,7 @@ psychro_stat_inverse_columns <- function(data, psychro_scales = NULL) {
 # Humidity ratios leave psychrolib in native kg/kg or lb/lb units; convert back
 # to the active chart scale before ggplot2 trains and maps the y position.
 psychro_stat_scale_humratio <- function(humratio, units, scale) {
-    psychro_scale_transform(scale, amplify_hum(humratio, units))
+    psychro_scale_transform(scale, unit__hum_to_chart(humratio, units))
 }
 
 finish_stat_humratio <- function(data, humratio, units, scales) {
@@ -393,10 +393,10 @@ StatRelhum <- ggproto(
     required_aes = c("x", "relhum", "pres", "units"),
 
     compute_group = function(self, data, scales, psychro_scales = NULL) {
-        units <- get_units(data)
+        units <- unit__from_data(data)
         tdb <- psychro_scale_inverse(scales$x, data$x)
         relhum <- psychro_stat_relhum_fraction(data$relhum, psychro_scales)
-        humratio <- with_units(
+        humratio <- psychrolib__with_units(
             units,
             GetHumRatioFromRelHum(tdb, relhum, data$pres)
         )
@@ -418,14 +418,14 @@ StatWetbulb <- ggproto(
     required_aes = c("x", "wetbulb", "pres", "units"),
 
     compute_group = function(self, data, scales, psychro_scales = NULL) {
-        units <- get_units(data)
+        units <- unit__from_data(data)
         tdb <- psychro_scale_inverse(scales$x, data$x)
         wetbulb <- psychro_stat_inverse_property(
             data$wetbulb,
             "wetbulb",
             psychro_scales
         )
-        humratio <- with_units(
+        humratio <- psychrolib__with_units(
             units,
             GetHumRatioFromTWetBulb(tdb, wetbulb, data$pres)
         )
@@ -447,13 +447,13 @@ StatVappres <- ggproto(
     required_aes = c("x", "vappres", "pres", "units"),
 
     compute_group = function(self, data, scales, psychro_scales = NULL) {
-        units <- get_units(data)
+        units <- unit__from_data(data)
         vappres <- psychro_stat_inverse_property(
             data$vappres,
             "vappres",
             psychro_scales
         )
-        humratio <- with_units(
+        humratio <- psychrolib__with_units(
             units,
             GetHumRatioFromVapPres(vappres, data$pres)
         )
@@ -475,14 +475,14 @@ StatSpecvol <- ggproto(
     required_aes = c("x", "specvol", "pres", "units"),
 
     compute_group = function(self, data, scales, psychro_scales = NULL) {
-        units <- get_units(data)
+        units <- unit__from_data(data)
         tdb <- psychro_scale_inverse(scales$x, data$x)
         specvol <- psychro_stat_inverse_property(
             data$specvol,
             "specvol",
             psychro_scales
         )
-        humratio <- with_units(
+        humratio <- psychrolib__with_units(
             units,
             GetHumRatioFromAirVolume(tdb, specvol, data$pres)
         )
@@ -504,14 +504,14 @@ StatEnthalpy <- ggproto(
     required_aes = c("x", "enthalpy", "pres", "units"),
 
     compute_group = function(self, data, scales, psychro_scales = NULL) {
-        units <- get_units(data)
+        units <- unit__from_data(data)
         tdb <- psychro_scale_inverse(scales$x, data$x)
         enthalpy <- psychro_stat_inverse_property(
             data$enthalpy,
             "enthalpy",
             psychro_scales
         )
-        humratio <- with_units(
+        humratio <- psychrolib__with_units(
             units,
             GetHumRatioFromEnthalpyAndTDryBulb(enthalpy, tdb)
         )

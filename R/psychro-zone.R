@@ -192,7 +192,7 @@ psychro_zone_chart_tdb_range <- function(units, tdb_lim) {
     if (!is.null(tdb_lim)) {
         return(tdb_lim)
     }
-    default_psychro_limits(units)$tdb
+    psychro__default_limits(units)$tdb
 }
 
 psychro_zone_complete <- function(row, columns, na.rm = FALSE) {
@@ -212,13 +212,16 @@ psychro_zone_relhum <- function(min, max) {
 }
 
 psychro_saturation_humratio <- function(tdb, units, pres) {
-    with_units(units, psychrolib::GetHumRatioFromRelHum(tdb, 1, pres))
+    psychrolib__with_units(
+        units,
+        psychrolib::GetHumRatioFromRelHum(tdb, 1, pres)
+    )
 }
 
 psychro_curve_humratio <- function(tdb, value, type, units, pres) {
-    with_units(
+    psychrolib__with_units(
         units,
-        with_no_hum_limit(switch(
+        psychrolib__with_no_hum_limit(switch(
             type,
             relhum = psychrolib::GetHumRatioFromRelHum(tdb, value, pres),
             enthalpy = GetHumRatioFromEnthalpyAndTDryBulb(value, tdb),
@@ -396,8 +399,8 @@ psychro_zone_dbt_wmax <- function(
     }
 
     tdb <- psychro_tdb_sequence(row$tdb_min, row$tdb_max, n)
-    lower <- rep(narrow_hum(row$humratio_min, units), length(tdb))
-    upper <- rep(narrow_hum(row$humratio_max, units), length(tdb))
+    lower <- rep(unit__hum_from_chart(row$humratio_min, units), length(tdb))
+    upper <- rep(unit__hum_from_chart(row$humratio_max, units), length(tdb))
     upper <- pmin(upper, psychro_saturation_humratio(tdb, units, pres))
     lower <- pmax(lower, 0)
 
@@ -453,7 +456,7 @@ psychro_zone_xy_points <- function(
     groups <- split(data, data$group)
     out <- lapply(groups, function(group_data) {
         group_data <- psychro_close_xy_group(group_data)
-        humratio <- narrow_hum(group_data$humratio, units)
+        humratio <- unit__hum_from_chart(group_data$humratio, units)
         psychro_output_xy(
             group_data,
             group_data$tdb,

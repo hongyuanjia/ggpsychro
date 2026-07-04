@@ -46,7 +46,7 @@ coord_fg__givoni_mean_outdoor_grob <- function(coord, panel_params, spec) {
         return(grid::nullGrob())
     }
 
-    hum_sat <- with_units(
+    hum_sat <- psychrolib__with_units(
         coord$units,
         psychrolib::GetHumRatioFromRelHum(tdb, 1, coord$pressure)
     )
@@ -69,17 +69,17 @@ coord_fg__givoni_mean_outdoor_grob <- function(coord, panel_params, spec) {
     hum_label_scaled <- hum_scaled[[3L]]
 
     if (coord$mollier) {
-        line_x <- rescale01(c(hum_sat_scaled, hum_top_scaled), range_hum)
-        line_y <- rep(rescale01(tdb_scaled, range_tdb), 2L)
-        label_x <- rescale01(hum_label_scaled, range_hum)
+        line_x <- util__rescale01(c(hum_sat_scaled, hum_top_scaled), range_hum)
+        line_y <- rep(util__rescale01(tdb_scaled, range_tdb), 2L)
+        label_x <- util__rescale01(hum_label_scaled, range_hum)
         label_y <- line_y[[1L]]
         label_rot <- comfort_givoni_mean_outdoor_label_angle(TRUE)
         label_vjust <- comfort_givoni_mean_outdoor_label_vjust(TRUE)
     } else {
-        line_x <- rep(rescale01(tdb_scaled, range_tdb), 2L)
-        line_y <- rescale01(c(hum_sat_scaled, hum_top_scaled), range_hum)
+        line_x <- rep(util__rescale01(tdb_scaled, range_tdb), 2L)
+        line_y <- util__rescale01(c(hum_sat_scaled, hum_top_scaled), range_hum)
         label_x <- line_x[[1L]]
-        label_y <- rescale01(hum_label_scaled, range_hum)
+        label_y <- util__rescale01(hum_label_scaled, range_hum)
         label_rot <- comfort_givoni_mean_outdoor_label_angle(FALSE)
         label_vjust <- comfort_givoni_mean_outdoor_label_vjust(FALSE)
     }
@@ -132,7 +132,7 @@ coord_fg__heat_index_label_grob <- function(coord, panel_params, spec) {
         coord$pressure,
         coord$mollier,
         range_tdb,
-        amplify_hum(range_hum, coord$units)
+        unit__hum_to_chart(range_hum, coord$units)
     )
     if (!nrow(data)) {
         return(grid::nullGrob())

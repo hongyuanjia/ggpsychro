@@ -57,7 +57,7 @@ scale_drybulb_continuous <- function(
     ...
 ) {
     # TODO: use mollier determine which aes should be used?
-    psychro_continuous_scale(
+    scale__continuous_psychro(
         GGPSY_OPT$tdb_aes,
         "drybulb",
         identity,
@@ -68,7 +68,7 @@ scale_drybulb_continuous <- function(
         labels = labels,
         limits = limits,
         expand = expand,
-        transform = init_transform(trans, transform),
+        transform = scale__init_transform(trans, transform),
         guide = guide,
         position = "bottom",
         super = ggplot2::ScaleContinuousPosition,
@@ -91,7 +91,7 @@ scale_humratio_continuous <- function(
     guide = waiver(),
     ...
 ) {
-    psychro_continuous_scale(
+    scale__continuous_psychro(
         GGPSY_OPT$hum_aes,
         "humratio",
         identity,
@@ -102,7 +102,7 @@ scale_humratio_continuous <- function(
         labels = labels,
         limits = limits,
         expand = expand,
-        transform = init_transform(trans, transform),
+        transform = scale__init_transform(trans, transform),
         guide = guide,
         position = "left",
         super = ggplot2::ScaleContinuousPosition,
@@ -126,7 +126,7 @@ scale_relhum_continuous <- function(
     ...
 ) {
     # TODO: use the same logic as scale_x_continuous, e.g. ggplot_global$relhum
-    psychro_continuous_scale(
+    scale__continuous_psychro(
         "relhum",
         "relhum",
         identity,
@@ -137,7 +137,7 @@ scale_relhum_continuous <- function(
         labels = labels,
         limits = limits,
         expand = expand,
-        transform = init_transform(trans, transform),
+        transform = scale__init_transform(trans, transform),
         guide = guide,
         ...
     )
@@ -158,7 +158,7 @@ scale_wetbulb_continuous <- function(
     guide = waiver(),
     ...
 ) {
-    psychro_continuous_scale(
+    scale__continuous_psychro(
         "wetbulb",
         "wetbulb",
         identity,
@@ -169,7 +169,7 @@ scale_wetbulb_continuous <- function(
         labels = labels,
         limits = limits,
         expand = expand,
-        transform = init_transform(trans, transform),
+        transform = scale__init_transform(trans, transform),
         guide = guide,
         ...
     )
@@ -190,7 +190,7 @@ scale_vappres_continuous <- function(
     guide = waiver(),
     ...
 ) {
-    psychro_continuous_scale(
+    scale__continuous_psychro(
         "vappres",
         "vappres",
         identity,
@@ -201,7 +201,7 @@ scale_vappres_continuous <- function(
         labels = labels,
         limits = limits,
         expand = expand,
-        transform = init_transform(trans, transform),
+        transform = scale__init_transform(trans, transform),
         guide = guide,
         ...
     )
@@ -222,7 +222,7 @@ scale_specvol_continuous <- function(
     guide = waiver(),
     ...
 ) {
-    psychro_continuous_scale(
+    scale__continuous_psychro(
         "specvol",
         "specvol",
         identity,
@@ -233,7 +233,7 @@ scale_specvol_continuous <- function(
         labels = labels,
         limits = limits,
         expand = expand,
-        transform = init_transform(trans, transform),
+        transform = scale__init_transform(trans, transform),
         guide = guide,
         ...
     )
@@ -254,7 +254,7 @@ scale_enthalpy_continuous <- function(
     guide = waiver(),
     ...
 ) {
-    psychro_continuous_scale(
+    scale__continuous_psychro(
         "enthalpy",
         "enthalpy",
         identity,
@@ -265,13 +265,14 @@ scale_enthalpy_continuous <- function(
         labels = labels,
         limits = limits,
         expand = expand,
-        transform = init_transform(trans, transform),
+        transform = scale__init_transform(trans, transform),
         guide = guide,
         ...
     )
 }
 
-psychro_continuous_scale <- function(
+# Build a psychrometric continuous scale and mark it for plot construction.
+scale__continuous_psychro <- function(
     aesthetics,
     scale_name,
     palette,
@@ -289,30 +290,16 @@ psychro_continuous_scale <- function(
     scale
 }
 
-init_trans <- function(trans = waiver()) {
-    if (is.waive(trans)) empty_trans() else trans
+# Resolve ggplot2's waiver sentinel to the identity transformation.
+scale__init_trans <- function(trans = waiver()) {
+    if (util__is_waive(trans)) empty_trans() else trans
 }
 
-init_transform <- function(trans = waiver(), transform = waiver()) {
-    if (!is.waive(transform)) {
+# Prefer the ggplot2 `transform` argument while preserving legacy `trans`.
+scale__init_transform <- function(trans = waiver(), transform = waiver()) {
+    if (!util__is_waive(transform)) {
         transform
     } else {
-        init_trans(trans)
+        scale__init_trans(trans)
     }
-}
-
-# use stat to compute corresponding hum-ratio values
-# scale_relhum_continuous --> for grid
-# scale_relhum_color --> for points
-# scale_relhum_fill --> for fill
-# scale_relhum_size --> for line size
-# scale_relhum_linetype --> for line type
-
-# Look up the scale that should be used for a given aesthetic
-# adopted from https://github.com/tidyverse/ggplot2/blob/master/R/aes.r
-aes_to_scale <- function(var) {
-    var[var %in% c("x", "xmin", "xmax", "xend", "xintercept")] <- "x"
-    var[var %in% c("y", "ymin", "ymax", "yend", "yintercept")] <- "y"
-
-    var
 }

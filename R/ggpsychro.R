@@ -78,7 +78,7 @@ ggpsychro <- function(
         hum_lim = hum_lim,
         grids = default_psychro_grids(),
         grid_labels = list(),
-        protractor = default_psychro_protractor()
+        protractor = psychro__default_protractor()
     )
 
     # set class

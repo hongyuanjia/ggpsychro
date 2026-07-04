@@ -1,5 +1,8 @@
 test_that("Psychrometric state stat converts supported properties", {
-    pressure <- with_units("SI", psychrolib::GetStandardAtmPressure(0))
+    pressure <- psychrolib__with_units(
+        "SI",
+        psychrolib::GetStandardAtmPressure(0)
+    )
 
     cases <- list(
         humratio = list(
@@ -10,7 +13,7 @@ test_that("Psychrometric state stat converts supported properties", {
         relhum = list(
             data = data.frame(tdb = 25, relhum = 50),
             mapping = ggplot2::aes(tdb = tdb, relhum = relhum),
-            expected = with_units(
+            expected = psychrolib__with_units(
                 "SI",
                 psychrolib::GetHumRatioFromRelHum(25, 0.5, pressure)
             )
@@ -18,7 +21,7 @@ test_that("Psychrometric state stat converts supported properties", {
         wetbulb = list(
             data = data.frame(tdb = 25, wetbulb = 18),
             mapping = ggplot2::aes(tdb = tdb, wetbulb = wetbulb),
-            expected = with_units(
+            expected = psychrolib__with_units(
                 "SI",
                 psychrolib::GetHumRatioFromTWetBulb(25, 18, pressure)
             )
@@ -26,7 +29,7 @@ test_that("Psychrometric state stat converts supported properties", {
         vappres = list(
             data = data.frame(tdb = 25, vappres = 1500),
             mapping = ggplot2::aes(tdb = tdb, vappres = vappres),
-            expected = with_units(
+            expected = psychrolib__with_units(
                 "SI",
                 psychrolib::GetHumRatioFromVapPres(1500, pressure)
             )
@@ -34,7 +37,7 @@ test_that("Psychrometric state stat converts supported properties", {
         specvol = list(
             data = data.frame(tdb = 25, specvol = 0.86),
             mapping = ggplot2::aes(tdb = tdb, specvol = specvol),
-            expected = with_units(
+            expected = psychrolib__with_units(
                 "SI",
                 GetHumRatioFromAirVolume(25, 0.86, pressure)
             )
@@ -42,7 +45,7 @@ test_that("Psychrometric state stat converts supported properties", {
         enthalpy = list(
             data = data.frame(tdb = 25, enthalpy = 55000),
             mapping = ggplot2::aes(tdb = tdb, enthalpy = enthalpy),
-            expected = with_units(
+            expected = psychrolib__with_units(
                 "SI",
                 GetHumRatioFromEnthalpyAndTDryBulb(55000, 25)
             )
@@ -60,8 +63,11 @@ test_that("Psychrometric state stat converts supported properties", {
 
 test_that("Psychrometric process supports IP units and Mollier charts", {
     ip <- data.frame(tdb = c(70, 75, 80), relhum = c(40, 50, 60))
-    pressure_ip <- with_units("IP", psychrolib::GetStandardAtmPressure(0))
-    expected_ip <- with_units(
+    pressure_ip <- psychrolib__with_units(
+        "IP",
+        psychrolib::GetStandardAtmPressure(0)
+    )
+    expected_ip <- psychrolib__with_units(
         "IP",
         psychrolib::GetHumRatioFromRelHum(ip$tdb, ip$relhum / 100, pressure_ip)
     )

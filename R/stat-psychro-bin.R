@@ -281,7 +281,7 @@ StatPsychroBin <- ggproto(
         gap = 0.08,
         na.rm = FALSE
     ) {
-        units <- get_units(data)
+        units <- unit__from_data(data)
         gap <- psychro_bin_gap(gap)
         data <- psychro_bin_humidity(data, units)
         data <- psychro_bin_drop_missing(data, na.rm = na.rm)
@@ -328,7 +328,7 @@ StatPsychroBin <- ggproto(
         y_center <- y_breaks[-length(y_breaks)] + y_width / 2
         tile_scale <- 1 - gap
 
-        new_data_frame(list(
+        util__new_data_frame(list(
             x = x_center[grid$x_bin],
             y = y_center[grid$y_bin],
             width = x_width[grid$x_bin] * tile_scale,
@@ -354,7 +354,7 @@ psychro_bin_humidity <- function(data, units) {
         stop("`pres` must resolve to a single pressure value.", call. = FALSE)
     }
 
-    data$y <- with_units(
+    data$y <- psychrolib__with_units(
         units,
         psychrolib::GetHumRatioFromRelHum(data$x, data$relhum, pres)
     )
@@ -379,7 +379,7 @@ psychro_bin_drop_missing <- function(data, na.rm = FALSE) {
 }
 
 psychro_bin_empty <- function() {
-    new_data_frame(list(
+    util__new_data_frame(list(
         x = numeric(),
         y = numeric(),
         width = numeric(),
@@ -440,7 +440,7 @@ psychro_bin_boundary <- function(boundary, units, binwidth) {
     }
 
     boundary <- rep(boundary, length.out = 2L)
-    list(boundary[[1L]], narrow_hum(boundary[[2L]], units))
+    list(boundary[[1L]], unit__hum_from_chart(boundary[[2L]], units))
 }
 
 psychro_bin_binwidth <- function(binwidth, units) {
@@ -462,7 +462,7 @@ psychro_bin_binwidth <- function(binwidth, units) {
     }
 
     binwidth <- rep(binwidth, length.out = 2L)
-    list(binwidth[[1L]], narrow_hum(binwidth[[2L]], units))
+    list(binwidth[[1L]], unit__hum_from_chart(binwidth[[2L]], units))
 }
 
 psychro_bin_breaks <- function(x, bins, binwidth, boundary = 0) {
@@ -658,7 +658,7 @@ psychro_tile_tdb_at_hum <- function(hum, units, pres) {
     out <- rep(NA_real_, length(hum))
     keep <- is.finite(hum) & hum > 0
     if (any(keep)) {
-        out[keep] <- with_units(
+        out[keep] <- psychrolib__with_units(
             units,
             GetTDewPointFromHumRatioOnly(hum[keep], pres)
         )
@@ -760,10 +760,10 @@ psychro_tile_cell_grid_style <- function(
         paste("panel.grid", type, axis, sep = "."),
         theme
     )
-    has_override <- !is.waive(colour) ||
-        !is.waive(linewidth) ||
-        !is.waive(linetype) ||
-        !is.waive(alpha)
+    has_override <- !util__is_waive(colour) ||
+        !util__is_waive(linewidth) ||
+        !util__is_waive(linetype) ||
+        !util__is_waive(alpha)
     is_blank <- is.null(element) || inherits(element, "element_blank")
     defaults <- list(
         colour = "grey78",
@@ -798,7 +798,7 @@ psychro_tile_cell_grid_style <- function(
 }
 
 psychro_tile_cell_grid_value <- function(value, inherited, default) {
-    if (!is.waive(value)) {
+    if (!util__is_waive(value)) {
         return(value)
     }
 
@@ -808,7 +808,7 @@ psychro_tile_cell_grid_value <- function(value, inherited, default) {
 psychro_tile_cell_segments <- function(data, panel_params, coord) {
     needed <- c("cell_xmin", "cell_xmax", "cell_ymin", "cell_ymax")
     if (!nrow(data) || !all(needed %in% names(data)) || is.null(panel_params)) {
-        return(new_data_frame(list(
+        return(util__new_data_frame(list(
             x = numeric(),
             y = numeric(),
             xend = numeric(),
@@ -824,7 +824,7 @@ psychro_tile_cell_segments <- function(data, panel_params, coord) {
         (!nrow(x_breaks) && is.null(x_spacing)) ||
             (!nrow(y_breaks) && is.null(y_spacing))
     ) {
-        return(new_data_frame(list(
+        return(util__new_data_frame(list(
             x = numeric(),
             y = numeric(),
             xend = numeric(),
@@ -961,11 +961,14 @@ psychro_tile_break_values <- function(x) {
 
 psychro_tile_break_data <- function(value, type) {
     if (!length(value)) {
-        return(new_data_frame(list(value = numeric(), type = character())))
+        return(util__new_data_frame(list(
+            value = numeric(),
+            type = character()
+        )))
     }
 
     order <- order(value)
-    new_data_frame(list(value = value[order], type = type[order]))
+    util__new_data_frame(list(value = value[order], type = type[order]))
 }
 
 psychro_tile_cell_spacing <- function(lower, upper, tolerance = 1e-8) {
@@ -1018,7 +1021,7 @@ psychro_tile_chart_segments <- function(
     coord
 ) {
     if (!nrow(x_breaks) && !nrow(y_breaks)) {
-        return(new_data_frame(list(
+        return(util__new_data_frame(list(
             x = numeric(),
             y = numeric(),
             xend = numeric(),
@@ -1037,11 +1040,11 @@ psychro_tile_chart_segments <- function(
         ))
     }
 
-    x_sat <- with_units(
+    x_sat <- psychrolib__with_units(
         coord$units,
         psychrolib::GetHumRatioFromRelHum(x_breaks$value, 1.0, coord$pressure)
     )
-    vertical <- new_data_frame(list(
+    vertical <- util__new_data_frame(list(
         x = x_breaks$value,
         y = y_range[[1L]],
         xend = x_breaks$value,
@@ -1054,7 +1057,7 @@ psychro_tile_chart_segments <- function(
     y_dew <- rep(x_range[[1L]], nrow(y_breaks))
     positive <- y_breaks$value > 0
     if (any(positive)) {
-        y_dew[positive] <- with_units(
+        y_dew[positive] <- psychrolib__with_units(
             coord$units,
             GetTDewPointFromHumRatioOnly(
                 y_breaks$value[positive],
@@ -1062,7 +1065,7 @@ psychro_tile_chart_segments <- function(
             )
         )
     }
-    horizontal <- new_data_frame(list(
+    horizontal <- util__new_data_frame(list(
         x = pmax(x_range[[1L]], y_dew),
         y = y_breaks$value,
         xend = x_range[[2L]],
@@ -1081,7 +1084,7 @@ psychro_tile_rectangular_segments <- function(
     x_range,
     y_range
 ) {
-    vertical <- new_data_frame(list(
+    vertical <- util__new_data_frame(list(
         x = x_breaks$value,
         y = y_range[[1L]],
         xend = x_breaks$value,
@@ -1089,7 +1092,7 @@ psychro_tile_rectangular_segments <- function(
         axis = "x",
         grid_type = x_breaks$type
     ))
-    horizontal <- new_data_frame(list(
+    horizontal <- util__new_data_frame(list(
         x = x_range[[1L]],
         y = y_breaks$value,
         xend = x_range[[2L]],

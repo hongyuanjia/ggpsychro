@@ -23,7 +23,7 @@ comfort_adaptive_ashrae <- function(
     # Elevated air speed only expands the upper acceptability limit.
     ce <- comfort_adaptive_cooling_effect(v, to)
 
-    out <- new_data_frame(list(
+    out <- util__new_data_frame(list(
         standard = rep("ashrae55", length(tdb)),
         tmp_cmf = t_cmf,
         tmp_cmf_80_low = t_cmf - 3.5,
@@ -73,7 +73,7 @@ comfort_adaptive_en <- function(
     t_cmf <- 0.33 * t_running + 18.8
     ce <- comfort_adaptive_cooling_effect(v, to)
 
-    out <- new_data_frame(list(
+    out <- util__new_data_frame(list(
         standard = rep("en16798", length(tdb)),
         tmp_cmf = t_cmf,
         tmp_cmf_cat_i_low = t_cmf - 3.0,
@@ -175,7 +175,7 @@ comfort_zone_adaptive <- function(
     lower <- max(zone$lower[[1L]], lim$tdb[[1L]])
     upper <- min(zone$upper[[1L]], lim$tdb[[2L]])
     if (!is.finite(lower) || !is.finite(upper) || lower >= upper) {
-        return(new_data_frame(list(
+        return(util__new_data_frame(list(
             tdb = numeric(),
             humratio = numeric(),
             x = numeric(),
@@ -186,8 +186,8 @@ comfort_zone_adaptive <- function(
         )))
     }
 
-    hum <- narrow_hum(lim$hum, units)
-    out <- new_data_frame(list(
+    hum <- unit__hum_from_chart(lim$hum, units)
+    out <- util__new_data_frame(list(
         tdb = c(lower, upper, upper, lower),
         humratio = c(hum[[1L]], hum[[1L]], hum[[2L]], hum[[2L]]),
         group = 1L,

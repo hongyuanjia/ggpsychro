@@ -20,8 +20,11 @@ test_that("psychrometric tile bins relative humidity inputs", {
     expect_equal(tiles$y, c(0.007, 0.011), tolerance = 1e-8)
     expect_equal(sum(tiles$count), nrow(d))
 
-    pressure <- with_units("SI", psychrolib::GetStandardAtmPressure(0))
-    expected <- with_units(
+    pressure <- psychrolib__with_units(
+        "SI",
+        psychrolib::GetStandardAtmPressure(0)
+    )
+    expected <- psychrolib__with_units(
         "SI",
         psychrolib::GetHumRatioFromRelHum(
             d$dry_bulb,

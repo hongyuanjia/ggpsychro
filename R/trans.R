@@ -35,7 +35,7 @@ is.empty_trans <- function(trans) {
 #' plot(enthalpy_trans("SI"), xlim = c(1000, 2000))
 drybulb_trans <- function(units = "SI") {
     units <- match.arg(units, c("SI", "IP"))
-    trans_new("drybulb", "force", "force", domain = get_tdb_limits(units))
+    trans_new("drybulb", "force", "force", domain = psychro__tdb_limits(units))
 }
 
 #' @rdname trans
@@ -45,9 +45,9 @@ humratio_trans <- function(units = "SI") {
     units <- match.arg(units, c("SI", "IP"))
     trans_new(
         "humratio",
-        transform = function(hum) narrow_hum(hum, units),
-        inverse = function(hum) amplify_hum(hum, units),
-        domain = get_hum_limits(units),
+        transform = function(hum) unit__hum_from_chart(hum, units),
+        inverse = function(hum) unit__hum_to_chart(hum, units),
+        domain = psychro__hum_limits(units),
     )
 }
 
@@ -74,7 +74,7 @@ wetbulb_trans <- function(units = "SI") {
         "wetbulb",
         "force",
         "force",
-        domain = get_tdb_limits(units),
+        domain = psychro__tdb_limits(units),
         format = label_wetbulb(units = units)
     )
 }

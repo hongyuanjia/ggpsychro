@@ -395,8 +395,8 @@ comfort_pmv_curve_base_data <- function(
     # Constant-PMV curves are traced by solving dry-bulb roots on humidity-ratio
     # samples, then adding saturation-boundary roots so curves close cleanly.
     humratio <- seq(
-        narrow_hum(lim$hum[[1L]], units),
-        narrow_hum(lim$hum[[2L]], units),
+        unit__hum_from_chart(lim$hum[[1L]], units),
+        unit__hum_from_chart(lim$hum[[2L]], units),
         length.out = n
     )
 
@@ -415,7 +415,7 @@ comfort_pmv_curve_base_data <- function(
         if (!length(roots$tdb)) {
             next
         }
-        curves[[i]] <- new_data_frame(list(
+        curves[[i]] <- util__new_data_frame(list(
             tdb = roots$tdb,
             humratio = roots$humratio,
             level = levels[[i]],
@@ -496,7 +496,7 @@ comfort_pmv_curve_level_roots <- function(
 }
 
 comfort_empty_pmv_curve_base <- function() {
-    new_data_frame(list(
+    util__new_data_frame(list(
         tdb = numeric(),
         humratio = numeric(),
         level = numeric(),
@@ -527,7 +527,7 @@ comfort_pmv_axis_label_data <- function(
     levels <- comfort_check_breaks(levels, "`levels`", n_min = 1L)
     n <- comfort_pmv_curve_n(n)
     lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
-    hum_lim_narrow <- narrow_hum(lim$hum, units)
+    hum_lim_narrow <- unit__hum_from_chart(lim$hum, units)
     label_start <- hum_lim_narrow[[1L]] +
         diff(hum_lim_narrow) * comfort_pmv_axis_label_offset(axis_label_hjust)
     label_end <- hum_lim_narrow[[1L]] +
@@ -558,7 +558,7 @@ comfort_pmv_axis_label_data <- function(
         if (is.null(segment)) {
             next
         }
-        labels[[i]] <- new_data_frame(list(
+        labels[[i]] <- util__new_data_frame(list(
             tdb = segment$tdb,
             humratio = segment$humratio,
             level = levels[[i]],
@@ -857,7 +857,7 @@ comfort_pmv_rootband_data <- function(
             right <- pmax(right, left)
             y <- y[ok]
             group <- length(polys) + 1L
-            polys[[group]] <- new_data_frame(list(
+            polys[[group]] <- util__new_data_frame(list(
                 tdb = c(left, rev(right)),
                 humratio = c(y, rev(y)),
                 edge = c(
@@ -909,7 +909,7 @@ comfort_pmv_rootband_data <- function(
 }
 
 comfort_empty_pmv_curve <- function() {
-    new_data_frame(list(
+    util__new_data_frame(list(
         tdb = numeric(),
         humratio = numeric(),
         x = numeric(),
@@ -1089,8 +1089,8 @@ comfort_pmv_rootband_humratio <- function(
     saturation_roots = NULL
 ) {
     hum <- seq(
-        narrow_hum(hum_lim[[1L]], units),
-        narrow_hum(hum_lim[[2L]], units),
+        unit__hum_from_chart(hum_lim[[1L]], units),
+        unit__hum_from_chart(hum_lim[[2L]], units),
         length.out = n
     )
     sat <- psychro_saturation_humratio(tdb_lim, units, pres)
@@ -1113,7 +1113,7 @@ comfort_pmv_rootband_humratio <- function(
         hum <- c(hum, roots$humratio)
     }
     hum <- sort(unique(round(hum[is.finite(hum)], 12L)))
-    hum_lim <- narrow_hum(hum_lim, units)
+    hum_lim <- unit__hum_from_chart(hum_lim, units)
     hum[hum >= hum_lim[[1L]] & hum <= hum_lim[[2L]]]
 }
 
@@ -1121,7 +1121,7 @@ comfort_pmv_rootband_domain <- function(humratio, tdb_lim, units, pres) {
     xlo <- rep(tdb_lim[[1L]], length(humratio))
     positive <- humratio > 0
     if (any(positive)) {
-        dew <- with_units(
+        dew <- psychrolib__with_units(
             units,
             GetTDewPointFromHumRatioOnly(
                 humratio[positive],
@@ -1290,7 +1290,7 @@ comfort_pmv_native_params <- function(model, units, pres) {
         clo = as.numeric(p$clo),
         wme = as.numeric(p$wme),
         pressure = comfort_pressure_pa(as.numeric(pres), units),
-        min_hum_ratio = psychrolib_options()$MIN_HUM_RATIO
+        min_hum_ratio = psychrolib__options()$MIN_HUM_RATIO
     )
 }
 
@@ -1340,7 +1340,7 @@ comfort_pmv_native_saturation_roots <- function(
         C_comfort_pmv_saturation_roots,
         as.numeric(level),
         as.numeric(comfort_to_si_temp(tdb_lim, units)),
-        as.numeric(narrow_hum(hum_lim, units)),
+        as.numeric(unit__hum_from_chart(hum_lim, units)),
         as.integer(max(as.integer(n), 80L)),
         as.numeric(p$pressure),
         as.numeric(p$tr),
@@ -1389,7 +1389,7 @@ comfort_pmv_curve_roots_r <- function(
     xlo <- rep(tdb_lim[[1L]], length(humratio))
     positive <- humratio > 0
     if (any(positive)) {
-        dew <- with_units(
+        dew <- psychrolib__with_units(
             units,
             GetTDewPointFromHumRatioOnly(
                 humratio[positive],
@@ -1502,7 +1502,7 @@ comfort_pmv_curve_saturation_roots_r <- function(
     n <- max(as.integer(n), 80L)
     tdb <- seq(tdb_lim[[1L]], tdb_lim[[2L]], length.out = n)
     hum <- psychro_saturation_humratio(tdb, units, pres)
-    hum_lim <- narrow_hum(hum_lim, units)
+    hum_lim <- unit__hum_from_chart(hum_lim, units)
     valid <- is.finite(tdb) &
         is.finite(hum) &
         hum >= hum_lim[[1L]] &

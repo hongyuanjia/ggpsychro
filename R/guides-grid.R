@@ -267,7 +267,7 @@ psychro_protractor_breaks <- function(breaks, minor = FALSE) {
     if (is.null(breaks)) {
         return(numeric())
     }
-    if (is.waive(breaks)) {
+    if (util__is_waive(breaks)) {
         if (isTRUE(minor)) {
             return(psychro_protractor_shr_minor_breaks())
         }
@@ -329,10 +329,10 @@ psychro_protractor_grob <- function(
         return(NULL)
     }
 
-    scale <- protractor$scale %||% default_psychro_protractor()$scale
-    radius <- protractor$radius %||% default_psychro_protractor()$radius
+    scale <- protractor$scale %||% psychro__default_protractor()$scale
+    radius <- protractor$radius %||% psychro__default_protractor()$radius
     margin <- psychro_protractor_margin(
-        protractor$margin %||% default_psychro_protractor()$margin
+        protractor$margin %||% psychro__default_protractor()$margin
     )
     radius <- min(radius * scale, 0.5 - max(margin$x, margin$y))
 
@@ -617,7 +617,7 @@ psychro_protractor_grob <- function(
 }
 
 psychro_protractor_margin <- function(margin) {
-    margin <- margin %||% default_psychro_protractor()$margin
+    margin <- margin %||% psychro__default_protractor()$margin
     if (length(margin) == 1L) {
         margin <- rep(margin, 2L)
     }
@@ -839,7 +839,7 @@ psychro_protractor_fixed_text_rotation <- function(rotation = 0) {
 
 psychro_protractor_label_ticks <- function(ticks, labels) {
     if (is.null(labels) || !nrow(ticks)) {
-        return(new_data_frame(list(
+        return(util__new_data_frame(list(
             value = numeric(),
             angle = numeric(),
             label = character(),
@@ -860,7 +860,7 @@ psychro_protractor_label_ticks <- function(ticks, labels) {
     loc <- loc[tick_order]
     endpoint <- endpoint[tick_order]
     if (!nrow(ticks)) {
-        return(new_data_frame(list(
+        return(util__new_data_frame(list(
             value = numeric(),
             angle = numeric(),
             label = character(),
@@ -880,7 +880,7 @@ psychro_protractor_label_ticks <- function(ticks, labels) {
 
 psychro_protractor_ratio_label_ticks <- function(ticks, labels) {
     if (!nrow(ticks)) {
-        return(new_data_frame(list(
+        return(util__new_data_frame(list(
             value = numeric(),
             angle = numeric(),
             label = character(),
@@ -891,7 +891,7 @@ psychro_protractor_ratio_label_ticks <- function(ticks, labels) {
         )))
     }
     if (is.null(labels)) {
-        return(new_data_frame(list(
+        return(util__new_data_frame(list(
             value = numeric(),
             angle = numeric(),
             label = character(),
@@ -906,7 +906,7 @@ psychro_protractor_ratio_label_ticks <- function(ticks, labels) {
     keep <- !is.na(loc)
     ticks <- ticks[keep, , drop = FALSE]
     if (!nrow(ticks)) {
-        return(new_data_frame(list(
+        return(util__new_data_frame(list(
             value = numeric(),
             angle = numeric(),
             label = character(),
@@ -925,7 +925,7 @@ psychro_protractor_ratio_label_ticks <- function(ticks, labels) {
 }
 
 psychro_protractor_label_spec <- function(breaks, labels, axis, units) {
-    breaks <- remove_na(breaks)
+    breaks <- util__remove_na(breaks)
     breaks <- breaks[is.finite(breaks)]
     if (!length(breaks)) {
         return(NULL)
@@ -949,7 +949,7 @@ psychro_protractor_label_text <- function(breaks, labels, axis, units) {
     if (is.null(labels)) {
         return(NULL)
     }
-    if (is.waive(labels)) {
+    if (util__is_waive(labels)) {
         if (identical(axis, "shr")) {
             return(guide__format_shr_labels(breaks))
         }
@@ -1031,10 +1031,10 @@ psychro_protractor_annotation <- function(annotation) {
 }
 
 psychro_protractor_shr_ticks <- function(shr, range_tdb, range_hum, units) {
-    shr <- remove_na(shr)
+    shr <- util__remove_na(shr)
     shr <- shr[is.finite(shr)]
     if (!length(shr)) {
-        return(new_data_frame(list(value = numeric(), angle = numeric())))
+        return(util__new_data_frame(list(value = numeric(), angle = numeric())))
     }
 
     cp <- if (units == "IP") 0.24 else 1.006
@@ -1045,14 +1045,14 @@ psychro_protractor_shr_ticks <- function(shr, range_tdb, range_hum, units) {
     angle <- ifelse(slope_angle >= 0, pi + slope_angle, 2 * pi + slope_angle)
     angle[shr == 0] <- 3 * pi / 2
 
-    new_data_frame(list(value = shr, angle = angle))
+    util__new_data_frame(list(value = shr, angle = angle))
 }
 
 psychro_protractor_ratio_ticks <- function(ratio, range_tdb, range_hum, units) {
-    value <- remove_na(ratio)
+    value <- util__remove_na(ratio)
     value <- value[is.finite(value)]
     if (!length(value)) {
-        return(new_data_frame(list(value = numeric(), angle = numeric())))
+        return(util__new_data_frame(list(value = numeric(), angle = numeric())))
     }
 
     cp <- if (units == "IP") 0.24 else 1.006
@@ -1067,7 +1067,7 @@ psychro_protractor_ratio_ticks <- function(ratio, range_tdb, range_hum, units) {
     angle <- ifelse(slope >= 0, pi + slope_angle, 2 * pi + slope_angle)
     angle[abs(denominator) <= sqrt(.Machine$double.eps)] <- 3 * pi / 2
 
-    new_data_frame(list(value = heat_ratio / divisor, angle = angle))
+    util__new_data_frame(list(value = heat_ratio / divisor, angle = angle))
 }
 
 psychro_protractor_ratio_major_breaks <- function(units) {
@@ -1113,7 +1113,7 @@ psychro_protractor_ratio_breaks <- function(breaks, units, minor = FALSE) {
     if (is.null(breaks)) {
         return(numeric())
     }
-    if (is.waive(breaks)) {
+    if (util__is_waive(breaks)) {
         if (isTRUE(minor)) {
             return(psychro_protractor_ratio_minor_breaks(units))
         }
@@ -1128,14 +1128,14 @@ psychro_protractor_ratio_divisor <- function(units) {
 
 psychro_protractor_tick_data <- function(ticks, axis) {
     if (!nrow(ticks)) {
-        return(new_data_frame(list(
+        return(util__new_data_frame(list(
             axis = character(),
             value = numeric(),
             angle = numeric()
         )))
     }
 
-    new_data_frame(list(
+    util__new_data_frame(list(
         axis = rep(axis, nrow(ticks)),
         value = ticks$value,
         angle = ticks$angle
@@ -1144,7 +1144,7 @@ psychro_protractor_tick_data <- function(ticks, axis) {
 
 psychro_protractor_unique_ticks <- function(ticks, major = FALSE) {
     if (!nrow(ticks)) {
-        return(new_data_frame(list(
+        return(util__new_data_frame(list(
             axis = character(),
             value = numeric(),
             angle = numeric(),
@@ -1170,7 +1170,7 @@ psychro_protractor_unique_ticks <- function(ticks, major = FALSE) {
         }
 
         lengths <- psychro_protractor_tick_scales(has_shr, has_ratio, major)
-        new_data_frame(list(
+        util__new_data_frame(list(
             axis = axis,
             value = rows$value[[1L]],
             angle = rows$angle[[1L]],
@@ -1209,7 +1209,7 @@ psychro_protractor_add_sensible_endpoint <- function(ticks, breaks) {
 
     rbind(
         ticks,
-        new_data_frame(list(value = 1, angle = 2 * pi))
+        util__new_data_frame(list(value = 1, angle = 2 * pi))
     )
 }
 
@@ -1312,7 +1312,7 @@ psychro_grid_label_data <- function(grid, labels, mollier, panel_x, panel_y) {
         if (length(idx) < 2L) {
             return(NULL)
         }
-        new_data_frame(list(
+        util__new_data_frame(list(
             x = x[idx],
             y = y[idx],
             id = rep(group, length(idx))
@@ -1320,7 +1320,7 @@ psychro_grid_label_data <- function(grid, labels, mollier, panel_x, panel_y) {
     })
     pieces <- pieces[!vapply(pieces, is.null, logical(1))]
     if (!length(pieces)) {
-        return(list(path = new_data_frame(list()), labels = labels[0]))
+        return(list(path = util__new_data_frame(list()), labels = labels[0]))
     }
 
     path <- do.call(rbind, pieces)

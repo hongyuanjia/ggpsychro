@@ -69,7 +69,7 @@ coord_psychro <- function(
 
 # Keep relative-humidity guide breaks inside the drawable psychrometric field.
 coord_psy__relhum_grid_breaks <- function(breaks) {
-    breaks <- remove_na(breaks)
+    breaks <- util__remove_na(breaks)
     breaks[breaks > 0 & breaks < 1]
 }
 
@@ -104,7 +104,7 @@ coord_psy__grid_label_text <- function(label, type, breaks, scale, units) {
         return(NULL)
     }
 
-    if (identical(type, "relhum") && is.waive(scale$scale$labels)) {
+    if (identical(type, "relhum") && util__is_waive(scale$scale$labels)) {
         return(label_relhum(units = units)(breaks))
     }
 
@@ -172,7 +172,7 @@ coord_psy__scale_xy <- function(coord, panel_params, data) {
 # Grid breaks are trained in scale space, but psychrolib needs physical values;
 # keep both forms so geometry and labels cannot drift apart.
 coord_psy__grid_break_data <- function(scale, type, breaks) {
-    scale_breaks <- remove_na(breaks)
+    scale_breaks <- util__remove_na(breaks)
     if (!length(scale_breaks)) {
         return(list(input = numeric(), scale = numeric()))
     }
@@ -246,8 +246,8 @@ CoordPsychro <- ggproto(
             unique = TRUE,
             sorted = TRUE,
             null.ok = TRUE,
-            lower = get_tdb_limits(self$units)[1L],
-            upper = get_tdb_limits(self$units)[2L],
+            lower = psychro__tdb_limits(self$units)[1L],
+            upper = psychro__tdb_limits(self$units)[2L],
             .var.name = "tdb_lim"
         )
         assert_numeric(
@@ -258,8 +258,8 @@ CoordPsychro <- ggproto(
             unique = TRUE,
             sorted = TRUE,
             null.ok = TRUE,
-            lower = get_hum_limits(self$units)[1],
-            upper = get_hum_limits(self$units)[2],
+            lower = psychro__hum_limits(self$units)[1],
+            upper = psychro__hum_limits(self$units)[2],
             .var.name = "hum_lim"
         )
 
@@ -272,7 +272,7 @@ CoordPsychro <- ggproto(
         }
 
         # calculate pressure
-        self$pressure <- with_units(
+        self$pressure <- psychrolib__with_units(
             self$units,
             GetStandardAtmPressure(self$altitude)
         )
@@ -297,7 +297,7 @@ CoordPsychro <- ggproto(
         # psychrometric chart. In this case, use the coordinate limits to build
         # a fake data for each layer
         lapply(data, function(d) {
-            if (is.waive(d)) {
+            if (util__is_waive(d)) {
                 len <- lengths(params$limits[c("x", "y")])
                 if (all(!len)) {
                     return(d)
@@ -319,7 +319,7 @@ CoordPsychro <- ggproto(
         scale_en,
         params = list()
     ) {
-        default_limits <- default_psychro_limits(self$units)
+        default_limits <- psychro__default_limits(self$units)
         default_x <- if (self$mollier) {
             default_limits$hum
         } else {
@@ -352,13 +352,13 @@ CoordPsychro <- ggproto(
 
         if (self$mollier) {
             lim_tdb <- lim_y
-            lim_hum <- narrow_hum(lim_x, self$units)
+            lim_hum <- unit__hum_from_chart(lim_x, self$units)
         } else {
             lim_tdb <- lim_x
-            lim_hum <- narrow_hum(lim_y, self$units)
+            lim_hum <- unit__hum_from_chart(lim_y, self$units)
         }
 
-        tdp <- with_units(
+        tdp <- psychrolib__with_units(
             self$units,
             psychrolib::GetTDewPointFromHumRatio(
                 lim_tdb[1L],
@@ -368,18 +368,18 @@ CoordPsychro <- ggproto(
         )
         lim_tdb <- c(max(lim_tdb[1L], tdp), lim_tdb[2L])
 
-        hum <- with_units(
+        hum <- psychrolib__with_units(
             self$units,
             psychrolib::GetHumRatioFromTDewPoint(lim_tdb[2L], self$pressure)
         )
         lim_hum <- c(lim_hum[1L], min(lim_hum[2L], hum))
 
         if (self$mollier) {
-            lim_x <- scale_x$transform(amplify_hum(lim_hum, self$units))
+            lim_x <- scale_x$transform(unit__hum_to_chart(lim_hum, self$units))
             lim_y <- scale_y$transform(lim_tdb)
         } else {
             lim_x <- scale_x$transform(lim_tdb)
-            lim_y <- scale_y$transform(amplify_hum(lim_hum, self$units))
+            lim_y <- scale_y$transform(unit__hum_to_chart(lim_hum, self$units))
         }
 
         if (scale_x$is_empty()) {
@@ -390,8 +390,8 @@ CoordPsychro <- ggproto(
         }
 
         if (!is.null(lim_tdb) && !is.null(lim_hum)) {
-            lim_rh <- cut_oob(
-                with_units(
+            lim_rh <- util__cut_oob(
+                psychrolib__with_units(
                     self$units,
                     psychrolib::GetRelHumFromHumRatio(
                         rev(lim_tdb),
@@ -401,7 +401,7 @@ CoordPsychro <- ggproto(
                 ),
                 c(0, 1)
             )
-            lim_wb <- with_units(
+            lim_wb <- psychrolib__with_units(
                 self$units,
                 psychrolib::GetTWetBulbFromHumRatio(
                     lim_tdb,
@@ -409,15 +409,15 @@ CoordPsychro <- ggproto(
                     params$pressure
                 )
             )
-            lim_vp <- with_units(
+            lim_vp <- psychrolib__with_units(
                 self$units,
                 psychrolib::GetVapPresFromHumRatio(lim_hum, params$pressure)
             )
-            lim_sv <- with_units(
+            lim_sv <- psychrolib__with_units(
                 self$units,
                 psychrolib::GetMoistAirVolume(lim_tdb, lim_hum, params$pressure)
             )
-            lim_en <- with_units(
+            lim_en <- psychrolib__with_units(
                 self$units,
                 psychrolib::GetMoistAirEnthalpy(lim_tdb, lim_hum)
             )
@@ -476,7 +476,7 @@ CoordPsychro <- ggproto(
         scale <- panel_params[[self$pos_tdb()]]$scale
         rng <- scale$trans$inverse(self$range_tdb(panel_params))
         if (cut) {
-            rng <- cut_oob(rng, get_tdb_limits(self$units))
+            rng <- util__cut_oob(rng, psychro__tdb_limits(self$units))
         }
         rng
     },
@@ -485,14 +485,17 @@ CoordPsychro <- ggproto(
     # native kg/kg or lb/lb ratio.
     range_hum_physical = function(self, panel_params, cut = FALSE) {
         scale <- panel_params[[self$pos_hum()]]$scale
-        hum <- narrow_hum(
+        hum <- unit__hum_from_chart(
             scale$trans$inverse(self$range_hum(panel_params)),
             self$units
         )
         if (cut) {
-            hum <- cut_oob(
+            hum <- util__cut_oob(
                 hum,
-                narrow_hum(get_hum_limits(self$units), self$units)
+                unit__hum_from_chart(
+                    psychro__hum_limits(self$units),
+                    self$units
+                )
             )
         }
         hum
@@ -507,7 +510,7 @@ CoordPsychro <- ggproto(
     # scale as user-facing display units.
     scale_hum = function(self, panel_params, hum) {
         scale <- panel_params[[self$pos_hum()]]$scale
-        psychro_scale_transform(scale, amplify_hum(hum, self$units))
+        psychro_scale_transform(scale, unit__hum_to_chart(hum, self$units))
     },
 
     trans_grid_vert = function(
@@ -552,7 +555,10 @@ CoordPsychro <- ggproto(
         }
 
         no_hum_limit <- function(expr) {
-            with_units(self$units, with_no_hum_limit(expr))
+            psychrolib__with_units(
+                self$units,
+                psychrolib__with_no_hum_limit(expr)
+            )
         }
 
         hum <- switch(
@@ -589,7 +595,7 @@ CoordPsychro <- ggproto(
             } else {
                 self$range_hum_physical(panel_params)
             }
-            hum <- cut_oob(hum, hum_range_physical)
+            hum <- util__cut_oob(hum, hum_range_physical)
         }
 
         if (!is.null(panel_params)) {
@@ -599,8 +605,8 @@ CoordPsychro <- ggproto(
             hum <- self$scale_hum(panel_params, hum)
         }
 
-        tdb <- rescale01(tdb, range_tdb)
-        hum <- rescale01(hum, range_hum)
+        tdb <- util__rescale01(tdb, range_tdb)
+        hum <- util__rescale01(hum, range_hum)
 
         list(
             tdb = tdb,
@@ -833,7 +839,7 @@ coord_psy__saturation_scaled <- function(coord, panel_params) {
         panel_params[[coord$pos_tdb()]]$continuous_range
     )
     tdb <- scale$trans$breaks(limits, 100L)
-    hum <- with_units(
+    hum <- psychrolib__with_units(
         coord$units,
         psychrolib::GetHumRatioFromRelHum(tdb, 1.0, coord$pressure)
     )
@@ -847,7 +853,7 @@ coord_psy__saturation_scaled <- function(coord, panel_params) {
     sat_app_end <- FALSE
     sat_tdb <- c(
         if (range_hum[1L] > 0.0) {
-            with_units(
+            psychrolib__with_units(
                 coord$units,
                 GetTDewPointFromHumRatioOnly(
                     range_hum[1L],
@@ -857,7 +863,7 @@ coord_psy__saturation_scaled <- function(coord, panel_params) {
         },
         sat_tdb,
         if (range_hum[2L] > 0.0) {
-            sat_tdb_max <- with_units(
+            sat_tdb_max <- psychrolib__with_units(
                 coord$units,
                 GetTDewPointFromHumRatioOnly(
                     range_hum[2L],
@@ -890,8 +896,8 @@ coord_psy__saturation_npc <- function(coord, panel_params) {
     }
 
     list(
-        tdb = rescale01(sat$tdb, range_tdb),
-        hum = rescale01(sat$hum, range_hum),
+        tdb = util__rescale01(sat$tdb, range_tdb),
+        hum = util__rescale01(sat$hum, range_hum),
         len = length(sat$tdb),
         n = 1L
     )

@@ -81,7 +81,7 @@ makeContent.psychro_textpath <- function(x) {
 
     # Unit conversion must happen inside makeContent(), where grid has already
     # pushed the panel viewport used by the psychrometric guide or layer grob.
-    path <- new_data_frame(list(
+    path <- util__new_data_frame(list(
         x = grid::convertX(spec$x, "in", valueOnly = TRUE),
         y = grid::convertY(spec$y, "in", valueOnly = TRUE),
         id = spec$id
@@ -442,7 +442,7 @@ textpath_place <- function(
     keep_path_side = FALSE
 ) {
     if (!nrow(path) || !length(measured$piece_id)) {
-        return(new_data_frame(list(
+        return(util__new_data_frame(list(
             x = numeric(),
             y = numeric(),
             angle = numeric(),
@@ -468,7 +468,7 @@ textpath_place <- function(
         isTRUE(remove_long),
         isTRUE(keep_path_side)
     )
-    new_data_frame(placed)
+    util__new_data_frame(placed)
 }
 
 # Draw the underlying path, optionally deleting segments under label spans when
@@ -565,14 +565,14 @@ textpath_gap_path <- function(path, placed, padding) {
     }
 
     if (!length(runs)) {
-        return(new_data_frame(list(
+        return(util__new_data_frame(list(
             x = numeric(),
             y = numeric(),
             id = integer()
         )))
     }
     run_lengths <- vapply(runs, nrow, integer(1L))
-    new_data_frame(list(
+    util__new_data_frame(list(
         x = unlist(lapply(runs, `[[`, "x"), use.names = FALSE),
         y = unlist(lapply(runs, `[[`, "y"), use.names = FALSE),
         id = rep.int(seq_along(runs), run_lengths)
@@ -584,16 +584,16 @@ textpath_gap_path <- function(path, placed, padding) {
 textpath_keep <- function(arc, label_bounds, pad) {
     path_length <- max(arc)
     if (!nrow(label_bounds)) {
-        return(new_data_frame(list(left = 0, right = path_length)))
+        return(util__new_data_frame(list(left = 0, right = path_length)))
     }
 
-    gaps <- new_data_frame(list(
+    gaps <- util__new_data_frame(list(
         left = pmax(0, label_bounds$left - pad),
         right = pmin(path_length, label_bounds$right + pad)
     ))
     gaps <- gaps[gaps$right > gaps$left, , drop = FALSE]
     if (!nrow(gaps)) {
-        return(new_data_frame(list(left = 0, right = path_length)))
+        return(util__new_data_frame(list(left = 0, right = path_length)))
     }
 
     gaps <- gaps[order(gaps$left, gaps$right), , drop = FALSE]
@@ -614,7 +614,7 @@ textpath_keep <- function(arc, label_bounds, pad) {
 
     starts <- c(0, gaps$right)
     ends <- c(gaps$left, path_length)
-    keep <- new_data_frame(list(left = starts, right = ends))
+    keep <- util__new_data_frame(list(left = starts, right = ends))
     keep[keep$right > keep$left, , drop = FALSE]
 }
 
@@ -633,7 +633,7 @@ path_slice <- function(x, y, arc, left, right) {
         path_at(y, arc, right)
     )
     keep <- c(TRUE, xx[-1L] != xx[-length(xx)] | yy[-1L] != yy[-length(yy)])
-    new_data_frame(list(x = xx[keep], y = yy[keep]))
+    util__new_data_frame(list(x = xx[keep], y = yy[keep]))
 }
 
 # Interpolate one coordinate vector on an arclength-parametrised polyline.

@@ -18,7 +18,7 @@ GetHumRatioFromAirVolume <- function(TDryBulb, AirVolume, Pressure) {
             1.607858
     }
 
-    pmax(HumRatio, psychrolib_options()$MIN_HUM_RATIO)
+    pmax(HumRatio, psychrolib__options()$MIN_HUM_RATIO)
 }
 
 GetTDewPointFromHumRatioOnly <- function(HumRatio, Pressure) {
@@ -27,8 +27,8 @@ GetTDewPointFromHumRatioOnly <- function(HumRatio, Pressure) {
         C_dew_point_from_hum_ratio,
         as.numeric(HumRatio),
         as.numeric(Pressure),
-        encode_units(units),
-        psychrolib_options()$MIN_HUM_RATIO
+        unit__encode(units),
+        psychrolib__options()$MIN_HUM_RATIO
     )
 }
 
@@ -43,7 +43,8 @@ GetTDewPointFromVapPresOnly <- function(VapPres) {
         TSat <- 100.0
         TSat <- stats::uniroot(
             function(TSat) {
-                with_units("SI", psychrolib::GetSatVapPres(TSat)) - VapPres
+                psychrolib__with_units("SI", psychrolib::GetSatVapPres(TSat)) -
+                    VapPres
             },
             interval = c(-100, 200),
             tol = 1E-4,

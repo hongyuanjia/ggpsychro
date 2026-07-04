@@ -335,14 +335,14 @@ validate_psychro_protractor_annotation <- function(annotation) {
 }
 
 validate_psychro_protractor_breaks <- function(breaks, arg) {
-    if (is.waive(breaks) || is.null(breaks)) {
+    if (util__is_waive(breaks) || is.null(breaks)) {
         return(invisible(breaks))
     }
     assert_numeric(breaks, any.missing = FALSE, .var.name = arg)
 }
 
 validate_psychro_protractor_labels <- function(labels, arg) {
-    if (is.waive(labels) || is.null(labels) || is.function(labels)) {
+    if (util__is_waive(labels) || is.null(labels) || is.function(labels)) {
         return(invisible(labels))
     }
     if (is.character(labels) && !anyNA(labels)) {
@@ -366,10 +366,10 @@ validate_psychro_protractor_break_labels <- function(
     breaks_arg,
     labels_arg
 ) {
-    if (is.waive(labels) || is.null(labels) || is.function(labels)) {
+    if (util__is_waive(labels) || is.null(labels) || is.function(labels)) {
         return(invisible(NULL))
     }
-    if (is.waive(breaks)) {
+    if (util__is_waive(breaks)) {
         stop(
             sprintf(
                 "`%s` requires explicit `%s` unless it is a function, NULL, or waiver().",

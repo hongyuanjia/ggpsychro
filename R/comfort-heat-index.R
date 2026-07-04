@@ -60,7 +60,7 @@ comfort_heat_index_thresholds <- function(units) {
     if (units == "IP") {
         c(80, 90, 103, 125)
     } else {
-        get_c_from_f(c(80, 90, 103, 125))
+        unit__c_from_f(c(80, 90, 103, 125))
     }
 }
 
@@ -76,7 +76,7 @@ comfort_heat_index_category <- function(heat_index_f) {
     id[!is.finite(heat_index_f)] <- NA_integer_
     category <- labels[id + 1L]
     category[is.na(id)] <- NA_character_
-    new_data_frame(list(category = category, category_id = id))
+    util__new_data_frame(list(category = category, category_id = id))
 }
 
 comfort_heat_index_zone_specs <- function() {
@@ -341,7 +341,7 @@ comfort_heat_index_label_data <- function(
             next
         }
         idx <- which(keep)[which.min(abs(values[keep] - target))]
-        labels[[i]] <- new_data_frame(list(
+        labels[[i]] <- util__new_data_frame(list(
             tdb = grid$tdb[[idx]],
             humratio = grid$humratio[[idx]],
             label = specs[[i]]$label,
@@ -353,7 +353,7 @@ comfort_heat_index_label_data <- function(
     }
     labels <- labels[!vapply(labels, is.null, logical(1L))]
     if (!length(labels)) {
-        return(new_data_frame(list(
+        return(util__new_data_frame(list(
             tdb = numeric(),
             humratio = numeric(),
             x = numeric(),

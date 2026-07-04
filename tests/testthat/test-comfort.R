@@ -218,9 +218,9 @@ test_that("comfort heat index matches Marsh and NOAA-style expected behavior", {
         "solar_exposure"
     )
 
-    si <- comfort_heat_index(get_c_from_f(90), rh = 70, round_output = FALSE)
+    si <- comfort_heat_index(unit__c_from_f(90), rh = 70, round_output = FALSE)
     ip <- comfort_heat_index(90, rh = 70, units = "IP", round_output = FALSE)
-    expect_equal(get_f_from_c(si$heat_index), ip$heat_index, tolerance = 1e-8)
+    expect_equal(unit__f_from_c(si$heat_index), ip$heat_index, tolerance = 1e-8)
 
     expect_true(is.na(
         comfort_heat_index(90, rh = 150, units = "IP")$heat_index
@@ -261,7 +261,7 @@ test_that("comfort calculations handle IP units and input limits", {
         units = "IP",
         round_output = FALSE
     )
-    expect_equal(set_ip$set, get_f_from_c(set_si$set), tolerance = 0.05)
+    expect_equal(set_ip$set, unit__f_from_c(set_si$set), tolerance = 0.05)
 
     expect_true(is.na(comfort_pmv(5, rh = 50)$pmv[[1L]]))
     expect_true(is.na(comfort_set(5, rh = 50)$set[[1L]]))
@@ -412,7 +412,10 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
     ))
     expect_equal(unique(tile_alpha$alpha), 0.35)
 
-    pressure <- with_units("SI", psychrolib::GetStandardAtmPressure(0))
+    pressure <- psychrolib__with_units(
+        "SI",
+        psychrolib::GetStandardAtmPressure(0)
+    )
     grid <- comfort_grid_data(
         comfort_model_pmv(),
         NULL,
@@ -592,7 +595,10 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
 })
 
 test_that("Givoni strategy zones build and stay below saturation", {
-    pressure <- with_units("SI", psychrolib::GetStandardAtmPressure(0))
+    pressure <- psychrolib__with_units(
+        "SI",
+        psychrolib::GetStandardAtmPressure(0)
+    )
     expect_s3_class(comfort_strategy_givoni(), "PsyComfortGivoniStrategy")
     expect_error(comfort_strategy_givoni(mean_outdoor = NA), "mean_outdoor")
     expect_s3_class(element_comfort_zone(), "PsyComfortZoneElement")
@@ -836,7 +842,10 @@ test_that("Givoni zone styles can be overridden per zone", {
 })
 
 test_that("PMV root-traced curves solve requested levels", {
-    pressure <- with_units("SI", psychrolib::GetStandardAtmPressure(0))
+    pressure <- psychrolib__with_units(
+        "SI",
+        psychrolib::GetStandardAtmPressure(0)
+    )
     model <- comfort_model_pmv()
 
     humratio <- seq(0, 0.02, length.out = 40)
@@ -1125,7 +1134,10 @@ test_that("PMV root-traced curves solve requested levels", {
 })
 
 test_that("PMV comfort lines and PMV-based standard zones build", {
-    pressure <- with_units("SI", psychrolib::GetStandardAtmPressure(0))
+    pressure <- psychrolib__with_units(
+        "SI",
+        psychrolib::GetStandardAtmPressure(0)
+    )
 
     pmv_lines <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +

@@ -115,7 +115,7 @@ comfort_check_ordered_breaks <- function(x, name, n_min = 2L) {
 
 comfort_layer_data <- function(data) {
     if (is.null(data)) {
-        return(new_data_frame(list(.comfort = 1), n = 1L))
+        return(util__new_data_frame(list(.comfort = 1), n = 1L))
     }
     data
 }
@@ -148,11 +148,11 @@ comfort_between <- function(x, lower, upper) {
 }
 
 comfort_to_si_temp <- function(x, units) {
-    if (units == "IP") get_c_from_f(x) else x
+    if (units == "IP") unit__c_from_f(x) else x
 }
 
 comfort_from_si_temp <- function(x, units) {
-    if (units == "IP") get_f_from_c(x) else x
+    if (units == "IP") unit__f_from_c(x) else x
 }
 
 comfort_to_si_speed <- function(x, units) {
@@ -168,7 +168,7 @@ comfort_p_sat_torr <- function(tdb) {
 }
 comfort_stat_units <- function(data, units) {
     if ("units" %in% names(data)) {
-        get_units(data)
+        unit__from_data(data)
     } else {
         match.arg(units, c("SI", "IP"))
     }
@@ -236,7 +236,7 @@ comfort_pmv_curve_n <- function(n) {
 }
 
 comfort_grid_limits <- function(units, tdb_lim, hum_lim) {
-    default <- default_psychro_limits(units)
+    default <- psychro__default_limits(units)
     list(
         tdb = if (is.null(tdb_lim)) default$tdb else tdb_lim,
         hum = if (is.null(hum_lim)) default$hum else hum_lim
@@ -266,7 +266,7 @@ comfort_grid_matrix <- function(
         lim$hum[[2L]],
         length.out = n[[2L]] + 1L
     )
-    humratio_edges <- narrow_hum(hum_display_edges, units)
+    humratio_edges <- unit__hum_from_chart(hum_display_edges, units)
     if (at == "nodes") {
         tdb <- tdb_edges
         humratio <- humratio_edges
@@ -369,7 +369,7 @@ comfort_grid_data <- function(
         return(comfort_empty_tile())
     }
 
-    out <- new_data_frame(list(
+    out <- util__new_data_frame(list(
         tdb = (x0[keep] + x1[keep]) / 2,
         humratio = (y0[keep] + y1[keep]) / 2,
         width = x_width[keep] * (1 - gap),
@@ -448,7 +448,7 @@ comfort_band_data <- function(
 }
 
 comfort_empty_band <- function() {
-    new_data_frame(list(
+    util__new_data_frame(list(
         tdb = numeric(),
         humratio = numeric(),
         x = numeric(),
@@ -465,7 +465,7 @@ comfort_empty_band <- function() {
 }
 
 comfort_empty_tile <- function() {
-    new_data_frame(list(
+    util__new_data_frame(list(
         tdb = numeric(),
         humratio = numeric(),
         x = numeric(),
@@ -626,7 +626,7 @@ comfort_contour_data <- function(
 }
 
 comfort_empty_contour <- function() {
-    new_data_frame(list(
+    util__new_data_frame(list(
         tdb = numeric(),
         humratio = numeric(),
         x = numeric(),
@@ -818,7 +818,7 @@ comfort_isoband_data <- function(
             level_low <- low[[i]]
             level_high <- high[[i]]
             level_mid <- (level_low + level_high) / 2
-            out[[i]] <- new_data_frame(list(
+            out[[i]] <- util__new_data_frame(list(
                 tdb = item$x,
                 humratio = item$y,
                 level = sprintf("%s:%s", level_low, level_high),
@@ -832,7 +832,7 @@ comfort_isoband_data <- function(
             ))
         } else {
             level <- low[[i]]
-            out[[i]] <- new_data_frame(list(
+            out[[i]] <- util__new_data_frame(list(
                 tdb = item$x,
                 humratio = item$y,
                 level = level,
@@ -1024,7 +1024,7 @@ comfort_apply_model <- function(model, tdb, rh, units, pres) {
 }
 
 comfort_relhum_from_humratio <- function(tdb, humratio, units, pres) {
-    rh <- with_units(
+    rh <- psychrolib__with_units(
         units,
         psychrolib::GetRelHumFromHumRatio(tdb, humratio, pres)
     )

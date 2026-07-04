@@ -395,7 +395,7 @@ setup_psychro_stat_params <- function(layers, psychro, scales = NULL) {
     panel_classes <- psychro_panel_stat_classes()
     chart_classes <- c(state_classes, panel_classes)
     stat_classes <- psychro_stat_classes()
-    pressure <- with_units(
+    pressure <- psychrolib__with_units(
         psychro$units,
         GetStandardAtmPressure(psychro$altitude)
     )
@@ -408,19 +408,20 @@ setup_psychro_stat_params <- function(layers, psychro, scales = NULL) {
 
         if (
             is.null(layer$stat_params$units) ||
-                is.waive(layer$stat_params$units)
+                util__is_waive(layer$stat_params$units)
         ) {
             layer$stat_params$units <- psychro$units
         }
         if (
-            is.null(layer$stat_params$pres) || is.waive(layer$stat_params$pres)
+            is.null(layer$stat_params$pres) ||
+                util__is_waive(layer$stat_params$pres)
         ) {
             layer$stat_params$pres <- pressure
         }
         if (any(vapply(chart_classes, inherits, logical(1L), x = layer$stat))) {
             if (
                 is.null(layer$stat_params$mollier) ||
-                    is.waive(layer$stat_params$mollier)
+                    util__is_waive(layer$stat_params$mollier)
             ) {
                 layer$stat_params$mollier <- psychro$mollier
             }
@@ -435,7 +436,7 @@ setup_psychro_stat_params <- function(layers, psychro, scales = NULL) {
         ) {
             if (
                 is.null(layer$stat_params$tdb_lim) ||
-                    is.waive(layer$stat_params$tdb_lim)
+                    util__is_waive(layer$stat_params$tdb_lim)
             ) {
                 layer$stat_params$tdb_lim <- psychro$tdb_lim
             }
@@ -443,7 +444,7 @@ setup_psychro_stat_params <- function(layers, psychro, scales = NULL) {
         if (any(vapply(panel_classes, inherits, logical(1L), x = layer$stat))) {
             if (
                 is.null(layer$stat_params$hum_lim) ||
-                    is.waive(layer$stat_params$hum_lim)
+                    util__is_waive(layer$stat_params$hum_lim)
             ) {
                 layer$stat_params$hum_lim <- psychro$hum_lim
             }

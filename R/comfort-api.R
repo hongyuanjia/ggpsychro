@@ -84,7 +84,7 @@ comfort_pmv <- function(
         ppd <- round(ppd, 1L)
     }
 
-    new_data_frame(list(
+    util__new_data_frame(list(
         pmv = pmv,
         ppd = ppd,
         tsv = comfort_pmv_tsv(pmv)
@@ -155,7 +155,7 @@ comfort_set <- function(
         set <- round(set, 1L)
     }
 
-    new_data_frame(list(set = set))
+    util__new_data_frame(list(set = set))
 }
 
 #' @rdname comfort_pmv
@@ -246,7 +246,7 @@ comfort_heat_index <- function(
     )
 
     tdb_si <- comfort_to_si_temp(x$tdb, units)
-    tdb_f <- get_f_from_c(tdb_si)
+    tdb_f <- unit__f_from_c(tdb_si)
     exposure <- x$solar_exposure
     # Missing exposure follows the vectorized calculator convention and returns
     # NA, but finite values outside Marsh's 0..1 scale are input errors.
@@ -267,13 +267,13 @@ comfort_heat_index <- function(
     heat_index <- if (units == "IP") {
         heat_index_f
     } else {
-        get_c_from_f(heat_index_f)
+        unit__c_from_f(heat_index_f)
     }
     if (isTRUE(round_output)) {
         heat_index <- round(heat_index, 1L)
     }
 
-    new_data_frame(list(
+    util__new_data_frame(list(
         heat_index = heat_index,
         category = category$category,
         category_id = category$category_id
