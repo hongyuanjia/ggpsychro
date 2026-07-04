@@ -720,10 +720,10 @@ geom_comfort_givoni <- function(
     inherit.aes = TRUE
 ) {
     label <- angle <- hjust <- vjust <- NULL
-    strategy <- comfort_check_givoni_strategy(strategy)
+    strategy <- givoni__check_strategy(strategy)
     layer_mapping <- comfort_computed_xy_mapping(mapping)
     params <- list(...)
-    zone_specs <- comfort_givoni_zone_specs()
+    zone_specs <- givoni__zone_specs()
     zone_specs <- zone_specs[zone_specs$draw_zone, , drop = FALSE]
     zone_style <- givoni__check_zone_style(zone_style, zone_specs$zone)
     layers <- list()
@@ -743,7 +743,7 @@ geom_comfort_givoni <- function(
     }
     for (i in seq_len(nrow(zone_specs))) {
         spec <- zone_specs[i, , drop = FALSE]
-        zone_params <- comfort_givoni_zone_params(
+        zone_params <- givoni__zone_params(
             spec,
             params,
             zone_style,
@@ -883,7 +883,7 @@ geom_comfort_givoni <- function(
             )
         )
     }
-    layers[[length(layers) + 1L]] <- comfort_givoni_foreground_marker(
+    layers[[length(layers) + 1L]] <- givoni__foreground_marker(
         strategy = strategy,
         show_label = isTRUE(show_labels),
         colour = mean_params$colour %||% mean_params$color %||% "#444444",

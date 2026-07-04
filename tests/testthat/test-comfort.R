@@ -603,7 +603,7 @@ test_that("Givoni strategy zones build and stay below saturation", {
     expect_error(comfort_strategy_givoni(mean_outdoor = NA), "mean_outdoor")
     expect_s3_class(element_comfort_zone(), "PsyComfortZoneElement")
 
-    cool <- comfort_givoni_zone_data(
+    cool <- givoni__zone_data(
         comfort_strategy_givoni(mean_outdoor = 15),
         "comfort",
         "SI",
@@ -612,7 +612,7 @@ test_that("Givoni strategy zones build and stay below saturation", {
         c(0, 45),
         c(0, 35)
     )
-    warm <- comfort_givoni_zone_data(
+    warm <- givoni__zone_data(
         comfort_strategy_givoni(mean_outdoor = 25),
         "comfort",
         "SI",
@@ -623,7 +623,7 @@ test_that("Givoni strategy zones build and stay below saturation", {
     )
     expect_gt(mean(warm$tdb), mean(cool$tdb))
 
-    zones <- comfort_givoni_zone_data(
+    zones <- givoni__zone_data(
         comfort_strategy_givoni(),
         NULL,
         "SI",
@@ -632,7 +632,7 @@ test_that("Givoni strategy zones build and stay below saturation", {
         c(0, 50),
         c(0, 35)
     )
-    drawable_zones <- comfort_givoni_zone_specs()
+    drawable_zones <- givoni__zone_specs()
     drawable_zones <- drawable_zones$zone[drawable_zones$draw_zone]
     expect_true(all(drawable_zones %in% unique(zones$zone)))
     expect_false(any(
@@ -678,7 +678,7 @@ test_that("Givoni strategy zones build and stay below saturation", {
         fixed = TRUE
     )))
 
-    path_labels <- comfort_givoni_label_data(
+    path_labels <- givoni__label_data(
         comfort_strategy_givoni(),
         "path",
         "SI",
@@ -708,7 +708,7 @@ test_that("Givoni strategy zones build and stay below saturation", {
         )
     }
 
-    point_labels <- comfort_givoni_label_data(
+    point_labels <- givoni__label_data(
         comfort_strategy_givoni(),
         "point",
         "SI",
@@ -723,7 +723,7 @@ test_that("Givoni strategy zones build and stay below saturation", {
         drop = FALSE
     ]
     expect_equal(heating_label$angle, 270)
-    heating_sat <- comfort_givoni_humratio(heating_label$tdb, 100, pressure)
+    heating_sat <- givoni__humratio(heating_label$tdb, 100, pressure)
     expect_equal(heating_label$humratio, heating_sat / 2, tolerance = 1e-8)
 
     air_label <- path_labels[
@@ -734,7 +734,7 @@ test_that("Givoni strategy zones build and stay below saturation", {
     expect_lt(unique(air_label$tdb), 50)
     expect_gt(unique(air_label$tdb), 45)
 
-    mean_line <- comfort_givoni_mean_outdoor_data(
+    mean_line <- givoni__mean_outdoor_data(
         comfort_strategy_givoni(mean_outdoor = 17.5),
         "SI",
         pressure,
@@ -742,7 +742,7 @@ test_that("Givoni strategy zones build and stay below saturation", {
         c(-10, 50),
         c(0, 35)
     )
-    mean_label <- comfort_givoni_mean_outdoor_label_data(
+    mean_label <- givoni__mean_outdoor_label_data(
         comfort_strategy_givoni(mean_outdoor = 17.5),
         "SI",
         pressure,
@@ -750,7 +750,7 @@ test_that("Givoni strategy zones build and stay below saturation", {
         c(-10, 50),
         c(0, 35)
     )
-    mean_sat <- comfort_givoni_humratio(17.5, 100, pressure)
+    mean_sat <- givoni__humratio(17.5, 100, pressure)
     expect_gt(max(mean_line$humratio), mean_sat)
     expect_gt(mean_label$humratio[[1L]], mean_sat)
     expect_equal(mean_label$angle[[1L]], 270)

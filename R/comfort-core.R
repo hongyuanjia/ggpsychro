@@ -56,7 +56,8 @@ comfort_check_standard <- function(standard) {
     standard
 }
 
-comfort_check_givoni_strategy <- function(strategy) {
+# Validate that an object is a Givoni strategy created by the public constructor.
+givoni__check_strategy <- function(strategy) {
     if (!inherits(strategy, "PsyComfortGivoniStrategy")) {
         stop(
             "`strategy` must be created by comfort_strategy_givoni().",

@@ -73,15 +73,15 @@ coord_fg__givoni_mean_outdoor_grob <- function(coord, panel_params, spec) {
         line_y <- rep(util__rescale01(tdb_scaled, range_tdb), 2L)
         label_x <- util__rescale01(hum_label_scaled, range_hum)
         label_y <- line_y[[1L]]
-        label_rot <- comfort_givoni_mean_outdoor_label_angle(TRUE)
-        label_vjust <- comfort_givoni_mean_outdoor_label_vjust(TRUE)
+        label_rot <- givoni__mean_outdoor_label_angle(TRUE)
+        label_vjust <- givoni__mean_outdoor_label_vjust(TRUE)
     } else {
         line_x <- rep(util__rescale01(tdb_scaled, range_tdb), 2L)
         line_y <- util__rescale01(c(hum_sat_scaled, hum_top_scaled), range_hum)
         label_x <- line_x[[1L]]
         label_y <- util__rescale01(hum_label_scaled, range_hum)
-        label_rot <- comfort_givoni_mean_outdoor_label_angle(FALSE)
-        label_vjust <- comfort_givoni_mean_outdoor_label_vjust(FALSE)
+        label_rot <- givoni__mean_outdoor_label_angle(FALSE)
+        label_vjust <- givoni__mean_outdoor_label_vjust(FALSE)
     }
 
     label_temp <- comfort_from_si_temp(mean_si, coord$units)

@@ -3,7 +3,8 @@ NULL
 
 # Givoni strategy geometry is fixed-shape chart construction rather than a
 # continuous comfort model, so it lives outside the generic grid/contour helpers.
-comfort_givoni_foreground_marker <- function(
+# Store Givoni mean-outdoor foreground marker metadata for coord rendering.
+givoni__foreground_marker <- function(
     strategy,
     show_label,
     colour,
@@ -26,14 +27,17 @@ comfort_givoni_foreground_marker <- function(
         class = "PsyComfortForeground"
     )
 }
-comfort_givoni_base_temp <- function(strategy) {
+
+# Compute the Marsh/Givoni base dry-bulb temperature in SI units.
+givoni__base_temp <- function(strategy) {
     mean_outdoor_si <- comfort_to_si_temp(strategy$mean_outdoor, strategy$units)
     # Marsh's Givoni chart shifts the comfort polygon from the mean outdoor
     # temperature; geometry is encoded in SI and converted at the output edge.
     round(17.6 + 0.31 * mean_outdoor_si - 3.5, 1L)
 }
 
-comfort_givoni_zone_specs <- function() {
+# Return the fixed Givoni strategy zone metadata used for drawing and labels.
+givoni__zone_specs <- function() {
     util__new_data_frame(list(
         zone = c(
             "comfort",
@@ -182,7 +186,8 @@ givoni__zone_style_to_params <- function(style) {
     out
 }
 
-comfort_givoni_zone_params <- function(
+# Merge layer, default, and per-zone style settings for one Givoni zone.
+givoni__zone_params <- function(
     spec,
     params,
     zone_style,
@@ -217,7 +222,8 @@ comfort_givoni_zone_params <- function(
     out
 }
 
-comfort_givoni_empty_zone <- function() {
+# Return an empty zone data frame with the expected computed columns.
+givoni__empty_zone <- function() {
     util__new_data_frame(list(
         tdb = numeric(),
         humratio = numeric(),
@@ -230,7 +236,8 @@ comfort_givoni_empty_zone <- function() {
     ))
 }
 
-comfort_givoni_empty_label <- function() {
+# Return an empty label data frame with the expected computed columns.
+givoni__empty_label <- function() {
     util__new_data_frame(list(
         tdb = numeric(),
         humratio = numeric(),
@@ -245,22 +252,26 @@ comfort_givoni_empty_label <- function() {
     ))
 }
 
-comfort_givoni_humratio <- function(tdb_si, rh, pressure_pa) {
+# Convert a Givoni dry-bulb/RH point to SI humidity ratio.
+givoni__humratio <- function(tdb_si, rh, pressure_pa) {
     psychrolib__with_units(
         "SI",
         psychrolib::GetHumRatioFromRelHum(tdb_si, rh / 100, pressure_pa)
     )
 }
 
-comfort_givoni_hum_gkg <- function(tdb_si, rh, pressure_pa) {
-    comfort_givoni_humratio(tdb_si, rh, pressure_pa) * 1000
+# Convert a Givoni dry-bulb/RH point to g/kg humidity ratio.
+givoni__hum_gkg <- function(tdb_si, rh, pressure_pa) {
+    givoni__humratio(tdb_si, rh, pressure_pa) * 1000
 }
 
-comfort_givoni_point <- function(tdb_si, hum_gkg) {
+# Build one Givoni geometry point in SI chart coordinates.
+givoni__point <- function(tdb_si, hum_gkg) {
     util__new_data_frame(list(tdb_si = tdb_si, humratio = hum_gkg / 1000))
 }
 
-comfort_givoni_rh_path <- function(
+# Build a curved Givoni path between two dry-bulb/RH points.
+givoni__rh_path <- function(
     t0,
     rh0,
     t1,
@@ -277,13 +288,14 @@ comfort_givoni_rh_path <- function(
     tdb <- seq(t0, t1, length.out = n)
     rh <- seq(rh0, rh1, length.out = n)
     hum_gkg <- pmin(
-        comfort_givoni_hum_gkg(tdb, rh, pressure_pa),
+        givoni__hum_gkg(tdb, rh, pressure_pa),
         max_gkg
     )
     util__new_data_frame(list(tdb_si = tdb, humratio = hum_gkg / 1000))
 }
 
-comfort_givoni_polygon <- function(
+# Build the raw SI polygon path for one named Givoni strategy zone.
+givoni__polygon <- function(
     zone,
     base,
     pressure_pa,
@@ -291,15 +303,15 @@ comfort_givoni_polygon <- function(
     hum_min_gkg
 ) {
     if (zone %in% c("air_conditioning_dehumidification", "humidification")) {
-        return(comfort_givoni_point(numeric(), numeric()))
+        return(givoni__point(numeric(), numeric()))
     }
     # Zone vertices follow the Marsh/Givoni overlay in dry-bulb and RH terms.
     # Humidity caps keep upper edges from extending beyond the comfort maximum.
-    hum20 <- function(tdb) comfort_givoni_hum_gkg(tdb, 20, pressure_pa)
-    hum30 <- function(tdb) comfort_givoni_hum_gkg(tdb, 30, pressure_pa)
-    hum50 <- function(tdb) comfort_givoni_hum_gkg(tdb, 50, pressure_pa)
-    hum80 <- function(tdb) comfort_givoni_hum_gkg(tdb, 80, pressure_pa)
-    hum100 <- function(tdb) comfort_givoni_hum_gkg(tdb, 100, pressure_pa)
+    hum20 <- function(tdb) givoni__hum_gkg(tdb, 20, pressure_pa)
+    hum30 <- function(tdb) givoni__hum_gkg(tdb, 30, pressure_pa)
+    hum50 <- function(tdb) givoni__hum_gkg(tdb, 50, pressure_pa)
+    hum80 <- function(tdb) givoni__hum_gkg(tdb, 80, pressure_pa)
+    hum100 <- function(tdb) givoni__hum_gkg(tdb, 100, pressure_pa)
     max_comfort_gkg <- min(16, hum80(base + 5))
     bottom20 <- hum20(base)
     evap_left <- base + 2.4528 * (bottom20 - hum_min_gkg)
@@ -308,27 +320,27 @@ comfort_givoni_polygon <- function(
     parts <- switch(
         zone,
         comfort = list(
-            comfort_givoni_rh_path(base, 80, base + 5, 80, pressure_pa, 16),
-            comfort_givoni_point(
+            givoni__rh_path(base, 80, base + 5, 80, pressure_pa, 16),
+            givoni__point(
                 base + 7,
                 min(max_comfort_gkg, hum50(base + 7))
             ),
-            comfort_givoni_point(base + 7, hum20(base + 7)),
-            comfort_givoni_rh_path(base + 7, 20, base, 20, pressure_pa),
-            comfort_givoni_point(base, hum80(base))
+            givoni__point(base + 7, hum20(base + 7)),
+            givoni__rh_path(base + 7, 20, base, 20, pressure_pa),
+            givoni__point(base, hum80(base))
         ),
         natural_ventilation = list(
-            comfort_givoni_rh_path(base, 100, base + 7, 100, pressure_pa),
-            comfort_givoni_point(base + 12, hum50(base + 12)),
-            comfort_givoni_point(base + 12, hum20(base + 12)),
-            comfort_givoni_rh_path(base + 12, 20, base, 20, pressure_pa),
-            comfort_givoni_point(base, hum100(base))
+            givoni__rh_path(base, 100, base + 7, 100, pressure_pa),
+            givoni__point(base + 12, hum50(base + 12)),
+            givoni__point(base + 12, hum20(base + 12)),
+            givoni__rh_path(base + 12, 20, base, 20, pressure_pa),
+            givoni__point(base, hum100(base))
         ),
         internal_gains = list(
-            comfort_givoni_rh_path(base - 2.5, 20, base - 7, 20, pressure_pa),
-            comfort_givoni_point(base - 7.5, hum20(base - 7.5)),
-            comfort_givoni_point(base - 7.5, min(hum80(base - 7.5), 16)),
-            comfort_givoni_rh_path(
+            givoni__rh_path(base - 2.5, 20, base - 7, 20, pressure_pa),
+            givoni__point(base - 7.5, hum20(base - 7.5)),
+            givoni__point(base - 7.5, min(hum80(base - 7.5), 16)),
+            givoni__rh_path(
                 base - 7.5,
                 80,
                 base - 2.5,
@@ -338,63 +350,63 @@ comfort_givoni_polygon <- function(
             )
         ),
         passive_solar_heating = list(
-            comfort_givoni_point(base + 3.5, 0),
-            comfort_givoni_point(base - 12, 0),
-            comfort_givoni_point(base - 12, hum100(base - 12)),
-            comfort_givoni_rh_path(base - 12, 100, base - 1, 100, pressure_pa)
+            givoni__point(base + 3.5, 0),
+            givoni__point(base - 12, 0),
+            givoni__point(base - 12, hum100(base - 12)),
+            givoni__rh_path(base - 12, 100, base - 1, 100, pressure_pa)
         ),
         active_solar_heating = list(
-            comfort_givoni_point(base - 13, 0),
-            comfort_givoni_point(base - 16, 0),
-            comfort_givoni_point(base - 16, hum100(base - 16)),
-            comfort_givoni_rh_path(base - 16, 100, base - 13, 100, pressure_pa)
+            givoni__point(base - 13, 0),
+            givoni__point(base - 16, 0),
+            givoni__point(base - 16, hum100(base - 16)),
+            givoni__rh_path(base - 16, 100, base - 13, 100, pressure_pa)
         ),
         evaporative_cooling = list(
-            comfort_givoni_point(base + 5, max_comfort_gkg),
-            comfort_givoni_point(
+            givoni__point(base + 5, max_comfort_gkg),
+            givoni__point(
                 base + 16,
                 min(max_comfort_gkg, hum30(base + 16))
             ),
-            comfort_givoni_point(
+            givoni__point(
                 base + 19,
                 min(max_comfort_gkg, hum20(base + 19))
             ),
-            comfort_givoni_point(
+            givoni__point(
                 base + 21,
                 min(
                     max_comfort_gkg,
-                    comfort_givoni_hum_gkg(base + 21, 10, pressure_pa)
+                    givoni__hum_gkg(base + 21, 10, pressure_pa)
                 )
             ),
-            comfort_givoni_point(base + 21, 0),
-            comfort_givoni_point(evap_left, 0),
-            comfort_givoni_point(base, bottom20)
+            givoni__point(base + 21, 0),
+            givoni__point(evap_left, 0),
+            givoni__point(base, bottom20)
         ),
         mass_cooling = list(
-            comfort_givoni_point(base + 5, max_comfort_gkg),
-            comfort_givoni_point(base + 13, max_comfort_gkg),
-            comfort_givoni_point(
+            givoni__point(base + 5, max_comfort_gkg),
+            givoni__point(base + 13, max_comfort_gkg),
+            givoni__point(
                 base + 17,
                 min(max_comfort_gkg, hum30(base + 17))
             ),
-            comfort_givoni_point(base + 17, min(max_comfort_gkg, hum20(base))),
-            comfort_givoni_point(base, min(max_comfort_gkg, hum20(base)))
+            givoni__point(base + 17, min(max_comfort_gkg, hum20(base))),
+            givoni__point(base, min(max_comfort_gkg, hum20(base)))
         ),
         mass_cooling_night_ventilation = list(
-            comfort_givoni_point(base + 13, max_comfort_gkg),
-            comfort_givoni_point(base + 20, max_comfort_gkg),
-            comfort_givoni_point(
+            givoni__point(base + 13, max_comfort_gkg),
+            givoni__point(base + 20, max_comfort_gkg),
+            givoni__point(
                 base + 24,
                 min(max_comfort_gkg, hum20(base + 24))
             ),
-            comfort_givoni_point(base + 24, min(max_comfort_gkg, hum20(base))),
-            comfort_givoni_point(base, min(max_comfort_gkg, hum20(base)))
+            givoni__point(base + 24, min(max_comfort_gkg, hum20(base))),
+            givoni__point(base, min(max_comfort_gkg, hum20(base)))
         ),
         winter = list(
-            comfort_givoni_rh_path(base - 0.5, 20, base - 2, 20, pressure_pa),
-            comfort_givoni_point(base - 2, hum20(base - 2)),
-            comfort_givoni_point(base - 2, min(hum80(base - 2), 16)),
-            comfort_givoni_rh_path(
+            givoni__rh_path(base - 0.5, 20, base - 2, 20, pressure_pa),
+            givoni__point(base - 2, hum20(base - 2)),
+            givoni__point(base - 2, min(hum80(base - 2), 16)),
+            givoni__rh_path(
                 base - 2,
                 80,
                 base - 0.5,
@@ -404,22 +416,22 @@ comfort_givoni_polygon <- function(
             )
         ),
         air_conditioning = list(
-            comfort_givoni_point(base + 20, max_comfort_gkg),
-            comfort_givoni_point(right_air, max_comfort_gkg),
-            comfort_givoni_point(right_air, 0),
-            comfort_givoni_point(base + 21, 0)
+            givoni__point(base + 20, max_comfort_gkg),
+            givoni__point(right_air, max_comfort_gkg),
+            givoni__point(right_air, 0),
+            givoni__point(base + 21, 0)
         ),
         air_conditioning_dehumidification = list(
-            comfort_givoni_point(base + 20, max_comfort_gkg),
-            comfort_givoni_point(right_air, max_comfort_gkg),
-            comfort_givoni_point(right_air, 30),
-            comfort_givoni_point(base + 20, 30)
+            givoni__point(base + 20, max_comfort_gkg),
+            givoni__point(right_air, max_comfort_gkg),
+            givoni__point(right_air, 30),
+            givoni__point(base + 20, 30)
         ),
         humidification = list(
-            comfort_givoni_point(base - 12, 0),
-            comfort_givoni_point(base, 0),
-            comfort_givoni_point(base, hum20(base)),
-            comfort_givoni_point(base - 12, hum20(base - 12))
+            givoni__point(base - 12, 0),
+            givoni__point(base, 0),
+            givoni__point(base, hum20(base)),
+            givoni__point(base - 12, hum20(base - 12))
         ),
         stop("Unknown Givoni zone: ", zone, call. = FALSE)
     )
@@ -429,7 +441,8 @@ comfort_givoni_polygon <- function(
     out
 }
 
-comfort_givoni_zone_data <- function(
+# Convert selected Givoni zones into plot-ready chart data.
+givoni__zone_data <- function(
     strategy,
     zone,
     units,
@@ -439,21 +452,21 @@ comfort_givoni_zone_data <- function(
     hum_lim,
     psychro_scales = NULL
 ) {
-    strategy <- comfort_check_givoni_strategy(strategy)
-    specs <- comfort_givoni_zone_specs()
+    strategy <- givoni__check_strategy(strategy)
+    specs <- givoni__zone_specs()
     if (is.null(zone)) {
         zone <- specs$zone[specs$draw_zone]
     }
     zone <- match.arg(zone, specs$zone, several.ok = TRUE)
     lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
     pressure_pa <- comfort_pressure_pa(pres, units)
-    base <- comfort_givoni_base_temp(strategy)
+    base <- givoni__base_temp(strategy)
     tdb_max_si <- comfort_to_si_temp(lim$tdb[[2L]], units)
     hum_min_gkg <- unit__hum_from_chart(lim$hum[[1L]], units) * 1000
 
     pieces <- vector("list", length(zone))
     for (i in seq_along(zone)) {
-        poly <- comfort_givoni_polygon(
+        poly <- givoni__polygon(
             zone[[i]],
             base,
             pressure_pa,
@@ -475,11 +488,11 @@ comfort_givoni_zone_data <- function(
     }
     pieces <- pieces[!vapply(pieces, is.null, logical(1L))]
     if (!length(pieces)) {
-        return(comfort_givoni_empty_zone())
+        return(givoni__empty_zone())
     }
     out <- do.call(rbind, pieces)
     row.names(out) <- NULL
-    out <- comfort_givoni_clip_humratio(out, lim$hum, units)
+    out <- givoni__clip_humratio(out, lim$hum, units)
     psychro_output_xy(
         out,
         out$tdb,
@@ -490,7 +503,8 @@ comfort_givoni_zone_data <- function(
     )
 }
 
-comfort_givoni_label_path_entry <- function(
+# Build one path-label entry with consistent label columns.
+givoni__label_path_entry <- function(
     zone,
     label,
     path,
@@ -499,7 +513,7 @@ comfort_givoni_label_path_entry <- function(
     group = 1L
 ) {
     if (!nrow(path)) {
-        return(comfort_givoni_empty_label())
+        return(givoni__empty_label())
     }
     util__new_data_frame(list(
         tdb_si = path$tdb_si,
@@ -513,7 +527,8 @@ comfort_givoni_label_path_entry <- function(
     ))
 }
 
-comfort_givoni_label_path_specs <- function(
+# Build path-following label specs for Givoni strategy zones.
+givoni__label_path_specs <- function(
     base,
     pressure_pa,
     tdb_max_si,
@@ -523,79 +538,79 @@ comfort_givoni_label_path_specs <- function(
     # curved RH boundaries and vertical strategy lines consistently.
     max_comfort_gkg <- min(
         16,
-        comfort_givoni_hum_gkg(base + 5, 80, pressure_pa)
+        givoni__hum_gkg(base + 5, 80, pressure_pa)
     )
-    hum20 <- function(tdb) comfort_givoni_hum_gkg(tdb, 20, pressure_pa)
-    hum30 <- function(tdb) comfort_givoni_hum_gkg(tdb, 30, pressure_pa)
-    hum80 <- function(tdb) comfort_givoni_hum_gkg(tdb, 80, pressure_pa)
-    hum100 <- function(tdb) comfort_givoni_hum_gkg(tdb, 100, pressure_pa)
+    hum20 <- function(tdb) givoni__hum_gkg(tdb, 20, pressure_pa)
+    hum30 <- function(tdb) givoni__hum_gkg(tdb, 30, pressure_pa)
+    hum80 <- function(tdb) givoni__hum_gkg(tdb, 80, pressure_pa)
+    hum100 <- function(tdb) givoni__hum_gkg(tdb, 100, pressure_pa)
     evap_left <- base + 2.4528 * (hum20(base) - hum_min_gkg)
     right_air <- max(tdb_max_si, base + 25.5)
     air_label_x <- min(right_air - 1.0, tdb_max_si - 0.8)
     air_label_x <- max(air_label_x, base + 21)
 
     paths <- list(
-        comfort_givoni_label_path_entry(
+        givoni__label_path_entry(
             "natural_ventilation",
             "NATURAL VENTILATION",
-            comfort_givoni_rh_path(base, 100, base + 7, 100, pressure_pa),
+            givoni__rh_path(base, 100, base + 7, 100, pressure_pa),
             hjust = 0.5,
             vjust = 1.8,
             group = 1L
         ),
-        comfort_givoni_label_path_entry(
+        givoni__label_path_entry(
             "internal_gains",
             "INTERNAL GAINS",
             rbind(
-                comfort_givoni_point(base - 7.5, min(hum80(base - 7.5), 16)),
-                comfort_givoni_point(base - 7.5, hum20(base - 7.5))
+                givoni__point(base - 7.5, min(hum80(base - 7.5), 16)),
+                givoni__point(base - 7.5, hum20(base - 7.5))
             ),
             hjust = 0.5,
             vjust = -0.25,
             group = 2L
         ),
-        comfort_givoni_label_path_entry(
+        givoni__label_path_entry(
             "passive_solar_heating",
             "PASSIVE SOLAR",
             rbind(
-                comfort_givoni_point(base - 12, hum100(base - 12)),
-                comfort_givoni_point(base - 12, 0)
+                givoni__point(base - 12, hum100(base - 12)),
+                givoni__point(base - 12, 0)
             ),
             hjust = 0.5,
             vjust = -0.25,
             group = 3L
         ),
-        comfort_givoni_label_path_entry(
+        givoni__label_path_entry(
             "active_solar_heating",
             "ACTIVE SOLAR",
             rbind(
-                comfort_givoni_point(base - 16, hum100(base - 16)),
-                comfort_givoni_point(base - 16, 0)
+                givoni__point(base - 16, hum100(base - 16)),
+                givoni__point(base - 16, 0)
             ),
             hjust = 0.5,
             vjust = -0.25,
             group = 4L
         ),
-        comfort_givoni_label_path_entry(
+        givoni__label_path_entry(
             "evaporative_cooling",
             "EVAPORATIVE COOLING",
             rbind(
-                comfort_givoni_point(evap_left, 0),
-                comfort_givoni_point(base + 21, 0)
+                givoni__point(evap_left, 0),
+                givoni__point(base + 21, 0)
             ),
             hjust = 0.68,
             vjust = -0.35,
             group = 5L
         ),
-        comfort_givoni_label_path_entry(
+        givoni__label_path_entry(
             "mass_cooling",
             "MASS COOLING",
             rbind(
-                comfort_givoni_point(
+                givoni__point(
                     base + 17,
                     min(max_comfort_gkg, hum30(base + 17))
                 ),
-                comfort_givoni_point(
+                givoni__point(
                     base + 17,
                     min(max_comfort_gkg, hum20(base))
                 )
@@ -604,15 +619,15 @@ comfort_givoni_label_path_specs <- function(
             vjust = -0.25,
             group = 6L
         ),
-        comfort_givoni_label_path_entry(
+        givoni__label_path_entry(
             "mass_cooling_night_ventilation",
             "MASS COOLING &\nNIGHT VENTILATION",
             rbind(
-                comfort_givoni_point(
+                givoni__point(
                     base + 24,
                     min(max_comfort_gkg, hum20(base + 24))
                 ),
-                comfort_givoni_point(
+                givoni__point(
                     base + 24,
                     min(max_comfort_gkg, hum20(base))
                 )
@@ -621,34 +636,34 @@ comfort_givoni_label_path_specs <- function(
             vjust = -0.25,
             group = 7L
         ),
-        comfort_givoni_label_path_entry(
+        givoni__label_path_entry(
             "winter",
             "WINTER",
             rbind(
-                comfort_givoni_point(base - 2, min(hum80(base - 2), 16)),
-                comfort_givoni_point(base - 2, hum20(base - 2))
+                givoni__point(base - 2, min(hum80(base - 2), 16)),
+                givoni__point(base - 2, hum20(base - 2))
             ),
             hjust = 0.5,
             vjust = -0.25,
             group = 8L
         ),
-        comfort_givoni_label_path_entry(
+        givoni__label_path_entry(
             "air_conditioning",
             "AIR-CONDITIONING",
             rbind(
-                comfort_givoni_point(air_label_x, max_comfort_gkg),
-                comfort_givoni_point(air_label_x, 0)
+                givoni__point(air_label_x, max_comfort_gkg),
+                givoni__point(air_label_x, 0)
             ),
             hjust = 0.5,
             vjust = -0.25,
             group = 9L
         ),
-        comfort_givoni_label_path_entry(
+        givoni__label_path_entry(
             "humidification",
             "HUMIDIFICATION",
             rbind(
-                comfort_givoni_point(base - 12, 0),
-                comfort_givoni_point(base, 0)
+                givoni__point(base - 12, 0),
+                givoni__point(base, 0)
             ),
             hjust = 0.5,
             vjust = -0.35,
@@ -660,7 +675,8 @@ comfort_givoni_label_path_specs <- function(
     out
 }
 
-comfort_givoni_label_point_specs <- function(
+# Build point label specs for compact Givoni strategy labels.
+givoni__label_point_specs <- function(
     base,
     pressure_pa,
     tdb_max_si,
@@ -668,12 +684,12 @@ comfort_givoni_label_point_specs <- function(
 ) {
     max_comfort_gkg <- min(
         16,
-        comfort_givoni_hum_gkg(base + 5, 80, pressure_pa)
+        givoni__hum_gkg(base + 5, 80, pressure_pa)
     )
     heating_x <- base - 18
     heating_hum_gkg <- mean(c(
         hum_min_gkg,
-        comfort_givoni_hum_gkg(heating_x, 100, pressure_pa)
+        givoni__hum_gkg(heating_x, 100, pressure_pa)
     ))
     util__new_data_frame(list(
         zone = c(
@@ -702,7 +718,8 @@ comfort_givoni_label_point_specs <- function(
     ))
 }
 
-comfort_givoni_label_data <- function(
+# Convert Givoni label specs into plot-ready chart data.
+givoni__label_data <- function(
     strategy,
     label_type,
     units,
@@ -713,15 +730,15 @@ comfort_givoni_label_data <- function(
     psychro_scales = NULL
 ) {
     label_type <- match.arg(label_type, c("path", "point"))
-    strategy <- comfort_check_givoni_strategy(strategy)
+    strategy <- givoni__check_strategy(strategy)
     lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
     pressure_pa <- comfort_pressure_pa(pres, units)
-    base <- comfort_givoni_base_temp(strategy)
+    base <- givoni__base_temp(strategy)
     tdb_max_si <- comfort_to_si_temp(lim$tdb[[2L]], units)
     hum_min_gkg <- unit__hum_from_chart(lim$hum[[1L]], units) * 1000
 
     if (label_type == "path") {
-        labels <- comfort_givoni_label_path_specs(
+        labels <- givoni__label_path_specs(
             base,
             pressure_pa,
             tdb_max_si,
@@ -737,7 +754,7 @@ comfort_givoni_label_data <- function(
             vjust = labels$vjust,
             group = labels$group
         ))
-        out <- comfort_givoni_clip_humratio(out, lim$hum, units)
+        out <- givoni__clip_humratio(out, lim$hum, units)
         return(psychro_output_xy(
             out,
             out$tdb,
@@ -748,7 +765,7 @@ comfort_givoni_label_data <- function(
         ))
     }
 
-    labels <- comfort_givoni_label_point_specs(
+    labels <- givoni__label_point_specs(
         base,
         pressure_pa,
         tdb_max_si,
@@ -764,7 +781,7 @@ comfort_givoni_label_data <- function(
         vjust = labels$vjust,
         group = seq_len(nrow(labels))
     ))
-    out <- comfort_givoni_clip_humratio(out, lim$hum, units)
+    out <- givoni__clip_humratio(out, lim$hum, units)
     psychro_output_xy(
         out,
         out$tdb,
@@ -775,28 +792,32 @@ comfort_givoni_label_data <- function(
     )
 }
 
-comfort_givoni_clip_humratio <- function(data, hum_lim, units) {
+# Clamp Givoni humidity ratios to the visible chart range.
+givoni__clip_humratio <- function(data, hum_lim, units) {
     hum_lim <- unit__hum_from_chart(hum_lim, units)
     data$humratio <- pmin(pmax(data$humratio, hum_lim[[1L]]), hum_lim[[2L]])
     data
 }
 
-comfort_givoni_mean_outdoor_label_angle <- function(mollier) {
+# Return mean-outdoor label rotation for normal or Mollier orientation.
+givoni__mean_outdoor_label_angle <- function(mollier) {
     if (isTRUE(mollier)) 0 else 270
 }
 
-comfort_givoni_mean_outdoor_label_vjust <- function(mollier) {
+# Return mean-outdoor label vertical adjustment for chart orientation.
+givoni__mean_outdoor_label_vjust <- function(mollier) {
     if (isTRUE(mollier)) 1.25 else -0.25
 }
 
-comfort_givoni_mean_outdoor_marker <- function(
+# Compute saturation, top, and label humidity ratios for the marker.
+givoni__mean_outdoor_marker <- function(
     mean_si,
     pressure_pa,
     hum_lim_narrow
 ) {
     # The mean-outdoor marker runs from the visible lower humidity limit to just
     # past saturation, leaving a short extension for the numeric label.
-    hum_sat <- comfort_givoni_humratio(mean_si, 100, pressure_pa)
+    hum_sat <- givoni__humratio(mean_si, 100, pressure_pa)
     if (!is.finite(hum_sat)) {
         return(NULL)
     }
@@ -811,7 +832,8 @@ comfort_givoni_mean_outdoor_marker <- function(
     list(saturation = hum_sat, top = hum_top, label = hum_label)
 }
 
-comfort_givoni_mean_outdoor_data <- function(
+# Convert the mean-outdoor marker line into plot-ready chart data.
+givoni__mean_outdoor_data <- function(
     strategy,
     units,
     pres,
@@ -820,12 +842,12 @@ comfort_givoni_mean_outdoor_data <- function(
     hum_lim,
     psychro_scales = NULL
 ) {
-    strategy <- comfort_check_givoni_strategy(strategy)
+    strategy <- givoni__check_strategy(strategy)
     lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
     pressure_pa <- comfort_pressure_pa(pres, units)
     mean_si <- comfort_to_si_temp(strategy$mean_outdoor, strategy$units)
     hum_lim_narrow <- unit__hum_from_chart(lim$hum, units)
-    marker <- comfort_givoni_mean_outdoor_marker(
+    marker <- givoni__mean_outdoor_marker(
         mean_si,
         pressure_pa,
         hum_lim_narrow
@@ -850,7 +872,8 @@ comfort_givoni_mean_outdoor_data <- function(
     )
 }
 
-comfort_givoni_mean_outdoor_label_data <- function(
+# Convert the mean-outdoor marker label into plot-ready chart data.
+givoni__mean_outdoor_label_data <- function(
     strategy,
     units,
     pres,
@@ -859,18 +882,18 @@ comfort_givoni_mean_outdoor_label_data <- function(
     hum_lim,
     psychro_scales = NULL
 ) {
-    strategy <- comfort_check_givoni_strategy(strategy)
+    strategy <- givoni__check_strategy(strategy)
     lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
     pressure_pa <- comfort_pressure_pa(pres, units)
     mean_si <- comfort_to_si_temp(strategy$mean_outdoor, strategy$units)
     hum_lim_narrow <- unit__hum_from_chart(lim$hum, units)
-    marker <- comfort_givoni_mean_outdoor_marker(
+    marker <- givoni__mean_outdoor_marker(
         mean_si,
         pressure_pa,
         hum_lim_narrow
     )
     if (is.null(marker)) {
-        return(comfort_givoni_empty_label())
+        return(givoni__empty_label())
     }
 
     label_temp <- comfort_from_si_temp(mean_si, units)
@@ -880,9 +903,9 @@ comfort_givoni_mean_outdoor_label_data <- function(
         humratio = marker$label,
         zone = "mean_outdoor",
         label = sprintf("%.1f %s", label_temp, unit_label),
-        angle = comfort_givoni_mean_outdoor_label_angle(mollier),
+        angle = givoni__mean_outdoor_label_angle(mollier),
         hjust = 0.5,
-        vjust = comfort_givoni_mean_outdoor_label_vjust(mollier),
+        vjust = givoni__mean_outdoor_label_vjust(mollier),
         group = 1L
     ))
     psychro_output_xy(
