@@ -3,7 +3,8 @@ NULL
 
 # Heat-index model helpers and derived overlay geometry. These functions stay
 # isolated from PMV/SET because their thresholds and categories are discrete.
-comfort_heat_index_f <- function(tdb_f, rh, solar_exposure) {
+# Calculate NOAA/Marsh heat-index values in Fahrenheit before unit conversion.
+heat_index__value_f <- function(tdb_f, rh, solar_exposure) {
     hi <- tdb_f
     valid <- is.finite(tdb_f) & is.finite(rh) & is.finite(solar_exposure)
     warm <- valid & tdb_f > 40
@@ -55,7 +56,8 @@ comfort_heat_index_f <- function(tdb_f, rh, solar_exposure) {
     hi
 }
 
-comfort_heat_index_thresholds <- function(units) {
+# Return heat-index category thresholds in the requested chart units.
+heat_index__thresholds <- function(units) {
     units <- match.arg(units, c("SI", "IP"))
     if (units == "IP") {
         c(80, 90, 103, 125)
@@ -64,7 +66,8 @@ comfort_heat_index_thresholds <- function(units) {
     }
 }
 
-comfort_heat_index_category <- function(heat_index_f) {
+# Map Fahrenheit heat-index values to category labels and integer ids.
+heat_index__category <- function(heat_index_f) {
     labels <- c(
         "none",
         "caution",
@@ -79,7 +82,8 @@ comfort_heat_index_category <- function(heat_index_f) {
     util__new_data_frame(list(category = category, category_id = id))
 }
 
-comfort_heat_index_zone_specs <- function() {
+# Return heat-index category style metadata used by overlay layers.
+heat_index__zone_specs <- function() {
     list(
         list(id = 1L, label = "CAUTION", fill = "#FFE66D"),
         list(id = 2L, label = "EXTREME CAUTION", fill = "#FFB347"),
@@ -88,7 +92,8 @@ comfort_heat_index_zone_specs <- function() {
     )
 }
 
-comfort_heat_index_zone_data <- function(
+# Convert requested heat-index categories into plot-ready filled band data.
+heat_index__zone_data <- function(
     model,
     category_id = NULL,
     n,
@@ -100,7 +105,7 @@ comfort_heat_index_zone_data <- function(
     grid_cache = NULL,
     psychro_scales = NULL
 ) {
-    thresholds <- comfort_heat_index_thresholds(units)
+    thresholds <- heat_index__thresholds(units)
     category_ids <- if (is.null(category_id)) {
         seq_along(thresholds)
     } else {
@@ -113,7 +118,7 @@ comfort_heat_index_zone_data <- function(
 
     # Each category remains a separate ggplot layer, but all categories are cut
     # from the same node grid so repeated layers do not recompute heat index.
-    m <- comfort_heat_index_grid_matrix(
+    m <- heat_index__grid_matrix(
         model,
         n,
         units,
@@ -127,9 +132,9 @@ comfort_heat_index_zone_data <- function(
         return(comfort_empty_band())
     }
 
-    specs <- comfort_heat_index_zone_specs()
+    specs <- heat_index__zone_specs()
     zones <- lapply(category_ids, function(id) {
-        comfort_heat_index_zone_from_grid(
+        heat_index__zone_from_grid(
             m,
             id,
             thresholds,
@@ -155,7 +160,8 @@ comfort_heat_index_zone_data <- function(
     out
 }
 
-comfort_heat_index_grid_matrix <- function(
+# Build or reuse the node grid shared by heat-index zone and contour layers.
+heat_index__grid_matrix <- function(
     model,
     n,
     units,
@@ -164,7 +170,7 @@ comfort_heat_index_grid_matrix <- function(
     hum_lim,
     grid_cache = NULL
 ) {
-    key <- comfort_heat_index_grid_key(model, n, units, pres, tdb_lim, hum_lim)
+    key <- heat_index__grid_key(model, n, units, pres, tdb_lim, hum_lim)
     if (
         !is.null(grid_cache) &&
             exists(key, envir = grid_cache, inherits = FALSE)
@@ -191,7 +197,8 @@ comfort_heat_index_grid_matrix <- function(
     m
 }
 
-comfort_heat_index_grid_key <- function(
+# Build a cache key for one heat-index grid configuration.
+heat_index__grid_key <- function(
     model,
     n,
     units,
@@ -215,7 +222,8 @@ comfort_heat_index_grid_key <- function(
     )
 }
 
-comfort_heat_index_zone_from_grid <- function(
+# Cut one heat-index category band from a precomputed grid.
+heat_index__zone_from_grid <- function(
     m,
     category_id,
     thresholds,
@@ -261,7 +269,8 @@ comfort_heat_index_zone_from_grid <- function(
     out
 }
 
-comfort_heat_index_contour_data <- function(
+# Convert heat-index thresholds into plot-ready contour paths.
+heat_index__contour_data <- function(
     model,
     n,
     units,
@@ -274,7 +283,7 @@ comfort_heat_index_contour_data <- function(
 ) {
     # Contours use the same node grid as filled zones so threshold paths align
     # exactly with the zone polygons when a wrapper-local cache is supplied.
-    m <- comfort_heat_index_grid_matrix(
+    m <- heat_index__grid_matrix(
         model,
         n,
         units,
@@ -283,7 +292,7 @@ comfort_heat_index_contour_data <- function(
         hum_lim,
         grid_cache = grid_cache
     )
-    thresholds <- comfort_heat_index_thresholds(units)
+    thresholds <- heat_index__thresholds(units)
     lines <- isoband::isolines(
         x = m$tdb,
         y = m$humratio,
@@ -304,7 +313,8 @@ comfort_heat_index_contour_data <- function(
     out
 }
 
-comfort_heat_index_label_data <- function(
+# Choose representative positions for heat-index foreground labels.
+heat_index__label_data <- function(
     model,
     n,
     units,
@@ -325,8 +335,8 @@ comfort_heat_index_label_data <- function(
         at = "centers",
         boundary = "saturation"
     )
-    specs <- comfort_heat_index_zone_specs()
-    thresholds <- comfort_heat_index_thresholds(units)
+    specs <- heat_index__zone_specs()
+    thresholds <- heat_index__thresholds(units)
     labels <- vector("list", length(specs))
     values <- as.vector(m$value)
     grid <- expand.grid(tdb = m$tdb, humratio = m$humratio)

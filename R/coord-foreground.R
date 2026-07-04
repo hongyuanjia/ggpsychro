@@ -125,7 +125,7 @@ coord_fg__givoni_mean_outdoor_grob <- function(coord, panel_params, spec) {
 coord_fg__heat_index_label_grob <- function(coord, panel_params, spec) {
     range_tdb <- coord$range_tdb_physical(panel_params)
     range_hum <- coord$range_hum_physical(panel_params)
-    data <- comfort_heat_index_label_data(
+    data <- heat_index__label_data(
         spec$model,
         comfort_grid_n(spec$n),
         coord$units,

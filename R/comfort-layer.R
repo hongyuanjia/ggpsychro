@@ -203,7 +203,7 @@ geom_comfort_heat_index <- function(
     label <- angle <- NULL
     layer_mapping <- comfort_computed_xy_mapping(mapping)
     params <- list(...)
-    zone_specs <- comfort_heat_index_zone_specs()
+    zone_specs <- heat_index__zone_specs()
     # Keep one layer per heat-index category so fill/alpha/legend semantics stay
     # unchanged, but share the expensive node grid across those sibling layers.
     zone_grid_cache <- new.env(parent = emptyenv())
@@ -290,7 +290,7 @@ geom_comfort_heat_index <- function(
                 alpha = 0
             )
         )
-        layers[[length(layers) + 1L]] <- comfort_heat_index_foreground_labels(
+        layers[[length(layers) + 1L]] <- heat_index__foreground_labels(
             model,
             n,
             text_params
@@ -904,7 +904,8 @@ geom_comfort_givoni <- function(
     layers
 }
 
-comfort_heat_index_foreground_labels <- function(model, n, params) {
+# Store heat-index foreground label metadata for coord rendering.
+heat_index__foreground_labels <- function(model, n, params) {
     structure(
         list(
             type = "heat_index_labels",

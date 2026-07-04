@@ -508,10 +508,10 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
     ))
     expect_true(all(
         sort(unique(round(heat_contour$level, 6))) %in%
-            round(comfort_heat_index_thresholds("SI"), 6)
+            round(heat_index__thresholds("SI"), 6)
     ))
 
-    heat_zones <- comfort_heat_index_zone_data(
+    heat_zones <- heat_index__zone_data(
         comfort_model_heat_index(),
         NULL,
         c(32, 24),
@@ -522,9 +522,9 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
         c(0, 35)
     )
     heat_zone_parts <- lapply(
-        seq_along(comfort_heat_index_zone_specs()),
+        seq_along(heat_index__zone_specs()),
         function(i) {
-            comfort_heat_index_zone_data(
+            heat_index__zone_data(
                 comfort_model_heat_index(),
                 i,
                 c(32, 24),
@@ -545,7 +545,7 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
         table(heat_zone_parts$category_id)
     )
     zone_fills <- vapply(
-        comfort_heat_index_zone_specs(),
+        heat_index__zone_specs(),
         `[[`,
         character(1L),
         "fill"
@@ -556,7 +556,7 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
     )
 
     heat_cache <- new.env(parent = emptyenv())
-    cached_heat_zones <- comfort_heat_index_zone_data(
+    cached_heat_zones <- heat_index__zone_data(
         comfort_model_heat_index(),
         NULL,
         c(32, 24),
@@ -567,7 +567,7 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
         c(0, 35),
         grid_cache = heat_cache
     )
-    cached_heat_contour <- comfort_heat_index_contour_data(
+    cached_heat_contour <- heat_index__contour_data(
         comfort_model_heat_index(),
         c(32, 24),
         "SI",
@@ -580,7 +580,7 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
     uncached_heat_contour <- comfort_contour_data(
         comfort_model_heat_index(),
         "heat_index",
-        comfort_heat_index_thresholds("SI"),
+        heat_index__thresholds("SI"),
         c(32, 24),
         "SI",
         pressure,

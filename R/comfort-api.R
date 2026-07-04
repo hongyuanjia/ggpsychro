@@ -254,7 +254,7 @@ comfort_heat_index <- function(
     if (any(bad_exposure)) {
         stop("`solar_exposure` must be from 0 to 1.", call. = FALSE)
     }
-    heat_index_f <- comfort_heat_index_f(tdb_f, x$rh, exposure)
+    heat_index_f <- heat_index__value_f(tdb_f, x$rh, exposure)
 
     if (isTRUE(limit_inputs)) {
         valid <- comfort_between(tdb_si, -50, 100) &
@@ -263,7 +263,7 @@ comfort_heat_index <- function(
         heat_index_f[!valid] <- NA_real_
     }
 
-    category <- comfort_heat_index_category(heat_index_f)
+    category <- heat_index__category(heat_index_f)
     heat_index <- if (units == "IP") {
         heat_index_f
     } else {

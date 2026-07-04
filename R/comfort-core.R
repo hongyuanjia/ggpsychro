@@ -726,7 +726,7 @@ comfort_contour_breaks <- function(metric, z, units = "SI") {
         return(seq(-3, 3, by = 0.5))
     }
     if (metric == "heat_index") {
-        return(comfort_heat_index_thresholds(units))
+        return(heat_index__thresholds(units))
     }
     z <- z[is.finite(z)]
     if (!length(z)) {
@@ -754,7 +754,7 @@ comfort_band_breaks <- function(metric, z, levels = NULL, units = "SI") {
         eps <- max(1, abs(z_range)) * 1e-9
         breaks <- c(
             z_range[[1L]] - eps,
-            comfort_heat_index_thresholds(units),
+            heat_index__thresholds(units),
             z_range[[2L]] + eps
         )
         breaks <- sort(unique(breaks[
@@ -928,7 +928,7 @@ comfort_zone_range <- function(model, metric, range, units = "SI") {
         metric,
         pmv = c(-0.5, 0.5),
         set = c(22.2, 25.6),
-        heat_index = comfort_heat_index_thresholds(units)[c(1L, 2L)],
+        heat_index = heat_index__thresholds(units)[c(1L, 2L)],
         stop("A comfort `range` is required for this metric.", call. = FALSE)
     )
 }

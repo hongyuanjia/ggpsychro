@@ -533,7 +533,7 @@ StatComfortHeatIndexZone <- ggplot2::ggproto(
         ctx <- comfort_stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
-        comfort_heat_index_zone_data(
+        heat_index__zone_data(
             model,
             category_id,
             comfort_grid_n(n),
@@ -592,7 +592,7 @@ StatComfortHeatIndexContour <- ggplot2::ggproto(
         ctx <- comfort_stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
-        comfort_heat_index_contour_data(
+        heat_index__contour_data(
             model,
             comfort_grid_n(n),
             units,
@@ -648,7 +648,7 @@ StatComfortHeatIndexLabel <- ggplot2::ggproto(
         ctx <- comfort_stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
-        comfort_heat_index_label_data(
+        heat_index__label_data(
             model,
             comfort_grid_n(n),
             units,
