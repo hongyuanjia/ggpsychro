@@ -99,15 +99,18 @@ comfort_givoni_zone_specs <- function() {
     ))
 }
 
-comfort_zone_style_fields <- function() {
+# Return the accepted style fields for Givoni zone overrides.
+givoni__zone_style_fields <- function() {
     c("fill", "colour", "color", "linewidth", "linetype", "alpha", "linejoin")
 }
 
-comfort_zone_fill_is_set <- function(fill) {
+# Test whether a Givoni zone fill override should mark the zone as filled.
+givoni__zone_fill_is_set <- function(fill) {
     !is.null(fill) && length(fill) == 1L && !is.na(fill)
 }
 
-comfort_givoni_check_zone_style <- function(zone_style, zone_names) {
+# Validate the named Givoni zone style override list.
+givoni__check_zone_style <- function(zone_style, zone_names) {
     if (is.null(zone_style)) {
         return(list())
     }
@@ -133,7 +136,8 @@ comfort_givoni_check_zone_style <- function(zone_style, zone_names) {
     zone_style
 }
 
-comfort_zone_style_to_params <- function(style) {
+# Normalize one Givoni zone style override into layer parameter names.
+givoni__zone_style_to_params <- function(style) {
     if (
         inherits(style, "PsyComfortZoneElement") ||
             inherits(style, "ggplot2::element_polygon")
@@ -161,7 +165,7 @@ comfort_zone_style_to_params <- function(style) {
     if (is.null(names(out))) {
         stop("Zone style lists must be named.", call. = FALSE)
     }
-    unknown <- setdiff(names(out), comfort_zone_style_fields())
+    unknown <- setdiff(names(out), givoni__zone_style_fields())
     if (length(unknown)) {
         stop(
             "Unknown comfort zone style field: ",
@@ -200,12 +204,12 @@ comfort_givoni_zone_params <- function(
     out <- utils::modifyList(defaults, params)
     style <- zone_style[[spec$zone[[1L]]]]
     if (!is.null(style)) {
-        style_params <- comfort_zone_style_to_params(style)
+        style_params <- givoni__zone_style_to_params(style)
         out <- utils::modifyList(out, style_params)
         if (
             !("alpha" %in% names(style_params)) &&
                 "fill" %in% names(style_params) &&
-                comfort_zone_fill_is_set(style_params$fill)
+                givoni__zone_fill_is_set(style_params$fill)
         ) {
             out$alpha <- zone_alpha
         }

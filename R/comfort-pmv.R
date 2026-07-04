@@ -633,7 +633,7 @@ comfort_pmv_axis_label_segment <- function(curve, label_start, label_end) {
 }
 
 comfort_pmv_axis_label_text_hjust <- function(axis_label_hjust) {
-    if (comfort_is_waiver(axis_label_hjust)) {
+    if (util__is_waive(axis_label_hjust)) {
         return(0.95)
     }
     if (is.numeric(axis_label_hjust) && length(axis_label_hjust)) {
@@ -643,7 +643,7 @@ comfort_pmv_axis_label_text_hjust <- function(axis_label_hjust) {
 }
 
 comfort_pmv_axis_label_text_vjust <- function(axis_label_vjust, size = NULL) {
-    if (comfort_is_waiver(axis_label_vjust)) {
+    if (util__is_waive(axis_label_vjust)) {
         size <- if (is.null(size)) 2.8 else as.numeric(size)[[1L]]
         offset <- max(3.5, size * ggplot2::.pt * 0.42)
         return(grid::unit(offset, "pt"))
@@ -658,7 +658,7 @@ comfort_pmv_axis_label_text_vjust <- function(axis_label_vjust, size = NULL) {
 }
 
 comfort_pmv_axis_label_offset <- function(axis_label_hjust) {
-    if (comfort_is_waiver(axis_label_hjust)) {
+    if (util__is_waive(axis_label_hjust)) {
         return(0.025)
     }
     if (is.numeric(axis_label_hjust) && length(axis_label_hjust)) {
@@ -672,10 +672,6 @@ comfort_pmv_axis_label_end <- function(axis_label_hjust) {
         return(min(0.16, max(0, axis_label_hjust[[1L]]) + 0.055))
     }
     0.07
-}
-
-comfort_is_waiver <- function(x) {
-    inherits(x, "waiver")
 }
 
 comfort_pmv_reverse_groups <- function(data) {

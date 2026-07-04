@@ -725,7 +725,7 @@ geom_comfort_givoni <- function(
     params <- list(...)
     zone_specs <- comfort_givoni_zone_specs()
     zone_specs <- zone_specs[zone_specs$draw_zone, , drop = FALSE]
-    zone_style <- comfort_givoni_check_zone_style(zone_style, zone_specs$zone)
+    zone_style <- givoni__check_zone_style(zone_style, zone_specs$zone)
     layers <- list()
     if (isTRUE(show_pmv)) {
         # The optional PMV background is a normal comfort overlay, kept separate
@@ -751,7 +751,7 @@ geom_comfort_givoni <- function(
             na.rm,
             strategy
         )
-        zone_is_filled <- comfort_zone_fill_is_set(zone_params$fill)
+        zone_is_filled <- givoni__zone_fill_is_set(zone_params$fill)
         zone_geom <- if (zone_is_filled) "polygon" else "path"
         if (!zone_is_filled) {
             zone_params$fill <- NULL
