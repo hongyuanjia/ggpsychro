@@ -1,8 +1,20 @@
-#' @include comfort-core.R
+#' @include comfort-core.R comfort-band.R
 NULL
 
 # PMV/SET native bridges and PMV root tracing. R root tracers remain as
 # fallbacks when the native tracer's scalar-parameter contract is not met.
+
+# Validate the scalar sampling count used by PMV root-traced curves.
+pmv__curve_n <- function(n) {
+    if (!is.numeric(n) || length(n) != 1L || !is.finite(n) || n < 8) {
+        stop(
+            "`n` must be a single finite number greater than or equal to 8.",
+            call. = FALSE
+        )
+    }
+    as.integer(n)
+}
+
 # Call the native vectorized PMV evaluator.
 pmv__vec <- function(tdb, tr, vr, rh, met, clo, wme) {
     .Call(
