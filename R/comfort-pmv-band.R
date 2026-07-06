@@ -17,8 +17,8 @@ pmv__root_band_data <- function(
     rootband_cache = NULL,
     psychro_scales = NULL
 ) {
-    metric <- comfort_model_metric(model, metric)
-    if (comfort_model_type(model) != "pmv" || metric != "pmv") {
+    metric <- comfort_dispatch__model_metric(model, metric)
+    if (comfort__model_type(model) != "pmv" || metric != "pmv") {
         stop(
             "Root-traced comfort overlay bands are only available for PMV.",
             call. = FALSE
@@ -27,8 +27,8 @@ pmv__root_band_data <- function(
 
     model <- pmv__curve_model(model)
     breaks <- pmv__root_band_breaks(levels)
-    n <- comfort_grid_n(n)
-    lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
+    n <- comfort_grid__n(n)
+    lim <- comfort_grid__limits(units, tdb_lim, hum_lim)
     key <- pmv__cache_key(
         kind = "rootband",
         model = model,
@@ -74,7 +74,7 @@ pmv__root_band_data <- function(
     domain <- pmv__root_band_domain(humratio, lim$tdb, units, pres)
     valid <- domain$valid
     if (!any(valid)) {
-        out <- comfort_empty_band()
+        out <- comfort_band__empty()
         if (!is.null(rootband_cache)) {
             assign(key, out, envir = rootband_cache)
         }
@@ -88,7 +88,7 @@ pmv__root_band_data <- function(
     pmv_hi <- pmv__value_at(model, xhi, humratio, units, pres)
     valid <- is.finite(pmv_lo) & is.finite(pmv_hi) & pmv_lo <= pmv_hi
     if (!any(valid)) {
-        out <- comfort_empty_band()
+        out <- comfort_band__empty()
         if (!is.null(rootband_cache)) {
             assign(key, out, envir = rootband_cache)
         }
@@ -202,7 +202,7 @@ pmv__root_band_data <- function(
     }
 
     if (!length(polys)) {
-        out <- comfort_empty_band()
+        out <- comfort_band__empty()
         if (!is.null(rootband_cache)) {
             assign(key, out, envir = rootband_cache)
         }
@@ -239,17 +239,17 @@ pmv__band_data <- function(
     rootband_cache = NULL,
     psychro_scales = NULL
 ) {
-    range <- comfort_check_breaks(range, "`range`", n_min = 2L)
+    range <- comfort__check_breaks(range, "`range`", n_min = 2L)
     if (length(range) != 2L) {
         stop("`range` must contain exactly two PMV boundaries.", call. = FALSE)
     }
     # When a caller supplies a wider break set, compute the full rootband once
-    # and filter back to this visible band. Plain geom_comfort_zone() leaves it
+    # and filter back to this visible band. Plain comfort_layer__zone() leaves it
     # NULL so its historical per-range behavior is unchanged.
     levels <- if (is.null(rootband_levels)) {
         range
     } else {
-        comfort_check_breaks(
+        comfort__check_breaks(
             c(rootband_levels, range),
             "`rootband_levels`",
             n_min = 2L
@@ -270,7 +270,7 @@ pmv__band_data <- function(
         psychro_scales = psychro_scales
     )
     if (!nrow(bands)) {
-        return(comfort_empty_band())
+        return(comfort_band__empty())
     }
 
     keep <- is.finite(bands$level_low) &
@@ -279,7 +279,7 @@ pmv__band_data <- function(
         abs(bands$level_high - range[[2L]]) <= 1e-8
     out <- bands[keep, , drop = FALSE]
     if (!nrow(out)) {
-        return(comfort_empty_band())
+        return(comfort_band__empty())
     }
     out$value <- mean(range)
     out$level_mid <- mean(range)
@@ -301,7 +301,7 @@ pmv__root_band_breaks <- function(levels) {
         }
         return(seq(-3, 3, length.out = n + 1L))
     }
-    comfort_check_breaks(levels, "`levels`", n_min = 2L)
+    comfort__check_breaks(levels, "`levels`", n_min = 2L)
 }
 
 # Format root-band open-ended and finite PMV boundaries.

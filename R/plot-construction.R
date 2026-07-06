@@ -124,7 +124,8 @@ add_psychro_comfort_foreground <- function(object, plot) {
 add_psychro_grid <- function(object, plot) {
     if (!is.ggpsychro(plot)) {
         stop(
-            "`geom_grid_*()` helpers can only be added to a ggpsychro plot.",
+            "`geom_psychro_grid_*()` helpers can only be added to a ",
+            "ggpsychro plot.",
             call. = FALSE
         )
     }

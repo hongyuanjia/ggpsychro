@@ -59,8 +59,8 @@ reference lines or overlays from data.
 
 ```{r wetbulb-line, fig.alt = "Psychrometric chart with labelled relative humidity and wet-bulb grids plus a highlighted constant wet-bulb line."}
 ggpsychro(tdb_lim = c(10, 35), hum_lim = c(0, 25)) +
-    geom_grid_relhum() +
-    geom_grid_wetbulb() +
+    geom_psychro_grid_relhum() +
+    geom_psychro_grid_wetbulb() +
     geom_line(
         aes(x = 20:32, wetbulb = 18),
         stat = "wetbulb",
@@ -115,7 +115,7 @@ plots.
 weather$cooling_load <- pmax(0, weather$dry_bulb_temperature - 24) * 1.5
 
 ggpsychro(weather, tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
-    geom_grid_relhum() +
+    geom_psychro_grid_relhum() +
     geom_psychro_tile(
         aes(
             dry_bulb_temperature,
@@ -132,7 +132,7 @@ The same bins can aggregate another metric with the `value` aesthetic and
 
 ```{r tile-value, fig.alt = "Psychrometric tile plot showing mean cooling load aggregated within dry-bulb and humidity-ratio bins."}
 ggpsychro(weather, tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
-    geom_grid_relhum() +
+    geom_psychro_grid_relhum() +
     geom_psychro_tile(
         aes(
             dry_bulb_temperature,

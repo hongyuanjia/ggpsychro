@@ -23,7 +23,7 @@ geom_comfort_givoni <- function(
 ) {
     label <- angle <- hjust <- vjust <- NULL
     strategy <- givoni__check_strategy(strategy)
-    layer_mapping <- comfort_computed_xy_mapping(mapping)
+    layer_mapping <- comfort__computed_xy_mapping(mapping)
     params <- list(...)
     zone_specs <- givoni__zone_specs()
     zone_specs <- zone_specs[zone_specs$draw_zone, , drop = FALSE]
@@ -32,7 +32,7 @@ geom_comfort_givoni <- function(
     if (isTRUE(show_pmv)) {
         # The optional PMV background is a normal comfort overlay, kept separate
         # from Givoni zone paths so users can style both independently.
-        layers[[length(layers) + 1L]] <- geom_comfort_bands(
+        layers[[length(layers) + 1L]] <- comfort_layer__bands(
             data = data,
             model = pmv_model,
             alpha = alpha,
@@ -60,7 +60,7 @@ geom_comfort_givoni <- function(
         }
         layers[[length(layers) + 1L]] <- psychro_layer(
             stat = StatComfortGivoniZone,
-            data = comfort_layer_data(data),
+            data = comfort__layer_data(data),
             mapping = layer_mapping,
             geom = zone_geom,
             position = position,
@@ -79,7 +79,7 @@ geom_comfort_givoni <- function(
     }
     layers[[length(layers) + 1L]] <- psychro_layer(
         stat = StatComfortGivoniMeanOutdoor,
-        data = comfort_layer_data(data),
+        data = comfort__layer_data(data),
         mapping = layer_mapping,
         geom = "path",
         position = position,
@@ -108,8 +108,8 @@ geom_comfort_givoni <- function(
         }
         layers[[length(layers) + 1L]] <- psychro_layer(
             stat = StatComfortGivoniLabel,
-            data = comfort_layer_data(data),
-            mapping = comfort_computed_xy_mapping(ggplot2::aes(
+            data = comfort__layer_data(data),
+            mapping = comfort__computed_xy_mapping(ggplot2::aes(
                 label = ggplot2::after_stat(label),
                 hjust = ggplot2::after_stat(hjust),
                 vjust = ggplot2::after_stat(vjust)
@@ -132,8 +132,8 @@ geom_comfort_givoni <- function(
         )
         layers[[length(layers) + 1L]] <- psychro_layer(
             stat = StatComfortGivoniLabel,
-            data = comfort_layer_data(data),
-            mapping = comfort_computed_xy_mapping(ggplot2::aes(
+            data = comfort__layer_data(data),
+            mapping = comfort__computed_xy_mapping(ggplot2::aes(
                 label = ggplot2::after_stat(label),
                 angle = ggplot2::after_stat(angle)
             )),
@@ -165,8 +165,8 @@ geom_comfort_givoni <- function(
         }
         layers[[length(layers) + 1L]] <- psychro_layer(
             stat = StatComfortGivoniMeanOutdoorLabel,
-            data = comfort_layer_data(data),
-            mapping = comfort_computed_xy_mapping(ggplot2::aes(
+            data = comfort__layer_data(data),
+            mapping = comfort__computed_xy_mapping(ggplot2::aes(
                 label = ggplot2::after_stat(label),
                 angle = ggplot2::after_stat(angle),
                 hjust = ggplot2::after_stat(hjust),

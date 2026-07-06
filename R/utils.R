@@ -142,14 +142,20 @@ psychro__hum_limits <- function(units) {
 psychro__default_limits <- function(units) {
     list(
         tdb = if (units == "SI") {
-            c(0, 50)
+            c(GGPSY_OPT$tdb_default_min, GGPSY_OPT$tdb_default_max)
         } else {
-            unit__convert_display(c(0, 50), "F")
+            unit__convert_display(
+                c(GGPSY_OPT$tdb_default_min, GGPSY_OPT$tdb_default_max),
+                "F"
+            )
         },
         hum = if (units == "SI") {
-            c(0, 50)
+            c(GGPSY_OPT$hum_default_min, GGPSY_OPT$hum_default_max)
         } else {
-            unit__convert_display(c(0, 50), "Gr")
+            unit__convert_display(
+                c(GGPSY_OPT$hum_default_min, GGPSY_OPT$hum_default_max),
+                "Gr"
+            )
         }
     )
 }

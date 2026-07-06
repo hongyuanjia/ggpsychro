@@ -3,10 +3,9 @@ NULL
 
 # Shared comfort field layer primitives for sampled bands, contours, zones,
 # metric-specific wrappers, and point-state evaluation.
-# Lower-level band primitive draws a sampled comfort metric as filled regions.
-#' @rdname geom_comfort_pmv
-#' @export
-geom_comfort_bands <- function(
+# Internal band layer draws sampled comfort metrics without widening the public
+# API beyond the metric-specific comfort geoms.
+comfort_layer__bands <- function(
     mapping = NULL,
     data = NULL,
     stat = NULL,
@@ -15,7 +14,7 @@ geom_comfort_bands <- function(
     model = comfort_model_pmv(),
     metric = NULL,
     n = NULL,
-    render = c("band", "tile"),
+    band_render = c("band", "tile"),
     band_method = c("auto", "root", "isoband"),
     levels = NULL,
     gap = 0,
@@ -24,14 +23,14 @@ geom_comfort_bands <- function(
     show.legend = NA,
     inherit.aes = TRUE
 ) {
-    render <- match.arg(render)
+    band_render <- match.arg(band_render)
     band_method <- match.arg(band_method)
-    band_metric <- comfort_model_metric(model, metric)
+    band_metric <- comfort_dispatch__model_metric(model, metric)
     # Rendering mode controls the mark type; band_method only controls how
     # continuous band boundaries are constructed for polygon rendering.
-    if (render == "band" && band_method == "auto") {
+    if (band_render == "band" && band_method == "auto") {
         band_method <- if (
-            comfort_model_type(model) == "pmv" && band_metric == "pmv"
+            comfort__model_type(model) == "pmv" && band_metric == "pmv"
         ) {
             "root"
         } else {
@@ -39,9 +38,9 @@ geom_comfort_bands <- function(
         }
     }
     if (
-        render == "band" &&
+        band_render == "band" &&
             band_method == "root" &&
-            (comfort_model_type(model) != "pmv" || band_metric != "pmv")
+            (comfort__model_type(model) != "pmv" || band_metric != "pmv")
     ) {
         stop(
             "`band_method = \"root\"` is only available for PMV bands.",
@@ -49,7 +48,7 @@ geom_comfort_bands <- function(
         )
     }
     if (is.null(stat)) {
-        stat <- if (render == "tile") {
+        stat <- if (band_render == "tile") {
             StatComfortGrid
         } else {
             switch(
@@ -59,7 +58,7 @@ geom_comfort_bands <- function(
             )
         }
     }
-    geom <- if (render == "tile") GeomComfortTile else "polygon"
+    geom <- if (band_render == "tile") GeomComfortTile else "polygon"
     params <- list(
         na.rm = na.rm,
         model = model,
@@ -68,7 +67,7 @@ geom_comfort_bands <- function(
         alpha = alpha,
         ...
     )
-    if (render == "band") {
+    if (band_render == "band") {
         params$levels <- levels
         if (is.null(params$colour)) {
             params$colour <- NA
@@ -79,7 +78,7 @@ geom_comfort_bands <- function(
 
     psychro_layer(
         stat = stat,
-        data = comfort_layer_data(data),
+        data = comfort__layer_data(data),
         mapping = mapping,
         geom = geom,
         position = position,
@@ -104,7 +103,7 @@ geom_comfort_set <- function(
     levels = NULL,
     breaks = NULL,
     n = NULL,
-    render = c("band", "tile"),
+    band_render = c("band", "tile"),
     band_method = c("auto", "root", "isoband"),
     alpha = 0.55,
     na.rm = FALSE,
@@ -114,7 +113,7 @@ geom_comfort_set <- function(
     assert_flag(bands)
     assert_flag(contours)
     assert_flag(labels)
-    render <- match.arg(render)
+    band_render <- match.arg(band_render)
     band_method <- match.arg(band_method)
     if (!isTRUE(bands) && !isTRUE(contours)) {
         stop(
@@ -127,7 +126,7 @@ geom_comfort_set <- function(
 
     if (isTRUE(bands)) {
         layers[[length(layers) + 1L]] <- do.call(
-            geom_comfort_bands,
+            comfort_layer__bands,
             c(
                 list(
                     mapping = mapping,
@@ -137,7 +136,7 @@ geom_comfort_set <- function(
                     metric = "set",
                     levels = levels,
                     n = n,
-                    render = render,
+                    band_render = band_render,
                     band_method = band_method,
                     alpha = alpha,
                     na.rm = na.rm,
@@ -151,7 +150,7 @@ geom_comfort_set <- function(
 
     if (isTRUE(contours)) {
         layers[[length(layers) + 1L]] <- do.call(
-            geom_comfort_contour,
+            comfort_layer__contour,
             c(
                 list(
                     mapping = mapping,
@@ -186,7 +185,7 @@ geom_comfort_adaptive <- function(
     t_running = NULL,
     tr = NULL,
     v = 0.1,
-    adaptive_standard = c("ashrae55", "en16798"),
+    standard = c("ashrae55", "en16798"),
     category = NULL,
     n = NULL,
     gap = 0,
@@ -197,7 +196,7 @@ geom_comfort_adaptive <- function(
 ) {
     params <- list(...)
     if (is.null(model)) {
-        adaptive_standard <- match.arg(adaptive_standard)
+        standard <- match.arg(standard)
         if (is.null(t_running)) {
             stop(
                 "`t_running` must be supplied when `model` is NULL.",
@@ -208,7 +207,7 @@ geom_comfort_adaptive <- function(
             t_running = t_running,
             tr = tr,
             v = v,
-            standard = adaptive_standard,
+            standard = standard,
             category = category
         )
     }
@@ -217,7 +216,7 @@ geom_comfort_adaptive <- function(
     # apply it only to the zone layer call.
     params$alpha <- params$alpha %||% alpha
     do.call(
-        geom_comfort_zone,
+        comfort_layer__zone,
         c(
             list(
                 mapping = mapping,
@@ -235,9 +234,9 @@ geom_comfort_adaptive <- function(
         )
     )
 }
-#' @rdname geom_comfort_pmv
-#' @export
-geom_comfort_contour <- function(
+# Internal contour layer keeps contour-specific stat wiring out of the public
+# API while high-level wrappers expose metric-specific options.
+comfort_layer__contour <- function(
     mapping = NULL,
     data = NULL,
     stat = StatComfortContour,
@@ -274,7 +273,7 @@ geom_comfort_contour <- function(
         params$label_path <- FALSE
         return(psychro_layer(
             stat = stat,
-            data = comfort_layer_data(data),
+            data = comfort__layer_data(data),
             mapping = mapping,
             geom = "path",
             position = position,
@@ -284,12 +283,12 @@ geom_comfort_contour <- function(
         ))
     }
 
-    label_params <- comfort_contour_label_params(params, label_size)
+    label_params <- comfort_contour__label_params(params, label_size)
     label_params$label_path <- TRUE
     psychro_layer(
         stat = stat,
-        data = comfort_layer_data(data),
-        mapping = comfort_contour_label_mapping(mapping),
+        data = comfort__layer_data(data),
+        mapping = comfort_contour__label_mapping(mapping),
         geom = GeomPsychroTextpath,
         position = position,
         show.legend = show.legend,
@@ -298,9 +297,9 @@ geom_comfort_contour <- function(
     )
 }
 
-#' @rdname geom_comfort_pmv
-#' @export
-geom_comfort_zone <- function(
+# Internal zone layer converts a model/range pair into polygons for wrappers
+# such as adaptive comfort and PMV standards.
+comfort_layer__zone <- function(
     mapping = NULL,
     data = NULL,
     stat = StatComfortZone,
@@ -331,7 +330,7 @@ geom_comfort_zone <- function(
 
     psychro_layer(
         stat = stat,
-        data = comfort_layer_data(data),
+        data = comfort__layer_data(data),
         mapping = mapping,
         geom = geom,
         position = position,

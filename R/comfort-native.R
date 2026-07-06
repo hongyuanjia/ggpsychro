@@ -65,15 +65,15 @@ pmv__native_params <- function(model, units, pres) {
         if (!is.numeric(p$tr) || length(p$tr) != 1L || !is.finite(p$tr)) {
             return(NULL)
         }
-        tr <- comfort_to_si_temp(as.numeric(p$tr), units)
+        tr <- comfort__to_si_temp(as.numeric(p$tr), units)
     }
     list(
         tr = tr,
-        vr = comfort_to_si_speed(as.numeric(p$vr), units),
+        vr = comfort__to_si_speed(as.numeric(p$vr), units),
         met = as.numeric(p$met),
         clo = as.numeric(p$clo),
         wme = as.numeric(p$wme),
-        pressure = comfort_pressure_pa(as.numeric(pres), units),
+        pressure = comfort__pressure_pa(as.numeric(pres), units),
         min_hum_ratio = psychrolib__options()$MIN_HUM_RATIO
     )
 }
@@ -95,7 +95,7 @@ pmv__native_curve_roots <- function(
         C_comfort_pmv_curve_roots,
         as.numeric(level),
         as.numeric(humratio),
-        as.numeric(comfort_to_si_temp(tdb_lim, units)),
+        as.numeric(comfort__to_si_temp(tdb_lim, units)),
         as.numeric(p$pressure),
         as.numeric(p$tr),
         as.numeric(p$vr),
@@ -104,7 +104,7 @@ pmv__native_curve_roots <- function(
         as.numeric(p$wme),
         as.numeric(p$min_hum_ratio)
     )
-    roots$tdb <- comfort_from_si_temp(roots$tdb, units)
+    roots$tdb <- comfort__from_si_temp(roots$tdb, units)
     roots
 }
 
@@ -125,7 +125,7 @@ pmv__native_saturation_roots <- function(
     roots <- .Call(
         C_comfort_pmv_saturation_roots,
         as.numeric(level),
-        as.numeric(comfort_to_si_temp(tdb_lim, units)),
+        as.numeric(comfort__to_si_temp(tdb_lim, units)),
         as.numeric(unit__hum_from_chart(hum_lim, units)),
         as.integer(max(as.integer(n), 80L)),
         as.numeric(p$pressure),
@@ -136,6 +136,6 @@ pmv__native_saturation_roots <- function(
         as.numeric(p$wme),
         as.numeric(p$min_hum_ratio)
     )
-    roots$tdb <- comfort_from_si_temp(roots$tdb, units)
+    roots$tdb <- comfort__from_si_temp(roots$tdb, units)
     roots
 }

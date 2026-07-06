@@ -5,7 +5,7 @@ NULL
 # by tile, band, contour, and label computations.
 
 # Validate two-dimensional grid resolution for sampled comfort fields.
-comfort_grid_n <- function(n) {
+comfort_grid__n <- function(n) {
     if (
         !is.numeric(n) ||
             length(n) < 1L ||
@@ -22,12 +22,12 @@ comfort_grid_n <- function(n) {
 }
 
 # Select model-specific default grid resolution when users omit n.
-comfort_default_n <- function(model, n = NULL) {
+comfort_grid__default_n <- function(model, n = NULL) {
     if (!is.null(n)) {
         return(n)
     }
     switch(
-        comfort_model_type(model),
+        comfort__model_type(model),
         pmv = c(360L, 220L),
         set = c(80L, 50L),
         adaptive = c(240L, 160L),
@@ -35,7 +35,7 @@ comfort_default_n <- function(model, n = NULL) {
     )
 }
 # Resolve chart limits used by grid-based comfort computations.
-comfort_grid_limits <- function(units, tdb_lim, hum_lim) {
+comfort_grid__limits <- function(units, tdb_lim, hum_lim) {
     default <- psychro__default_limits(units)
     list(
         tdb = if (is.null(tdb_lim)) default$tdb else tdb_lim,
@@ -44,7 +44,7 @@ comfort_grid_limits <- function(units, tdb_lim, hum_lim) {
 }
 
 # Evaluate one comfort metric on a regular dry-bulb/humidity-ratio grid.
-comfort_grid_matrix <- function(
+comfort_grid__matrix <- function(
     model,
     metric,
     n,
@@ -57,8 +57,8 @@ comfort_grid_matrix <- function(
 ) {
     at <- match.arg(at)
     boundary <- match.arg(boundary)
-    n <- comfort_grid_n(n)
-    lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
+    n <- comfort_grid__n(n)
+    lim <- comfort_grid__limits(units, tdb_lim, hum_lim)
     # Grid consumers need different sampling locations: nodes for isoband
     # topology, centers for tile values and label placement.
     tdb_edges <- seq(lim$tdb[[1L]], lim$tdb[[2L]], length.out = n[[1L]] + 1L)
@@ -89,11 +89,16 @@ comfort_grid_matrix <- function(
         humratio_eval <- pmax(humratio_eval, 0)
     }
 
-    rh <- comfort_relhum_from_humratio(grid$tdb, humratio_eval, units, pres)
-    metric <- comfort_model_metric(model, metric)
-    result <- comfort_apply_model(model, grid$tdb, rh, units, pres)
-    value <- comfort_metric_value(result, metric)
-    value[!comfort_valid_grid_rh(rh)] <- NA_real_
+    rh <- comfort_dispatch__relhum_from_humratio(
+        grid$tdb,
+        humratio_eval,
+        units,
+        pres
+    )
+    metric <- comfort_dispatch__model_metric(model, metric)
+    result <- comfort_dispatch__apply_model(model, grid$tdb, rh, units, pres)
+    value <- comfort_dispatch__metric_value(result, metric)
+    value[!comfort_dispatch__valid_grid_rh(rh)] <- NA_real_
     matrix_value <- matrix(value, nrow = length(tdb), ncol = length(humratio))
 
     list(
@@ -107,7 +112,7 @@ comfort_grid_matrix <- function(
 }
 
 # Convert grid-center samples into tile data for direct sampled rendering.
-comfort_grid_data <- function(
+comfort_grid__data <- function(
     model,
     metric,
     n,
@@ -120,7 +125,7 @@ comfort_grid_data <- function(
     na.rm = FALSE,
     psychro_scales = NULL
 ) {
-    m <- comfort_grid_matrix(model, metric, n, units, pres, tdb_lim, hum_lim)
+    m <- comfort_grid__matrix(model, metric, n, units, pres, tdb_lim, hum_lim)
     gap <- psychro_bin_gap(gap)
     sat <- psychro_saturation_humratio(m$tdb_edges, units, pres)
 
@@ -144,7 +149,7 @@ comfort_grid_data <- function(
         y_height > 0 &
         y0 < pmax(s0, s1)
     if (!any(keep)) {
-        return(comfort_empty_tile())
+        return(comfort_grid__empty_tile())
     }
 
     value <- as.vector(m$value)
@@ -152,7 +157,7 @@ comfort_grid_data <- function(
     if (any(missing)) {
         # Cell centers can lie above saturation even when part of the tile is
         # visible; resample near the valid saturated edge instead of dropping it.
-        value[missing] <- comfort_grid_boundary_values(
+        value[missing] <- comfort_grid__boundary_values(
             model,
             m$metric,
             units,
@@ -168,7 +173,7 @@ comfort_grid_data <- function(
 
     keep <- keep & is.finite(value)
     if (!any(keep)) {
-        return(comfort_empty_tile())
+        return(comfort_grid__empty_tile())
     }
 
     out <- util__new_data_frame(list(
@@ -201,7 +206,7 @@ comfort_grid_data <- function(
     )
 }
 # Return an empty tile-shaped data frame with stable columns.
-comfort_empty_tile <- function() {
+comfort_grid__empty_tile <- function() {
     util__new_data_frame(list(
         tdb = numeric(),
         humratio = numeric(),
@@ -216,7 +221,7 @@ comfort_empty_tile <- function() {
 }
 
 # Resample partially saturated tiles at an in-domain representative point.
-comfort_grid_boundary_values <- function(
+comfort_grid__boundary_values <- function(
     model,
     metric,
     units,
@@ -247,13 +252,19 @@ comfort_grid_boundary_values <- function(
             (y1[outside_mid] - y0[outside_mid]) * eps
     }
 
-    rh <- comfort_relhum_from_humratio(tdb, humratio, units, pres)
-    rh <- comfort_clip_grid_rh(rh)
+    rh <- comfort_dispatch__relhum_from_humratio(tdb, humratio, units, pres)
+    rh <- comfort_dispatch__clip_grid_rh(rh)
     out <- rep(NA_real_, length(tdb))
-    valid <- comfort_valid_grid_rh(rh)
+    valid <- comfort_dispatch__valid_grid_rh(rh)
     if (any(valid)) {
-        out[valid] <- comfort_metric_value(
-            comfort_apply_model(model, tdb[valid], rh[valid], units, pres),
+        out[valid] <- comfort_dispatch__metric_value(
+            comfort_dispatch__apply_model(
+                model,
+                tdb[valid],
+                rh[valid],
+                units,
+                pres
+            ),
             metric
         )
     }

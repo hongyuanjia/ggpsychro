@@ -33,11 +33,11 @@ coord_fg__givoni_mean_outdoor_grob <- function(coord, panel_params, spec) {
     range_hum <- coord$range_hum(panel_params)
     range_tdb_physical <- coord$range_tdb_physical(panel_params)
     range_hum_physical <- coord$range_hum_physical(panel_params)
-    mean_si <- comfort_to_si_temp(
+    mean_si <- comfort__to_si_temp(
         spec$strategy$mean_outdoor,
         spec$strategy$units
     )
-    tdb <- comfort_from_si_temp(mean_si, coord$units)
+    tdb <- comfort__from_si_temp(mean_si, coord$units)
     if (
         !is.finite(tdb) ||
             tdb < range_tdb_physical[[1L]] ||
@@ -84,7 +84,7 @@ coord_fg__givoni_mean_outdoor_grob <- function(coord, panel_params, spec) {
         label_vjust <- givoni__mean_outdoor_label_vjust(FALSE)
     }
 
-    label_temp <- comfort_from_si_temp(mean_si, coord$units)
+    label_temp <- comfort__from_si_temp(mean_si, coord$units)
     unit_label <- if (coord$units == "IP") "\u00b0F" else "\u00b0C"
     label <- sprintf("%.1f %s", label_temp, unit_label)
     colour <- spec$colour %||% "#444444"
@@ -127,7 +127,7 @@ coord_fg__heat_index_label_grob <- function(coord, panel_params, spec) {
     range_hum <- coord$range_hum_physical(panel_params)
     data <- heat_index__label_data(
         spec$model,
-        comfort_grid_n(spec$n),
+        comfort_grid__n(spec$n),
         coord$units,
         coord$pressure,
         coord$mollier,

@@ -2,37 +2,15 @@
 % Please edit documentation in R/comfort-layer-field.R,
 %   R/comfort-layer-givoni.R, R/comfort-layer-heat-index.R,
 %   R/comfort-layer-pmv.R
-\name{geom_comfort_bands}
-\alias{geom_comfort_bands}
+\name{geom_comfort_set}
 \alias{geom_comfort_set}
 \alias{geom_comfort_adaptive}
-\alias{geom_comfort_contour}
-\alias{geom_comfort_zone}
 \alias{stat_comfort_state}
 \alias{geom_comfort_givoni}
 \alias{geom_comfort_heat_index}
 \alias{geom_comfort_pmv}
 \title{Comfort layers for psychrometric charts}
 \usage{
-geom_comfort_bands(
-  mapping = NULL,
-  data = NULL,
-  stat = NULL,
-  position = "identity",
-  ...,
-  model = comfort_model_pmv(),
-  metric = NULL,
-  n = NULL,
-  render = c("band", "tile"),
-  band_method = c("auto", "root", "isoband"),
-  levels = NULL,
-  gap = 0,
-  alpha = 0.55,
-  na.rm = FALSE,
-  show.legend = NA,
-  inherit.aes = TRUE
-)
-
 geom_comfort_set(
   mapping = NULL,
   data = NULL,
@@ -45,7 +23,7 @@ geom_comfort_set(
   levels = NULL,
   breaks = NULL,
   n = NULL,
-  render = c("band", "tile"),
+  band_render = c("band", "tile"),
   band_method = c("auto", "root", "isoband"),
   alpha = 0.55,
   na.rm = FALSE,
@@ -62,44 +40,11 @@ geom_comfort_adaptive(
   t_running = NULL,
   tr = NULL,
   v = 0.1,
-  adaptive_standard = c("ashrae55", "en16798"),
+  standard = c("ashrae55", "en16798"),
   category = NULL,
   n = NULL,
   gap = 0,
   alpha = 0.3,
-  na.rm = FALSE,
-  show.legend = NA,
-  inherit.aes = TRUE
-)
-
-geom_comfort_contour(
-  mapping = NULL,
-  data = NULL,
-  stat = StatComfortContour,
-  position = "identity",
-  ...,
-  model = comfort_model_pmv(),
-  metric = NULL,
-  breaks = NULL,
-  n = NULL,
-  label = FALSE,
-  label_size = NULL,
-  na.rm = FALSE,
-  show.legend = NA,
-  inherit.aes = TRUE
-)
-
-geom_comfort_zone(
-  mapping = NULL,
-  data = NULL,
-  stat = StatComfortZone,
-  position = "identity",
-  ...,
-  model = comfort_model_pmv(),
-  metric = NULL,
-  range = NULL,
-  n = NULL,
-  gap = 0,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -156,12 +101,12 @@ geom_comfort_pmv(
   model = comfort_model_pmv(),
   standard = NULL,
   bands = TRUE,
-  curves = TRUE,
+  contours = TRUE,
   labels = TRUE,
-  curve_levels = seq(-3, 3, by = 0.5),
+  contour_levels = seq(-3, 3, by = 0.5),
   band_levels = NULL,
   n = NULL,
-  render = c("band", "tile"),
+  band_render = c("band", "tile"),
   band_method = c("auto", "root", "isoband"),
   alpha = NULL,
   na.rm = FALSE,
@@ -189,19 +134,6 @@ A \code{function} will be called with a single argument,
 the plot data. The return value must be a \code{data.frame}, and
 will be used as the layer data. A \code{function} can be created
 from a \code{formula} (e.g. \code{~ head(.x, 10)}).}
-
-\item{stat}{The statistical transformation to use on the data for this layer.
-When using a \verb{geom_*()} function to construct a layer, the \code{stat}
-argument can be used to override the default coupling between geoms and
-stats. The \code{stat} argument accepts the following:
-\itemize{
-\item A \code{Stat} ggproto subclass, for example \code{StatCount}.
-\item A string naming the stat. To give the stat as a string, strip the
-function name of the \code{stat_} prefix. For example, to use \code{stat_count()},
-give the stat as \code{"count"}.
-\item For more information and other ways to specify the stat, see the
-\link[ggplot2:layer_stats]{layer stat} documentation.
-}}
 
 \item{position}{A position adjustment to use on the data for this layer. This
 can be used in various ways, including to prevent overplotting and
@@ -246,24 +178,27 @@ lists which parameters it can accept.
 
 \item{model}{A comfort model object.}
 
-\item{metric}{Comfort metric to draw. Defaults to \code{"pmv"} for PMV, \code{"set"}
-for SET, and \code{"acceptability"} for adaptive comfort.}
+\item{bands, contours, labels}{Single logical values controlling whether
+high-level comfort wrappers draw filled bands, contour lines, and text
+labels. For \code{geom_comfort_pmv()}, \code{bands} controls the sampled PMV field;
+PMV standard zones still draw when \code{standard} is supplied.}
+
+\item{levels}{Number of filled contour bands, or a numeric vector of band
+breaks. Used only for \code{band_render = "band"}.}
+
+\item{breaks}{Contour break values.}
 
 \item{n}{Grid resolution in dry-bulb and humidity-ratio directions. If
 \code{NULL}, a model-specific default is used.}
 
-\item{render}{Band rendering mode. \code{"band"} draws filled polygon regions from
-continuous band boundaries; \code{"tile"} draws sampled grid cells directly.}
+\item{band_render}{Band rendering mode. \code{"band"} draws filled polygon
+regions from continuous band boundaries; \code{"tile"} draws sampled grid cells
+directly.}
 
-\item{band_method}{Boundary construction method for \code{render = "band"}.
+\item{band_method}{Boundary construction method for \code{band_render = "band"}.
 \code{"auto"} uses root-traced boundaries for PMV and isobands for other
 metrics; \code{"root"} forces PMV root-traced boundaries; \code{"isoband"} uses
 gridded isobands.}
-
-\item{levels}{Number of filled contour bands, or a numeric vector of band
-breaks. Used only for \code{render = "band"}.}
-
-\item{gap}{Relative gap between generated tiles for \code{render = "tile"}.}
 
 \item{alpha}{Layer transparency. PMV standards keep their own defaults unless
 \code{alpha} is supplied.}
@@ -284,13 +219,6 @@ rather than combining with them. This is most useful for helper functions
 that define both data and aesthetics and shouldn't inherit behaviour from
 the default plot specification, e.g. \code{\link[ggplot2:annotation_borders]{annotation_borders()}}.}
 
-\item{bands, curves, contours, labels}{Single logical values controlling whether
-high-level comfort wrappers draw filled bands, curve/contour lines, and text
-labels. For \code{geom_comfort_pmv()}, \code{bands} controls the sampled PMV field;
-PMV standard zones still draw when \code{standard} is supplied.}
-
-\item{breaks}{Contour break values.}
-
 \item{t_running}{Running mean outdoor temperature for
 \code{geom_comfort_adaptive()} when \code{model} is \code{NULL}.}
 
@@ -299,17 +227,13 @@ temperature.}
 
 \item{v}{Air speed for \code{geom_comfort_adaptive()} when \code{model} is \code{NULL}.}
 
-\item{adaptive_standard}{Adaptive comfort standard for
-\code{geom_comfort_adaptive()} when \code{model} is \code{NULL}.}
+\item{standard}{PMV-based standard object for \code{geom_comfort_pmv()}, or an
+adaptive comfort standard name for \code{geom_comfort_adaptive()} when \code{model}
+is \code{NULL}.}
 
 \item{category}{Adaptive comfort category for \code{geom_comfort_adaptive()}.}
 
-\item{label}{A single logical value. If \code{TRUE}, label contour lines with
-their level values.}
-
-\item{label_size}{Text size for contour labels. Defaults to \code{2.8}.}
-
-\item{range}{Comfort value interval for PMV and SET zones.}
+\item{gap}{Relative gap between generated tiles for \code{band_render = "tile"}.}
 
 \item{geom}{The geometric object to use to display the data for this layer.
 When using a \verb{stat_*()} function to construct a layer, the \code{geom} argument
@@ -339,14 +263,11 @@ strategy regions are drawn as outlines.}
 \item{zone_style}{Optional named list of per-zone style overrides for
 \code{geom_comfort_givoni()}. Names must match Givoni zone ids such as
 \code{"comfort"}, \code{"winter"}, or \code{"air_conditioning"}. Values can be created
-with \code{\link[=element_comfort_zone]{element_comfort_zone()}}, \code{\link[ggplot2:element]{ggplot2::element_polygon()}}, or ordinary
+with \code{\link[=element_givoni_zone]{element_givoni_zone()}}, \code{\link[ggplot2:element]{ggplot2::element_polygon()}}, or ordinary
 named lists with fields \code{fill}, \code{colour}/\code{color}, \code{linewidth}, \code{linetype},
 \code{alpha}, and \code{linejoin}.}
 
-\item{standard}{Optional PMV-based comfort standard object to draw on top of
-the PMV field.}
-
-\item{curve_levels}{PMV curve levels for \code{geom_comfort_pmv()}.}
+\item{contour_levels}{PMV contour levels for \code{geom_comfort_pmv()}.}
 
 \item{band_levels}{Number of PMV filled bands, or a numeric vector of PMV
 band breaks for \code{geom_comfort_pmv()}.}
@@ -356,44 +277,46 @@ A ggplot layer or a list of ggplot additions.
 }
 \description{
 \code{geom_comfort_pmv()} is the main PMV entry point and can draw filled PMV
-bands, PMV curves and labels, plus optional PMV-based standard zones.
-\code{geom_comfort_bands()}, \code{geom_comfort_contour()}, and \code{geom_comfort_zone()}
-are lower-level primitives for filled metric bands, metric contours, and
-value ranges. \code{stat_comfort_state()} evaluates comfort fields at supplied
-states.
+bands, PMV contour lines and labels, plus optional PMV-based standard zones.
+\code{geom_comfort_set()}, \code{geom_comfort_adaptive()}, \code{geom_comfort_heat_index()},
+and \code{geom_comfort_givoni()} provide higher-level overlays for other comfort
+metrics. \code{stat_comfort_state()} evaluates comfort fields at supplied states.
 }
 \examples{
-# Draw PMV comfort bands, curves, and labels.
+# Draw PMV comfort bands, contours, and labels.
 ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
     geom_comfort_pmv(n = c(45, 30)) +
     scale_fill_comfort_pmv(name = "PMV")
 
 # Draw labelled PMV contour lines.
 ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
-    geom_comfort_contour(
-        breaks = c(-1, 0, 1),
-        label = TRUE,
+    geom_comfort_pmv(
+        bands = FALSE,
+        contours = TRUE,
+        labels = TRUE,
+        contour_levels = c(-1, 0, 1),
         n = 80
     )
 
 # Draw the neutral PMV comfort zone.
 ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
-    geom_comfort_zone(
-        range = c(-0.5, 0.5),
-        n = c(45, 30),
-        alpha = 0.3
+    geom_comfort_pmv(
+        standard = comfort_pmv_ashrae55(),
+        bands = FALSE,
+        contours = FALSE,
+        n = 80
     )
 
 # Draw sampled PMV values as grid tiles.
 ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
-    geom_comfort_pmv(render = "tile", n = c(45, 30))
+    geom_comfort_pmv(band_render = "tile", contours = FALSE, n = c(45, 30))
 
 # Draw a PMV-based comfort standard zone.
 ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
     geom_comfort_pmv(
-        standard = comfort_standard_ashrae55_2017(),
+        standard = comfort_pmv_ashrae55(),
         bands = FALSE,
-        curves = FALSE,
+        contours = FALSE,
         n = 80
     )
 

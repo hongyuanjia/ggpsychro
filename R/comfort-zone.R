@@ -5,7 +5,7 @@ NULL
 # polygon regions in the active psychrometric coordinate system.
 
 # Build filled comfort zone polygons for PMV, SET, heat-index, or adaptive models.
-comfort_zone_data <- function(
+comfort_zone__data <- function(
     model,
     metric,
     range,
@@ -21,8 +21,8 @@ comfort_zone_data <- function(
     rootband_cache = NULL,
     psychro_scales = NULL
 ) {
-    if (comfort_model_type(model) == "adaptive") {
-        return(comfort_zone_adaptive(
+    if (comfort__model_type(model) == "adaptive") {
+        return(adaptive__zone(
             model,
             units,
             mollier,
@@ -32,9 +32,9 @@ comfort_zone_data <- function(
         ))
     }
 
-    metric <- comfort_model_metric(model, metric)
-    range <- comfort_zone_range(model, metric, range, units)
-    if (comfort_model_type(model) == "pmv" && metric == "pmv") {
+    metric <- comfort_dispatch__model_metric(model, metric)
+    range <- comfort_zone__range(model, metric, range, units)
+    if (comfort__model_type(model) == "pmv" && metric == "pmv") {
         return(pmv__band_data(
             model,
             range,
@@ -49,7 +49,7 @@ comfort_zone_data <- function(
             psychro_scales = psychro_scales
         ))
     }
-    comfort_band_data(
+    comfort_band__data(
         model,
         metric,
         range,
@@ -64,7 +64,7 @@ comfort_zone_data <- function(
 }
 
 # Resolve the value interval used by zone rendering.
-comfort_zone_range <- function(model, metric, range, units = "SI") {
+comfort_zone__range <- function(model, metric, range, units = "SI") {
     if (!is.null(range)) {
         if (
             !is.numeric(range) ||

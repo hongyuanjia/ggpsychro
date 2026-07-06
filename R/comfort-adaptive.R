@@ -3,7 +3,7 @@ NULL
 
 # Adaptive comfort helpers keep the standard-specific equations separate from
 # the plotting/stat layer code that consumes them.
-comfort_adaptive_ashrae <- function(
+adaptive__ashrae <- function(
     tdb,
     tr,
     t_running,
@@ -12,8 +12,8 @@ comfort_adaptive_ashrae <- function(
     limit_inputs,
     round_output
 ) {
-    category <- comfort_adaptive_category(category, c("80", "90"), "80")
-    to <- comfort_operative_temp(tdb, tr, v, standard = "ashrae")
+    category <- adaptive__category(category, c("80", "90"), "80")
+    to <- adaptive__operative_temp(tdb, tr, v, standard = "ashrae")
     # ASHRAE 55 neutral operative temperature is a linear function of running
     # mean outdoor temperature; 80% and 90% acceptability are symmetric bands.
     t_cmf <- 0.31 * t_running + 17.8
@@ -21,7 +21,7 @@ comfort_adaptive_ashrae <- function(
         t_cmf <- round(t_cmf, 1L)
     }
     # Elevated air speed only expands the upper acceptability limit.
-    ce <- comfort_adaptive_cooling_effect(v, to)
+    ce <- adaptive__cooling_effect(v, to)
 
     out <- util__new_data_frame(list(
         standard = rep("ashrae55", length(tdb)),
@@ -38,10 +38,10 @@ comfort_adaptive_ashrae <- function(
     out$acceptability <- out[[paste0("acceptability_", category)]]
 
     if (isTRUE(limit_inputs)) {
-        valid <- comfort_between(tdb, 10, 40) &
-            comfort_between(tr, 10, 40) &
-            comfort_between(v, 0, 2) &
-            comfort_between(t_running, 10, 33.5)
+        valid <- comfort__between(tdb, 10, 40) &
+            comfort__between(tr, 10, 40) &
+            comfort__between(v, 0, 2) &
+            comfort__between(t_running, 10, 33.5)
         out[!valid, names(out) != "standard"] <- NA
     }
     if (isTRUE(round_output)) {
@@ -51,7 +51,7 @@ comfort_adaptive_ashrae <- function(
     out
 }
 
-comfort_adaptive_en <- function(
+adaptive__en <- function(
     tdb,
     tr,
     t_running,
@@ -60,18 +60,18 @@ comfort_adaptive_en <- function(
     limit_inputs,
     round_output
 ) {
-    category <- comfort_adaptive_category(category, c("I", "II", "III"), "II")
+    category <- adaptive__category(category, c("I", "II", "III"), "II")
     category_key <- switch(
         category,
         I = "cat_i",
         II = "cat_ii",
         III = "cat_iii"
     )
-    to <- comfort_operative_temp(tdb, tr, v, standard = "iso")
+    to <- adaptive__operative_temp(tdb, tr, v, standard = "iso")
     # EN adaptive comfort uses a different neutral-temperature fit and
     # asymmetric category bands around that comfort temperature.
     t_cmf <- 0.33 * t_running + 18.8
-    ce <- comfort_adaptive_cooling_effect(v, to)
+    ce <- adaptive__cooling_effect(v, to)
 
     out <- util__new_data_frame(list(
         standard = rep("en16798", length(tdb)),
@@ -94,10 +94,10 @@ comfort_adaptive_en <- function(
     out$acceptability <- out[[paste0("acceptability_", category_key)]]
 
     if (isTRUE(limit_inputs)) {
-        valid <- comfort_between(tdb, 10, 40) &
-            comfort_between(tr, 10, 40) &
-            comfort_between(v, 0, 2) &
-            comfort_between(t_running, 10, 33.5)
+        valid <- comfort__between(tdb, 10, 40) &
+            comfort__between(tr, 10, 40) &
+            comfort__between(v, 0, 2) &
+            comfort__between(t_running, 10, 33.5)
         out[!valid, names(out) != "standard"] <- NA
     }
     if (isTRUE(round_output)) {
@@ -107,7 +107,7 @@ comfort_adaptive_en <- function(
     out
 }
 
-comfort_adaptive_category <- function(category, choices, default) {
+adaptive__category <- function(category, choices, default) {
     if (is.null(category)) {
         return(default)
     }
@@ -115,7 +115,7 @@ comfort_adaptive_category <- function(category, choices, default) {
     match.arg(category, choices)
 }
 
-comfort_operative_temp <- function(tdb, tr, v, standard) {
+adaptive__operative_temp <- function(tdb, tr, v, standard) {
     if (standard == "iso") {
         out <- rep(NA_real_, length(v))
         valid <- is.finite(tdb) & is.finite(tr) & is.finite(v) & v >= 0
@@ -135,7 +135,7 @@ comfort_operative_temp <- function(tdb, tr, v, standard) {
     a * tdb + (1 - a) * tr
 }
 
-comfort_adaptive_cooling_effect <- function(v, to) {
+adaptive__cooling_effect <- function(v, to) {
     ce <- numeric(length(v))
     active <- is.finite(to) & is.finite(v) & to >= 25 & v >= 0.6
     ce[active] <- 1.2
@@ -144,7 +144,7 @@ comfort_adaptive_cooling_effect <- function(v, to) {
     ce
 }
 
-comfort_zone_adaptive <- function(
+adaptive__zone <- function(
     model,
     units,
     mollier,
@@ -161,11 +161,11 @@ comfort_zone_adaptive <- function(
         )
     }
 
-    lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
+    lim <- comfort_grid__limits(units, tdb_lim, hum_lim)
     mid <- mean(lim$tdb)
     # Adaptive comfort has no humidity dependence, so the zone is a vertical
     # operative-temperature band spanning the visible humidity range.
-    zone <- comfort_apply_model(
+    zone <- comfort_dispatch__apply_model(
         model,
         mid,
         rh = 50,

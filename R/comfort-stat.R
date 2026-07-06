@@ -57,14 +57,14 @@ StatComfortBand <- ggplot2::ggproto(
         na.rm = FALSE,
         psychro_scales = NULL
     ) {
-        ctx <- comfort_stat_context(data, units, pres)
+        ctx <- comfort__stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
-        comfort_band_data(
+        comfort_band__data(
             model,
             metric,
             levels,
-            comfort_default_n(model, n),
+            comfort_grid__default_n(model, n),
             units,
             pres,
             mollier,
@@ -124,13 +124,13 @@ StatComfortGrid <- ggplot2::ggproto(
         na.rm = FALSE,
         psychro_scales = NULL
     ) {
-        ctx <- comfort_stat_context(data, units, pres)
+        ctx <- comfort__stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
-        comfort_grid_data(
+        comfort_grid__data(
             model,
             metric,
-            comfort_default_n(model, n),
+            comfort_grid__default_n(model, n),
             gap,
             units,
             pres,
@@ -189,14 +189,14 @@ StatComfortContour <- ggplot2::ggproto(
         na.rm = FALSE,
         psychro_scales = NULL
     ) {
-        ctx <- comfort_stat_context(data, units, pres)
+        ctx <- comfort__stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
-        comfort_contour_data(
+        comfort_contour__data(
             model,
             metric,
             breaks,
-            comfort_default_n(model, n),
+            comfort_grid__default_n(model, n),
             units,
             pres,
             mollier,
@@ -261,14 +261,14 @@ StatComfortZone <- ggplot2::ggproto(
         na.rm = FALSE,
         psychro_scales = NULL
     ) {
-        ctx <- comfort_stat_context(data, units, pres)
+        ctx <- comfort__stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
-        comfort_zone_data(
+        comfort_zone__data(
             model,
             metric,
             range,
-            comfort_default_n(model, n),
+            comfort_grid__default_n(model, n),
             gap,
             units,
             pres,
@@ -316,7 +316,7 @@ StatComfortState <- ggplot2::ggproto(
         na.rm = FALSE,
         psychro_scales = NULL
     ) {
-        ctx <- comfort_stat_context(data, units, pres)
+        ctx <- comfort__stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
         data <- psychro_compute_state(
@@ -331,8 +331,19 @@ StatComfortState <- ggplot2::ggproto(
             return(data)
         }
 
-        rh <- comfort_relhum_from_humratio(data$tdb, data$humratio, units, pres)
-        result <- comfort_apply_model(model, data$tdb, rh, units, pres)
+        rh <- comfort_dispatch__relhum_from_humratio(
+            data$tdb,
+            data$humratio,
+            units,
+            pres
+        )
+        result <- comfort_dispatch__apply_model(
+            model,
+            data$tdb,
+            rh,
+            units,
+            pres
+        )
         cbind(data, result)
     }
 )

@@ -71,14 +71,14 @@ comfort_model_pmv <- function(
     model <- match.arg(model, "7730-2005")
     # Layer model objects hold fixed environmental assumptions for a whole
     # contour/grid evaluation; vectorized point inputs belong in comfort_pmv().
-    tr <- comfort_check_scalar_finite(tr, "`tr`", allow_null = TRUE)
-    vr <- comfort_check_scalar_finite(vr, "`vr`")
-    met <- comfort_check_scalar_finite(met, "`met`")
-    clo <- comfort_check_scalar_finite(clo, "`clo`")
-    wme <- comfort_check_scalar_finite(wme, "`wme`")
-    limit_inputs <- comfort_check_flag(limit_inputs, "`limit_inputs`")
-    round_output <- comfort_check_flag(round_output, "`round_output`")
-    comfort_model(
+    tr <- comfort__check_scalar_finite(tr, "`tr`", allow_null = TRUE)
+    vr <- comfort__check_scalar_finite(vr, "`vr`")
+    met <- comfort__check_scalar_finite(met, "`met`")
+    clo <- comfort__check_scalar_finite(clo, "`clo`")
+    wme <- comfort__check_scalar_finite(wme, "`wme`")
+    limit_inputs <- comfort__check_flag(limit_inputs, "`limit_inputs`")
+    round_output <- comfort__check_flag(round_output, "`round_output`")
+    comfort__model(
         "pmv",
         list(
             tr = tr,
@@ -108,19 +108,19 @@ comfort_model_set <- function(
     round_output = FALSE
 ) {
     position <- match.arg(position)
-    tr <- comfort_check_scalar_finite(tr, "`tr`", allow_null = TRUE)
-    v <- comfort_check_scalar_finite(v, "`v`")
-    met <- comfort_check_scalar_finite(met, "`met`")
-    clo <- comfort_check_scalar_finite(clo, "`clo`")
-    wme <- comfort_check_scalar_finite(wme, "`wme`")
-    body_surface_area <- comfort_check_scalar_finite(
+    tr <- comfort__check_scalar_finite(tr, "`tr`", allow_null = TRUE)
+    v <- comfort__check_scalar_finite(v, "`v`")
+    met <- comfort__check_scalar_finite(met, "`met`")
+    clo <- comfort__check_scalar_finite(clo, "`clo`")
+    wme <- comfort__check_scalar_finite(wme, "`wme`")
+    body_surface_area <- comfort__check_scalar_finite(
         body_surface_area,
         "`body_surface_area`"
     )
-    p_atm <- comfort_check_scalar_finite(p_atm, "`p_atm`", allow_null = TRUE)
-    limit_inputs <- comfort_check_flag(limit_inputs, "`limit_inputs`")
-    round_output <- comfort_check_flag(round_output, "`round_output`")
-    comfort_model(
+    p_atm <- comfort__check_scalar_finite(p_atm, "`p_atm`", allow_null = TRUE)
+    limit_inputs <- comfort__check_flag(limit_inputs, "`limit_inputs`")
+    round_output <- comfort__check_flag(round_output, "`round_output`")
+    comfort__model(
         "set",
         list(
             tr = tr,
@@ -152,12 +152,12 @@ comfort_model_adaptive <- function(
     round_output = FALSE
 ) {
     standard <- match.arg(standard)
-    t_running <- comfort_check_scalar_finite(t_running, "`t_running`")
-    tr <- comfort_check_scalar_finite(tr, "`tr`", allow_null = TRUE)
-    v <- comfort_check_scalar_finite(v, "`v`")
-    limit_inputs <- comfort_check_flag(limit_inputs, "`limit_inputs`")
-    round_output <- comfort_check_flag(round_output, "`round_output`")
-    comfort_model(
+    t_running <- comfort__check_scalar_finite(t_running, "`t_running`")
+    tr <- comfort__check_scalar_finite(tr, "`tr`", allow_null = TRUE)
+    v <- comfort__check_scalar_finite(v, "`v`")
+    limit_inputs <- comfort__check_flag(limit_inputs, "`limit_inputs`")
+    round_output <- comfort__check_flag(round_output, "`round_output`")
+    comfort__model(
         "adaptive",
         list(
             t_running = t_running,
@@ -178,7 +178,7 @@ comfort_model_heat_index <- function(
     limit_inputs = TRUE,
     round_output = FALSE
 ) {
-    solar_exposure <- comfort_check_scalar_finite(
+    solar_exposure <- comfort__check_scalar_finite(
         solar_exposure,
         "`solar_exposure`"
     )
@@ -188,9 +188,9 @@ comfort_model_heat_index <- function(
             call. = FALSE
         )
     }
-    limit_inputs <- comfort_check_flag(limit_inputs, "`limit_inputs`")
-    round_output <- comfort_check_flag(round_output, "`round_output`")
-    comfort_model(
+    limit_inputs <- comfort__check_flag(limit_inputs, "`limit_inputs`")
+    round_output <- comfort__check_flag(round_output, "`round_output`")
+    comfort__model(
         "heat_index",
         list(
             solar_exposure = solar_exposure,
@@ -206,6 +206,8 @@ comfort_model_heat_index <- function(
 #' adaptive comfort models such as [comfort_model_adaptive()], which use running
 #' mean outdoor temperature and produce operative-temperature bands.
 #'
+#' @param edition Standard edition. Currently `"2017"` for ASHRAE 55 and
+#'   `"2007"` for EN 15251.
 #' @param range PMV comfort interval for ASHRAE 55.
 #' @param breaks PMV boundaries for EN 15251 comfort bands.
 #'
@@ -213,52 +215,65 @@ comfort_model_heat_index <- function(
 #'
 #' @examples
 #' # Create the ASHRAE 55 PMV comfort interval.
-#' comfort_standard_ashrae55_2017()
+#' comfort_pmv_ashrae55()
 #'
 #' # Create the EN 15251 PMV comfort bands.
-#' comfort_standard_en15251_2007()
+#' comfort_pmv_en15251()
 #'
 #' # Draw the ASHRAE 55 comfort zone.
 #' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
 #'     geom_comfort_pmv(
-#'         standard = comfort_standard_ashrae55_2017(),
+#'         standard = comfort_pmv_ashrae55(),
 #'         bands = FALSE,
-#'         curves = FALSE,
+#'         contours = FALSE,
 #'         n = 80
 #'     )
 #'
 #' # Draw the EN 15251 comfort bands.
 #' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
 #'     geom_comfort_pmv(
-#'         standard = comfort_standard_en15251_2007(),
+#'         standard = comfort_pmv_en15251(),
 #'         bands = FALSE,
-#'         curves = FALSE,
+#'         contours = FALSE,
 #'         n = 80
 #'     )
 #'
 #' @export
-comfort_standard_ashrae55_2017 <- function(range = c(-0.5, 0.5)) {
-    range <- comfort_check_ordered_breaks(range, "`range`", n_min = 2L)
+comfort_pmv_ashrae55 <- function(edition = "2017", range = c(-0.5, 0.5)) {
+    # Keep editions explicit in the API while leaving room for later standards.
+    edition <- as.character(edition)
+    if (length(edition) != 1L || is.na(edition) || edition != "2017") {
+        stop('`edition` must be "2017".', call. = FALSE)
+    }
+    range <- comfort__check_ordered_breaks(range, "`range`", n_min = 2L)
     if (length(range) != 2L) {
         stop("`range` must contain exactly two PMV boundaries.", call. = FALSE)
     }
-    comfort_standard(
-        "ashrae55_2017",
+    comfort__standard(
+        paste0("ashrae55_", edition),
         breaks = range,
         fills = "#5BD96A",
         alphas = 0.58
     )
 }
 
-#' @rdname comfort_standard_ashrae55_2017
+#' @rdname comfort_pmv_ashrae55
 #' @export
-comfort_standard_en15251_2007 <- function(breaks = c(-0.7, -0.2, 0.2, 0.7)) {
-    breaks <- comfort_check_ordered_breaks(breaks, "`breaks`", n_min = 4L)
+comfort_pmv_en15251 <- function(
+    edition = "2007",
+    breaks = c(-0.7, -0.2, 0.2, 0.7)
+) {
+    # Keep editions explicit in the API while leaving room for later standards.
+    edition <- as.character(edition)
+    if (length(edition) != 1L || is.na(edition) || edition != "2007") {
+        stop('`edition` must be "2007".', call. = FALSE)
+    }
+    breaks <- comfort__check_ordered_breaks(breaks, "`breaks`", n_min = 4L)
     if (length(breaks) != 4L) {
         stop("`breaks` must contain four PMV boundaries.", call. = FALSE)
     }
-    comfort_standard(
-        "en15251_2007",
+    comfort__standard(
+        paste0("en15251_", edition),
         breaks = breaks,
         fills = c("#9BE89D", "#39D84A", "#9BE89D"),
         alphas = c(0.34, 0.58, 0.34)

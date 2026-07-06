@@ -1,57 +1,50 @@
 #' @include comfort-layer-field.R comfort-stat-pmv.R comfort-model.R
 NULL
 
-# PMV layer wrapper composes sampled bands, root-traced curves, and optional
-# PMV-based standard zones without exposing the lower-level stat classes.
+# PMV layer wrapper composes sampled bands, root-traced contour curves, and
+# optional PMV-based standard zones without exposing lower-level stat classes.
 #' Comfort layers for psychrometric charts
 #'
 #' `geom_comfort_pmv()` is the main PMV entry point and can draw filled PMV
-#' bands, PMV curves and labels, plus optional PMV-based standard zones.
-#' `geom_comfort_bands()`, `geom_comfort_contour()`, and `geom_comfort_zone()`
-#' are lower-level primitives for filled metric bands, metric contours, and
-#' value ranges. `stat_comfort_state()` evaluates comfort fields at supplied
-#' states.
+#' bands, PMV contour lines and labels, plus optional PMV-based standard zones.
+#' `geom_comfort_set()`, `geom_comfort_adaptive()`, `geom_comfort_heat_index()`,
+#' and `geom_comfort_givoni()` provide higher-level overlays for other comfort
+#' metrics. `stat_comfort_state()` evaluates comfort fields at supplied states.
 #'
 #' @inheritParams ggplot2::layer
 #' @inheritParams ggplot2::geom_tile
 #' @param model A comfort model object.
-#' @param metric Comfort metric to draw. Defaults to `"pmv"` for PMV, `"set"`
-#'   for SET, and `"acceptability"` for adaptive comfort.
 #' @param n Grid resolution in dry-bulb and humidity-ratio directions. If
 #'   `NULL`, a model-specific default is used.
-#' @param bands,curves,contours,labels Single logical values controlling whether
-#'   high-level comfort wrappers draw filled bands, curve/contour lines, and text
+#' @param bands,contours,labels Single logical values controlling whether
+#'   high-level comfort wrappers draw filled bands, contour lines, and text
 #'   labels. For `geom_comfort_pmv()`, `bands` controls the sampled PMV field;
 #'   PMV standard zones still draw when `standard` is supplied.
-#' @param standard Optional PMV-based comfort standard object to draw on top of
-#'   the PMV field.
+#' @param standard PMV-based standard object for `geom_comfort_pmv()`, or an
+#'   adaptive comfort standard name for `geom_comfort_adaptive()` when `model`
+#'   is `NULL`.
 #' @param t_running Running mean outdoor temperature for
 #'   `geom_comfort_adaptive()` when `model` is `NULL`.
 #' @param tr Mean radiant temperature. If `NULL`, the model uses dry-bulb
 #'   temperature.
 #' @param v Air speed for `geom_comfort_adaptive()` when `model` is `NULL`.
-#' @param adaptive_standard Adaptive comfort standard for
-#'   `geom_comfort_adaptive()` when `model` is `NULL`.
 #' @param category Adaptive comfort category for `geom_comfort_adaptive()`.
-#' @param curve_levels PMV curve levels for `geom_comfort_pmv()`.
+#' @param contour_levels PMV contour levels for `geom_comfort_pmv()`.
 #' @param band_levels Number of PMV filled bands, or a numeric vector of PMV
 #'   band breaks for `geom_comfort_pmv()`.
-#' @param render Band rendering mode. `"band"` draws filled polygon regions from
-#'   continuous band boundaries; `"tile"` draws sampled grid cells directly.
-#' @param band_method Boundary construction method for `render = "band"`.
+#' @param band_render Band rendering mode. `"band"` draws filled polygon
+#'   regions from continuous band boundaries; `"tile"` draws sampled grid cells
+#'   directly.
+#' @param band_method Boundary construction method for `band_render = "band"`.
 #'   `"auto"` uses root-traced boundaries for PMV and isobands for other
 #'   metrics; `"root"` forces PMV root-traced boundaries; `"isoband"` uses
 #'   gridded isobands.
 #' @param levels Number of filled contour bands, or a numeric vector of band
-#'   breaks. Used only for `render = "band"`.
-#' @param gap Relative gap between generated tiles for `render = "tile"`.
+#'   breaks. Used only for `band_render = "band"`.
+#' @param gap Relative gap between generated tiles for `band_render = "tile"`.
 #' @param alpha Layer transparency. PMV standards keep their own defaults unless
 #'   `alpha` is supplied.
 #' @param breaks Contour break values.
-#' @param label A single logical value. If `TRUE`, label contour lines with
-#'   their level values.
-#' @param label_size Text size for contour labels. Defaults to `2.8`.
-#' @param range Comfort value interval for PMV and SET zones.
 #' @param show_labels If `TRUE`, draw overlay labels.
 #' @param strategy A Givoni bioclimatic strategy object.
 #' @param show_pmv If `TRUE`, draw the PMV comfort background under the Givoni
@@ -62,43 +55,46 @@ NULL
 #' @param zone_style Optional named list of per-zone style overrides for
 #'   `geom_comfort_givoni()`. Names must match Givoni zone ids such as
 #'   `"comfort"`, `"winter"`, or `"air_conditioning"`. Values can be created
-#'   with [element_comfort_zone()], [ggplot2::element_polygon()], or ordinary
+#'   with [element_givoni_zone()], [ggplot2::element_polygon()], or ordinary
 #'   named lists with fields `fill`, `colour`/`color`, `linewidth`, `linetype`,
 #'   `alpha`, and `linejoin`.
 #' @return A ggplot layer or a list of ggplot additions.
 #'
 #' @examples
-#' # Draw PMV comfort bands, curves, and labels.
+#' # Draw PMV comfort bands, contours, and labels.
 #' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
 #'     geom_comfort_pmv(n = c(45, 30)) +
 #'     scale_fill_comfort_pmv(name = "PMV")
 #'
 #' # Draw labelled PMV contour lines.
 #' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
-#'     geom_comfort_contour(
-#'         breaks = c(-1, 0, 1),
-#'         label = TRUE,
+#'     geom_comfort_pmv(
+#'         bands = FALSE,
+#'         contours = TRUE,
+#'         labels = TRUE,
+#'         contour_levels = c(-1, 0, 1),
 #'         n = 80
 #'     )
 #'
 #' # Draw the neutral PMV comfort zone.
 #' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
-#'     geom_comfort_zone(
-#'         range = c(-0.5, 0.5),
-#'         n = c(45, 30),
-#'         alpha = 0.3
+#'     geom_comfort_pmv(
+#'         standard = comfort_pmv_ashrae55(),
+#'         bands = FALSE,
+#'         contours = FALSE,
+#'         n = 80
 #'     )
 #'
 #' # Draw sampled PMV values as grid tiles.
 #' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
-#'     geom_comfort_pmv(render = "tile", n = c(45, 30))
+#'     geom_comfort_pmv(band_render = "tile", contours = FALSE, n = c(45, 30))
 #'
 #' # Draw a PMV-based comfort standard zone.
 #' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
 #'     geom_comfort_pmv(
-#'         standard = comfort_standard_ashrae55_2017(),
+#'         standard = comfort_pmv_ashrae55(),
 #'         bands = FALSE,
-#'         curves = FALSE,
+#'         contours = FALSE,
 #'         n = 80
 #'     )
 #'
@@ -130,12 +126,12 @@ geom_comfort_pmv <- function(
     model = comfort_model_pmv(),
     standard = NULL,
     bands = TRUE,
-    curves = TRUE,
+    contours = TRUE,
     labels = TRUE,
-    curve_levels = seq(-3, 3, by = 0.5),
+    contour_levels = seq(-3, 3, by = 0.5),
     band_levels = NULL,
     n = NULL,
-    render = c("band", "tile"),
+    band_render = c("band", "tile"),
     band_method = c("auto", "root", "isoband"),
     alpha = NULL,
     na.rm = FALSE,
@@ -143,13 +139,13 @@ geom_comfort_pmv <- function(
     inherit.aes = TRUE
 ) {
     assert_flag(bands)
-    assert_flag(curves)
+    assert_flag(contours)
     assert_flag(labels)
-    render <- match.arg(render)
+    band_render <- match.arg(band_render)
     band_method <- match.arg(band_method)
-    if (!isTRUE(bands) && !isTRUE(curves) && is.null(standard)) {
+    if (!isTRUE(bands) && !isTRUE(contours) && is.null(standard)) {
         stop(
-            "At least one of `bands`, `curves`, or `standard` must draw ",
+            "At least one of `bands`, `contours`, or `standard` must draw ",
             "a PMV layer.",
             call. = FALSE
         )
@@ -170,7 +166,7 @@ geom_comfort_pmv <- function(
                 model = model,
                 metric = "pmv",
                 n = n,
-                render = render,
+                band_render = band_render,
                 band_method = band_method,
                 levels = band_levels,
                 na.rm = na.rm,
@@ -183,7 +179,7 @@ geom_comfort_pmv <- function(
             band_params$alpha <- alpha
         }
         layers[[length(layers) + 1L]] <- do.call(
-            geom_comfort_bands,
+            comfort_layer__bands,
             band_params
         )
     }
@@ -213,7 +209,7 @@ geom_comfort_pmv <- function(
         )
     }
 
-    if (isTRUE(curves)) {
+    if (isTRUE(contours)) {
         layers <- c(
             layers,
             pmv__curve_layers(
@@ -222,7 +218,7 @@ geom_comfort_pmv <- function(
                 position = position,
                 params = params,
                 model = model,
-                levels = curve_levels,
+                levels = contour_levels,
                 n = curve_n,
                 labels = labels,
                 na.rm = na.rm,
@@ -235,14 +231,14 @@ geom_comfort_pmv <- function(
     layers
 }
 
-# PMV curve and standard sublayers use a one-dimensional sampling count.
+# PMV contour and standard sublayers use a one-dimensional sampling count.
 pmv__layer_n <- function(n, default = 360L) {
     if (is.null(n)) {
         return(default)
     }
     n[[1L]]
 }
-# Build PMV curve and optional label layers for the public PMV wrapper.
+# Build PMV contour and optional label layers for the public PMV wrapper.
 pmv__curve_layers <- function(
     mapping = NULL,
     data = NULL,
@@ -301,7 +297,7 @@ pmv__curve_layers <- function(
     if (length(line_levels)) {
         layers[[length(layers) + 1L]] <- psychro_layer(
             stat = StatComfortPmvCurve,
-            data = comfort_layer_data(data),
+            data = comfort__layer_data(data),
             mapping = mapping,
             geom = "path",
             position = position,
@@ -323,7 +319,7 @@ pmv__curve_layers <- function(
         sensation_params$size <- sensation_label_size
         layers[[length(layers) + 1L]] <- psychro_layer(
             stat = StatComfortPmvCurve,
-            data = comfort_layer_data(data),
+            data = comfort__layer_data(data),
             mapping = ggplot2::aes(
                 label = ggplot2::after_stat(label),
                 hjust = ggplot2::after_stat(hjust),
@@ -358,7 +354,7 @@ pmv__curve_layers <- function(
         axis_params$linetype <- NULL
         layers[[length(layers) + 1L]] <- psychro_layer(
             stat = StatComfortPmvAxisLabel,
-            data = comfort_layer_data(data),
+            data = comfort__layer_data(data),
             mapping = ggplot2::aes(
                 label = ggplot2::after_stat(label)
             ),
@@ -387,9 +383,9 @@ pmv__curve_layers <- function(
     layers
 }
 
-# Build PMV-standard bands, boundary curves, and optional standard labels.
+# Build PMV-standard bands, boundary contours, and optional standard labels.
 pmv__standard_layers <- function(
-    standard = comfort_standard_ashrae55_2017(),
+    standard = comfort_pmv_ashrae55(),
     mapping = NULL,
     data = NULL,
     position = "identity",
@@ -402,7 +398,7 @@ pmv__standard_layers <- function(
     inherit.aes = TRUE
 ) {
     label <- hjust <- vjust <- NULL
-    standard <- comfort_check_standard(standard)
+    standard <- comfort__check_standard(standard)
     params$na.rm <- na.rm
     params$model <- model
     params$n <- n
@@ -425,7 +421,7 @@ pmv__standard_layers <- function(
         band_params$range <- ranges[i, ]
         band_params$rootband_cache <- pmv_rootband_cache
         band_params$fill <- standard$fills[[i]]
-        band_params$alpha <- comfort_standard_alpha(
+        band_params$alpha <- comfort__standard_alpha(
             alpha_override,
             standard$alphas,
             i
@@ -435,7 +431,7 @@ pmv__standard_layers <- function(
         }
         layers[[length(layers) + 1L]] <- psychro_layer(
             stat = StatComfortZone,
-            data = comfort_layer_data(data),
+            data = comfort__layer_data(data),
             mapping = mapping,
             geom = "polygon",
             position = position,
@@ -456,7 +452,7 @@ pmv__standard_layers <- function(
     }
     layers[[length(layers) + 1L]] <- psychro_layer(
         stat = StatComfortPmvCurve,
-        data = comfort_layer_data(data),
+        data = comfort__layer_data(data),
         mapping = mapping,
         geom = "path",
         position = position,
@@ -472,7 +468,7 @@ pmv__standard_layers <- function(
         }
         layers[[length(layers) + 1L]] <- psychro_layer(
             stat = StatComfortPmvCurve,
-            data = comfort_layer_data(data),
+            data = comfort__layer_data(data),
             mapping = ggplot2::aes(
                 label = ggplot2::after_stat(label),
                 hjust = ggplot2::after_stat(hjust),
@@ -501,7 +497,7 @@ pmv__standard_layers <- function(
         }
         layers[[length(layers) + 1L]] <- psychro_layer(
             stat = StatComfortPmvCurve,
-            data = comfort_layer_data(data),
+            data = comfort__layer_data(data),
             mapping = ggplot2::aes(
                 label = ggplot2::after_stat(label),
                 hjust = ggplot2::after_stat(hjust),

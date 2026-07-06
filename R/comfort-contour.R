@@ -4,7 +4,7 @@ NULL
 # Comfort contour helpers draw metric isolines and textpath-ready labels.
 
 # Build contour paths for the requested comfort metric.
-comfort_contour_data <- function(
+comfort_contour__data <- function(
     model,
     metric,
     breaks,
@@ -17,13 +17,13 @@ comfort_contour_data <- function(
     label_path = FALSE,
     psychro_scales = NULL
 ) {
-    metric <- comfort_model_metric(model, metric)
+    metric <- comfort_dispatch__model_metric(model, metric)
     # PMV curves are root-traced because grid isolines can miss steep segments
     # near saturation; other metrics keep the cheaper grid/isoband path.
-    use_root <- comfort_model_type(model) == "pmv" && metric == "pmv"
+    use_root <- comfort__model_type(model) == "pmv" && metric == "pmv"
     if (use_root) {
         if (is.null(breaks)) {
-            breaks <- comfort_contour_breaks("pmv", numeric(), units)
+            breaks <- comfort_contour__breaks("pmv", numeric(), units)
         }
         # Root-traced PMV contours already return curve vertices; the common
         # label code below can treat them like isoband isolines.
@@ -39,14 +39,14 @@ comfort_contour_data <- function(
             label = "none",
             psychro_scales = psychro_scales
         )
-        out <- comfort_add_contour_labels(out)
+        out <- comfort_contour__add_labels(out)
         if (isTRUE(label_path)) {
-            out <- comfort_orient_contour_label_paths(out)
+            out <- comfort_contour__orient_label_paths(out)
         }
         return(out)
     }
 
-    m <- comfort_grid_matrix(
+    m <- comfort_grid__matrix(
         model,
         metric,
         n,
@@ -59,11 +59,11 @@ comfort_contour_data <- function(
     )
     z <- m$value
     if (is.null(breaks)) {
-        breaks <- comfort_contour_breaks(m$metric, z, units)
+        breaks <- comfort_contour__breaks(m$metric, z, units)
     }
     breaks <- breaks[is.finite(breaks)]
     if (!length(breaks)) {
-        return(comfort_empty_contour())
+        return(comfort_contour__empty())
     }
 
     lines <- isoband::isolines(
@@ -74,7 +74,7 @@ comfort_contour_data <- function(
     )
     # Normalize isoband's path representation to the columns expected by
     # ggplot stats and psychrometric coordinate transforms.
-    out <- comfort_isoband_data(
+    out <- comfort_band__isoband_data(
         lines,
         breaks,
         breaks,
@@ -84,15 +84,15 @@ comfort_contour_data <- function(
         psychro_scales = psychro_scales,
         units = units
     )
-    out <- comfort_add_contour_labels(out)
+    out <- comfort_contour__add_labels(out)
     if (isTRUE(label_path)) {
-        out <- comfort_orient_contour_label_paths(out)
+        out <- comfort_contour__orient_label_paths(out)
     }
     out
 }
 
 # Return an empty contour data frame with stable columns.
-comfort_empty_contour <- function() {
+comfort_contour__empty <- function() {
     util__new_data_frame(list(
         tdb = numeric(),
         humratio = numeric(),
@@ -107,17 +107,17 @@ comfort_empty_contour <- function() {
 }
 
 # Attach display labels derived from contour levels.
-comfort_add_contour_labels <- function(data) {
+comfort_contour__add_labels <- function(data) {
     if (!nrow(data)) {
         return(data)
     }
     data$value <- data$level
-    data$label <- comfort_format_contour_level(data$level, data$metric)
+    data$label <- comfort_contour__format_level(data$level, data$metric)
     data
 }
 
 # Orient contour paths so text labels follow a consistent reading direction.
-comfort_orient_contour_label_paths <- function(data) {
+comfort_contour__orient_label_paths <- function(data) {
     if (!nrow(data) || !"group" %in% names(data)) {
         return(data)
     }
@@ -164,7 +164,7 @@ comfort_orient_contour_label_paths <- function(data) {
 }
 
 # Format contour levels with metric-specific conventions.
-comfort_format_contour_level <- function(level, metric) {
+comfort_contour__format_level <- function(level, metric) {
     metric <- rep(metric, length.out = length(level))
     out <- scales::number(level, accuracy = NULL, trim = TRUE)
     pmv <- metric == "pmv"
@@ -173,7 +173,7 @@ comfort_format_contour_level <- function(level, metric) {
 }
 
 # Merge contour label aesthetics into a user-supplied mapping.
-comfort_contour_label_mapping <- function(mapping) {
+comfort_contour__label_mapping <- function(mapping) {
     label <- NULL
     out <- mapping %||% ggplot2::aes()
     label_mapping <- ggplot2::aes(label = ggplot2::after_stat(label))
@@ -182,7 +182,7 @@ comfort_contour_label_mapping <- function(mapping) {
 }
 
 # Fill textpath defaults for labelled comfort contours.
-comfort_contour_label_params <- function(params, label_size = NULL) {
+comfort_contour__label_params <- function(params, label_size = NULL) {
     params$size <- label_size %||% params$size %||% 2.8
     params$text_only <- FALSE
     params$upright <- FALSE
@@ -193,7 +193,7 @@ comfort_contour_label_params <- function(params, label_size = NULL) {
 }
 
 # Choose default contour breaks for PMV, heat index, or sampled metrics.
-comfort_contour_breaks <- function(metric, z, units = "SI") {
+comfort_contour__breaks <- function(metric, z, units = "SI") {
     if (metric == "pmv") {
         return(seq(-3, 3, by = 0.5))
     }

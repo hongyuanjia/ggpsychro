@@ -46,7 +46,7 @@ comfort_strategy_givoni <- function(mean_outdoor = 19, units = c("SI", "IP")) {
 
 #' Comfort zone style element
 #'
-#' `element_comfort_zone()` creates a small style object for comfort strategy
+#' `element_givoni_zone()` creates a small style object for comfort strategy
 #' zones. It is used by `geom_comfort_givoni()` through the `zone_style`
 #' argument to override Marsh-style defaults for individual zones.
 #'
@@ -61,7 +61,7 @@ comfort_strategy_givoni <- function(mean_outdoor = 19, units = c("SI", "IP")) {
 #'     geom_comfort_givoni(
 #'         show_labels = FALSE,
 #'         zone_style = list(
-#'             comfort = element_comfort_zone(
+#'             comfort = element_givoni_zone(
 #'                 fill = "#6FCF97",
 #'                 colour = "#1B7F4A",
 #'                 alpha = 0.35
@@ -74,7 +74,7 @@ comfort_strategy_givoni <- function(mean_outdoor = 19, units = c("SI", "IP")) {
 #'     geom_comfort_givoni(
 #'         show_labels = FALSE,
 #'         zone_style = list(
-#'             air_conditioning = element_comfort_zone(
+#'             air_conditioning = element_givoni_zone(
 #'                 fill = "#7BC8F6",
 #'                 colour = "#1B5E8C",
 #'                 alpha = 0.18,
@@ -88,7 +88,7 @@ comfort_strategy_givoni <- function(mean_outdoor = 19, units = c("SI", "IP")) {
 #'     geom_comfort_givoni(
 #'         show_labels = FALSE,
 #'         zone_style = list(
-#'             winter = element_comfort_zone(
+#'             winter = element_givoni_zone(
 #'                 colour = "#C44536",
 #'                 linewidth = 1.2,
 #'                 linetype = "dashed"
@@ -97,7 +97,7 @@ comfort_strategy_givoni <- function(mean_outdoor = 19, units = c("SI", "IP")) {
 #'     )
 #'
 #' @export
-element_comfort_zone <- function(
+element_givoni_zone <- function(
     fill = ggplot2::waiver(),
     colour = ggplot2::waiver(),
     linewidth = ggplot2::waiver(),
@@ -149,7 +149,10 @@ givoni__foreground_marker <- function(
 
 # Compute the Marsh/Givoni base dry-bulb temperature in SI units.
 givoni__base_temp <- function(strategy) {
-    mean_outdoor_si <- comfort_to_si_temp(strategy$mean_outdoor, strategy$units)
+    mean_outdoor_si <- comfort__to_si_temp(
+        strategy$mean_outdoor,
+        strategy$units
+    )
     # Marsh's Givoni chart shifts the comfort polygon from the mean outdoor
     # temperature; geometry is encoded in SI and converted at the output edge.
     round(17.6 + 0.31 * mean_outdoor_si - 3.5, 1L)
@@ -279,7 +282,7 @@ givoni__zone_style_to_params <- function(style) {
         out <- style
     } else {
         stop(
-            "`zone_style` values must be created by element_comfort_zone(), ",
+            "`zone_style` values must be created by element_givoni_zone(), ",
             "ggplot2::element_polygon(), or ordinary named lists.",
             call. = FALSE
         )
@@ -577,10 +580,10 @@ givoni__zone_data <- function(
         zone <- specs$zone[specs$draw_zone]
     }
     zone <- match.arg(zone, specs$zone, several.ok = TRUE)
-    lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
-    pressure_pa <- comfort_pressure_pa(pres, units)
+    lim <- comfort_grid__limits(units, tdb_lim, hum_lim)
+    pressure_pa <- comfort__pressure_pa(pres, units)
     base <- givoni__base_temp(strategy)
-    tdb_max_si <- comfort_to_si_temp(lim$tdb[[2L]], units)
+    tdb_max_si <- comfort__to_si_temp(lim$tdb[[2L]], units)
     hum_min_gkg <- unit__hum_from_chart(lim$hum[[1L]], units) * 1000
 
     pieces <- vector("list", length(zone))
@@ -597,7 +600,7 @@ givoni__zone_data <- function(
         }
         spec <- specs[match(zone[[i]], specs$zone), , drop = FALSE]
         pieces[[i]] <- util__new_data_frame(list(
-            tdb = comfort_from_si_temp(poly$tdb_si, units),
+            tdb = comfort__from_si_temp(poly$tdb_si, units),
             humratio = poly$humratio,
             zone = spec$zone,
             label = spec$label,
@@ -850,10 +853,10 @@ givoni__label_data <- function(
 ) {
     label_type <- match.arg(label_type, c("path", "point"))
     strategy <- givoni__check_strategy(strategy)
-    lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
-    pressure_pa <- comfort_pressure_pa(pres, units)
+    lim <- comfort_grid__limits(units, tdb_lim, hum_lim)
+    pressure_pa <- comfort__pressure_pa(pres, units)
     base <- givoni__base_temp(strategy)
-    tdb_max_si <- comfort_to_si_temp(lim$tdb[[2L]], units)
+    tdb_max_si <- comfort__to_si_temp(lim$tdb[[2L]], units)
     hum_min_gkg <- unit__hum_from_chart(lim$hum[[1L]], units) * 1000
 
     if (label_type == "path") {
@@ -864,7 +867,7 @@ givoni__label_data <- function(
             hum_min_gkg
         )
         out <- util__new_data_frame(list(
-            tdb = comfort_from_si_temp(labels$tdb_si, units),
+            tdb = comfort__from_si_temp(labels$tdb_si, units),
             humratio = labels$humratio,
             zone = labels$zone,
             label = labels$label,
@@ -891,7 +894,7 @@ givoni__label_data <- function(
         hum_min_gkg
     )
     out <- util__new_data_frame(list(
-        tdb = comfort_from_si_temp(labels$tdb_si, units),
+        tdb = comfort__from_si_temp(labels$tdb_si, units),
         humratio = labels$hum_gkg / 1000,
         zone = labels$zone,
         label = labels$label,
@@ -962,9 +965,9 @@ givoni__mean_outdoor_data <- function(
     psychro_scales = NULL
 ) {
     strategy <- givoni__check_strategy(strategy)
-    lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
-    pressure_pa <- comfort_pressure_pa(pres, units)
-    mean_si <- comfort_to_si_temp(strategy$mean_outdoor, strategy$units)
+    lim <- comfort_grid__limits(units, tdb_lim, hum_lim)
+    pressure_pa <- comfort__pressure_pa(pres, units)
+    mean_si <- comfort__to_si_temp(strategy$mean_outdoor, strategy$units)
     hum_lim_narrow <- unit__hum_from_chart(lim$hum, units)
     marker <- givoni__mean_outdoor_marker(
         mean_si,
@@ -972,10 +975,10 @@ givoni__mean_outdoor_data <- function(
         hum_lim_narrow
     )
     if (is.null(marker)) {
-        return(comfort_empty_contour())
+        return(comfort_contour__empty())
     }
     out <- util__new_data_frame(list(
-        tdb = comfort_from_si_temp(c(mean_si, mean_si), units),
+        tdb = comfort__from_si_temp(c(mean_si, mean_si), units),
         humratio = c(hum_lim_narrow[[1L]], marker$top),
         level = mean_si,
         group = 1L,
@@ -1002,9 +1005,9 @@ givoni__mean_outdoor_label_data <- function(
     psychro_scales = NULL
 ) {
     strategy <- givoni__check_strategy(strategy)
-    lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
-    pressure_pa <- comfort_pressure_pa(pres, units)
-    mean_si <- comfort_to_si_temp(strategy$mean_outdoor, strategy$units)
+    lim <- comfort_grid__limits(units, tdb_lim, hum_lim)
+    pressure_pa <- comfort__pressure_pa(pres, units)
+    mean_si <- comfort__to_si_temp(strategy$mean_outdoor, strategy$units)
     hum_lim_narrow <- unit__hum_from_chart(lim$hum, units)
     marker <- givoni__mean_outdoor_marker(
         mean_si,
@@ -1015,10 +1018,10 @@ givoni__mean_outdoor_label_data <- function(
         return(givoni__empty_label())
     }
 
-    label_temp <- comfort_from_si_temp(mean_si, units)
+    label_temp <- comfort__from_si_temp(mean_si, units)
     unit_label <- if (units == "IP") "\u00b0F" else "\u00b0C"
     out <- util__new_data_frame(list(
-        tdb = comfort_from_si_temp(mean_si, units),
+        tdb = comfort__from_si_temp(mean_si, units),
         humratio = marker$label,
         zone = "mean_outdoor",
         label = sprintf("%.1f %s", label_temp, unit_label),

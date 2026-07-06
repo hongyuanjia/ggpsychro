@@ -47,13 +47,13 @@ StatComfortHeatIndexZone <- ggplot2::ggproto(
         na.rm = FALSE,
         psychro_scales = NULL
     ) {
-        ctx <- comfort_stat_context(data, units, pres)
+        ctx <- comfort__stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
         heat_index__zone_data(
             model,
             category_id,
-            comfort_grid_n(n),
+            comfort_grid__n(n),
             units,
             pres,
             mollier,
@@ -107,12 +107,12 @@ StatComfortHeatIndexContour <- ggplot2::ggproto(
         na.rm = FALSE,
         psychro_scales = NULL
     ) {
-        ctx <- comfort_stat_context(data, units, pres)
+        ctx <- comfort__stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
         heat_index__contour_data(
             model,
-            comfort_grid_n(n),
+            comfort_grid__n(n),
             units,
             pres,
             mollier,
@@ -164,12 +164,12 @@ StatComfortHeatIndexLabel <- ggplot2::ggproto(
         na.rm = FALSE,
         psychro_scales = NULL
     ) {
-        ctx <- comfort_stat_context(data, units, pres)
+        ctx <- comfort__stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
         heat_index__label_data(
             model,
-            comfort_grid_n(n),
+            comfort_grid__n(n),
             units,
             pres,
             mollier,

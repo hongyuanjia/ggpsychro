@@ -91,10 +91,10 @@ pmv__curve_base_data <- function(
     hum_lim,
     curve_cache = NULL
 ) {
-    levels <- comfort_check_breaks(levels, "`levels`", n_min = 1L)
+    levels <- comfort__check_breaks(levels, "`levels`", n_min = 1L)
     n <- pmv__curve_n(n)
     model <- pmv__curve_model(model)
-    lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
+    lim <- comfort_grid__limits(units, tdb_lim, hum_lim)
     # Constant-PMV curves are traced by solving dry-bulb roots on humidity-ratio
     # samples, then adding saturation-boundary roots so curves close cleanly.
     humratio <- seq(
@@ -227,9 +227,9 @@ pmv__axis_label_data <- function(
     curve_cache = NULL,
     psychro_scales = NULL
 ) {
-    levels <- comfort_check_breaks(levels, "`levels`", n_min = 1L)
+    levels <- comfort__check_breaks(levels, "`levels`", n_min = 1L)
     n <- pmv__curve_n(n)
-    lim <- comfort_grid_limits(units, tdb_lim, hum_lim)
+    lim <- comfort_grid__limits(units, tdb_lim, hum_lim)
     hum_lim_narrow <- unit__hum_from_chart(lim$hum, units)
     label_start <- hum_lim_narrow[[1L]] +
         diff(hum_lim_narrow) * pmv__axis_label_offset(axis_label_hjust)
@@ -393,7 +393,7 @@ pmv__curve_root_vector <- function(
 
 # Validate that a model can be used for root-traced PMV curves.
 pmv__curve_model <- function(model) {
-    comfort_check_model(model)
+    comfort__check_model(model)
     if (model$type != "pmv") {
         stop(
             "Root-traced PMV curves require `comfort_model_pmv()`.",
@@ -645,13 +645,19 @@ pmv__merge_roots <- function(...) {
 
 # Evaluate PMV at fixed dry-bulb and humidity-ratio coordinates.
 pmv__value_at <- function(model, tdb, humratio, units, pres) {
-    rh <- comfort_relhum_from_humratio(tdb, humratio, units, pres)
-    rh <- comfort_clip_grid_rh(rh)
+    rh <- comfort_dispatch__relhum_from_humratio(tdb, humratio, units, pres)
+    rh <- comfort_dispatch__clip_grid_rh(rh)
     out <- rep(NA_real_, length(tdb))
-    valid <- comfort_valid_grid_rh(rh)
+    valid <- comfort_dispatch__valid_grid_rh(rh)
     if (any(valid)) {
-        out[valid] <- comfort_metric_value(
-            comfort_apply_model(model, tdb[valid], rh[valid], units, pres),
+        out[valid] <- comfort_dispatch__metric_value(
+            comfort_dispatch__apply_model(
+                model,
+                tdb[valid],
+                rh[valid],
+                units,
+                pres
+            ),
             "pmv"
         )
     }

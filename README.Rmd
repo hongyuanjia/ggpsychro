@@ -72,7 +72,7 @@ psychrometric chart.
 ggpsychro(tdb_lim = c(5, 40), hum_lim = c(0, 24)) +
     psychro_preset("minimal") +
     geom_comfort_pmv(
-        curve_levels = seq(-3, 3, by = 0.5),
+        contour_levels = seq(-3, 3, by = 0.5),
         n = c(70, 48)
     ) +
     scale_fill_comfort_pmv(name = "PMV")

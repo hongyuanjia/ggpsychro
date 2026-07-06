@@ -292,20 +292,10 @@ CoordPsychro <- ggproto(
     },
 
     setup_data = function(self, data, params = list()) {
+        # Coordinate limits are applied during panel-parameter setup, and empty
+        # charts get a blank layer in the custom build path. Keeping setup_data()
+        # as identity preserves ggplot2's layer data semantics here.
         return(data)
-        # If there is no data specified, this is the case for an empty
-        # psychrometric chart. In this case, use the coordinate limits to build
-        # a fake data for each layer
-        lapply(data, function(d) {
-            if (util__is_waive(d)) {
-                len <- lengths(params$limits[c("x", "y")])
-                if (all(!len)) {
-                    return(d)
-                }
-                d <- as.data.frame(params$limits[c("x", "y")[len > 0]])
-            }
-            d
-        })
     },
 
     setup_panel_params = function(
@@ -352,9 +342,13 @@ CoordPsychro <- ggproto(
 
         if (self$mollier) {
             lim_tdb <- lim_y
+            # Humidity limits are stored in chart units (g/kg or gr/lb), while
+            # psychrolib expects native humidity ratios (kg/kg or lb/lb).
             lim_hum <- unit__hum_from_chart(lim_x, self$units)
         } else {
             lim_tdb <- lim_x
+            # Convert chart-display humidity limits before dew-point and
+            # saturation calculations use psychrolib.
             lim_hum <- unit__hum_from_chart(lim_y, self$units)
         }
 
@@ -375,13 +369,20 @@ CoordPsychro <- ggproto(
         lim_hum <- c(lim_hum[1L], min(lim_hum[2L], hum))
 
         if (self$mollier) {
+            # After psychrolib constrains native humidity ratios, convert back
+            # to chart units before entering ggplot2 scale space.
             lim_x <- scale_x$transform(unit__hum_to_chart(lim_hum, self$units))
             lim_y <- scale_y$transform(lim_tdb)
         } else {
             lim_x <- scale_x$transform(lim_tdb)
+            # Non-Mollier charts put humidity on y, but the same chart-unit
+            # conversion is required before training the y scale.
             lim_y <- scale_y$transform(unit__hum_to_chart(lim_hum, self$units))
         }
 
+        # Empty psychrometric charts have no layer data to train position scales.
+        # Seed only empty scales so default panel limits exist without overriding
+        # ranges already learned from user data.
         if (scale_x$is_empty()) {
             scale_x$train(lim_x)
         }
@@ -528,30 +529,31 @@ CoordPsychro <- ggproto(
             return(NULL)
         }
 
-        if (type != "wetbulb") {
-            len <- length(tdb)
-            line_breaks <- breaks
-            tdb <- rep(tdb, n)
-            breaks <- rep(breaks, each = len)
-            group <- rep(seq_len(n), each = len)
-        } else {
-            # make sure wetbulb is lower than drybulb
-            lst <- lapply(breaks, function(twb) tdb[tdb >= twb])
-            len <- lengths(lst)
-            not_empty <- len > 0L
-            # make sure twb itself is included
-            lst <- lapply(seq_along(lst), function(i) c(lst[[i]], breaks[[i]]))
-
-            # only use the range
-            line_breaks <- breaks[not_empty]
-            n <- length(breaks[not_empty])
+        if (type == "wetbulb") {
+            # Wet-bulb grid lines are only valid where dry-bulb is at least the
+            # wet-bulb value; reduce each line to the visible endpoint span.
+            tdb_by_break <- lapply(breaks, function(twb) tdb[tdb >= twb])
+            keep <- lengths(tdb_by_break) > 0L
+            line_breaks <- breaks[keep]
+            n <- length(line_breaks)
             if (n == 0L) {
                 return(NULL)
             }
-            tdb <- unlist(lapply(lst[not_empty], base::range), FALSE)
-            breaks <- rep(breaks[not_empty], each = 2L)
+
+            tdb_by_break <- lapply(
+                seq_along(tdb_by_break),
+                function(i) c(tdb_by_break[[i]], breaks[[i]])
+            )
+            tdb <- unlist(lapply(tdb_by_break[keep], base::range), FALSE)
+            break_values <- rep(line_breaks, each = 2L)
             group <- rep(seq_len(n), each = 2L)
             len <- 2L
+        } else {
+            len <- length(tdb)
+            line_breaks <- breaks
+            tdb <- rep(tdb, n)
+            break_values <- rep(breaks, each = len)
+            group <- rep(seq_len(n), each = len)
         }
 
         no_hum_limit <- function(expr) {
@@ -565,25 +567,25 @@ CoordPsychro <- ggproto(
             type,
             relhum = no_hum_limit(psychrolib::GetHumRatioFromRelHum(
                 tdb,
-                breaks,
+                break_values,
                 self$pressure
             )),
             wetbulb = no_hum_limit(psychrolib::GetHumRatioFromTWetBulb(
                 tdb,
-                breaks,
+                break_values,
                 self$pressure
             )),
             vappres = no_hum_limit(psychrolib::GetHumRatioFromVapPres(
-                breaks,
+                break_values,
                 self$pressure
             )),
             specvol = no_hum_limit(GetHumRatioFromMoistAirVolumeAndTDryBulb(
-                breaks,
+                break_values,
                 tdb,
                 self$pressure
             )),
             enthalpy = no_hum_limit(GetHumRatioFromEnthalpyAndTDryBulb(
-                breaks,
+                break_values,
                 tdb
             )),
             stop("Invalid grid type found")
@@ -614,7 +616,7 @@ CoordPsychro <- ggproto(
             len = len,
             n = n,
             breaks = line_breaks,
-            value = breaks,
+            value = break_values,
             group = group
         )
     },

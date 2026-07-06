@@ -443,15 +443,15 @@ psychro_preset <- function(name = c("ashrae", "minimal"), labels = TRUE) {
                 breaks = seq(50000, 100000, by = 50000),
                 minor_breaks = seq(10000, 130000, by = 10000)
             ),
-            geom_grid_relhum(label = labels, label.size = 3.1),
-            geom_grid_wetbulb(
+            geom_psychro_grid_relhum(label = labels, label.size = 3.1),
+            geom_psychro_grid_wetbulb(
                 label = labels,
                 label_loc = 0.12,
                 label.size = 2.8
             ),
-            geom_grid_vappres(show = FALSE),
-            geom_grid_specvol(label = labels, label.size = 2.7),
-            geom_grid_enthalpy(label = labels, label.size = 2.7),
+            geom_psychro_grid_vappres(show = FALSE),
+            geom_psychro_grid_specvol(label = labels, label.size = 2.7),
+            geom_psychro_grid_enthalpy(label = labels, label.size = 2.7),
             theme_psychro_ashrae()
         ),
         minimal = list(
@@ -477,15 +477,15 @@ psychro_preset <- function(name = c("ashrae", "minimal"), labels = TRUE) {
                 breaks = seq(20000, 100000, by = 40000),
                 minor_breaks = NULL
             ),
-            geom_grid_relhum(label = FALSE),
-            geom_grid_wetbulb(
+            geom_psychro_grid_relhum(label = FALSE),
+            geom_psychro_grid_wetbulb(
                 label = labels,
                 label_loc = 0.22,
                 label.size = 2.7
             ),
-            geom_grid_vappres(show = FALSE),
-            geom_grid_specvol(label = FALSE),
-            geom_grid_enthalpy(label = FALSE),
+            geom_psychro_grid_vappres(show = FALSE),
+            geom_psychro_grid_specvol(label = FALSE),
+            geom_psychro_grid_enthalpy(label = FALSE),
             theme_psychro_minimal()
         )
     )

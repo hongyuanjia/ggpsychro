@@ -553,14 +553,16 @@ test_that("comfort model objects validate inputs", {
     expect_error(comfort_model_adaptive(t_running = NA_real_), "`t_running`")
     expect_error(comfort_model_adaptive(t_running = c(20, 21)), "`t_running`")
     expect_error(comfort_model_heat_index(limit_inputs = NA), "`limit_inputs`")
-    expect_error(comfort_model_type(list()), "comfort_model")
+    expect_error(comfort__model_type(list()), "comfort_model")
     expect_error(comfort_model_adaptive(t_running = 20, standard = "bad"))
+    expect_error(comfort_pmv_ashrae55(edition = "2020"), "edition")
+    expect_error(comfort_pmv_en15251(edition = "2019"), "edition")
     expect_error(
-        comfort_standard_ashrae55_2017(c(0.5, -0.5)),
+        comfort_pmv_ashrae55(range = c(0.5, -0.5)),
         "strictly increasing"
     )
     expect_error(
-        comfort_standard_en15251_2007(c(-0.7, 0.2, -0.2, 0.7)),
+        comfort_pmv_en15251(breaks = c(-0.7, 0.2, -0.2, 0.7)),
         "strictly increasing"
     )
 })
@@ -568,7 +570,7 @@ test_that("comfort model objects validate inputs", {
 test_that("comfort overlay and contour build on psychrometric panel grids", {
     overlay <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_bands(n = c(24, 16), gap = 0) +
+            comfort_layer__bands(n = c(24, 16), gap = 0) +
             scale_fill_comfort_pmv()
     ))
     expect_gt(nrow(overlay), 0L)
@@ -588,7 +590,7 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
     pmv_layers <- built_data_layers(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
             geom_comfort_pmv(
-                curve_levels = c(-1, 0, 1),
+                contour_levels = c(-1, 0, 1),
                 n = c(24, 16)
             )
     ))
@@ -597,13 +599,13 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
 
     overlay_alpha <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_bands(n = c(24, 16), alpha = 0.35)
+            comfort_layer__bands(n = c(24, 16), alpha = 0.35)
     ))
     expect_equal(unique(overlay_alpha$alpha), 0.35)
 
     isoband <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_bands(band_method = "isoband", n = c(24, 16))
+            comfort_layer__bands(band_method = "isoband", n = c(24, 16))
     ))
     expect_gt(nrow(isoband), 0L)
     expect_true("level_mid" %in% names(isoband))
@@ -611,26 +613,30 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
 
     tile <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_bands(render = "tile", n = c(24, 16))
+            comfort_layer__bands(band_render = "tile", n = c(24, 16))
     ))
     expect_gt(nrow(tile), 0L)
     expect_equal(unique(tile$alpha), 0.55)
 
     pmv_tile <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_pmv(render = "tile", curves = FALSE, n = c(24, 16))
+            geom_comfort_pmv(
+                band_render = "tile",
+                contours = FALSE,
+                n = c(24, 16)
+            )
     ))
     expect_gt(nrow(pmv_tile), 0L)
     expect_equal(unique(pmv_tile$alpha), 0.55)
 
     set_overlay <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_bands(model = comfort_model_set(), n = c(24, 16))
+            comfort_layer__bands(model = comfort_model_set(), n = c(24, 16))
     ))
     expect_gt(nrow(set_overlay), 0L)
     expect_equal(unique(set_overlay$alpha), 0.55)
     expect_error(
-        geom_comfort_bands(
+        comfort_layer__bands(
             model = comfort_model_set(),
             band_method = "root"
         ),
@@ -652,14 +658,14 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
 
     set_tile <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_set(render = "tile", n = c(24, 16))
+            geom_comfort_set(band_render = "tile", n = c(24, 16))
     ))
     expect_gt(nrow(set_tile), 0L)
     expect_equal(unique(set_tile$alpha), 0.55)
 
     adaptive_overlay <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_bands(
+            comfort_layer__bands(
                 model = comfort_model_adaptive(t_running = 20),
                 n = c(24, 16)
             )
@@ -676,7 +682,7 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
 
     heat_overlay <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
-            geom_comfort_bands(
+            comfort_layer__bands(
                 model = comfort_model_heat_index(),
                 n = c(32, 24)
             )
@@ -723,7 +729,11 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
 
     tile_alpha <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_bands(render = "tile", n = c(24, 16), alpha = 0.35)
+            comfort_layer__bands(
+                band_render = "tile",
+                n = c(24, 16),
+                alpha = 0.35
+            )
     ))
     expect_equal(unique(tile_alpha$alpha), 0.35)
 
@@ -731,7 +741,7 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
         "SI",
         psychrolib::GetStandardAtmPressure(0)
     )
-    grid <- comfort_grid_data(
+    grid <- comfort_grid__data(
         comfort_model_pmv(),
         NULL,
         c(16, 16),
@@ -759,14 +769,14 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
 
     contour <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_contour(n = c(32, 20), breaks = c(-1, 0, 1))
+            comfort_layer__contour(n = c(32, 20), breaks = c(-1, 0, 1))
     ))
     expect_gt(nrow(contour), 0L)
     expect_true(all(contour$level %in% c(-1, 0, 1)))
 
     contour_labelled <- built_data_layers(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_contour(
+            comfort_layer__contour(
                 model = comfort_model_set(),
                 metric = "set",
                 breaks = c(22, 24, 26),
@@ -783,7 +793,7 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
     empty_contour <- expect_warning(
         ggplot2::ggplot_build(
             ggpsychro(tdb_lim = c(-50, -40), hum_lim = c(0, 5)) +
-                geom_comfort_contour(
+                comfort_layer__contour(
                     model = comfort_model_set(limit_inputs = TRUE),
                     metric = "set",
                     n = c(8, 8)
@@ -795,7 +805,7 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
 
     pmv_labelled <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_contour(
+            comfort_layer__contour(
                 breaks = c(-1, 0, 1),
                 n = c(32, 20),
                 label = TRUE
@@ -805,18 +815,18 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
 
     expect_error(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_contour(label = NA),
+            comfort_layer__contour(label = NA),
         "label"
     )
     expect_error(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_contour(label = TRUE, label_size = -1),
+            comfort_layer__contour(label = TRUE, label_size = -1),
         "label_size"
     )
 
     heat_contour <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
-            geom_comfort_contour(
+            comfort_layer__contour(
                 model = comfort_model_heat_index(),
                 n = c(32, 24)
             )
@@ -892,7 +902,7 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
         c(0, 35),
         grid_cache = heat_cache
     )
-    uncached_heat_contour <- comfort_contour_data(
+    uncached_heat_contour <- comfort_contour__data(
         comfort_model_heat_index(),
         "heat_index",
         heat_index__thresholds("SI"),
@@ -915,7 +925,7 @@ test_that("Givoni strategy zones build and stay below saturation", {
     )
     expect_s3_class(comfort_strategy_givoni(), "PsyComfortGivoniStrategy")
     expect_error(comfort_strategy_givoni(mean_outdoor = NA), "mean_outdoor")
-    expect_s3_class(element_comfort_zone(), "PsyComfortZoneElement")
+    expect_s3_class(element_givoni_zone(), "PsyComfortZoneElement")
 
     cool <- givoni__zone_data(
         comfort_strategy_givoni(mean_outdoor = 15),
@@ -1082,7 +1092,7 @@ test_that("Givoni zone styles can be overridden per zone", {
         ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 35)) +
             geom_comfort_givoni(
                 zone_style = list(
-                    comfort = element_comfort_zone(
+                    comfort = element_givoni_zone(
                         fill = "#00AA55",
                         colour = "#123456",
                         linewidth = 1.4,
@@ -1139,7 +1149,7 @@ test_that("Givoni zone styles can be overridden per zone", {
         ggplot2::ggplot_build(
             ggpsychro() +
                 geom_comfort_givoni(
-                    zone_style = list(not_a_zone = element_comfort_zone())
+                    zone_style = list(not_a_zone = element_givoni_zone())
                 )
         ),
         "Unknown Givoni zone"
@@ -1155,7 +1165,7 @@ test_that("Givoni zone styles can be overridden per zone", {
     )
 })
 
-test_that("PMV root-traced curves solve requested levels", {
+test_that("PMV root-traced contours solve requested levels", {
     pressure <- psychrolib__with_units(
         "SI",
         psychrolib::GetStandardAtmPressure(0)
@@ -1219,7 +1229,7 @@ test_that("PMV root-traced curves solve requested levels", {
         logical(1L)
     )))
 
-    rh <- comfort_relhum_from_humratio(
+    rh <- comfort_dispatch__relhum_from_humratio(
         curves$tdb,
         curves$humratio,
         "SI",
@@ -1344,7 +1354,7 @@ test_that("PMV root-traced curves solve requested levels", {
             ,
             drop = FALSE
         ]
-        rh <- comfort_relhum_from_humratio(
+        rh <- comfort_dispatch__relhum_from_humratio(
             edge$tdb,
             edge$humratio,
             "SI",
@@ -1455,7 +1465,11 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
 
     pmv_lines <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_pmv(bands = FALSE, curve_levels = c(-1, 0, 1), n = 80)
+            geom_comfort_pmv(
+                bands = FALSE,
+                contour_levels = c(-1, 0, 1),
+                n = 80
+            )
     )$data
     expect_equal(length(pmv_lines), 2L)
     expect_true(all(c("level", "linetype") %in% names(pmv_lines[[1L]])))
@@ -1470,8 +1484,8 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
     expect_true(all(table(pmv_lines[[2L]]$group) >= 2L))
 
     expect_error(
-        geom_comfort_pmv(bands = FALSE, curves = FALSE),
-        "At least one of `bands`, `curves`, or `standard`"
+        geom_comfort_pmv(bands = FALSE, contours = FALSE),
+        "At least one of `bands`, `contours`, or `standard`"
     )
     expect_error(
         geom_comfort_set(bands = FALSE, contours = FALSE),
@@ -1578,9 +1592,9 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
     ashrae <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
             geom_comfort_pmv(
-                standard = comfort_standard_ashrae55_2017(),
+                standard = comfort_pmv_ashrae55(),
                 bands = FALSE,
-                curves = FALSE,
+                contours = FALSE,
                 n = 90
             )
     )$data
@@ -1594,9 +1608,9 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
     ashrae_alpha <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
             geom_comfort_pmv(
-                standard = comfort_standard_ashrae55_2017(),
+                standard = comfort_pmv_ashrae55(),
                 bands = FALSE,
-                curves = FALSE,
+                contours = FALSE,
                 n = 90,
                 alpha = 0.2
             )
@@ -1606,9 +1620,9 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
         ggplot2::ggplot_build(
             ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
                 geom_comfort_pmv(
-                    standard = comfort_standard_ashrae55_2017(),
+                    standard = comfort_pmv_ashrae55(),
                     bands = FALSE,
-                    curves = FALSE,
+                    contours = FALSE,
                     alpha = NA_real_
                 )
         ),
@@ -1618,9 +1632,9 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
     en <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
             geom_comfort_pmv(
-                standard = comfort_standard_en15251_2007(),
+                standard = comfort_pmv_en15251(),
                 bands = FALSE,
-                curves = FALSE,
+                contours = FALSE,
                 n = 90
             )
     )$data
@@ -1637,13 +1651,17 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
 
     ip <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(50, 90), hum_lim = c(0, 140), units = "IP") +
-            geom_comfort_pmv(bands = FALSE, curve_levels = c(-0.5, 0.5), n = 60)
+            geom_comfort_pmv(
+                bands = FALSE,
+                contour_levels = c(-0.5, 0.5),
+                n = 60
+            )
     )
     expect_gt(nrow(first_built_data(ip)), 0L)
 
     ip_overlay <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(50, 90), hum_lim = c(0, 140), units = "IP") +
-            geom_comfort_bands(n = c(40, 24)) +
+            comfort_layer__bands(n = c(40, 24)) +
             scale_fill_comfort_pmv()
     )
     expect_gt(nrow(first_built_data(ip_overlay)), 0L)
@@ -1681,30 +1699,30 @@ test_that("comfort overlays build in Mollier coordinates", {
 
     base <- ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20), mollier = TRUE)
 
-    expect_mollier_comfort(base + geom_comfort_bands(n = c(40, 24)))
+    expect_mollier_comfort(base + comfort_layer__bands(n = c(40, 24)))
     expect_mollier_comfort(
-        base + geom_comfort_bands(band_method = "isoband", n = c(32, 20))
+        base + comfort_layer__bands(band_method = "isoband", n = c(32, 20))
     )
     expect_mollier_comfort(
-        base + geom_comfort_bands(render = "tile", n = c(24, 16))
+        base + comfort_layer__bands(band_render = "tile", n = c(24, 16))
     )
     expect_mollier_comfort(
         base +
-            geom_comfort_bands(
+            comfort_layer__bands(
                 model = comfort_model_set(),
                 n = c(24, 16)
             )
     )
     expect_mollier_comfort(
         base +
-            geom_comfort_bands(
+            comfort_layer__bands(
                 model = comfort_model_adaptive(t_running = 20),
                 n = c(24, 16)
             )
     )
     expect_mollier_comfort(
         base +
-            geom_comfort_bands(
+            comfort_layer__bands(
                 model = comfort_model_heat_index(),
                 n = c(32, 20)
             )
@@ -1713,14 +1731,14 @@ test_that("comfort overlays build in Mollier coordinates", {
 
     expect_mollier_comfort(
         base +
-            geom_comfort_contour(
+            comfort_layer__contour(
                 breaks = c(-1, 0, 1),
                 n = c(32, 20)
             )
     )
     expect_mollier_comfort(
         base +
-            geom_comfort_contour(
+            comfort_layer__contour(
                 model = comfort_model_set(),
                 metric = "set",
                 breaks = c(22, 24, 26),
@@ -1729,7 +1747,7 @@ test_that("comfort overlays build in Mollier coordinates", {
     )
     expect_mollier_comfort(
         base +
-            geom_comfort_contour(
+            comfort_layer__contour(
                 model = comfort_model_set(),
                 metric = "set",
                 breaks = c(22, 24, 26),
@@ -1742,41 +1760,41 @@ test_that("comfort overlays build in Mollier coordinates", {
         base +
             geom_comfort_pmv(
                 bands = FALSE,
-                curve_levels = c(-1, 0, 1),
+                contour_levels = c(-1, 0, 1),
                 n = 60
             )
     )
     expect_mollier_comfort(
         base +
             geom_comfort_pmv(
-                standard = comfort_standard_ashrae55_2017(),
+                standard = comfort_pmv_ashrae55(),
                 bands = FALSE,
-                curves = FALSE,
+                contours = FALSE,
                 n = 60
             )
     )
     expect_mollier_comfort(
         base +
             geom_comfort_pmv(
-                standard = comfort_standard_en15251_2007(),
+                standard = comfort_pmv_en15251(),
                 bands = FALSE,
-                curves = FALSE,
+                contours = FALSE,
                 n = 60
             )
     )
     expect_mollier_comfort(base + geom_comfort_givoni())
 
-    expect_mollier_comfort(base + geom_comfort_zone(n = c(60, 40)))
+    expect_mollier_comfort(base + comfort_layer__zone(n = c(60, 40)))
     expect_mollier_comfort(
         base +
-            geom_comfort_zone(
+            comfort_layer__zone(
                 model = comfort_model_set(),
                 n = c(32, 20)
             )
     )
     expect_mollier_comfort(
         base +
-            geom_comfort_zone(
+            comfort_layer__zone(
                 model = comfort_model_adaptive(t_running = 20)
             )
     )
@@ -1799,11 +1817,11 @@ test_that("Marsh-style comfort overlays have visual regressions", {
     vdiffr::expect_doppelganger(
         "comfort pmv marsh lines",
         pmv_base +
-            geom_comfort_bands(n = c(70, 48), gap = 0) +
+            comfort_layer__bands(n = c(70, 48), gap = 0) +
             scale_fill_comfort_pmv() +
             geom_comfort_pmv(
                 bands = FALSE,
-                curve_levels = seq(-3, 3, by = 0.5),
+                contour_levels = seq(-3, 3, by = 0.5),
                 n = 140
             )
     )
@@ -1812,9 +1830,9 @@ test_that("Marsh-style comfort overlays have visual regressions", {
         "comfort ashrae55 2017 pmv zone",
         base +
             geom_comfort_pmv(
-                standard = comfort_standard_ashrae55_2017(),
+                standard = comfort_pmv_ashrae55(),
                 bands = FALSE,
-                curves = FALSE,
+                contours = FALSE,
                 n = 140
             )
     )
@@ -1823,9 +1841,9 @@ test_that("Marsh-style comfort overlays have visual regressions", {
         "comfort en15251 2007 pmv zones",
         base +
             geom_comfort_pmv(
-                standard = comfort_standard_en15251_2007(),
+                standard = comfort_pmv_en15251(),
                 bands = FALSE,
-                curves = FALSE,
+                contours = FALSE,
                 n = 140
             )
     )
@@ -1833,7 +1851,7 @@ test_that("Marsh-style comfort overlays have visual regressions", {
     vdiffr::expect_doppelganger(
         "comfort set contour labels",
         set_base +
-            geom_comfort_contour(
+            comfort_layer__contour(
                 model = comfort_model_set(),
                 metric = "set",
                 breaks = c(22, 24, 26),
@@ -1865,21 +1883,21 @@ test_that("Marsh-style comfort overlays have visual regressions", {
             geom_comfort_givoni(
                 comfort_strategy_givoni(mean_outdoor = 22),
                 zone_style = list(
-                    comfort = element_comfort_zone(
+                    comfort = element_givoni_zone(
                         fill = "#66D27A",
                         colour = "#1F5F2D",
                         alpha = 0.35
                     ),
-                    natural_ventilation = element_comfort_zone(
+                    natural_ventilation = element_givoni_zone(
                         fill = "#B6E3FF",
                         colour = "#2F6FB0",
                         alpha = 0.25
                     ),
-                    winter = element_comfort_zone(
+                    winter = element_givoni_zone(
                         colour = "#A14D00",
                         linetype = "dashed"
                     ),
-                    air_conditioning = element_comfort_zone(
+                    air_conditioning = element_givoni_zone(
                         colour = "#8B1E3F",
                         linewidth = 1.2
                     )
@@ -1897,11 +1915,11 @@ test_that("Mollier comfort overlays have visual regressions", {
     vdiffr::expect_doppelganger(
         "comfort mollier pmv overlay",
         base +
-            geom_comfort_bands(n = c(50, 30)) +
+            comfort_layer__bands(n = c(50, 30)) +
             scale_fill_comfort_pmv() +
             geom_comfort_pmv(
                 bands = FALSE,
-                curve_levels = seq(-2, 2, by = 1),
+                contour_levels = seq(-2, 2, by = 1),
                 n = 100
             )
     )
@@ -1909,8 +1927,8 @@ test_that("Mollier comfort overlays have visual regressions", {
     vdiffr::expect_doppelganger(
         "comfort mollier set overlay",
         base +
-            geom_comfort_bands(model = comfort_model_set(), n = c(40, 24)) +
-            geom_comfort_contour(
+            comfort_layer__bands(model = comfort_model_set(), n = c(40, 24)) +
+            comfort_layer__contour(
                 model = comfort_model_set(),
                 metric = "set",
                 breaks = c(22, 24, 26),
@@ -1922,7 +1940,7 @@ test_that("Mollier comfort overlays have visual regressions", {
     vdiffr::expect_doppelganger(
         "comfort mollier set contour labels",
         base +
-            geom_comfort_contour(
+            comfort_layer__contour(
                 model = comfort_model_set(),
                 metric = "set",
                 breaks = c(22, 24, 26),
@@ -1936,11 +1954,11 @@ test_that("Mollier comfort overlays have visual regressions", {
     vdiffr::expect_doppelganger(
         "comfort mollier adaptive overlay",
         base +
-            geom_comfort_bands(
+            comfort_layer__bands(
                 model = comfort_model_adaptive(t_running = 20),
                 n = c(40, 24)
             ) +
-            geom_comfort_zone(
+            comfort_layer__zone(
                 model = comfort_model_adaptive(t_running = 20),
                 fill = NA,
                 colour = "#4A4A4A"
@@ -1951,9 +1969,9 @@ test_that("Mollier comfort overlays have visual regressions", {
         "comfort mollier ashrae55 2017 pmv zone",
         base +
             geom_comfort_pmv(
-                standard = comfort_standard_ashrae55_2017(),
+                standard = comfort_pmv_ashrae55(),
                 bands = FALSE,
-                curves = FALSE,
+                contours = FALSE,
                 n = 100
             )
     )
@@ -1962,9 +1980,9 @@ test_that("Mollier comfort overlays have visual regressions", {
         "comfort mollier en15251 2007 pmv zones",
         base +
             geom_comfort_pmv(
-                standard = comfort_standard_en15251_2007(),
+                standard = comfort_pmv_en15251(),
                 bands = FALSE,
-                curves = FALSE,
+                contours = FALSE,
                 n = 100
             )
     )
@@ -1979,11 +1997,11 @@ test_that("IP comfort overlays have visual regressions", {
     vdiffr::expect_doppelganger(
         "comfort ip pmv overlay",
         base +
-            geom_comfort_bands(n = c(50, 30)) +
+            comfort_layer__bands(n = c(50, 30)) +
             scale_fill_comfort_pmv() +
             geom_comfort_pmv(
                 bands = FALSE,
-                curve_levels = seq(-2, 2, by = 1),
+                contour_levels = seq(-2, 2, by = 1),
                 n = 100
             )
     )
@@ -2000,7 +2018,7 @@ test_that("comfort layer internals are not exported", {
 test_that("comfort zones and state stats build model-specific fields", {
     zone <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_zone(model = comfort_model_adaptive(t_running = 20))
+            comfort_layer__zone(model = comfort_model_adaptive(t_running = 20))
     ))
     expect_equal(range(zone$x), c(20.5, 27.5), tolerance = 1e-8)
     expect_equal(range(zone$y), c(0, 0.02), tolerance = 1e-8)

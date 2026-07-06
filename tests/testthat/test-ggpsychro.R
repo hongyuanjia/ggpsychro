@@ -384,9 +384,9 @@ test_that("Comfort path labels use the internal textpath renderer", {
         count_textpath_shapes(
             base +
                 geom_comfort_pmv(
-                    standard = comfort_standard_ashrae55_2017(),
+                    standard = comfort_pmv_ashrae55(),
                     bands = FALSE,
-                    curves = FALSE,
+                    contours = FALSE,
                     n = 80
                 )
         ),
@@ -394,7 +394,7 @@ test_that("Comfort path labels use the internal textpath renderer", {
     )
     expect_gt(
         count_textpath_shapes(
-            base + geom_comfort_contour(label = TRUE, n = c(30, 20))
+            base + comfort_layer__contour(label = TRUE, n = c(30, 20))
         ),
         0L
     )
@@ -403,7 +403,7 @@ test_that("Comfort path labels use the internal textpath renderer", {
 test_that("Relative humidity grid breaks use psychrolib fractions", {
     built <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-            geom_grid_relhum()
+            geom_psychro_grid_relhum()
     )
     breaks <- util__remove_na(built$layout$panel_params[[
         1L
@@ -412,7 +412,7 @@ test_that("Relative humidity grid breaks use psychrolib fractions", {
 
     built <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-            geom_grid_relhum() +
+            geom_psychro_grid_relhum() +
             scale_relhum_continuous(
                 limits = c(25, 100),
                 breaks = seq(25, 100, by = 25),
@@ -432,8 +432,8 @@ test_that("Relative humidity grid breaks use psychrolib fractions", {
 
 test_that("Psychrometric grid helpers update coord metadata", {
     p <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-        geom_grid_relhum(color = "red", label.size = 5) +
-        geom_grid_enthalpy()
+        geom_psychro_grid_relhum(color = "red", label.size = 5) +
+        geom_psychro_grid_enthalpy()
 
     expect_length(p$layers, 0L)
     expect_true(p$psychro$grids$relhum)
@@ -446,15 +446,15 @@ test_that("Psychrometric grid helpers update coord metadata", {
     expect_equal(p$coordinates$grid_labels, p$psychro$grid_labels)
     expect_no_error(ggplot2::ggplot_build(p))
 
-    p <- p + geom_grid_relhum(show = FALSE)
+    p <- p + geom_psychro_grid_relhum(show = FALSE)
     expect_false(p$psychro$grids$relhum)
     expect_false(p$psychro$grid_labels$relhum$show)
     expect_false(p$coordinates$grids$relhum)
     expect_no_error(ggplot2::ggplot_build(p))
 
     p <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-        geom_grid_relhum(label.size = 5) +
-        geom_grid_relhum(label.size = 2, label.vjust = 0.8)
+        geom_psychro_grid_relhum(label.size = 5) +
+        geom_psychro_grid_relhum(label.size = 2, label.vjust = 0.8)
     expect_equal(p$psychro$grid_labels$relhum$style$size, 2)
     expect_equal(p$psychro$grid_labels$relhum$style$vjust, 0.8)
 })
@@ -914,15 +914,15 @@ test_that("Psychrometric charts build with common ggplot features", {
                 units = "IP",
                 altitude = -10
             ) +
-                geom_grid_relhum() +
-                geom_grid_wetbulb()
+                geom_psychro_grid_relhum() +
+                geom_psychro_grid_wetbulb()
         )
     )
 
     expect_no_error(
         ggplot2::ggplot_build(
             ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50), mollier = TRUE) +
-                geom_grid_enthalpy()
+                geom_psychro_grid_enthalpy()
         )
     )
 
@@ -935,7 +935,7 @@ test_that("Psychrometric charts build with common ggplot features", {
                 tdb_lim = c(0, 50),
                 hum_lim = c(0, 50)
             ) +
-                geom_grid_relhum() +
+                geom_psychro_grid_relhum() +
                 ggplot2::geom_point() +
                 ggplot2::facet_wrap(~ y > 7)
         )
@@ -944,9 +944,9 @@ test_that("Psychrometric charts build with common ggplot features", {
     expect_no_error(
         ggplot2::ggplotGrob(
             ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-                geom_grid_relhum(label = FALSE) +
-                geom_grid_wetbulb(label_loc = NA) +
-                geom_grid_specvol() +
+                geom_psychro_grid_relhum(label = FALSE) +
+                geom_psychro_grid_wetbulb(label_loc = NA) +
+                geom_psychro_grid_specvol() +
                 scale_specvol_continuous(labels = NULL)
         )
     )
@@ -987,28 +987,28 @@ test_that("Psychrometric grid labels are rendered only for explicit helpers", {
     expect_gt(
         count_textpath_shapes(
             ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-                geom_grid_relhum()
+                geom_psychro_grid_relhum()
         ),
         0L
     )
     expect_equal(
         count_textpath_shapes(
             ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-                geom_grid_relhum(label = FALSE)
+                geom_psychro_grid_relhum(label = FALSE)
         ),
         0L
     )
     expect_equal(
         count_textpath_shapes(
             ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-                geom_grid_relhum(label_loc = NA)
+                geom_psychro_grid_relhum(label_loc = NA)
         ),
         0L
     )
     expect_equal(
         count_textpath_shapes(
             ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-                geom_grid_specvol() +
+                geom_psychro_grid_specvol() +
                 scale_specvol_continuous(labels = NULL)
         ),
         0L
@@ -1017,18 +1017,18 @@ test_that("Psychrometric grid labels are rendered only for explicit helpers", {
     expect_gt(
         count_textpath_shapes(
             ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-                geom_grid_relhum() +
-                geom_grid_wetbulb() +
-                geom_grid_vappres() +
-                geom_grid_specvol() +
-                geom_grid_enthalpy()
+                geom_psychro_grid_relhum() +
+                geom_psychro_grid_wetbulb() +
+                geom_psychro_grid_vappres() +
+                geom_psychro_grid_specvol() +
+                geom_psychro_grid_enthalpy()
         ),
         1L
     )
 
     fast_labels <- find_named_grobs(
         ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-            geom_grid_relhum(),
+            geom_psychro_grid_relhum(),
         "psychro-grid-label-relhum"
     )
     expect_true(any(vapply(
@@ -1046,23 +1046,23 @@ test_that("Psychrometric grid labels are rendered only for explicit helpers", {
     vdiffr::expect_doppelganger(
         "relative humidity grid labels",
         ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-            geom_grid_relhum()
+            geom_psychro_grid_relhum()
     )
 
     vdiffr::expect_doppelganger(
         "combined grid labels",
         ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-            geom_grid_relhum() +
-            geom_grid_wetbulb() +
-            geom_grid_vappres() +
-            geom_grid_specvol() +
-            geom_grid_enthalpy()
+            geom_psychro_grid_relhum() +
+            geom_psychro_grid_wetbulb() +
+            geom_psychro_grid_vappres() +
+            geom_psychro_grid_specvol() +
+            geom_psychro_grid_enthalpy()
     )
 
     vdiffr::expect_doppelganger(
         "mollier grid labels",
         ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50), mollier = TRUE) +
-            geom_grid_enthalpy()
+            geom_psychro_grid_enthalpy()
     )
 })
 
@@ -1094,7 +1094,7 @@ test_that("Coordinate range helpers clip expanded ranges in native units", {
 
 test_that("Coordinate calculations inverse custom position transforms before psychrolib", {
     p <- ggpsychro(tdb_lim = c(0, 50), hum_lim = c(1, 50)) +
-        geom_grid_relhum() +
+        geom_psychro_grid_relhum() +
         scale_humratio_continuous(transform = "log10")
 
     built <- ggplot2::ggplot_build(p)
@@ -1178,7 +1178,7 @@ test_that("Psychrolib calculations inverse custom psychrometric scale transforms
     expect_equal(
         grid_break_values(
             ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-                geom_grid_wetbulb() +
+                geom_psychro_grid_wetbulb() +
                 scale_wetbulb_continuous(
                     transform = "log10",
                     breaks = c(10, 20, 30)
@@ -1191,7 +1191,7 @@ test_that("Psychrolib calculations inverse custom psychrometric scale transforms
     expect_equal(
         grid_break_values(
             ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-                geom_grid_vappres() +
+                geom_psychro_grid_vappres() +
                 scale_vappres_continuous(
                     transform = "log10",
                     breaks = c(1000, 2000, 3000)
@@ -1204,7 +1204,7 @@ test_that("Psychrolib calculations inverse custom psychrometric scale transforms
     expect_equal(
         grid_break_values(
             ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50)) +
-                geom_grid_relhum() +
+                geom_psychro_grid_relhum() +
                 scale_relhum_continuous(
                     transform = "log10",
                     breaks = c(25, 50, 75)
@@ -1218,7 +1218,7 @@ test_that("Psychrolib calculations inverse custom psychrometric scale transforms
 
 test_that("Generated comfort stats return custom position scale coordinates", {
     tile_plot <- ggpsychro(tdb_lim = c(15, 35), hum_lim = c(1, 24)) +
-        geom_comfort_bands(render = "tile", n = c(10, 8), gap = 0) +
+        comfort_layer__bands(band_render = "tile", n = c(10, 8), gap = 0) +
         scale_humratio_continuous(transform = "log10")
     tile <- first_built_data(ggplot2::ggplot_build(tile_plot))
     hum_edges <- seq(1, 24, length.out = 9) / 1000
@@ -1230,13 +1230,13 @@ test_that("Generated comfort stats return custom position scale coordinates", {
     expect_equal(tile$ymax - tile$ymin, hum_height[hum_index], tolerance = 1e-8)
 
     pmv_hum_plot <- ggpsychro(tdb_lim = c(15, 35), hum_lim = c(1, 24)) +
-        geom_comfort_pmv(bands = FALSE, curve_levels = 0, n = 40) +
+        geom_comfort_pmv(bands = FALSE, contour_levels = 0, n = 40) +
         scale_humratio_continuous(transform = "log10")
     pmv_hum <- first_built_data(ggplot2::ggplot_build(pmv_hum_plot))
     expect_equal(pmv_hum$y, log10(pmv_hum$humratio * 1000), tolerance = 1e-8)
 
     pmv_tdb_plot <- ggpsychro(tdb_lim = c(15, 35), hum_lim = c(1, 24)) +
-        geom_comfort_pmv(bands = FALSE, curve_levels = 0, n = 40) +
+        geom_comfort_pmv(bands = FALSE, contour_levels = 0, n = 40) +
         scale_drybulb_continuous(transform = "log10")
     pmv_tdb <- first_built_data(ggplot2::ggplot_build(pmv_tdb_plot))
     expect_equal(pmv_tdb$x, log10(pmv_tdb$tdb), tolerance = 1e-8)
@@ -1624,7 +1624,7 @@ test_that("Psychrometric stats draw retained aesthetics in common plots", {
     )
 
     p_alpha <- ggpsychro(d, tdb_lim = c(10, 35), hum_lim = c(0, 25)) +
-        geom_grid_relhum(label = FALSE) +
+        geom_psychro_grid_relhum(label = FALSE) +
         ggplot2::geom_point(
             ggplot2::aes(tdb, relhum = relhum, alpha = weight),
             stat = "relhum",
@@ -1634,7 +1634,7 @@ test_that("Psychrometric stats draw retained aesthetics in common plots", {
         ggplot2::scale_alpha_continuous(range = c(0.25, 1))
 
     p_lines <- ggpsychro(tdb_lim = c(10, 35), hum_lim = c(0, 25)) +
-        geom_grid_wetbulb(label = FALSE) +
+        geom_psychro_grid_wetbulb(label = FALSE) +
         ggplot2::geom_line(
             ggplot2::aes(
                 tdb,
@@ -1649,7 +1649,7 @@ test_that("Psychrometric stats draw retained aesthetics in common plots", {
         )
 
     p_mixed <- ggpsychro(d, tdb_lim = c(10, 35), hum_lim = c(0, 25)) +
-        geom_grid_relhum(label = FALSE) +
+        geom_psychro_grid_relhum(label = FALSE) +
         ggplot2::geom_point(
             ggplot2::aes(tdb, vappres = vappres, size = weight, shape = state),
             stat = "vappres",

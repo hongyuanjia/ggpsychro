@@ -18,29 +18,29 @@
 #' @param label_parse If `TRUE`, labels are parsed as plotmath expressions.
 #' @return A ggplot addition that controls rendering of a psychrometric grid.
 #'
-#' @rdname geom_grid
+#' @rdname geom_psychro_grid
 #' @examples
 #' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
-#'     geom_grid_relhum() +
-#'     geom_grid_wetbulb() +
-#'     geom_grid_enthalpy()
+#'     geom_psychro_grid_relhum() +
+#'     geom_psychro_grid_wetbulb() +
+#'     geom_psychro_grid_enthalpy()
 #'
 #' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
-#'     geom_grid_relhum(color = "black", linewidth = 0.6, label.size = 4) +
+#'     geom_psychro_grid_relhum(color = "black", linewidth = 0.6, label.size = 4) +
 #'     scale_relhum_continuous(
 #'         breaks = seq(25, 75, by = 25),
 #'         minor_breaks = NULL
 #'     ) +
-#'     geom_grid_wetbulb(color = "black", label = FALSE) +
+#'     geom_psychro_grid_wetbulb(color = "black", label = FALSE) +
 #'     scale_wetbulb_continuous(
 #'         breaks = seq(10, 30, by = 10),
 #'         minor_breaks = NULL
 #'     ) +
-#'     geom_grid_vappres(show = FALSE) +
-#'     geom_grid_specvol(label_loc = 0.90) +
-#'     geom_grid_enthalpy(label.size = 4)
+#'     geom_psychro_grid_vappres(show = FALSE) +
+#'     geom_psychro_grid_specvol(label_loc = 0.90) +
+#'     geom_psychro_grid_enthalpy(label.size = 4)
 #' @export
-geom_grid_relhum <- function(
+geom_psychro_grid_relhum <- function(
     ...,
     show = TRUE,
     label = TRUE,
@@ -57,9 +57,9 @@ geom_grid_relhum <- function(
     )
 }
 
-#' @rdname geom_grid
+#' @rdname geom_psychro_grid
 #' @export
-geom_grid_wetbulb <- function(
+geom_psychro_grid_wetbulb <- function(
     ...,
     show = TRUE,
     label = TRUE,
@@ -76,9 +76,9 @@ geom_grid_wetbulb <- function(
     )
 }
 
-#' @rdname geom_grid
+#' @rdname geom_psychro_grid
 #' @export
-geom_grid_vappres <- function(
+geom_psychro_grid_vappres <- function(
     ...,
     show = TRUE,
     label = TRUE,
@@ -95,9 +95,9 @@ geom_grid_vappres <- function(
     )
 }
 
-#' @rdname geom_grid
+#' @rdname geom_psychro_grid
 #' @export
-geom_grid_specvol <- function(
+geom_psychro_grid_specvol <- function(
     ...,
     show = TRUE,
     label = TRUE,
@@ -114,9 +114,9 @@ geom_grid_specvol <- function(
     )
 }
 
-#' @rdname geom_grid
+#' @rdname geom_psychro_grid
 #' @export
-geom_grid_enthalpy <- function(
+geom_psychro_grid_enthalpy <- function(
     ...,
     show = TRUE,
     label = TRUE,

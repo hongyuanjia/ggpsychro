@@ -56,7 +56,7 @@ StatComfortPmvCurve <- ggplot2::ggproto(
         psychro_scales = NULL
     ) {
         label_type <- match.arg(label_type)
-        ctx <- comfort_stat_context(data, units, pres)
+        ctx <- comfort__stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
         pmv__curve_data(
@@ -124,7 +124,7 @@ StatComfortPmvAxisLabel <- ggplot2::ggproto(
         na.rm = FALSE,
         psychro_scales = NULL
     ) {
-        ctx <- comfort_stat_context(data, units, pres)
+        ctx <- comfort__stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
         pmv__axis_label_data(
@@ -191,14 +191,14 @@ StatComfortPmvRootBand <- ggplot2::ggproto(
         na.rm = FALSE,
         psychro_scales = NULL
     ) {
-        ctx <- comfort_stat_context(data, units, pres)
+        ctx <- comfort__stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
         pmv__root_band_data(
             model,
             metric,
             levels,
-            comfort_default_n(model, n),
+            comfort_grid__default_n(model, n),
             units,
             pres,
             mollier,

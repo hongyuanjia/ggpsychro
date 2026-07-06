@@ -47,7 +47,7 @@ comfort_pmv <- function(
     round_output = TRUE
 ) {
     units <- match.arg(units)
-    x <- comfort_recycle(
+    x <- comfort__recycle(
         tdb = tdb,
         tr = tr,
         vr = vr,
@@ -57,9 +57,9 @@ comfort_pmv <- function(
         wme = wme
     )
 
-    tdb_si <- comfort_to_si_temp(x$tdb, units)
-    tr_si <- comfort_to_si_temp(x$tr, units)
-    vr_si <- comfort_to_si_speed(x$vr, units)
+    tdb_si <- comfort__to_si_temp(x$tdb, units)
+    tr_si <- comfort__to_si_temp(x$tr, units)
+    vr_si <- comfort__to_si_speed(x$vr, units)
 
     pmv <- pmv__vec(tdb_si, tr_si, vr_si, x$rh, x$met, x$clo, x$wme)
 
@@ -68,13 +68,13 @@ comfort_pmv <- function(
     ppd <- 100 - 95 * exp(-0.03353 * pmv^4 - 0.2179 * pmv^2)
 
     if (isTRUE(limit_inputs)) {
-        valid <- comfort_between(tdb_si, 10, 30) &
-            comfort_between(tr_si, 10, 40) &
-            comfort_between(vr_si, 0, 1) &
-            comfort_between(x$rh, 0, 100) &
-            comfort_between(x$met, 0.8, 4) &
-            comfort_between(x$clo, 0, 2) &
-            comfort_between(pmv, -2, 2)
+        valid <- comfort__between(tdb_si, 10, 30) &
+            comfort__between(tr_si, 10, 40) &
+            comfort__between(vr_si, 0, 1) &
+            comfort__between(x$rh, 0, 100) &
+            comfort__between(x$met, 0.8, 4) &
+            comfort__between(x$clo, 0, 2) &
+            comfort__between(pmv, -2, 2)
         pmv[!valid] <- NA_real_
         ppd[!valid] <- NA_real_
     }
@@ -113,7 +113,7 @@ comfort_set <- function(
 ) {
     units <- match.arg(units)
     position <- match.arg(position)
-    x <- comfort_recycle(
+    x <- comfort__recycle(
         tdb = tdb,
         tr = tr,
         v = v,
@@ -123,9 +123,9 @@ comfort_set <- function(
         wme = wme
     )
 
-    tdb_si <- comfort_to_si_temp(x$tdb, units)
-    tr_si <- comfort_to_si_temp(x$tr, units)
-    v_si <- comfort_to_si_speed(x$v, units)
+    tdb_si <- comfort__to_si_temp(x$tdb, units)
+    tr_si <- comfort__to_si_temp(x$tr, units)
+    v_si <- comfort__to_si_speed(x$v, units)
 
     set <- set__vec(
         tdb_si,
@@ -141,16 +141,16 @@ comfort_set <- function(
     )
 
     if (isTRUE(limit_inputs)) {
-        valid <- comfort_between(tdb_si, 10, 40) &
-            comfort_between(tr_si, 10, 40) &
-            comfort_between(v_si, 0, 2) &
-            comfort_between(x$rh, 0, 100) &
-            comfort_between(x$met, 1, 4) &
-            comfort_between(x$clo, 0, 1.5)
+        valid <- comfort__between(tdb_si, 10, 40) &
+            comfort__between(tr_si, 10, 40) &
+            comfort__between(v_si, 0, 2) &
+            comfort__between(x$rh, 0, 100) &
+            comfort__between(x$met, 1, 4) &
+            comfort__between(x$clo, 0, 1.5)
         set[!valid] <- NA_real_
     }
 
-    set <- comfort_from_si_temp(set, units)
+    set <- comfort__from_si_temp(set, units)
     if (isTRUE(round_output)) {
         set <- round(set, 1L)
     }
@@ -178,15 +178,15 @@ comfort_adaptive <- function(
 ) {
     units <- match.arg(units)
     standard <- match.arg(standard)
-    x <- comfort_recycle(tdb = tdb, tr = tr, t_running = t_running, v = v)
+    x <- comfort__recycle(tdb = tdb, tr = tr, t_running = t_running, v = v)
 
-    tdb_si <- comfort_to_si_temp(x$tdb, units)
-    tr_si <- comfort_to_si_temp(x$tr, units)
-    t_running_si <- comfort_to_si_temp(x$t_running, units)
-    v_si <- comfort_to_si_speed(x$v, units)
+    tdb_si <- comfort__to_si_temp(x$tdb, units)
+    tr_si <- comfort__to_si_temp(x$tr, units)
+    t_running_si <- comfort__to_si_temp(x$t_running, units)
+    v_si <- comfort__to_si_speed(x$v, units)
 
     if (standard == "ashrae55") {
-        out <- comfort_adaptive_ashrae(
+        out <- adaptive__ashrae(
             tdb_si,
             tr_si,
             t_running_si,
@@ -196,7 +196,7 @@ comfort_adaptive <- function(
             round_output = round_output
         )
     } else {
-        out <- comfort_adaptive_en(
+        out <- adaptive__en(
             tdb_si,
             tr_si,
             t_running_si,
@@ -221,7 +221,7 @@ comfort_adaptive <- function(
     )
     for (col in temp_cols) {
         if (is.numeric(out[[col]])) {
-            out[[col]] <- comfort_from_si_temp(out[[col]], units)
+            out[[col]] <- comfort__from_si_temp(out[[col]], units)
         }
     }
 
@@ -239,13 +239,13 @@ comfort_heat_index <- function(
     round_output = TRUE
 ) {
     units <- match.arg(units)
-    x <- comfort_recycle(
+    x <- comfort__recycle(
         tdb = tdb,
         rh = rh,
         solar_exposure = solar_exposure
     )
 
-    tdb_si <- comfort_to_si_temp(x$tdb, units)
+    tdb_si <- comfort__to_si_temp(x$tdb, units)
     tdb_f <- unit__f_from_c(tdb_si)
     exposure <- x$solar_exposure
     # Missing exposure follows the vectorized calculator convention and returns
@@ -257,8 +257,8 @@ comfort_heat_index <- function(
     heat_index_f <- heat_index__value_f(tdb_f, x$rh, exposure)
 
     if (isTRUE(limit_inputs)) {
-        valid <- comfort_between(tdb_si, -50, 100) &
-            comfort_between(x$rh, 0, 100) &
+        valid <- comfort__between(tdb_si, -50, 100) &
+            comfort__between(x$rh, 0, 100) &
             is.finite(exposure)
         heat_index_f[!valid] <- NA_real_
     }

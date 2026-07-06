@@ -491,7 +491,7 @@ test_that("psychrometric tiles build with grids, fill scales, and facets", {
     expect_no_error(
         ggplot2::ggplot_build(
             ggpsychro(d, tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
-                geom_grid_relhum() +
+                geom_psychro_grid_relhum() +
                 geom_psychro_tile(
                     ggplot2::aes(dry_bulb, relhum = relative_humidity),
                     binwidth = c(5, 2)
@@ -504,7 +504,7 @@ test_that("psychrometric tiles build with grids, fill scales, and facets", {
     expect_no_error(
         ggplot2::ggplotGrob(
             ggpsychro(d, tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
-                geom_grid_relhum() +
+                geom_psychro_grid_relhum() +
                 geom_psychro_tile(
                     ggplot2::aes(dry_bulb, relhum = relative_humidity),
                     binwidth = c(5, 2)

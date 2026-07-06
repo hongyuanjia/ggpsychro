@@ -43,7 +43,7 @@ StatComfortGivoniZone <- ggplot2::ggproto(
         na.rm = FALSE,
         psychro_scales = NULL
     ) {
-        ctx <- comfort_stat_context(data, units, pres)
+        ctx <- comfort__stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
         givoni__zone_data(
@@ -99,7 +99,7 @@ StatComfortGivoniLabel <- ggplot2::ggproto(
         na.rm = FALSE,
         psychro_scales = NULL
     ) {
-        ctx <- comfort_stat_context(data, units, pres)
+        ctx <- comfort__stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
         givoni__label_data(
@@ -153,7 +153,7 @@ StatComfortGivoniMeanOutdoor <- ggplot2::ggproto(
         na.rm = FALSE,
         psychro_scales = NULL
     ) {
-        ctx <- comfort_stat_context(data, units, pres)
+        ctx <- comfort__stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
         givoni__mean_outdoor_data(
@@ -206,7 +206,7 @@ StatComfortGivoniMeanOutdoorLabel <- ggplot2::ggproto(
         na.rm = FALSE,
         psychro_scales = NULL
     ) {
-        ctx <- comfort_stat_context(data, units, pres)
+        ctx <- comfort__stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
         givoni__mean_outdoor_label_data(

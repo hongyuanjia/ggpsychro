@@ -19,7 +19,7 @@ geom_comfort_heat_index <- function(
     inherit.aes = TRUE
 ) {
     label <- angle <- NULL
-    layer_mapping <- comfort_computed_xy_mapping(mapping)
+    layer_mapping <- comfort__computed_xy_mapping(mapping)
     params <- list(...)
     zone_specs <- heat_index__zone_specs()
     # Keep one layer per heat-index category so fill/alpha/legend semantics stay
@@ -43,7 +43,7 @@ geom_comfort_heat_index <- function(
         )
         layers[[i]] <- psychro_layer(
             stat = StatComfortHeatIndexZone,
-            data = comfort_layer_data(data),
+            data = comfort__layer_data(data),
             mapping = layer_mapping,
             geom = "polygon",
             position = position,
@@ -62,7 +62,7 @@ geom_comfort_heat_index <- function(
     }
     layers[[length(layers) + 1L]] <- psychro_layer(
         stat = StatComfortHeatIndexContour,
-        data = comfort_layer_data(data),
+        data = comfort__layer_data(data),
         mapping = layer_mapping,
         geom = "path",
         position = position,
@@ -92,8 +92,8 @@ geom_comfort_heat_index <- function(
         }
         layers[[length(layers) + 1L]] <- psychro_layer(
             stat = StatComfortHeatIndexLabel,
-            data = comfort_layer_data(data),
-            mapping = comfort_computed_xy_mapping(ggplot2::aes(
+            data = comfort__layer_data(data),
+            mapping = comfort__computed_xy_mapping(ggplot2::aes(
                 label = ggplot2::after_stat(label),
                 angle = ggplot2::after_stat(angle)
             )),

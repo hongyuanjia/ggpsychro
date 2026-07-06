@@ -14,6 +14,18 @@ GGPSY_OPT$hum_min <- 0.0
 # Upper humidity-ratio display limit in g_H2O kg_Air-1 for SI charts.
 GGPSY_OPT$hum_max <- 60.0
 
+# Default dry-bulb lower bound in Celsius for empty SI chart panels.
+GGPSY_OPT$tdb_default_min <- 0.0
+
+# Default dry-bulb upper bound in Celsius for empty SI chart panels.
+GGPSY_OPT$tdb_default_max <- 50.0
+
+# Default humidity-ratio lower bound in g_H2O kg_Air-1 for empty SI charts.
+GGPSY_OPT$hum_default_min <- 0.0
+
+# Default humidity-ratio upper bound in g_H2O kg_Air-1 for empty SI charts.
+GGPSY_OPT$hum_default_max <- 50.0
+
 # ggplot2's known x-position aesthetics are reused for dry-bulb scale aliases.
 GGPSY_OPT$x_aes <- utils::getFromNamespace(
     "ggplot_global",

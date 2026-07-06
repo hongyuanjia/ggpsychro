@@ -5,7 +5,7 @@ NULL
 # psychrometric polygon/path data frames.
 
 # Build filled comfort bands from a sampled metric grid.
-comfort_band_data <- function(
+comfort_band__data <- function(
     model,
     metric,
     levels,
@@ -19,7 +19,7 @@ comfort_band_data <- function(
 ) {
     # Filled bands are generated on node grids so isoband can preserve polygon
     # topology across adjacent cells.
-    m <- comfort_grid_matrix(
+    m <- comfort_grid__matrix(
         model,
         metric,
         n,
@@ -30,9 +30,9 @@ comfort_band_data <- function(
         at = "nodes",
         boundary = "saturation"
     )
-    breaks <- comfort_band_breaks(m$metric, m$value, levels, units)
+    breaks <- comfort_band__breaks(m$metric, m$value, levels, units)
     if (length(breaks) < 2L) {
-        return(comfort_empty_band())
+        return(comfort_band__empty())
     }
 
     bands <- isoband::isobands(
@@ -42,7 +42,7 @@ comfort_band_data <- function(
         levels_low = breaks[-length(breaks)],
         levels_high = breaks[-1L]
     )
-    comfort_isoband_data(
+    comfort_band__isoband_data(
         bands,
         breaks[-length(breaks)],
         breaks[-1L],
@@ -55,7 +55,7 @@ comfort_band_data <- function(
 }
 
 # Return an empty polygon-band data frame with stable columns.
-comfort_empty_band <- function() {
+comfort_band__empty <- function() {
     util__new_data_frame(list(
         tdb = numeric(),
         humratio = numeric(),
@@ -73,7 +73,7 @@ comfort_empty_band <- function() {
 }
 
 # Derive band breakpoints from metric defaults, user levels, and sampled values.
-comfort_band_breaks <- function(metric, z, levels = NULL, units = "SI") {
+comfort_band__breaks <- function(metric, z, levels = NULL, units = "SI") {
     if (identical(metric, "acceptability") && is.null(levels)) {
         return(c(-0.5, 0.5, 1.5))
     }
@@ -123,7 +123,7 @@ comfort_band_breaks <- function(metric, z, levels = NULL, units = "SI") {
 }
 
 # Normalize isoband polygon/path output to comfort layer data columns.
-comfort_isoband_data <- function(
+comfort_band__isoband_data <- function(
     iso,
     low,
     high,
@@ -138,9 +138,9 @@ comfort_isoband_data <- function(
     if (!any(lengths)) {
         return(
             if (geom == "polygon") {
-                comfort_empty_band()
+                comfort_band__empty()
             } else {
-                comfort_empty_contour()
+                comfort_contour__empty()
             }
         )
     }

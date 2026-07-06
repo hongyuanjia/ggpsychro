@@ -113,7 +113,7 @@ heat_index__zone_data <- function(
     }
     category_ids <- category_ids[category_ids %in% seq_along(thresholds)]
     if (!length(category_ids)) {
-        return(comfort_empty_band())
+        return(comfort_band__empty())
     }
 
     # Each category remains a separate ggplot layer, but all categories are cut
@@ -129,7 +129,7 @@ heat_index__zone_data <- function(
     )
     z_range <- range(m$value, finite = TRUE)
     if (!all(is.finite(z_range))) {
-        return(comfort_empty_band())
+        return(comfort_band__empty())
     }
 
     specs <- heat_index__zone_specs()
@@ -147,7 +147,7 @@ heat_index__zone_data <- function(
     })
     zones <- zones[vapply(zones, nrow, integer(1L)) > 0L]
     if (!length(zones)) {
-        return(comfort_empty_band())
+        return(comfort_band__empty())
     }
 
     group_offset <- 0L
@@ -180,7 +180,7 @@ heat_index__grid_matrix <- function(
 
     # Heat-index zone layers all need the same node grid; the caller supplies a
     # short-lived environment so reuse stays local to one layer composition.
-    m <- comfort_grid_matrix(
+    m <- comfort_grid__matrix(
         model,
         "heat_index",
         n,
@@ -240,7 +240,7 @@ heat_index__zone_from_grid <- function(
         max(z_range[[2L]], low) + max(1, abs(low)) * 1e-6
     }
     if (high <= low || z_range[[2L]] < low) {
-        return(comfort_empty_band())
+        return(comfort_band__empty())
     }
     high <- min(high, z_range[[2L]] + max(1, abs(z_range[[2L]])) * 1e-6)
 
@@ -251,7 +251,7 @@ heat_index__zone_from_grid <- function(
         levels_low = low,
         levels_high = high
     )
-    out <- comfort_isoband_data(
+    out <- comfort_band__isoband_data(
         bands,
         low,
         high,
@@ -299,7 +299,7 @@ heat_index__contour_data <- function(
         z = t(m$value),
         levels = thresholds
     )
-    out <- comfort_isoband_data(
+    out <- comfort_band__isoband_data(
         lines,
         thresholds,
         thresholds,
@@ -309,7 +309,7 @@ heat_index__contour_data <- function(
         psychro_scales = psychro_scales,
         units = units
     )
-    out <- comfort_add_contour_labels(out)
+    out <- comfort_contour__add_labels(out)
     out
 }
 
@@ -324,7 +324,7 @@ heat_index__label_data <- function(
     hum_lim,
     psychro_scales = NULL
 ) {
-    m <- comfort_grid_matrix(
+    m <- comfort_grid__matrix(
         model,
         "heat_index",
         n,
