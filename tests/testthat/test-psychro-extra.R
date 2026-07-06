@@ -1,5 +1,5 @@
 test_that("GetTDewPointFromHumRatioOnly()", {
-    with_units(
+    psychrolib__with_units(
         "SI",
         expect_equal(
             GetTDewPointFromHumRatioOnly(0.01, 101325),
@@ -8,7 +8,7 @@ test_that("GetTDewPointFromHumRatioOnly()", {
         )
     )
 
-    with_units("SI", {
+    psychrolib__with_units("SI", {
         pressure <- psychrolib::GetStandardAtmPressure(0)
         hum_ratio <- c(1e-7, 0.004, 0.01, 0.02)
         vap_pres <- psychrolib::GetVapPresFromHumRatio(hum_ratio, pressure)
@@ -17,22 +17,24 @@ test_that("GetTDewPointFromHumRatioOnly()", {
         expect_equal(native, fallback, tolerance = 1e-4)
     })
 
-    with_units("IP", {
+    psychrolib__with_units("IP", {
         pressure <- psychrolib::GetStandardAtmPressure(0)
         hum_ratio <- c(1e-7, 0.004, 0.01, 0.02)
         vap_pres <- psychrolib::GetVapPresFromHumRatio(hum_ratio, pressure) *
             6894.7572931783
         fallback <- vapply(vap_pres, GetTDewPointFromVapPresOnly, double(1L)) *
-            9 / 5 + 32
+            9 /
+            5 +
+            32
         native <- GetTDewPointFromHumRatioOnly(hum_ratio, pressure)
         expect_equal(native, fallback, tolerance = 1e-4)
     })
 })
 
 test_that("with_units restores nested unit systems", {
-    with_units("IP", {
+    psychrolib__with_units("IP", {
         expect_true(psychrolib::isIP())
-        with_units("SI", {
+        psychrolib__with_units("SI", {
             expect_false(psychrolib::isIP())
         })
         expect_true(psychrolib::isIP())
@@ -40,30 +42,33 @@ test_that("with_units restores nested unit systems", {
 })
 
 test_that("with_units restores an unset unit system", {
-    psy_op <- psychrolib_options()
+    psy_op <- psychrolib__options()
     old_units <- psy_op$UNITS
     old_tolerance <- psy_op$TOLERANCE
-    on.exit({
-        psy_op$UNITS <- old_units
-        psy_op$TOLERANCE <- old_tolerance
-    }, add = TRUE)
+    on.exit(
+        {
+            psy_op$UNITS <- old_units
+            psy_op$TOLERANCE <- old_tolerance
+        },
+        add = TRUE
+    )
 
     psy_op$UNITS <- NA_character_
     psy_op$TOLERANCE <- NA_real_
 
-    value <- with_units("SI", {
+    value <- psychrolib__with_units("SI", {
         expect_identical(psychrolib::GetUnitSystem(), "SI")
-        expect_false(is.na(psychrolib_options()$TOLERANCE))
+        expect_false(is.na(psychrolib__options()$TOLERANCE))
         psychrolib::GetStandardAtmPressure(0)
     })
 
     expect_type(value, "double")
     expect_true(is.na(psychrolib::GetUnitSystem()))
-    expect_true(is.na(psychrolib_options()$TOLERANCE))
+    expect_true(is.na(psychrolib__options()$TOLERANCE))
 })
 
 test_that("GetHumRatioFromAirVolume() round-trips specific volume", {
-    with_units("SI", {
+    psychrolib__with_units("SI", {
         pressure <- psychrolib::GetStandardAtmPressure(0)
         hum_ratio <- 0.01
         volume <- psychrolib::GetMoistAirVolume(25, hum_ratio, pressure)
@@ -75,7 +80,7 @@ test_that("GetHumRatioFromAirVolume() round-trips specific volume", {
         )
     })
 
-    with_units("IP", {
+    psychrolib__with_units("IP", {
         pressure <- psychrolib::GetStandardAtmPressure(0)
         hum_ratio <- 0.008
         volume <- psychrolib::GetMoistAirVolume(77, hum_ratio, pressure)

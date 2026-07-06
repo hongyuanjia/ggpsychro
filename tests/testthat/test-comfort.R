@@ -1,110 +1,448 @@
+# Read one typed pythermalcomfort oracle vector for a model/case metric.
 comfort_oracle <- function(model, case, metric) {
     path <- testthat::test_path("fixtures", "comfort-oracle.csv")
     oracle <- utils::read.csv(path, stringsAsFactors = FALSE)
-    value <- oracle$value[
-        oracle$model == model & oracle$case == case & oracle$metric == metric
+    rows <- oracle[
+        oracle$model == model & oracle$case == case & oracle$metric == metric,
+        ,
+        drop = FALSE
     ]
-    expect_length(value, 1L)
-    value
+    expect_gt(nrow(rows), 0L)
+    rows <- rows[order(rows$index), , drop = FALSE]
+    expect_equal(rows$index, seq_len(nrow(rows)))
+
+    values <- Map(comfort_oracle_value, rows$type, rows$value)
+    values <- unlist(values, use.names = FALSE)
+
+    if (all(rows$type == "numeric")) {
+        return(as.numeric(values))
+    }
+    if (all(rows$type == "logical")) {
+        return(as.logical(values))
+    }
+    if (all(rows$type == "character")) {
+        return(as.character(values))
+    }
+
+    stop("Mixed oracle value types are not supported.", call. = FALSE)
+}
+
+# Convert one serialized oracle cell back to the closest R scalar type.
+comfort_oracle_value <- function(type, value) {
+    switch(
+        type,
+        numeric = as.numeric(value),
+        logical = as.logical(value),
+        character = as.character(value),
+        stop("Unknown oracle value type: ", type, call. = FALSE)
+    )
+}
+
+# Compare a ggpsychro output column with the stored pythermalcomfort vector.
+expect_comfort_oracle <- function(
+    actual,
+    model,
+    case,
+    metric,
+    tolerance = 1e-8
+) {
+    expected <- comfort_oracle(model, case, metric)
+    actual <- actual[[metric]]
+    expect_equal(length(actual), length(expected))
+    # pythermalcomfort stores unavailable string fields as NaN; ggpsychro uses
+    # the natural R missing value for the public column type.
+    expect_equal(is.na(actual), is.na(expected))
+    keep <- !is.na(actual) & !is.na(expected)
+    if (!any(keep)) {
+        return(invisible(NULL))
+    }
+    if (is.numeric(expected)) {
+        expect_equal(actual[keep], expected[keep], tolerance = tolerance)
+    } else {
+        expect_equal(actual[keep], expected[keep])
+    }
 }
 
 test_that("comfort PMV and PPD match fixed pythermalcomfort oracle values", {
-    result <- comfort_pmv(
-        tdb = c(22, 25), tr = 25, vr = 0.1,
-        rh = 50, met = 1.4, clo = 0.5
+    cases <- list(
+        si_default_22 = list(
+            args = list(
+                tdb = 22,
+                tr = 25,
+                vr = 0.1,
+                rh = 50,
+                met = 1.4,
+                clo = 0.5
+            ),
+            tolerance = 1e-8
+        ),
+        si_default_25 = list(
+            args = list(
+                tdb = 25,
+                tr = 25,
+                vr = 0.1,
+                rh = 50,
+                met = 1.4,
+                clo = 0.5
+            ),
+            tolerance = 1e-8
+        ),
+        vector_mixed_inputs = list(
+            args = list(
+                tdb = c(22, 25, 28),
+                tr = c(25, 25, 26),
+                vr = c(0.1, 0.2, 0.3),
+                rh = c(50, 55, 60),
+                met = c(1.1, 1.4, 1.8),
+                clo = c(0.5, 0.6, 0.7)
+            ),
+            tolerance = 1e-8
+        ),
+        si_unrounded = list(
+            args = list(
+                tdb = 26,
+                tr = 25,
+                vr = 0.2,
+                rh = 60,
+                met = 1.2,
+                clo = 0.7,
+                round_output = FALSE
+            ),
+            tolerance = 1e-6
+        ),
+        ip_default = list(
+            args = list(
+                tdb = 77,
+                tr = 77,
+                vr = 0.328084,
+                rh = 50,
+                met = 1.2,
+                clo = 0.5,
+                units = "IP"
+            ),
+            tolerance = 1e-8
+        ),
+        limit_inputs_low_tdb = list(
+            args = list(
+                tdb = 5,
+                tr = 25,
+                vr = 0.1,
+                rh = 50,
+                met = 1.2,
+                clo = 0.5
+            ),
+            tolerance = 1e-8
+        ),
+        limit_inputs_false_low_tdb = list(
+            args = list(
+                tdb = 5,
+                tr = 25,
+                vr = 0.1,
+                rh = 50,
+                met = 1.2,
+                clo = 0.5,
+                limit_inputs = FALSE,
+                round_output = FALSE
+            ),
+            tolerance = 1e-6
+        ),
+        high_rh_clo = list(
+            args = list(
+                tdb = 24,
+                tr = 24,
+                vr = 0.1,
+                rh = 100,
+                met = 1.2,
+                clo = 1.5
+            ),
+            tolerance = 1e-8
+        ),
+        upper_tr_v_met = list(
+            args = list(
+                tdb = 28,
+                tr = 35,
+                vr = 1,
+                rh = 70,
+                met = 2,
+                clo = 0.3
+            ),
+            tolerance = 1e-8
+        )
     )
 
-    expect_equal(result$pmv[[1L]], comfort_oracle("pmv", "iso_vector_22", "pmv"))
-    expect_equal(result$ppd[[1L]], comfort_oracle("pmv", "iso_vector_22", "ppd"))
-    expect_equal(result$pmv[[2L]], comfort_oracle("pmv", "iso_vector_25", "pmv"))
-    expect_equal(result$ppd[[2L]], comfort_oracle("pmv", "iso_vector_25", "ppd"))
-    expect_equal(result$tsv, c("Neutral", "Neutral"))
-})
-
-test_that("native PMV kernel matches R scalar reference", {
-    tdb <- c(20, 25, 30, NA)
-    tr <- c(21, 25, 32, 25)
-    vr <- c(0.1, 0.2, 0.4, 0.1)
-    rh <- c(40, 50, 70, 50)
-    met <- c(1.0, 1.2, 1.6, 1.2)
-    clo <- c(0.5, 0.7, 0.3, 0.5)
-    wme <- c(0, 0, 0.1, 0)
-
-    native <- comfort_pmv_vec(tdb, tr, vr, rh, met, clo, wme)
-    reference <- mapply(
-        comfort_pmv_one,
-        tdb, tr, vr, rh, met, clo, wme,
-        SIMPLIFY = TRUE, USE.NAMES = FALSE
-    )
-
-    expect_equal(native, reference, tolerance = 1e-10)
+    for (case in names(cases)) {
+        result <- do.call(comfort_pmv, cases[[case]]$args)
+        for (metric in c("pmv", "ppd", "tsv")) {
+            expect_comfort_oracle(
+                result,
+                "pmv",
+                case,
+                metric,
+                tolerance = cases[[case]]$tolerance
+            )
+        }
+    }
 })
 
 test_that("comfort SET matches fixed pythermalcomfort oracle value", {
-    result <- comfort_set(25, tr = 25, v = 0.1, rh = 50, met = 1.2, clo = 0.5)
-    expect_equal(result$set[[1L]], comfort_oracle("set", "gagge_default", "set"))
-})
-
-test_that("native SET kernel matches R scalar reference", {
-    tdb <- c(22, 25, 28, NA)
-    tr <- c(22, 26, 30, 25)
-    v <- c(0.1, 0.2, 0.6, 0.1)
-    rh <- c(40, 50, 70, 50)
-    met <- c(1.1, 1.2, 1.6, 1.2)
-    clo <- c(0.4, 0.5, 0.7, 0.5)
-    wme <- c(0, 0, 0.1, 0)
-
-    native <- comfort_set_vec(
-        tdb, tr, v, rh, met, clo, wme,
-        body_surface_area = 1.8258, p_atm = 101325,
-        position = "standing"
-    )
-    reference <- mapply(
-        comfort_set_one,
-        tdb, tr, v, rh, met, clo, wme,
-        MoreArgs = list(
-            body_surface_area = 1.8258,
-            p_atm = 101325,
-            position = "standing"
+    cases <- list(
+        gagge_default = list(
+            args = list(
+                tdb = 25,
+                tr = 25,
+                v = 0.1,
+                rh = 50,
+                met = 1.2,
+                clo = 0.5
+            ),
+            tolerance = 1e-8
         ),
-        SIMPLIFY = TRUE, USE.NAMES = FALSE
+        vector_mixed_inputs = list(
+            args = list(
+                tdb = c(24, 26, 28),
+                tr = c(24, 27, 30),
+                v = c(0.1, 0.4, 0.8),
+                rh = c(45, 60, 70),
+                met = c(1.1, 1.6, 2.0),
+                clo = c(0.5, 0.7, 0.8)
+            ),
+            tolerance = 1e-8
+        ),
+        standing_unrounded = list(
+            args = list(
+                tdb = 28,
+                tr = 30,
+                v = 0.6,
+                rh = 70,
+                met = 1.6,
+                clo = 0.7,
+                wme = 0.1,
+                round_output = FALSE
+            ),
+            tolerance = 1e-4
+        ),
+        sitting_low_pressure = list(
+            args = list(
+                tdb = 25,
+                tr = 26,
+                v = 0.2,
+                rh = 45,
+                met = 1.1,
+                clo = 0.6,
+                body_surface_area = 1.7,
+                p_atm = 90000,
+                position = "sitting"
+            ),
+            tolerance = 1e-8
+        ),
+        limit_inputs_low_tdb = list(
+            args = list(
+                tdb = 5,
+                tr = 25,
+                v = 0.1,
+                rh = 50,
+                met = 1.2,
+                clo = 0.5
+            ),
+            tolerance = 1e-8
+        ),
+        limit_inputs_false_low_tdb = list(
+            args = list(
+                tdb = 5,
+                tr = 25,
+                v = 0.1,
+                rh = 50,
+                met = 1.2,
+                clo = 0.5,
+                limit_inputs = FALSE,
+                round_output = FALSE
+            ),
+            tolerance = 1e-4
+        ),
+        boundary_low = list(
+            args = list(
+                tdb = 10,
+                tr = 10,
+                v = 0,
+                rh = 0,
+                met = 1,
+                clo = 0
+            ),
+            tolerance = 1e-8
+        ),
+        boundary_high = list(
+            args = list(
+                tdb = 35,
+                tr = 35,
+                v = 2,
+                rh = 100,
+                met = 4,
+                clo = 1.5
+            ),
+            tolerance = 1e-8
+        ),
+        wme_unrounded = list(
+            args = list(
+                tdb = 26,
+                tr = 27,
+                v = 0.4,
+                rh = 55,
+                met = 2,
+                clo = 0.6,
+                wme = 0.4,
+                round_output = FALSE
+            ),
+            tolerance = 1e-4
+        )
     )
 
-    expect_equal(native, reference, tolerance = 1e-7)
+    for (case in names(cases)) {
+        result <- do.call(comfort_set, cases[[case]]$args)
+        expect_comfort_oracle(
+            result,
+            "set",
+            case,
+            "set",
+            tolerance = cases[[case]]$tolerance
+        )
+    }
 })
 
 test_that("comfort adaptive models match fixed pythermalcomfort oracle values", {
-    ashrae <- comfort_adaptive(25, tr = 25, t_running = 20, v = 0.1,
-        standard = "ashrae55")
-    expect_equal(ashrae$tmp_cmf[[1L]],
-        comfort_oracle("adaptive_ashrae", "default", "tmp_cmf"))
-    expect_equal(ashrae$tmp_cmf_80_low[[1L]],
-        comfort_oracle("adaptive_ashrae", "default", "tmp_cmf_80_low"))
-    expect_equal(ashrae$tmp_cmf_80_up[[1L]],
-        comfort_oracle("adaptive_ashrae", "default", "tmp_cmf_80_up"))
-    expect_equal(ashrae$tmp_cmf_90_low[[1L]],
-        comfort_oracle("adaptive_ashrae", "default", "tmp_cmf_90_low"))
-    expect_equal(ashrae$tmp_cmf_90_up[[1L]],
-        comfort_oracle("adaptive_ashrae", "default", "tmp_cmf_90_up"))
-    expect_true(ashrae$acceptability[[1L]])
+    ashrae_cases <- list(
+        default = list(
+            args = list(tdb = 25, tr = 25, t_running = 20, v = 0.1),
+            tolerance = 1e-8
+        ),
+        vector_mixed_inputs = list(
+            args = list(
+                tdb = c(24, 27, 30),
+                tr = c(24, 28, 30),
+                t_running = c(18, 24, 30),
+                v = c(0.1, 1.0, 1.3)
+            ),
+            tolerance = 1e-8
+        ),
+        high_air_speed = list(
+            args = list(tdb = 27, tr = 27, t_running = 24, v = 1.0),
+            tolerance = 1e-8
+        ),
+        ip_default = list(
+            args = list(
+                tdb = 77,
+                tr = 77,
+                t_running = 68,
+                v = 0.328084,
+                units = "IP"
+            ),
+            tolerance = 0.05
+        ),
+        limit_inputs_false_low_running = list(
+            args = list(
+                tdb = 25,
+                tr = 25,
+                t_running = 5,
+                v = 0.1,
+                limit_inputs = FALSE,
+                round_output = FALSE
+            ),
+            tolerance = 1e-8
+        )
+    )
+    ashrae_metrics <- c(
+        "tmp_cmf",
+        "tmp_cmf_80_low",
+        "tmp_cmf_80_up",
+        "tmp_cmf_90_low",
+        "tmp_cmf_90_up",
+        "acceptability_80",
+        "acceptability_90"
+    )
 
-    en <- comfort_adaptive(25, tr = 25, t_running = 20, v = 0.1,
-        standard = "en16798")
-    expect_equal(en$tmp_cmf[[1L]],
-        comfort_oracle("adaptive_en", "default", "tmp_cmf"))
-    expect_equal(en$tmp_cmf_cat_i_low[[1L]],
-        comfort_oracle("adaptive_en", "default", "tmp_cmf_cat_i_low"))
-    expect_equal(en$tmp_cmf_cat_i_up[[1L]],
-        comfort_oracle("adaptive_en", "default", "tmp_cmf_cat_i_up"))
-    expect_equal(en$tmp_cmf_cat_ii_low[[1L]],
-        comfort_oracle("adaptive_en", "default", "tmp_cmf_cat_ii_low"))
-    expect_equal(en$tmp_cmf_cat_ii_up[[1L]],
-        comfort_oracle("adaptive_en", "default", "tmp_cmf_cat_ii_up"))
-    expect_equal(en$tmp_cmf_cat_iii_low[[1L]],
-        comfort_oracle("adaptive_en", "default", "tmp_cmf_cat_iii_low"))
-    expect_equal(en$tmp_cmf_cat_iii_up[[1L]],
-        comfort_oracle("adaptive_en", "default", "tmp_cmf_cat_iii_up"))
-    expect_true(en$acceptability[[1L]])
+    for (case in names(ashrae_cases)) {
+        result <- do.call(
+            comfort_adaptive,
+            c(ashrae_cases[[case]]$args, list(standard = "ashrae55"))
+        )
+        for (metric in ashrae_metrics) {
+            expect_comfort_oracle(
+                result,
+                "adaptive_ashrae",
+                case,
+                metric,
+                tolerance = ashrae_cases[[case]]$tolerance
+            )
+        }
+    }
+
+    en_cases <- list(
+        default = list(
+            args = list(tdb = 25, tr = 25, t_running = 20, v = 0.1),
+            tolerance = 1e-8
+        ),
+        vector_mixed_inputs = list(
+            args = list(
+                tdb = c(24, 27, 30),
+                tr = c(24, 28, 30),
+                t_running = c(18, 24, 30),
+                v = c(0.1, 1.0, 1.3)
+            ),
+            tolerance = 1e-8
+        ),
+        high_air_speed = list(
+            args = list(tdb = 27, tr = 27, t_running = 24, v = 1.0),
+            tolerance = 1e-8
+        ),
+        ip_default = list(
+            args = list(
+                tdb = 77,
+                tr = 77,
+                t_running = 68,
+                v = 0.328084,
+                units = "IP"
+            ),
+            tolerance = 0.05
+        ),
+        limit_inputs_false_low_running = list(
+            args = list(
+                tdb = 25,
+                tr = 25,
+                t_running = 5,
+                v = 0.1,
+                limit_inputs = FALSE,
+                round_output = FALSE
+            ),
+            tolerance = 1e-8
+        )
+    )
+    en_metrics <- c(
+        "tmp_cmf",
+        "tmp_cmf_cat_i_low",
+        "tmp_cmf_cat_i_up",
+        "tmp_cmf_cat_ii_low",
+        "tmp_cmf_cat_ii_up",
+        "tmp_cmf_cat_iii_low",
+        "tmp_cmf_cat_iii_up",
+        "acceptability_cat_i",
+        "acceptability_cat_ii",
+        "acceptability_cat_iii"
+    )
+
+    for (case in names(en_cases)) {
+        result <- do.call(
+            comfort_adaptive,
+            c(en_cases[[case]]$args, list(standard = "en16798"))
+        )
+        for (metric in en_metrics) {
+            expect_comfort_oracle(
+                result,
+                "adaptive_en",
+                case,
+                metric,
+                tolerance = en_cases[[case]]$tolerance
+            )
+        }
+    }
 })
 
 test_that("comfort heat index matches Marsh and NOAA-style expected behavior", {
@@ -121,12 +459,20 @@ test_that("comfort heat index matches Marsh and NOAA-style expected behavior", {
     expect_equal(exposed$heat_index - hi$heat_index, 8, tolerance = 0.05)
 
     exposure_vector <- comfort_heat_index(
-        c(90, 90), rh = 70, solar_exposure = c(0, 1), units = "IP"
+        c(90, 90),
+        rh = 70,
+        solar_exposure = c(0, 1),
+        units = "IP"
     )
     expect_equal(diff(exposure_vector$heat_index), 8, tolerance = 0.05)
-    expect_true(is.na(comfort_heat_index(
-        90, rh = 70, solar_exposure = NA_real_, units = "IP"
-    )$heat_index))
+    expect_true(is.na(
+        comfort_heat_index(
+            90,
+            rh = 70,
+            solar_exposure = NA_real_,
+            units = "IP"
+        )$heat_index
+    ))
     expect_error(
         comfort_heat_index(90, rh = 70, solar_exposure = 2, units = "IP"),
         "solar_exposure"
@@ -136,34 +482,62 @@ test_that("comfort heat index matches Marsh and NOAA-style expected behavior", {
         "solar_exposure"
     )
 
-    si <- comfort_heat_index(get_c_from_f(90), rh = 70, round_output = FALSE)
+    si <- comfort_heat_index(unit__c_from_f(90), rh = 70, round_output = FALSE)
     ip <- comfort_heat_index(90, rh = 70, units = "IP", round_output = FALSE)
-    expect_equal(get_f_from_c(si$heat_index), ip$heat_index, tolerance = 1e-8)
+    expect_equal(unit__f_from_c(si$heat_index), ip$heat_index, tolerance = 1e-8)
 
-    expect_true(is.na(comfort_heat_index(90, rh = 150, units = "IP")$heat_index))
+    expect_true(is.na(
+        comfort_heat_index(90, rh = 150, units = "IP")$heat_index
+    ))
     expect_error(comfort_model_heat_index(solar_exposure = 2), "solar_exposure")
 })
 
 test_that("comfort calculations handle IP units and input limits", {
     si <- comfort_pmv(25, tr = 25, vr = 0.1, rh = 50, met = 1.4, clo = 0.5)
-    ip <- comfort_pmv(77, tr = 77, vr = 0.3281, rh = 50, met = 1.4, clo = 0.5,
-        units = "IP")
+    ip <- comfort_pmv(
+        77,
+        tr = 77,
+        vr = 0.3281,
+        rh = 50,
+        met = 1.4,
+        clo = 0.5,
+        units = "IP"
+    )
     expect_equal(ip$pmv, si$pmv)
     expect_equal(ip$ppd, si$ppd)
 
-    set_si <- comfort_set(25, tr = 25, v = 0.1, rh = 50, met = 1.2, clo = 0.5,
-        round_output = FALSE)
-    set_ip <- comfort_set(77, tr = 77, v = 0.3281, rh = 50, met = 1.2, clo = 0.5,
-        units = "IP", round_output = FALSE)
-    expect_equal(set_ip$set, get_f_from_c(set_si$set), tolerance = 0.05)
+    set_si <- comfort_set(
+        25,
+        tr = 25,
+        v = 0.1,
+        rh = 50,
+        met = 1.2,
+        clo = 0.5,
+        round_output = FALSE
+    )
+    set_ip <- comfort_set(
+        77,
+        tr = 77,
+        v = 0.3281,
+        rh = 50,
+        met = 1.2,
+        clo = 0.5,
+        units = "IP",
+        round_output = FALSE
+    )
+    expect_equal(set_ip$set, unit__f_from_c(set_si$set), tolerance = 0.05)
 
     expect_true(is.na(comfort_pmv(5, rh = 50)$pmv[[1L]]))
     expect_true(is.na(comfort_set(5, rh = 50)$set[[1L]]))
     expect_true(is.na(comfort_pmv(25, rh = -10)$pmv[[1L]]))
     expect_true(is.na(comfort_set(25, rh = 150)$set[[1L]]))
     expect_true(is.na(comfort_adaptive(25, t_running = 5)$tmp_cmf[[1L]]))
-    expect_true(is.na(comfort_adaptive(25, t_running = 20, v = -0.1,
-        standard = "en16798")$acceptability[[1L]]))
+    expect_true(is.na(comfort_adaptive(
+        25,
+        t_running = 20,
+        v = -0.1,
+        standard = "en16798"
+    )$acceptability[[1L]]))
     expect_true(is.na(comfort_pmv(c(25, NA), rh = 50)$pmv[[2L]]))
 })
 
@@ -179,14 +553,16 @@ test_that("comfort model objects validate inputs", {
     expect_error(comfort_model_adaptive(t_running = NA_real_), "`t_running`")
     expect_error(comfort_model_adaptive(t_running = c(20, 21)), "`t_running`")
     expect_error(comfort_model_heat_index(limit_inputs = NA), "`limit_inputs`")
-    expect_error(comfort_model_type(list()), "comfort_model")
+    expect_error(comfort__model_type(list()), "comfort_model")
     expect_error(comfort_model_adaptive(t_running = 20, standard = "bad"))
+    expect_error(comfort_pmv_ashrae55(edition = "2020"), "edition")
+    expect_error(comfort_pmv_en15251(edition = "2019"), "edition")
     expect_error(
-        comfort_standard_ashrae55_2017(c(0.5, -0.5)),
+        comfort_pmv_ashrae55(range = c(0.5, -0.5)),
         "strictly increasing"
     )
     expect_error(
-        comfort_standard_en15251_2007(c(-0.7, 0.2, -0.2, 0.7)),
+        comfort_pmv_en15251(breaks = c(-0.7, 0.2, -0.2, 0.7)),
         "strictly increasing"
     )
 })
@@ -194,13 +570,15 @@ test_that("comfort model objects validate inputs", {
 test_that("comfort overlay and contour build on psychrometric panel grids", {
     overlay <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_overlay(n = c(24, 16), gap = 0) +
+            comfort_layer__bands(n = c(24, 16), gap = 0) +
             scale_fill_comfort_pmv()
     ))
     expect_gt(nrow(overlay), 0L)
     expect_true(all(is.finite(overlay$value)))
     expect_true(all(overlay$y >= 0))
-    expect_true(all(c("level_low", "level_high", "edge_level") %in% names(overlay)))
+    expect_true(all(
+        c("level_low", "level_high", "edge_level") %in% names(overlay)
+    ))
     expect_false("width" %in% names(overlay))
     expect_equal(unique(overlay$alpha), 0.55)
     overlay_breaks <- sort(unique(c(
@@ -209,15 +587,25 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
     )))
     expect_true(all(abs(diff(overlay_breaks) - 0.25) < 1e-8))
 
+    pmv_layers <- built_data_layers(ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+            geom_comfort_pmv(
+                contour_levels = c(-1, 0, 1),
+                n = c(24, 16)
+            )
+    ))
+    expect_gte(length(pmv_layers), 3L)
+    expect_gt(nrow(pmv_layers[[1L]]), 0L)
+
     overlay_alpha <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_overlay(n = c(24, 16), alpha = 0.35)
+            comfort_layer__bands(n = c(24, 16), alpha = 0.35)
     ))
     expect_equal(unique(overlay_alpha$alpha), 0.35)
 
     isoband <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_overlay(method = "isoband", n = c(24, 16))
+            comfort_layer__bands(band_method = "isoband", n = c(24, 16))
     ))
     expect_gt(nrow(isoband), 0L)
     expect_true("level_mid" %in% names(isoband))
@@ -225,21 +613,59 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
 
     tile <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_overlay(method = "tile", n = c(24, 16))
+            comfort_layer__bands(band_render = "tile", n = c(24, 16))
     ))
     expect_gt(nrow(tile), 0L)
     expect_equal(unique(tile$alpha), 0.55)
 
+    pmv_tile <- first_built_data(ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+            geom_comfort_pmv(
+                band_render = "tile",
+                contours = FALSE,
+                n = c(24, 16)
+            )
+    ))
+    expect_gt(nrow(pmv_tile), 0L)
+    expect_equal(unique(pmv_tile$alpha), 0.55)
+
     set_overlay <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_overlay(model = comfort_model_set(), n = c(24, 16))
+            comfort_layer__bands(model = comfort_model_set(), n = c(24, 16))
     ))
     expect_gt(nrow(set_overlay), 0L)
     expect_equal(unique(set_overlay$alpha), 0.55)
+    expect_error(
+        comfort_layer__bands(
+            model = comfort_model_set(),
+            band_method = "root"
+        ),
+        "`band_method = \"root\"` is only available for PMV"
+    )
+
+    set_layers <- built_data_layers(ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+            geom_comfort_set(
+                contours = TRUE,
+                breaks = c(22, 24, 26),
+                labels = TRUE,
+                n = c(24, 16)
+            )
+    ))
+    expect_equal(length(set_layers), 2L)
+    expect_gt(nrow(set_layers[[1L]]), 0L)
+    expect_true("label" %in% names(set_layers[[2L]]))
+
+    set_tile <- first_built_data(ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+            geom_comfort_set(band_render = "tile", n = c(24, 16))
+    ))
+    expect_gt(nrow(set_tile), 0L)
+    expect_equal(unique(set_tile$alpha), 0.55)
 
     adaptive_overlay <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_overlay(
+            comfort_layer__bands(
                 model = comfort_model_adaptive(t_running = 20),
                 n = c(24, 16)
             )
@@ -247,10 +673,18 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
     expect_gt(nrow(adaptive_overlay), 0L)
     expect_equal(unique(adaptive_overlay$alpha), 0.55)
 
+    adaptive_zone <- first_built_data(ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+            geom_comfort_adaptive(t_running = 20)
+    ))
+    expect_gt(nrow(adaptive_zone), 0L)
+    expect_equal(unique(adaptive_zone$alpha), 0.3)
+
     heat_overlay <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
-            geom_comfort_overlay(
-                model = comfort_model_heat_index(), n = c(32, 24)
+            comfort_layer__bands(
+                model = comfort_model_heat_index(),
+                n = c(32, 24)
             )
     ))
     expect_gt(nrow(heat_overlay), 0L)
@@ -264,8 +698,10 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
     expect_equal(length(heat_index), 6L)
     expect_true(all(vapply(heat_index[1:4], nrow, integer(1L)) > 0L))
     expect_equal(unique(heat_index[[1L]]$alpha), 0.4)
-    expect_true(all(c("CAUTION", "EXTREME CAUTION", "DANGER",
-        "EXTREME DANGER") %in% unique(heat_index[[6L]]$label)))
+    expect_true(all(
+        c("CAUTION", "EXTREME CAUTION", "DANGER", "EXTREME DANGER") %in%
+            unique(heat_index[[6L]]$label)
+    ))
     expect_equal(unique(heat_index[[6L]]$alpha), 0)
 
     collect_grobs <- function(grob) {
@@ -274,32 +710,57 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
             if (!is.null(grob$children)) as.list(grob$children) else list()
         )
 
-        c(list(grob), unlist(lapply(children, collect_grobs), recursive = FALSE))
+        c(
+            list(grob),
+            unlist(lapply(children, collect_grobs), recursive = FALSE)
+        )
     }
     heat_index_grobs <- collect_grobs(ggplot2::ggplotGrob(
         ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
             geom_comfort_heat_index(n = c(32, 24), alpha = 0.4)
     ))
-    expect_true(any(vapply(heat_index_grobs, function(grob) {
-        identical(grob$name, "psychro-heat-index-labels")
-    }, logical(1L))))
+    expect_true(any(vapply(
+        heat_index_grobs,
+        function(grob) {
+            identical(grob$name, "psychro-heat-index-labels")
+        },
+        logical(1L)
+    )))
 
     tile_alpha <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_overlay(method = "tile", n = c(24, 16), alpha = 0.35)
+            comfort_layer__bands(
+                band_render = "tile",
+                n = c(24, 16),
+                alpha = 0.35
+            )
     ))
     expect_equal(unique(tile_alpha$alpha), 0.35)
 
-    pressure <- with_units("SI", psychrolib::GetStandardAtmPressure(0))
-    grid <- comfort_grid_data(
-        comfort_model_pmv(), NULL, c(16, 16), 0, "SI", pressure,
-        FALSE, c(15, 30), c(0, 35)
+    pressure <- psychrolib__with_units(
+        "SI",
+        psychrolib::GetStandardAtmPressure(0)
+    )
+    grid <- comfort_grid__data(
+        comfort_model_pmv(),
+        NULL,
+        c(16, 16),
+        0,
+        "SI",
+        pressure,
+        FALSE,
+        c(15, 30),
+        c(0, 35)
     )
     saturation_left <- psychro_saturation_humratio(
-        grid$tdb - grid$width / 2, "SI", pressure
+        grid$tdb - grid$width / 2,
+        "SI",
+        pressure
     )
     saturation_right <- psychro_saturation_humratio(
-        grid$tdb + grid$width / 2, "SI", pressure
+        grid$tdb + grid$width / 2,
+        "SI",
+        pressure
     )
     expect_true(all(
         grid$humratio - grid$height / 2 <=
@@ -308,14 +769,14 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
 
     contour <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_contour(n = c(32, 20), breaks = c(-1, 0, 1))
+            comfort_layer__contour(n = c(32, 20), breaks = c(-1, 0, 1))
     ))
     expect_gt(nrow(contour), 0L)
     expect_true(all(contour$level %in% c(-1, 0, 1)))
 
     contour_labelled <- built_data_layers(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_contour(
+            comfort_layer__contour(
                 model = comfort_model_set(),
                 metric = "set",
                 breaks = c(22, 24, 26),
@@ -325,14 +786,17 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
     ))
     expect_equal(length(contour_labelled), 1L)
     expect_true(all(c("22", "24", "26") %in% contour_labelled[[1L]]$label))
-    expect_true(all(c("label", "level", "value") %in% names(contour_labelled[[1L]])))
+    expect_true(all(
+        c("label", "level", "value") %in% names(contour_labelled[[1L]])
+    ))
 
     empty_contour <- expect_warning(
         ggplot2::ggplot_build(
             ggpsychro(tdb_lim = c(-50, -40), hum_lim = c(0, 5)) +
-                geom_comfort_contour(
+                comfort_layer__contour(
                     model = comfort_model_set(limit_inputs = TRUE),
-                    metric = "set", n = c(8, 8)
+                    metric = "set",
+                    n = c(8, 8)
                 )
         )$data[[1L]],
         NA
@@ -341,7 +805,7 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
 
     pmv_labelled <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_contour(
+            comfort_layer__contour(
                 breaks = c(-1, 0, 1),
                 n = c(32, 20),
                 label = TRUE
@@ -351,60 +815,103 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
 
     expect_error(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_contour(label = NA),
+            comfort_layer__contour(label = NA),
         "label"
     )
     expect_error(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_contour(label = TRUE, label_size = -1),
+            comfort_layer__contour(label = TRUE, label_size = -1),
         "label_size"
     )
 
     heat_contour <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
-            geom_comfort_contour(
-                model = comfort_model_heat_index(), n = c(32, 24)
+            comfort_layer__contour(
+                model = comfort_model_heat_index(),
+                n = c(32, 24)
             )
     ))
-    expect_true(all(sort(unique(round(heat_contour$level, 6))) %in%
-        round(comfort_heat_index_thresholds("SI"), 6)))
+    expect_true(all(
+        sort(unique(round(heat_contour$level, 6))) %in%
+            round(heat_index__thresholds("SI"), 6)
+    ))
 
-    heat_zones <- comfort_heat_index_zone_data(
-        comfort_model_heat_index(), NULL, c(32, 24), "SI", pressure,
-        FALSE, c(20, 45), c(0, 35)
+    heat_zones <- heat_index__zone_data(
+        comfort_model_heat_index(),
+        NULL,
+        c(32, 24),
+        "SI",
+        pressure,
+        FALSE,
+        c(20, 45),
+        c(0, 35)
     )
-    heat_zone_parts <- lapply(seq_along(comfort_heat_index_zone_specs()), function(i) {
-        comfort_heat_index_zone_data(
-            comfort_model_heat_index(), i, c(32, 24), "SI", pressure,
-            FALSE, c(20, 45), c(0, 35)
-        )
-    })
-    heat_zone_parts <- heat_zone_parts[vapply(heat_zone_parts, nrow, integer(1L)) > 0L]
+    heat_zone_parts <- lapply(
+        seq_along(heat_index__zone_specs()),
+        function(i) {
+            heat_index__zone_data(
+                comfort_model_heat_index(),
+                i,
+                c(32, 24),
+                "SI",
+                pressure,
+                FALSE,
+                c(20, 45),
+                c(0, 35)
+            )
+        }
+    )
+    heat_zone_parts <- heat_zone_parts[
+        vapply(heat_zone_parts, nrow, integer(1L)) > 0L
+    ]
     heat_zone_parts <- do.call(rbind, heat_zone_parts)
     expect_equal(
         table(heat_zones$category_id),
         table(heat_zone_parts$category_id)
     )
-    zone_fills <- vapply(comfort_heat_index_zone_specs(), `[[`,
-        character(1L), "fill")
+    zone_fills <- vapply(
+        heat_index__zone_specs(),
+        `[[`,
+        character(1L),
+        "fill"
+    )
     expect_equal(
         as.vector(tapply(heat_zones$fill, heat_zones$category_id, unique)),
         zone_fills[as.integer(names(table(heat_zones$category_id)))]
     )
 
     heat_cache <- new.env(parent = emptyenv())
-    cached_heat_zones <- comfort_heat_index_zone_data(
-        comfort_model_heat_index(), NULL, c(32, 24), "SI", pressure,
-        FALSE, c(20, 45), c(0, 35), grid_cache = heat_cache
+    cached_heat_zones <- heat_index__zone_data(
+        comfort_model_heat_index(),
+        NULL,
+        c(32, 24),
+        "SI",
+        pressure,
+        FALSE,
+        c(20, 45),
+        c(0, 35),
+        grid_cache = heat_cache
     )
-    cached_heat_contour <- comfort_heat_index_contour_data(
-        comfort_model_heat_index(), c(32, 24), "SI", pressure,
-        FALSE, c(20, 45), c(0, 35), grid_cache = heat_cache
+    cached_heat_contour <- heat_index__contour_data(
+        comfort_model_heat_index(),
+        c(32, 24),
+        "SI",
+        pressure,
+        FALSE,
+        c(20, 45),
+        c(0, 35),
+        grid_cache = heat_cache
     )
-    uncached_heat_contour <- comfort_contour_data(
-        comfort_model_heat_index(), "heat_index",
-        comfort_heat_index_thresholds("SI"), c(32, 24), "SI", pressure,
-        FALSE, c(20, 45), c(0, 35), contour_method = "isoband"
+    uncached_heat_contour <- comfort_contour__data(
+        comfort_model_heat_index(),
+        "heat_index",
+        heat_index__thresholds("SI"),
+        c(32, 24),
+        "SI",
+        pressure,
+        FALSE,
+        c(20, 45),
+        c(0, 35)
     )
     expect_gt(nrow(cached_heat_zones), 0L)
     expect_equal(length(ls(heat_cache)), 1L)
@@ -412,30 +919,50 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
 })
 
 test_that("Givoni strategy zones build and stay below saturation", {
-    pressure <- with_units("SI", psychrolib::GetStandardAtmPressure(0))
+    pressure <- psychrolib__with_units(
+        "SI",
+        psychrolib::GetStandardAtmPressure(0)
+    )
     expect_s3_class(comfort_strategy_givoni(), "PsyComfortGivoniStrategy")
     expect_error(comfort_strategy_givoni(mean_outdoor = NA), "mean_outdoor")
-    expect_s3_class(element_comfort_zone(), "PsyComfortZoneElement")
+    expect_s3_class(element_givoni_zone(), "PsyComfortZoneElement")
 
-    cool <- comfort_givoni_zone_data(
-        comfort_strategy_givoni(mean_outdoor = 15), "comfort", "SI",
-        pressure, FALSE, c(0, 45), c(0, 35)
+    cool <- givoni__zone_data(
+        comfort_strategy_givoni(mean_outdoor = 15),
+        "comfort",
+        "SI",
+        pressure,
+        FALSE,
+        c(0, 45),
+        c(0, 35)
     )
-    warm <- comfort_givoni_zone_data(
-        comfort_strategy_givoni(mean_outdoor = 25), "comfort", "SI",
-        pressure, FALSE, c(0, 45), c(0, 35)
+    warm <- givoni__zone_data(
+        comfort_strategy_givoni(mean_outdoor = 25),
+        "comfort",
+        "SI",
+        pressure,
+        FALSE,
+        c(0, 45),
+        c(0, 35)
     )
     expect_gt(mean(warm$tdb), mean(cool$tdb))
 
-    zones <- comfort_givoni_zone_data(
-        comfort_strategy_givoni(), NULL, "SI", pressure,
-        FALSE, c(0, 50), c(0, 35)
+    zones <- givoni__zone_data(
+        comfort_strategy_givoni(),
+        NULL,
+        "SI",
+        pressure,
+        FALSE,
+        c(0, 50),
+        c(0, 35)
     )
-    drawable_zones <- comfort_givoni_zone_specs()
+    drawable_zones <- givoni__zone_specs()
     drawable_zones <- drawable_zones$zone[drawable_zones$draw_zone]
     expect_true(all(drawable_zones %in% unique(zones$zone)))
-    expect_false(any(c("air_conditioning_dehumidification", "humidification") %in%
-        unique(zones$zone)))
+    expect_false(any(
+        c("air_conditioning_dehumidification", "humidification") %in%
+            unique(zones$zone)
+    ))
     sat <- psychro_saturation_humratio(zones$tdb, "SI", pressure)
     expect_true(all(zones$humratio <= sat + 1e-8))
 
@@ -444,66 +971,110 @@ test_that("Givoni strategy zones build and stay below saturation", {
             geom_comfort_givoni(alpha = 0.35)
     )$data
     expect_equal(length(built), 14L)
-    comfort_layer <- which(vapply(built, function(x) {
-        "zone" %in% names(x) && any(x$zone == "comfort")
-    }, logical(1L)))[[1L]]
+    comfort_layer <- which(vapply(
+        built,
+        function(x) {
+            "zone" %in% names(x) && any(x$zone == "comfort")
+        },
+        logical(1L)
+    ))[[1L]]
     expect_equal(unique(built[[comfort_layer]]$alpha), 0.2)
     path_label_layer <- length(built) - 2L
-    expect_true("NATURAL VENTILATION" %in%
-        unique(built[[path_label_layer]]$label))
+    expect_true(
+        "NATURAL VENTILATION" %in%
+            unique(built[[path_label_layer]]$label)
+    )
     expect_true("MASS COOLING" %in% unique(built[[path_label_layer]]$label))
-    expect_true("AIR-CONDITIONING" %in%
-        unique(built[[path_label_layer]]$label))
+    expect_true(
+        "AIR-CONDITIONING" %in%
+            unique(built[[path_label_layer]]$label)
+    )
     label_layer <- length(built) - 1L
     expect_true("COMFORT\nZONE" %in% unique(built[[label_layer]]$label))
     expect_true("HEATING" %in% unique(built[[label_layer]]$label))
-    expect_true("AIR-CONDITIONING &\nDEHUMIDIFICATION" %in%
-        unique(built[[label_layer]]$label))
-    expect_true(any(grepl("\u00b0C", built[[length(built)]]$label,
-        fixed = TRUE)))
+    expect_true(
+        "AIR-CONDITIONING &\nDEHUMIDIFICATION" %in%
+            unique(built[[label_layer]]$label)
+    )
+    expect_true(any(grepl(
+        "\u00b0C",
+        built[[length(built)]]$label,
+        fixed = TRUE
+    )))
 
-    path_labels <- comfort_givoni_label_data(
-        comfort_strategy_givoni(), "path", "SI", pressure,
-        FALSE, c(0, 50), c(0, 35)
+    path_labels <- givoni__label_data(
+        comfort_strategy_givoni(),
+        "path",
+        "SI",
+        pressure,
+        FALSE,
+        c(0, 50),
+        c(0, 35)
     )
     expect_equal(
         unique(path_labels$vjust[path_labels$zone == "natural_ventilation"]),
         1.8
     )
     top_to_bottom <- c(
-        "internal_gains", "passive_solar_heating", "active_solar_heating",
-        "mass_cooling", "mass_cooling_night_ventilation", "winter",
+        "internal_gains",
+        "passive_solar_heating",
+        "active_solar_heating",
+        "mass_cooling",
+        "mass_cooling_night_ventilation",
+        "winter",
         "air_conditioning"
     )
     for (zone in top_to_bottom) {
         zone_data <- path_labels[path_labels$zone == zone, , drop = FALSE]
-        expect_gt(zone_data$humratio[[1L]], zone_data$humratio[[nrow(zone_data)]])
+        expect_gt(
+            zone_data$humratio[[1L]],
+            zone_data$humratio[[nrow(zone_data)]]
+        )
     }
 
-    point_labels <- comfort_givoni_label_data(
-        comfort_strategy_givoni(), "point", "SI", pressure,
-        FALSE, c(0, 50), c(0, 35)
+    point_labels <- givoni__label_data(
+        comfort_strategy_givoni(),
+        "point",
+        "SI",
+        pressure,
+        FALSE,
+        c(0, 50),
+        c(0, 35)
     )
-    heating_label <- point_labels[point_labels$zone == "heating", ,
-        drop = FALSE]
+    heating_label <- point_labels[
+        point_labels$zone == "heating",
+        ,
+        drop = FALSE
+    ]
     expect_equal(heating_label$angle, 270)
-    heating_sat <- comfort_givoni_humratio(heating_label$tdb, 100, pressure)
+    heating_sat <- givoni__humratio(heating_label$tdb, 100, pressure)
     expect_equal(heating_label$humratio, heating_sat / 2, tolerance = 1e-8)
 
-    air_label <- path_labels[path_labels$zone == "air_conditioning", ,
-        drop = FALSE]
+    air_label <- path_labels[
+        path_labels$zone == "air_conditioning",
+        ,
+        drop = FALSE
+    ]
     expect_lt(unique(air_label$tdb), 50)
     expect_gt(unique(air_label$tdb), 45)
 
-    mean_line <- comfort_givoni_mean_outdoor_data(
-        comfort_strategy_givoni(mean_outdoor = 17.5), "SI", pressure,
-        FALSE, c(-10, 50), c(0, 35)
+    mean_line <- givoni__mean_outdoor_data(
+        comfort_strategy_givoni(mean_outdoor = 17.5),
+        "SI",
+        pressure,
+        FALSE,
+        c(-10, 50),
+        c(0, 35)
     )
-    mean_label <- comfort_givoni_mean_outdoor_label_data(
-        comfort_strategy_givoni(mean_outdoor = 17.5), "SI", pressure,
-        FALSE, c(-10, 50), c(0, 35)
+    mean_label <- givoni__mean_outdoor_label_data(
+        comfort_strategy_givoni(mean_outdoor = 17.5),
+        "SI",
+        pressure,
+        FALSE,
+        c(-10, 50),
+        c(0, 35)
     )
-    mean_sat <- comfort_givoni_humratio(17.5, 100, pressure)
+    mean_sat <- givoni__humratio(17.5, 100, pressure)
     expect_gt(max(mean_line$humratio), mean_sat)
     expect_gt(mean_label$humratio[[1L]], mean_sat)
     expect_equal(mean_label$angle[[1L]], 270)
@@ -521,39 +1092,55 @@ test_that("Givoni zone styles can be overridden per zone", {
         ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 35)) +
             geom_comfort_givoni(
                 zone_style = list(
-                    comfort = element_comfort_zone(
-                        fill = "#00AA55", colour = "#123456",
-                        linewidth = 1.4, alpha = 0.4
+                    comfort = element_givoni_zone(
+                        fill = "#00AA55",
+                        colour = "#123456",
+                        linewidth = 1.4,
+                        alpha = 0.4
                     ),
                     winter = ggplot2::element_polygon(
-                        colour = "#AA0000", linetype = "dotdash",
+                        colour = "#AA0000",
+                        linetype = "dotdash",
                         linewidth = 1.2
                     ),
                     natural_ventilation = list(
-                        fill = "#99CCFF", colour = "#0033AA"
+                        fill = "#99CCFF",
+                        colour = "#0033AA"
                     )
                 )
             )
     )$data
 
-    comfort_layer <- which(vapply(styled, function(x) {
-        "zone" %in% names(x) && any(x$zone == "comfort")
-    }, logical(1L)))[[1L]]
+    comfort_layer <- which(vapply(
+        styled,
+        function(x) {
+            "zone" %in% names(x) && any(x$zone == "comfort")
+        },
+        logical(1L)
+    ))[[1L]]
     expect_equal(unique(styled[[comfort_layer]]$fill), "#00AA55")
     expect_equal(unique(styled[[comfort_layer]]$colour), "#123456")
     expect_equal(unique(styled[[comfort_layer]]$linewidth), 1.4)
     expect_equal(unique(styled[[comfort_layer]]$alpha), 0.4)
 
-    winter_layer <- which(vapply(styled, function(x) {
-        "zone" %in% names(x) && any(x$zone == "winter")
-    }, logical(1L)))[[1L]]
+    winter_layer <- which(vapply(
+        styled,
+        function(x) {
+            "zone" %in% names(x) && any(x$zone == "winter")
+        },
+        logical(1L)
+    ))[[1L]]
     expect_equal(unique(styled[[winter_layer]]$colour), "#AA0000")
     expect_equal(unique(styled[[winter_layer]]$linetype), "dotdash")
     expect_equal(unique(styled[[winter_layer]]$linewidth), 1.2)
 
-    natural_layer <- which(vapply(styled, function(x) {
-        "zone" %in% names(x) && any(x$zone == "natural_ventilation")
-    }, logical(1L)))[[1L]]
+    natural_layer <- which(vapply(
+        styled,
+        function(x) {
+            "zone" %in% names(x) && any(x$zone == "natural_ventilation")
+        },
+        logical(1L)
+    ))[[1L]]
     expect_equal(unique(styled[[natural_layer]]$fill), "#99CCFF")
     expect_equal(unique(styled[[natural_layer]]$colour), "#0033AA")
     expect_equal(unique(styled[[natural_layer]]$alpha), 0.2)
@@ -562,7 +1149,7 @@ test_that("Givoni zone styles can be overridden per zone", {
         ggplot2::ggplot_build(
             ggpsychro() +
                 geom_comfort_givoni(
-                    zone_style = list(not_a_zone = element_comfort_zone())
+                    zone_style = list(not_a_zone = element_givoni_zone())
                 )
         ),
         "Unknown Givoni zone"
@@ -578,132 +1165,291 @@ test_that("Givoni zone styles can be overridden per zone", {
     )
 })
 
-test_that("PMV root-traced curves solve requested levels", {
-    pressure <- with_units("SI", psychrolib::GetStandardAtmPressure(0))
+test_that("PMV root-traced contours solve requested levels", {
+    pressure <- psychrolib__with_units(
+        "SI",
+        psychrolib::GetStandardAtmPressure(0)
+    )
     model <- comfort_model_pmv()
 
     humratio <- seq(0, 0.02, length.out = 40)
-    native_roots <- comfort_pmv_curve_roots(
-        model, -0.5, humratio, c(15, 30), "SI", pressure
+    native_roots <- pmv__curve_roots(
+        model,
+        -0.5,
+        humratio,
+        c(15, 30),
+        "SI",
+        pressure
     )
-    fallback_roots <- comfort_pmv_curve_roots_r(
-        model, -0.5, humratio, c(15, 30), "SI", pressure
+    fallback_roots <- pmv__curve_roots_r(
+        model,
+        -0.5,
+        humratio,
+        c(15, 30),
+        "SI",
+        pressure
     )
     expect_equal(native_roots, fallback_roots, tolerance = 1e-7)
 
-    native_sat_roots <- comfort_pmv_curve_saturation_roots(
-        model, 0, c(0, 35), c(0, 35), "SI", pressure, 120
+    native_sat_roots <- pmv__curve_saturation_roots(
+        model,
+        0,
+        c(0, 35),
+        c(0, 35),
+        "SI",
+        pressure,
+        120
     )
-    fallback_sat_roots <- comfort_pmv_curve_saturation_roots_r(
-        model, 0, c(0, 35), c(0, 35), "SI", pressure, 120
+    fallback_sat_roots <- pmv__curve_saturation_roots_r(
+        model,
+        0,
+        c(0, 35),
+        c(0, 35),
+        "SI",
+        pressure,
+        120
     )
     expect_equal(native_sat_roots, fallback_sat_roots, tolerance = 1e-7)
 
-    curves <- comfort_pmv_curve_data(
-        comfort_model_pmv(), c(-0.5, 0, 0.5), 96, "SI", pressure,
-        FALSE, c(15, 30), c(0, 20), label = "none"
+    curves <- pmv__curve_data(
+        comfort_model_pmv(),
+        c(-0.5, 0, 0.5),
+        96,
+        "SI",
+        pressure,
+        FALSE,
+        c(15, 30),
+        c(0, 20),
+        label = "none"
     )
     expect_gt(nrow(curves), 0L)
-    expect_true(all(vapply(split(curves$humratio, curves$level),
-        function(x) all(diff(x) >= 0), logical(1L))))
+    expect_true(all(vapply(
+        split(curves$humratio, curves$level),
+        function(x) all(diff(x) >= 0),
+        logical(1L)
+    )))
 
-    rh <- comfort_relhum_from_humratio(curves$tdb, curves$humratio, "SI", pressure)
-    pmv <- comfort_pmv(curves$tdb, rh = rh, limit_inputs = FALSE,
-        round_output = FALSE)$pmv
+    rh <- comfort_dispatch__relhum_from_humratio(
+        curves$tdb,
+        curves$humratio,
+        "SI",
+        pressure
+    )
+    pmv <- comfort_pmv(
+        curves$tdb,
+        rh = rh,
+        limit_inputs = FALSE,
+        round_output = FALSE
+    )$pmv
     expect_lt(max(abs(pmv - curves$level), na.rm = TRUE), 0.02)
 
     curve_cache <- new.env(parent = emptyenv())
-    cached_curves <- comfort_pmv_curve_data(
-        comfort_model_pmv(), c(-0.5, 0, 0.5), 96, "SI", pressure,
-        FALSE, c(15, 30), c(0, 20), label = "none",
+    cached_curves <- pmv__curve_data(
+        comfort_model_pmv(),
+        c(-0.5, 0, 0.5),
+        96,
+        "SI",
+        pressure,
+        FALSE,
+        c(15, 30),
+        c(0, 20),
+        label = "none",
         curve_cache = curve_cache
     )
-    cached_axis <- comfort_pmv_axis_label_data(
-        comfort_model_pmv(), c(-0.5, 0, 0.5), 96, "SI", pressure,
-        FALSE, c(15, 30), c(0, 20), curve_cache = curve_cache
+    cached_axis <- pmv__axis_label_data(
+        comfort_model_pmv(),
+        c(-0.5, 0, 0.5),
+        96,
+        "SI",
+        pressure,
+        FALSE,
+        c(15, 30),
+        c(0, 20),
+        curve_cache = curve_cache
     )
     expect_equal(cached_curves, curves, tolerance = 1e-8)
     expect_gt(nrow(cached_axis), 0L)
     expect_equal(length(ls(curve_cache)), 3L)
 
-    saturated <- comfort_pmv_curve_data(
-        comfort_model_pmv(), c(-1, 0, 1), 120, "SI", pressure,
-        FALSE, c(0, 35), c(0, 35), label = "none"
+    saturated <- pmv__curve_data(
+        comfort_model_pmv(),
+        c(-1, 0, 1),
+        120,
+        "SI",
+        pressure,
+        FALSE,
+        c(0, 35),
+        c(0, 35),
+        label = "none"
     )
-    sat_exists <- vapply(c(-1, 0, 1), function(level) {
-        length(comfort_pmv_curve_saturation_roots(
-            comfort_model_pmv(), level, c(0, 35), c(0, 35),
-            "SI", pressure, 120
-        )$tdb) > 0L
-    }, logical(1L))
-    reaches_saturation <- vapply(split(saturated, saturated$level), function(x) {
-        sat <- psychro_saturation_humratio(x$tdb, "SI", pressure)
-        min(abs(x$humratio - sat), na.rm = TRUE) < 1e-8
-    }, logical(1L))
+    sat_exists <- vapply(
+        c(-1, 0, 1),
+        function(level) {
+            length(
+                pmv__curve_saturation_roots(
+                    comfort_model_pmv(),
+                    level,
+                    c(0, 35),
+                    c(0, 35),
+                    "SI",
+                    pressure,
+                    120
+                )$tdb
+            ) >
+                0L
+        },
+        logical(1L)
+    )
+    reaches_saturation <- vapply(
+        split(saturated, saturated$level),
+        function(x) {
+            sat <- psychro_saturation_humratio(x$tdb, "SI", pressure)
+            min(abs(x$humratio - sat), na.rm = TRUE) < 1e-8
+        },
+        logical(1L)
+    )
     expect_true(all(reaches_saturation[sat_exists]))
 
-    labels <- comfort_pmv_curve_data(
-        comfort_model_pmv(), -3:3, 120, "SI", pressure,
-        FALSE, c(5, 40), c(0, 24), label = "sensation"
+    labels <- pmv__curve_data(
+        comfort_model_pmv(),
+        -3:3,
+        120,
+        "SI",
+        pressure,
+        FALSE,
+        c(5, 40),
+        c(0, 24),
+        label = "sensation"
     )
-    expect_true(all(c("COLD", "COOL", "SLIGHTLY COOL", "NEUTRAL",
-        "SLIGHTLY WARM", "WARM", "HOT") %in%
-        unique(labels$label)))
+    expect_true(all(
+        c(
+            "COLD",
+            "COOL",
+            "SLIGHTLY COOL",
+            "NEUTRAL",
+            "SLIGHTLY WARM",
+            "WARM",
+            "HOT"
+        ) %in%
+            unique(labels$label)
+    ))
     expect_equal(unique(labels$linetype[labels$level == 0]), "dashed")
     expect_equal(unique(labels$vjust), 0.5)
 
-    rootband <- comfort_pmv_rootband_data(
-        comfort_model_pmv(), NULL, c(-0.5, 0, 0.5), c(120, 60),
-        "SI", pressure, FALSE, c(15, 30), c(0, 20)
+    rootband <- pmv__root_band_data(
+        comfort_model_pmv(),
+        NULL,
+        c(-0.5, 0, 0.5),
+        c(120, 60),
+        "SI",
+        pressure,
+        FALSE,
+        c(15, 30),
+        c(0, 20)
     )
     for (level in c(-0.5, 0, 0.5)) {
-        edge <- rootband[rootband$edge_level == level &
-            is.finite(rootband$edge_level), , drop = FALSE]
-        rh <- comfort_relhum_from_humratio(edge$tdb, edge$humratio, "SI", pressure)
-        pmv <- comfort_pmv(edge$tdb, rh = rh, limit_inputs = FALSE,
-            round_output = FALSE)$pmv
+        edge <- rootband[
+            rootband$edge_level == level &
+                is.finite(rootband$edge_level),
+            ,
+            drop = FALSE
+        ]
+        rh <- comfort_dispatch__relhum_from_humratio(
+            edge$tdb,
+            edge$humratio,
+            "SI",
+            pressure
+        )
+        pmv <- comfort_pmv(
+            edge$tdb,
+            rh = rh,
+            limit_inputs = FALSE,
+            round_output = FALSE
+        )$pmv
         expect_lt(max(abs(pmv - level), na.rm = TRUE), 0.02)
     }
 
-    marsh_rootband <- comfort_pmv_rootband_data(
-        comfort_model_pmv(), NULL, NULL, c(70, 48),
-        "SI", pressure, FALSE, c(5, 40), c(0, 24)
+    marsh_rootband <- pmv__root_band_data(
+        comfort_model_pmv(),
+        NULL,
+        NULL,
+        c(70, 48),
+        "SI",
+        pressure,
+        FALSE,
+        c(5, 40),
+        c(0, 24)
     )
     cap_points <- data.frame(
         x = c(18.05063, 18.16456, 18.16456, 18.16456),
         y = c(0.01292650, 0.01302172, 0.01295477, 0.01288782)
     )
     cap_polys <- split(marsh_rootband, marsh_rootband$group)
-    cap_covered <- vapply(seq_len(nrow(cap_points)), function(i) {
-        any(vapply(cap_polys, function(poly) {
-            psychro_inside_polygon(
-                cap_points$x[[i]], cap_points$y[[i]], poly$x, poly$y
-            )
-        }, logical(1L)))
-    }, logical(1L))
+    cap_covered <- vapply(
+        seq_len(nrow(cap_points)),
+        function(i) {
+            any(vapply(
+                cap_polys,
+                function(poly) {
+                    util__inside_polygon(
+                        cap_points$x[[i]],
+                        cap_points$y[[i]],
+                        poly$x,
+                        poly$y
+                    )
+                },
+                logical(1L)
+            ))
+        },
+        logical(1L)
+    )
     expect_true(all(cap_covered))
 
-    standard_band <- comfort_pmv_band_data(
-        comfort_model_pmv(), c(-0.5, 0.5), c(140, 90),
-        "SI", pressure, FALSE, c(5, 35), c(0, 24)
+    standard_band <- pmv__band_data(
+        comfort_model_pmv(),
+        c(-0.5, 0.5),
+        c(140, 90),
+        "SI",
+        pressure,
+        FALSE,
+        c(5, 35),
+        c(0, 24)
     )
     top <- standard_band[which.max(standard_band$humratio), , drop = FALSE]
     sat <- psychro_saturation_humratio(top$tdb, "SI", pressure)
     expect_lt(abs(top$humratio - sat), 1e-6)
 
     rootband_cache <- new.env(parent = emptyenv())
-    uncached_first_band <- comfort_pmv_band_data(
-        comfort_model_pmv(), c(-0.5, 0), c(140, 90),
-        "SI", pressure, FALSE, c(5, 35), c(0, 24)
+    uncached_first_band <- pmv__band_data(
+        comfort_model_pmv(),
+        c(-0.5, 0),
+        c(140, 90),
+        "SI",
+        pressure,
+        FALSE,
+        c(5, 35),
+        c(0, 24)
     )
-    cached_standard_band <- comfort_pmv_band_data(
-        comfort_model_pmv(), c(-0.5, 0), c(140, 90),
-        "SI", pressure, FALSE, c(5, 35), c(0, 24),
+    cached_standard_band <- pmv__band_data(
+        comfort_model_pmv(),
+        c(-0.5, 0),
+        c(140, 90),
+        "SI",
+        pressure,
+        FALSE,
+        c(5, 35),
+        c(0, 24),
         rootband_cache = rootband_cache
     )
-    cached_adjacent_band <- comfort_pmv_band_data(
-        comfort_model_pmv(), c(0, 0.5), c(140, 90),
-        "SI", pressure, FALSE, c(5, 35), c(0, 24),
+    cached_adjacent_band <- pmv__band_data(
+        comfort_model_pmv(),
+        c(0, 0.5),
+        c(140, 90),
+        "SI",
+        pressure,
+        FALSE,
+        c(5, 35),
+        c(0, 24),
         rootband_cache = rootband_cache
     )
     expect_equal(cached_standard_band, uncached_first_band, tolerance = 1e-8)
@@ -712,95 +1458,185 @@ test_that("PMV root-traced curves solve requested levels", {
 })
 
 test_that("PMV comfort lines and PMV-based standard zones build", {
-    pressure <- with_units("SI", psychrolib::GetStandardAtmPressure(0))
+    pressure <- psychrolib__with_units(
+        "SI",
+        psychrolib::GetStandardAtmPressure(0)
+    )
 
     pmv_lines <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_pmv_lines(levels = c(-1, 0, 1), n = 80)
+            geom_comfort_pmv(
+                bands = FALSE,
+                contour_levels = c(-1, 0, 1),
+                n = 80
+            )
     )$data
     expect_equal(length(pmv_lines), 2L)
     expect_true(all(c("level", "linetype") %in% names(pmv_lines[[1L]])))
     expect_equal(sort(unique(pmv_lines[[1L]]$level)), c(-1, 0, 1))
-    expect_equal(unique(pmv_lines[[1L]]$linetype[pmv_lines[[1L]]$level == 0]), "dashed")
-    expect_true(all(c("-1.0", "0.0", "+1.0") %in% unique(pmv_lines[[2L]]$label)))
+    expect_equal(
+        unique(pmv_lines[[1L]]$linetype[pmv_lines[[1L]]$level == 0]),
+        "dashed"
+    )
+    expect_true(all(
+        c("-1.0", "0.0", "+1.0") %in% unique(pmv_lines[[2L]]$label)
+    ))
     expect_true(all(table(pmv_lines[[2L]]$group) >= 2L))
-    axis_y <- vapply(split(pmv_lines[[2L]]$y, pmv_lines[[2L]]$group),
-        min, numeric(1L))
+
+    expect_error(
+        geom_comfort_pmv(bands = FALSE, contours = FALSE),
+        "At least one of `bands`, `contours`, or `standard`"
+    )
+    expect_error(
+        geom_comfort_set(bands = FALSE, contours = FALSE),
+        "At least one of `bands` or `contours`"
+    )
+    axis_y <- vapply(
+        split(pmv_lines[[2L]]$y, pmv_lines[[2L]]$group),
+        min,
+        numeric(1L)
+    )
     expect_equal(length(unique(round(axis_y, 6))), 1L)
     expect_gt(min(axis_y), 0.0003)
 
-    axis_default <- comfort_pmv_axis_label_data(
-        comfort_model_pmv(), c(-1, 0, 1), 80, "SI", pressure,
-        FALSE, c(15, 30), c(0, 20)
+    axis_default <- pmv__axis_label_data(
+        comfort_model_pmv(),
+        c(-1, 0, 1),
+        80,
+        "SI",
+        pressure,
+        FALSE,
+        c(15, 30),
+        c(0, 20)
     )
     expect_equal(unique(axis_default$hjust), 0.95)
     expect_equal(unique(axis_default$vjust), 0.5)
-    axis_vjust <- comfort_pmv_axis_label_text_vjust(ggplot2::waiver())
+    axis_vjust <- pmv__axis_label_text_vjust(ggplot2::waiver())
     expect_s3_class(axis_vjust, "unit")
     expect_equal(as.numeric(axis_vjust), 3.5)
-    axis_large_vjust <- comfort_pmv_axis_label_text_vjust(ggplot2::waiver(), 6)
+    axis_large_vjust <- pmv__axis_label_text_vjust(ggplot2::waiver(), 6)
     expect_gt(as.numeric(axis_large_vjust), as.numeric(axis_vjust))
 
-    axis_labels <- comfort_pmv_axis_label_data(
-        comfort_model_pmv(), c(-1, 0, 1), 80, "SI", pressure,
-        FALSE, c(15, 30), c(0, 20), axis_label_hjust = 0.015
+    axis_labels <- pmv__axis_label_data(
+        comfort_model_pmv(),
+        c(-1, 0, 1),
+        80,
+        "SI",
+        pressure,
+        FALSE,
+        c(15, 30),
+        c(0, 20),
+        axis_label_hjust = 0.015
     )
     expect_true(all(table(axis_labels$group) >= 2L))
-    axis_hum <- vapply(split(axis_labels$humratio, axis_labels$group),
-        min, numeric(1L))
+    axis_hum <- vapply(
+        split(axis_labels$humratio, axis_labels$group),
+        min,
+        numeric(1L)
+    )
     expect_equal(length(unique(round(axis_hum, 8))), 1L)
     expect_equal(unique(axis_labels$hjust), 0.985)
     expect_equal(unique(axis_labels$vjust), 0.5)
 
-    pmv_boundary <- comfort_pmv_curve_data(
-        comfort_model_pmv(), c(-0.5, 0.5), 80, "SI", pressure,
-        FALSE, c(15, 30), c(0, 20), label = "boundary"
+    pmv_boundary <- pmv__curve_data(
+        comfort_model_pmv(),
+        c(-0.5, 0.5),
+        80,
+        "SI",
+        pressure,
+        FALSE,
+        c(15, 30),
+        c(0, 20),
+        label = "boundary"
     )
     expect_equal(unique(pmv_boundary$vjust[pmv_boundary$level < 0]), -0.25)
     expect_equal(unique(pmv_boundary$vjust[pmv_boundary$level > 0]), 1.25)
 
-    pmv_boundary_mollier <- comfort_pmv_curve_data(
-        comfort_model_pmv(), c(-0.5, 0.5), 80, "SI", pressure,
-        TRUE, c(15, 30), c(0, 20), label = "boundary"
+    pmv_boundary_mollier <- pmv__curve_data(
+        comfort_model_pmv(),
+        c(-0.5, 0.5),
+        80,
+        "SI",
+        pressure,
+        TRUE,
+        c(15, 30),
+        c(0, 20),
+        label = "boundary"
     )
-    expect_equal(unique(pmv_boundary_mollier$vjust[
-        pmv_boundary_mollier$level < 0
-    ]), 1.25)
-    expect_equal(unique(pmv_boundary_mollier$vjust[
-        pmv_boundary_mollier$level > 0
-    ]), -0.25)
+    expect_equal(
+        unique(pmv_boundary_mollier$vjust[
+            pmv_boundary_mollier$level < 0
+        ]),
+        1.25
+    )
+    expect_equal(
+        unique(pmv_boundary_mollier$vjust[
+            pmv_boundary_mollier$level > 0
+        ]),
+        -0.25
+    )
 
-    pmv_sensation <- comfort_pmv_curve_data(
-        comfort_model_pmv(), c(-1, 0, 1), 80, "SI", pressure,
-        FALSE, c(15, 30), c(0, 20), label = "sensation"
+    pmv_sensation <- pmv__curve_data(
+        comfort_model_pmv(),
+        c(-1, 0, 1),
+        80,
+        "SI",
+        pressure,
+        FALSE,
+        c(15, 30),
+        c(0, 20),
+        label = "sensation"
     )
     expect_equal(unique(pmv_sensation$vjust), 0.5)
 
     ashrae <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_standard_zone(comfort_standard_ashrae55_2017(), n = 90)
+            geom_comfort_pmv(
+                standard = comfort_pmv_ashrae55(),
+                bands = FALSE,
+                contours = FALSE,
+                n = 90
+            )
     )$data
     expect_gt(nrow(ashrae[[1L]]), 0L)
-    expect_gt(length(unique(round(ashrae[[2L]]$x[ashrae[[2L]]$level == -0.5], 4))), 1L)
+    expect_gt(
+        length(unique(round(ashrae[[2L]]$x[ashrae[[2L]]$level == -0.5], 4))),
+        1L
+    )
     expect_true("COMFORT" %in% unique(unlist(lapply(ashrae, `[[`, "label"))))
 
     ashrae_alpha <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_standard_zone(comfort_standard_ashrae55_2017(), n = 90,
-                alpha = 0.2)
+            geom_comfort_pmv(
+                standard = comfort_pmv_ashrae55(),
+                bands = FALSE,
+                contours = FALSE,
+                n = 90,
+                alpha = 0.2
+            )
     )$data
     expect_equal(unique(ashrae_alpha[[1L]]$alpha), 0.2)
     expect_error(
         ggplot2::ggplot_build(
             ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-                geom_comfort_standard_zone(alpha = NA_real_)
+                geom_comfort_pmv(
+                    standard = comfort_pmv_ashrae55(),
+                    bands = FALSE,
+                    contours = FALSE,
+                    alpha = NA_real_
+                )
         ),
         "alpha"
     )
 
     en <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_standard_zone(comfort_standard_en15251_2007(), n = 90)
+            geom_comfort_pmv(
+                standard = comfort_pmv_en15251(),
+                bands = FALSE,
+                contours = FALSE,
+                n = 90
+            )
     )$data
     expect_equal(length(en), 6L)
     expect_equal(
@@ -808,18 +1644,24 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
         c(-0.7, -0.2, 0.2),
         tolerance = 1e-8
     )
-    expect_true(all(c("PMV -0.7", "PMV -0.2", "PMV +0.2", "PMV +0.7") %in%
-        unique(en[[5L]]$label)))
+    expect_true(all(
+        c("PMV -0.7", "PMV -0.2", "PMV +0.2", "PMV +0.7") %in%
+            unique(en[[5L]]$label)
+    ))
 
     ip <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(50, 90), hum_lim = c(0, 140), units = "IP") +
-            geom_comfort_pmv_lines(levels = c(-0.5, 0.5), n = 60)
+            geom_comfort_pmv(
+                bands = FALSE,
+                contour_levels = c(-0.5, 0.5),
+                n = 60
+            )
     )
     expect_gt(nrow(first_built_data(ip)), 0L)
 
     ip_overlay <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(50, 90), hum_lim = c(0, 140), units = "IP") +
-            geom_comfort_overlay(n = c(40, 24)) +
+            comfort_layer__bands(n = c(40, 24)) +
             scale_fill_comfort_pmv()
     )
     expect_gt(nrow(first_built_data(ip_overlay)), 0L)
@@ -857,52 +1699,105 @@ test_that("comfort overlays build in Mollier coordinates", {
 
     base <- ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20), mollier = TRUE)
 
-    expect_mollier_comfort(base + geom_comfort_overlay(n = c(40, 24)))
-    expect_mollier_comfort(base + geom_comfort_overlay(method = "isoband",
-        n = c(32, 20)))
-    expect_mollier_comfort(base + geom_comfort_overlay(method = "tile",
-        n = c(24, 16)))
-    expect_mollier_comfort(base + geom_comfort_overlay(
-        model = comfort_model_set(), n = c(24, 16)
-    ))
-    expect_mollier_comfort(base + geom_comfort_overlay(
-        model = comfort_model_adaptive(t_running = 20), n = c(24, 16)
-    ))
-    expect_mollier_comfort(base + geom_comfort_overlay(
-        model = comfort_model_heat_index(), n = c(32, 20)
-    ))
+    expect_mollier_comfort(base + comfort_layer__bands(n = c(40, 24)))
+    expect_mollier_comfort(
+        base + comfort_layer__bands(band_method = "isoband", n = c(32, 20))
+    )
+    expect_mollier_comfort(
+        base + comfort_layer__bands(band_render = "tile", n = c(24, 16))
+    )
+    expect_mollier_comfort(
+        base +
+            comfort_layer__bands(
+                model = comfort_model_set(),
+                n = c(24, 16)
+            )
+    )
+    expect_mollier_comfort(
+        base +
+            comfort_layer__bands(
+                model = comfort_model_adaptive(t_running = 20),
+                n = c(24, 16)
+            )
+    )
+    expect_mollier_comfort(
+        base +
+            comfort_layer__bands(
+                model = comfort_model_heat_index(),
+                n = c(32, 20)
+            )
+    )
     expect_mollier_comfort(base + geom_comfort_heat_index(n = c(32, 20)))
 
-    expect_mollier_comfort(base + geom_comfort_contour(
-        breaks = c(-1, 0, 1), n = c(32, 20)
-    ))
-    expect_mollier_comfort(base + geom_comfort_contour(
-        model = comfort_model_set(), metric = "set", breaks = c(22, 24, 26),
-        n = c(32, 20)
-    ))
-    expect_mollier_comfort(base + geom_comfort_contour(
-        model = comfort_model_set(), metric = "set", breaks = c(22, 24, 26),
-        n = c(32, 20), label = TRUE
-    ))
+    expect_mollier_comfort(
+        base +
+            comfort_layer__contour(
+                breaks = c(-1, 0, 1),
+                n = c(32, 20)
+            )
+    )
+    expect_mollier_comfort(
+        base +
+            comfort_layer__contour(
+                model = comfort_model_set(),
+                metric = "set",
+                breaks = c(22, 24, 26),
+                n = c(32, 20)
+            )
+    )
+    expect_mollier_comfort(
+        base +
+            comfort_layer__contour(
+                model = comfort_model_set(),
+                metric = "set",
+                breaks = c(22, 24, 26),
+                n = c(32, 20),
+                label = TRUE
+            )
+    )
 
-    expect_mollier_comfort(base + geom_comfort_pmv_lines(
-        levels = c(-1, 0, 1), n = 60
-    ))
-    expect_mollier_comfort(base + geom_comfort_standard_zone(
-        comfort_standard_ashrae55_2017(), n = 60
-    ))
-    expect_mollier_comfort(base + geom_comfort_standard_zone(
-        comfort_standard_en15251_2007(), n = 60
-    ))
+    expect_mollier_comfort(
+        base +
+            geom_comfort_pmv(
+                bands = FALSE,
+                contour_levels = c(-1, 0, 1),
+                n = 60
+            )
+    )
+    expect_mollier_comfort(
+        base +
+            geom_comfort_pmv(
+                standard = comfort_pmv_ashrae55(),
+                bands = FALSE,
+                contours = FALSE,
+                n = 60
+            )
+    )
+    expect_mollier_comfort(
+        base +
+            geom_comfort_pmv(
+                standard = comfort_pmv_en15251(),
+                bands = FALSE,
+                contours = FALSE,
+                n = 60
+            )
+    )
     expect_mollier_comfort(base + geom_comfort_givoni())
 
-    expect_mollier_comfort(base + geom_comfort_zone(n = c(60, 40)))
-    expect_mollier_comfort(base + geom_comfort_zone(
-        model = comfort_model_set(), n = c(32, 20)
-    ))
-    expect_mollier_comfort(base + geom_comfort_zone(
-        model = comfort_model_adaptive(t_running = 20)
-    ))
+    expect_mollier_comfort(base + comfort_layer__zone(n = c(60, 40)))
+    expect_mollier_comfort(
+        base +
+            comfort_layer__zone(
+                model = comfort_model_set(),
+                n = c(32, 20)
+            )
+    )
+    expect_mollier_comfort(
+        base +
+            comfort_layer__zone(
+                model = comfort_model_adaptive(t_running = 20)
+            )
+    )
 })
 
 test_that("Marsh-style comfort overlays have visual regressions", {
@@ -922,30 +1817,48 @@ test_that("Marsh-style comfort overlays have visual regressions", {
     vdiffr::expect_doppelganger(
         "comfort pmv marsh lines",
         pmv_base +
-            geom_comfort_overlay(n = c(70, 48), gap = 0) +
+            comfort_layer__bands(n = c(70, 48), gap = 0) +
             scale_fill_comfort_pmv() +
-            geom_comfort_pmv_lines(levels = seq(-3, 3, by = 0.5), n = 140)
+            geom_comfort_pmv(
+                bands = FALSE,
+                contour_levels = seq(-3, 3, by = 0.5),
+                n = 140
+            )
     )
 
     vdiffr::expect_doppelganger(
         "comfort ashrae55 2017 pmv zone",
         base +
-            geom_comfort_standard_zone(comfort_standard_ashrae55_2017(), n = 140)
+            geom_comfort_pmv(
+                standard = comfort_pmv_ashrae55(),
+                bands = FALSE,
+                contours = FALSE,
+                n = 140
+            )
     )
 
     vdiffr::expect_doppelganger(
         "comfort en15251 2007 pmv zones",
         base +
-            geom_comfort_standard_zone(comfort_standard_en15251_2007(), n = 140)
+            geom_comfort_pmv(
+                standard = comfort_pmv_en15251(),
+                bands = FALSE,
+                contours = FALSE,
+                n = 140
+            )
     )
 
     vdiffr::expect_doppelganger(
         "comfort set contour labels",
         set_base +
-            geom_comfort_contour(
-                model = comfort_model_set(), metric = "set",
-                breaks = c(22, 24, 26), n = c(70, 42),
-                label = TRUE, colour = "#4A4A4A", linewidth = 0.7
+            comfort_layer__contour(
+                model = comfort_model_set(),
+                metric = "set",
+                breaks = c(22, 24, 26),
+                n = c(70, 42),
+                label = TRUE,
+                colour = "#4A4A4A",
+                linewidth = 0.7
             )
     )
 
@@ -970,17 +1883,23 @@ test_that("Marsh-style comfort overlays have visual regressions", {
             geom_comfort_givoni(
                 comfort_strategy_givoni(mean_outdoor = 22),
                 zone_style = list(
-                    comfort = element_comfort_zone(
-                        fill = "#66D27A", colour = "#1F5F2D", alpha = 0.35
+                    comfort = element_givoni_zone(
+                        fill = "#66D27A",
+                        colour = "#1F5F2D",
+                        alpha = 0.35
                     ),
-                    natural_ventilation = element_comfort_zone(
-                        fill = "#B6E3FF", colour = "#2F6FB0", alpha = 0.25
+                    natural_ventilation = element_givoni_zone(
+                        fill = "#B6E3FF",
+                        colour = "#2F6FB0",
+                        alpha = 0.25
                     ),
-                    winter = element_comfort_zone(
-                        colour = "#A14D00", linetype = "dashed"
+                    winter = element_givoni_zone(
+                        colour = "#A14D00",
+                        linetype = "dashed"
                     ),
-                    air_conditioning = element_comfort_zone(
-                        colour = "#8B1E3F", linewidth = 1.2
+                    air_conditioning = element_givoni_zone(
+                        colour = "#8B1E3F",
+                        linewidth = 1.2
                     )
                 )
             )
@@ -990,25 +1909,30 @@ test_that("Marsh-style comfort overlays have visual regressions", {
 test_that("Mollier comfort overlays have visual regressions", {
     testthat::skip_on_os(c("linux", "windows"))
 
-    base <- ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20),
-        mollier = TRUE) +
+    base <- ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20), mollier = TRUE) +
         psychro_preset("minimal")
 
     vdiffr::expect_doppelganger(
         "comfort mollier pmv overlay",
         base +
-            geom_comfort_overlay(n = c(50, 30)) +
+            comfort_layer__bands(n = c(50, 30)) +
             scale_fill_comfort_pmv() +
-            geom_comfort_pmv_lines(levels = seq(-2, 2, by = 1), n = 100)
+            geom_comfort_pmv(
+                bands = FALSE,
+                contour_levels = seq(-2, 2, by = 1),
+                n = 100
+            )
     )
 
     vdiffr::expect_doppelganger(
         "comfort mollier set overlay",
         base +
-            geom_comfort_overlay(model = comfort_model_set(), n = c(40, 24)) +
-            geom_comfort_contour(
-                model = comfort_model_set(), metric = "set",
-                breaks = c(22, 24, 26), n = c(40, 24),
+            comfort_layer__bands(model = comfort_model_set(), n = c(40, 24)) +
+            comfort_layer__contour(
+                model = comfort_model_set(),
+                metric = "set",
+                breaks = c(22, 24, 26),
+                n = c(40, 24),
                 colour = "#4A4A4A"
             )
     )
@@ -1016,52 +1940,70 @@ test_that("Mollier comfort overlays have visual regressions", {
     vdiffr::expect_doppelganger(
         "comfort mollier set contour labels",
         base +
-            geom_comfort_contour(
-                model = comfort_model_set(), metric = "set",
-                breaks = c(22, 24, 26), n = c(70, 42),
-                label = TRUE, colour = "#4A4A4A", linewidth = 0.7
+            comfort_layer__contour(
+                model = comfort_model_set(),
+                metric = "set",
+                breaks = c(22, 24, 26),
+                n = c(70, 42),
+                label = TRUE,
+                colour = "#4A4A4A",
+                linewidth = 0.7
             )
     )
 
     vdiffr::expect_doppelganger(
         "comfort mollier adaptive overlay",
         base +
-            geom_comfort_overlay(
+            comfort_layer__bands(
                 model = comfort_model_adaptive(t_running = 20),
                 n = c(40, 24)
             ) +
-            geom_comfort_zone(
+            comfort_layer__zone(
                 model = comfort_model_adaptive(t_running = 20),
-                fill = NA, colour = "#4A4A4A"
+                fill = NA,
+                colour = "#4A4A4A"
             )
     )
 
     vdiffr::expect_doppelganger(
         "comfort mollier ashrae55 2017 pmv zone",
         base +
-            geom_comfort_standard_zone(comfort_standard_ashrae55_2017(), n = 100)
+            geom_comfort_pmv(
+                standard = comfort_pmv_ashrae55(),
+                bands = FALSE,
+                contours = FALSE,
+                n = 100
+            )
     )
 
     vdiffr::expect_doppelganger(
         "comfort mollier en15251 2007 pmv zones",
         base +
-            geom_comfort_standard_zone(comfort_standard_en15251_2007(), n = 100)
+            geom_comfort_pmv(
+                standard = comfort_pmv_en15251(),
+                bands = FALSE,
+                contours = FALSE,
+                n = 100
+            )
     )
 })
 
 test_that("IP comfort overlays have visual regressions", {
     testthat::skip_on_os(c("linux", "windows"))
 
-    base <- ggpsychro(tdb_lim = c(50, 90), hum_lim = c(0, 140),
-        units = "IP") +
+    base <- ggpsychro(tdb_lim = c(50, 90), hum_lim = c(0, 140), units = "IP") +
         psychro_preset("minimal")
 
     vdiffr::expect_doppelganger(
         "comfort ip pmv overlay",
         base +
-            geom_comfort_overlay(n = c(50, 30)) +
+            comfort_layer__bands(n = c(50, 30)) +
             scale_fill_comfort_pmv() +
-            geom_comfort_pmv_lines(levels = seq(-2, 2, by = 1), n = 100)
+            geom_comfort_pmv(
+                bands = FALSE,
+                contour_levels = seq(-2, 2, by = 1),
+                n = 100
+            )
     )
 })
 
@@ -1076,7 +2018,7 @@ test_that("comfort layer internals are not exported", {
 test_that("comfort zones and state stats build model-specific fields", {
     zone <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
-            geom_comfort_zone(model = comfort_model_adaptive(t_running = 20))
+            comfort_layer__zone(model = comfort_model_adaptive(t_running = 20))
     ))
     expect_equal(range(zone$x), c(20.5, 27.5), tolerance = 1e-8)
     expect_equal(range(zone$y), c(0, 0.02), tolerance = 1e-8)

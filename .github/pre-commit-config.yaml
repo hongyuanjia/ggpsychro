@@ -1,0 +1,7 @@
+# Air is wired through Posit's maintained pre-commit hook repository.
+repos:
+  - repo: https://github.com/posit-dev/air-pre-commit
+    # Air hook versions are pinned so formatting behavior is reproducible.
+    rev: 0.10.0
+    hooks:
+      - id: air-format

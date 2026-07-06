@@ -21,9 +21,10 @@ typedef struct {
     double wme;
     double pressure;
     double min_hum_ratio;
-} PmvParams;
+} ComfortPmvParams;
 
-static double scalar_or_na(SEXP x)
+/* Read the first numeric scalar or return NA for absent scalar inputs. */
+static double comfort_scalar_or_na(SEXP x)
 {
     if (XLENGTH(x) < 1) {
         return NA_REAL;
@@ -31,8 +32,9 @@ static double scalar_or_na(SEXP x)
     return REAL(x)[0];
 }
 
-static int finite_all7(double a, double b, double c, double d,
-                       double e, double f, double g)
+/* Check the seven scalar inputs shared by PMV and SET kernels. */
+static int comfort_finite_all7(double a, double b, double c, double d,
+                               double e, double f, double g)
 {
     return R_FINITE(a) && R_FINITE(b) && R_FINITE(c) && R_FINITE(d) &&
         R_FINITE(e) && R_FINITE(f) && R_FINITE(g);
@@ -88,7 +90,7 @@ static double comfort_pmv_scalar(double tdb, double tr, double vr, double rh,
     double ts;
     int i = 0;
 
-    if (!finite_all7(tdb, tr, vr, rh, met, clo, wme)) {
+    if (!comfort_finite_all7(tdb, tr, vr, rh, met, clo, wme)) {
         return NA_REAL;
     }
 
@@ -239,7 +241,7 @@ static double comfort_set_scalar(double tdb, double tr, double v, double rh,
     double e_diff;
     double m_shiv;
 
-    if (!finite_all7(tdb, tr, v, rh, met, clo, wme) ||
+    if (!comfort_finite_all7(tdb, tr, v, rh, met, clo, wme) ||
             !R_FINITE(body_surface_area) || !R_FINITE(p_atm)) {
         return NA_REAL;
     }
@@ -394,7 +396,7 @@ static double comfort_set_scalar(double tdb, double tr, double v, double rh,
 }
 
 static double comfort_pmv_at_humratio(double tdb, double hum_ratio,
-                                      const PmvParams *p)
+                                      const ComfortPmvParams *p)
 {
     /*
      * Root tracing happens in psychrometric chart coordinates: x = dry-bulb
@@ -425,19 +427,20 @@ static double comfort_pmv_at_humratio(double tdb, double hum_ratio,
     return comfort_pmv_scalar(tdb, tr, p->vr, rh, p->met, p->clo, p->wme);
 }
 
-static PmvParams pmv_params_from_sexp(SEXP tr_sxp, SEXP vr_sxp, SEXP met_sxp,
-                                      SEXP clo_sxp, SEXP wme_sxp,
-                                      SEXP pressure_sxp,
-                                      SEXP min_hum_ratio_sxp)
+/* Pack scalar PMV root-tracing parameters from R's .Call inputs. */
+static ComfortPmvParams comfort_pmv_params_from_sexp(
+    SEXP tr_sxp, SEXP vr_sxp, SEXP met_sxp, SEXP clo_sxp, SEXP wme_sxp,
+    SEXP pressure_sxp, SEXP min_hum_ratio_sxp
+)
 {
-    PmvParams p;
-    p.tr = scalar_or_na(tr_sxp);
-    p.vr = scalar_or_na(vr_sxp);
-    p.met = scalar_or_na(met_sxp);
-    p.clo = scalar_or_na(clo_sxp);
-    p.wme = scalar_or_na(wme_sxp);
-    p.pressure = scalar_or_na(pressure_sxp);
-    p.min_hum_ratio = scalar_or_na(min_hum_ratio_sxp);
+    ComfortPmvParams p;
+    p.tr = comfort_scalar_or_na(tr_sxp);
+    p.vr = comfort_scalar_or_na(vr_sxp);
+    p.met = comfort_scalar_or_na(met_sxp);
+    p.clo = comfort_scalar_or_na(clo_sxp);
+    p.wme = comfort_scalar_or_na(wme_sxp);
+    p.pressure = comfort_scalar_or_na(pressure_sxp);
+    p.min_hum_ratio = comfort_scalar_or_na(min_hum_ratio_sxp);
     return p;
 }
 
@@ -474,8 +477,8 @@ SEXP C_comfort_set_vec(SEXP tdb_sxp, SEXP tr_sxp, SEXP v_sxp, SEXP rh_sxp,
                        SEXP position_sitting_sxp)
 {
     R_xlen_t n = XLENGTH(tdb_sxp);
-    double body_surface_area = scalar_or_na(body_surface_area_sxp);
-    double p_atm = scalar_or_na(p_atm_sxp);
+    double body_surface_area = comfort_scalar_or_na(body_surface_area_sxp);
+    double p_atm = comfort_scalar_or_na(p_atm_sxp);
     int position_sitting = asLogical(position_sitting_sxp);
     SEXP out = PROTECT(allocVector(REALSXP, n));
     double *tdb = REAL(tdb_sxp);
@@ -515,7 +518,7 @@ SEXP C_comfort_pmv_curve_roots(SEXP level_sxp, SEXP hum_ratio_sxp,
     double *hum_ratio = REAL(hum_ratio_sxp);
     R_xlen_t n = XLENGTH(hum_ratio_sxp);
     double *tdb_lim = REAL(tdb_lim_sxp);
-    PmvParams p = pmv_params_from_sexp(
+    ComfortPmvParams p = comfort_pmv_params_from_sexp(
         tr_sxp, vr_sxp, met_sxp, clo_sxp, wme_sxp,
         pressure_sxp, min_hum_ratio_sxp
     );
@@ -631,7 +634,7 @@ SEXP C_comfort_pmv_saturation_roots(SEXP level_sxp, SEXP tdb_lim_sxp,
     double *tdb_lim = REAL(tdb_lim_sxp);
     double *hum_lim = REAL(hum_lim_sxp);
     int n = asInteger(n_sxp);
-    PmvParams p = pmv_params_from_sexp(
+    ComfortPmvParams p = comfort_pmv_params_from_sexp(
         tr_sxp, vr_sxp, met_sxp, clo_sxp, wme_sxp,
         pressure_sxp, min_hum_ratio_sxp
     );

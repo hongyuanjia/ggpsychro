@@ -8,17 +8,9 @@
 \alias{label_vappres}
 \alias{label_specvol}
 \alias{label_enthalpy}
-\alias{drybulb_format}
-\alias{humratio_format}
-\alias{relhum_format}
-\alias{wetbulb_format}
-\alias{vappres_format}
-\alias{specvol_format}
-\alias{enthalpy_format}
-\title{Label wet-bulb temperature}
+\title{Label psychrometric scale breaks}
 \usage{
 label_drybulb(
-  x,
   accuracy = NULL,
   scale = 1,
   units,
@@ -30,7 +22,6 @@ label_drybulb(
 )
 
 label_humratio(
-  x,
   accuracy = NULL,
   scale = 1,
   units,
@@ -42,7 +33,6 @@ label_humratio(
 )
 
 label_relhum(
-  x,
   accuracy = NULL,
   scale = 1,
   units,
@@ -54,7 +44,6 @@ label_relhum(
 )
 
 label_wetbulb(
-  x,
   accuracy = NULL,
   scale = 1,
   units,
@@ -66,7 +55,6 @@ label_wetbulb(
 )
 
 label_vappres(
-  x,
   accuracy = NULL,
   scale = 1,
   units,
@@ -78,7 +66,6 @@ label_vappres(
 )
 
 label_specvol(
-  x,
   accuracy = NULL,
   scale = 1,
   units,
@@ -90,91 +77,6 @@ label_specvol(
 )
 
 label_enthalpy(
-  x,
-  accuracy = NULL,
-  scale = 1,
-  units,
-  big.mark = ",",
-  decimal.mark = ".",
-  trim = TRUE,
-  parse = FALSE,
-  ...
-)
-
-drybulb_format(
-  x,
-  accuracy = NULL,
-  scale = 1,
-  units,
-  big.mark = ",",
-  decimal.mark = ".",
-  trim = TRUE,
-  parse = FALSE,
-  ...
-)
-
-humratio_format(
-  x,
-  accuracy = NULL,
-  scale = 1,
-  units,
-  big.mark = ",",
-  decimal.mark = ".",
-  trim = TRUE,
-  parse = FALSE,
-  ...
-)
-
-relhum_format(
-  x,
-  accuracy = NULL,
-  scale = 1,
-  units,
-  big.mark = ",",
-  decimal.mark = ".",
-  trim = TRUE,
-  parse = FALSE,
-  ...
-)
-
-wetbulb_format(
-  x,
-  accuracy = NULL,
-  scale = 1,
-  units,
-  big.mark = ",",
-  decimal.mark = ".",
-  trim = TRUE,
-  parse = FALSE,
-  ...
-)
-
-vappres_format(
-  x,
-  accuracy = NULL,
-  scale = 1,
-  units,
-  big.mark = ",",
-  decimal.mark = ".",
-  trim = TRUE,
-  parse = FALSE,
-  ...
-)
-
-specvol_format(
-  x,
-  accuracy = NULL,
-  scale = 1,
-  units,
-  big.mark = ",",
-  decimal.mark = ".",
-  trim = TRUE,
-  parse = FALSE,
-  ...
-)
-
-enthalpy_format(
-  x,
   accuracy = NULL,
   scale = 1,
   units,
@@ -186,8 +88,6 @@ enthalpy_format(
 )
 }
 \arguments{
-\item{x}{A numeric vector}
-
 \item{accuracy}{A number to round to. Use (e.g.) \code{0.01} to show 2 decimal
 places of precision. If \code{NULL}, the default, uses a heuristic that should
 ensure breaks have the minimum number of digits needed to show the
@@ -245,13 +145,5 @@ demo_scale(10:50, labels = label_vappres(units = "IP"))
 
 demo_scale(seq(1000, 2000), labels = label_enthalpy(units = "SI", parse = TRUE))
 demo_scale(seq(1000, 2000), labels = label_enthalpy(units = "IP", parse = TRUE))
-
-demo_scale(10:50, labels = drybulb_format(units = "SI", parse = TRUE))
-demo_scale(10:20, labels = humratio_format(scale = 0.001, units = "SI", parse = TRUE))
-demo_scale(10:50, labels = relhum_format(units = "SI"))
-demo_scale(10:50, labels = wetbulb_format(units = "SI", parse = TRUE))
-demo_scale(10:50, labels = specvol_format(units = "SI", parse = TRUE))
-demo_scale(10:50, labels = vappres_format(units = "SI"))
-demo_scale(seq(1000, 2000), labels = enthalpy_format(units = "SI", parse = TRUE))
 
 }

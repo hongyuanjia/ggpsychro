@@ -20,8 +20,11 @@ test_that("psychrometric tile bins relative humidity inputs", {
     expect_equal(tiles$y, c(0.007, 0.011), tolerance = 1e-8)
     expect_equal(sum(tiles$count), nrow(d))
 
-    pressure <- with_units("SI", psychrolib::GetStandardAtmPressure(0))
-    expected <- with_units(
+    pressure <- psychrolib__with_units(
+        "SI",
+        psychrolib::GetStandardAtmPressure(0)
+    )
+    expected <- psychrolib__with_units(
         "SI",
         psychrolib::GetHumRatioFromRelHum(
             d$dry_bulb,
@@ -44,7 +47,8 @@ test_that("psychrometric tile bins direct humidity ratio inputs and summaries", 
         ggpsychro(d, tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
             geom_psychro_tile(
                 ggplot2::aes(
-                    dry_bulb, humidity_ratio,
+                    dry_bulb,
+                    humidity_ratio,
                     value = load,
                     fill = ggplot2::after_stat(value)
                 ),
@@ -67,7 +71,8 @@ test_that("psychrometric tile bins direct humidity ratio inputs and summaries", 
         ggpsychro(d, tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
             stat_psychro_bin(
                 ggplot2::aes(
-                    dry_bulb, humidity_ratio,
+                    dry_bulb,
+                    humidity_ratio,
                     fill = ggplot2::after_stat(hours)
                 ),
                 binwidth = c(2, 2),
@@ -131,7 +136,8 @@ test_that("psychrometric tile defaults set gap and alpha", {
         ggpsychro(d, tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
             geom_psychro_tile(
                 ggplot2::aes(
-                    dry_bulb, humidity_ratio,
+                    dry_bulb,
+                    humidity_ratio,
                     alpha = ggplot2::after_stat(hours)
                 ),
                 binwidth = c(2, 2)
@@ -201,10 +207,12 @@ test_that("psychrometric tile cell grid covers the chart area", {
     vertical <- segments[segments$x == segments$xend, , drop = FALSE]
     horizontal <- segments[segments$y == segments$yend, , drop = FALSE]
     expected_x <- psychro_tile_panel_grid_breaks(
-        built$layout$panel_params[[1L]], "x"
+        built$layout$panel_params[[1L]],
+        "x"
     )
     expected_y <- psychro_tile_panel_grid_breaks(
-        built$layout$panel_params[[1L]], "y"
+        built$layout$panel_params[[1L]],
+        "y"
     )
 
     expect_gt(nrow(segments), nrow(first_built_data(built)) * 4L)
@@ -212,9 +220,15 @@ test_that("psychrometric tile cell grid covers the chart area", {
     expect_equal(sort(unique(horizontal$y)), expected_y$value, tolerance = 1e-8)
     expect_true(all(c("major", "minor") %in% vertical$grid_type))
     expect_true(all(c("major", "minor") %in% horizontal$grid_type))
-    expect_true(all(vertical$yend <= built$layout$panel_params[[1L]]$y.range[[2L]]))
-    expect_true(any(vertical$yend < built$layout$panel_params[[1L]]$y.range[[2L]]))
-    expect_true(all(horizontal$xend == built$layout$panel_params[[1L]]$x.range[[2L]]))
+    expect_true(all(
+        vertical$yend <= built$layout$panel_params[[1L]]$y.range[[2L]]
+    ))
+    expect_true(any(
+        vertical$yend < built$layout$panel_params[[1L]]$y.range[[2L]]
+    ))
+    expect_true(all(
+        horizontal$xend == built$layout$panel_params[[1L]]$x.range[[2L]]
+    ))
 })
 
 test_that("psychrometric tile cell grid can subdivide x and y axis breaks", {
@@ -239,10 +253,12 @@ test_that("psychrometric tile cell grid can subdivide x and y axis breaks", {
     vertical <- segments[segments$x == segments$xend, , drop = FALSE]
     horizontal <- segments[segments$y == segments$yend, , drop = FALSE]
     axis_x <- psychro_tile_panel_grid_breaks(
-        built$layout$panel_params[[1L]], "x"
+        built$layout$panel_params[[1L]],
+        "x"
     )
     axis_y <- psychro_tile_panel_grid_breaks(
-        built$layout$panel_params[[1L]], "y"
+        built$layout$panel_params[[1L]],
+        "y"
     )
 
     expect_gt(length(unique(vertical$x)), nrow(axis_x))
@@ -250,7 +266,11 @@ test_that("psychrometric tile cell grid can subdivide x and y axis breaks", {
     expect_true(all(round(axis_x$value, 10L) %in% round(vertical$x, 10L)))
     expect_true(all(round(axis_y$value, 10L) %in% round(horizontal$y, 10L)))
     expect_equal(min(diff(sort(unique(vertical$x)))), 1.25, tolerance = 1e-8)
-    expect_equal(min(diff(sort(unique(horizontal$y)))), 0.0025, tolerance = 1e-8)
+    expect_equal(
+        min(diff(sort(unique(horizontal$y)))),
+        0.0025,
+        tolerance = 1e-8
+    )
 })
 
 test_that("psychrometric tile cell grid inherits x and y grid theme styles", {
@@ -443,8 +463,8 @@ test_that("psychrometric tile stats handle missing values", {
                 geom_psychro_tile(
                     ggplot2::aes(dry_bulb, humidity_ratio),
                     binwidth = c(2, 2)
-        )
-    ),
+                )
+        ),
         "Removed 2 rows containing non-finite"
     )
 
@@ -471,7 +491,7 @@ test_that("psychrometric tiles build with grids, fill scales, and facets", {
     expect_no_error(
         ggplot2::ggplot_build(
             ggpsychro(d, tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
-                geom_grid_relhum() +
+                geom_psychro_grid_relhum() +
                 geom_psychro_tile(
                     ggplot2::aes(dry_bulb, relhum = relative_humidity),
                     binwidth = c(5, 2)
@@ -484,7 +504,7 @@ test_that("psychrometric tiles build with grids, fill scales, and facets", {
     expect_no_error(
         ggplot2::ggplotGrob(
             ggpsychro(d, tdb_lim = c(10, 35), hum_lim = c(0, 30)) +
-                geom_grid_relhum() +
+                geom_psychro_grid_relhum() +
                 geom_psychro_tile(
                     ggplot2::aes(dry_bulb, relhum = relative_humidity),
                     binwidth = c(5, 2)
@@ -530,7 +550,8 @@ test_that("psychrometric tile crossing saturation is visually clipped", {
         ggpsychro(d, tdb_lim = c(0, 20), hum_lim = c(0, 15)) +
             geom_psychro_tile(
                 ggplot2::aes(
-                    dry_bulb, humidity_ratio,
+                    dry_bulb,
+                    humidity_ratio,
                     fill = ggplot2::after_stat(hours)
                 ),
                 binwidth = c(2.5, 2.5),

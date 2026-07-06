@@ -18,64 +18,119 @@
 #' @param label_parse If `TRUE`, labels are parsed as plotmath expressions.
 #' @return A ggplot addition that controls rendering of a psychrometric grid.
 #'
-#' @rdname geom_grid
+#' @rdname geom_psychro_grid
 #' @examples
 #' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
-#'     geom_grid_relhum() +
-#'     geom_grid_wetbulb() +
-#'     geom_grid_enthalpy()
+#'     geom_psychro_grid_relhum() +
+#'     geom_psychro_grid_wetbulb() +
+#'     geom_psychro_grid_enthalpy()
 #'
 #' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
-#'     geom_grid_relhum(color = "black", linewidth = 0.6, label.size = 4) +
+#'     geom_psychro_grid_relhum(color = "black", linewidth = 0.6, label.size = 4) +
 #'     scale_relhum_continuous(
 #'         breaks = seq(25, 75, by = 25),
 #'         minor_breaks = NULL
 #'     ) +
-#'     geom_grid_wetbulb(color = "black", label = FALSE) +
+#'     geom_psychro_grid_wetbulb(color = "black", label = FALSE) +
 #'     scale_wetbulb_continuous(
 #'         breaks = seq(10, 30, by = 10),
 #'         minor_breaks = NULL
 #'     ) +
-#'     geom_grid_vappres(show = FALSE) +
-#'     geom_grid_specvol(label_loc = 0.90) +
-#'     geom_grid_enthalpy(label.size = 4)
+#'     geom_psychro_grid_vappres(show = FALSE) +
+#'     geom_psychro_grid_specvol(label_loc = 0.90) +
+#'     geom_psychro_grid_enthalpy(label.size = 4)
 #' @export
-geom_grid_relhum <- function(..., show = TRUE, label = TRUE, label_loc = 0.95,
-                             label_parse = FALSE) {
-    psychro_grid_layer("relhum", ..., show = show, label = label,
-        label_loc = label_loc, label_parse = label_parse)
+geom_psychro_grid_relhum <- function(
+    ...,
+    show = TRUE,
+    label = TRUE,
+    label_loc = 0.95,
+    label_parse = FALSE
+) {
+    psychro_grid_layer(
+        "relhum",
+        ...,
+        show = show,
+        label = label,
+        label_loc = label_loc,
+        label_parse = label_parse
+    )
 }
 
-#' @rdname geom_grid
+#' @rdname geom_psychro_grid
 #' @export
-geom_grid_wetbulb <- function(..., show = TRUE, label = TRUE, label_loc = 0.10,
-                              label_parse = TRUE) {
-    psychro_grid_layer("wetbulb", ..., show = show, label = label,
-        label_loc = label_loc, label_parse = label_parse)
+geom_psychro_grid_wetbulb <- function(
+    ...,
+    show = TRUE,
+    label = TRUE,
+    label_loc = 0.10,
+    label_parse = TRUE
+) {
+    psychro_grid_layer(
+        "wetbulb",
+        ...,
+        show = show,
+        label = label,
+        label_loc = label_loc,
+        label_parse = label_parse
+    )
 }
 
-#' @rdname geom_grid
+#' @rdname geom_psychro_grid
 #' @export
-geom_grid_vappres <- function(..., show = TRUE, label = TRUE, label_loc = 0.50,
-                              label_parse = FALSE) {
-    psychro_grid_layer("vappres", ..., show = show, label = label,
-        label_loc = label_loc, label_parse = label_parse)
+geom_psychro_grid_vappres <- function(
+    ...,
+    show = TRUE,
+    label = TRUE,
+    label_loc = 0.50,
+    label_parse = FALSE
+) {
+    psychro_grid_layer(
+        "vappres",
+        ...,
+        show = show,
+        label = label,
+        label_loc = label_loc,
+        label_parse = label_parse
+    )
 }
 
-#' @rdname geom_grid
+#' @rdname geom_psychro_grid
 #' @export
-geom_grid_specvol <- function(..., show = TRUE, label = TRUE, label_loc = 0.95,
-                              label_parse = TRUE) {
-    psychro_grid_layer("specvol", ..., show = show, label = label,
-        label_loc = label_loc, label_parse = label_parse)
+geom_psychro_grid_specvol <- function(
+    ...,
+    show = TRUE,
+    label = TRUE,
+    label_loc = 0.95,
+    label_parse = TRUE
+) {
+    psychro_grid_layer(
+        "specvol",
+        ...,
+        show = show,
+        label = label,
+        label_loc = label_loc,
+        label_parse = label_parse
+    )
 }
 
-#' @rdname geom_grid
+#' @rdname geom_psychro_grid
 #' @export
-geom_grid_enthalpy <- function(..., show = TRUE, label = TRUE, label_loc = 0.95,
-                               label_parse = TRUE) {
-    psychro_grid_layer("enthalpy", ..., show = show, label = label,
-        label_loc = label_loc, label_parse = label_parse)
+geom_psychro_grid_enthalpy <- function(
+    ...,
+    show = TRUE,
+    label = TRUE,
+    label_loc = 0.95,
+    label_parse = TRUE
+) {
+    psychro_grid_layer(
+        "enthalpy",
+        ...,
+        show = show,
+        label = label,
+        label_loc = label_loc,
+        label_parse = label_parse
+    )
 }
 
 #' Add a psychrometric protractor
@@ -157,22 +212,34 @@ geom_grid_enthalpy <- function(..., show = TRUE, label = TRUE, label_loc = 0.95,
 #'             shr_labels = c("0", "half", "1")
 #'         )
 #'     )
-geom_psychro_protractor <- function(..., show = TRUE, label = TRUE, annotation = TRUE,
-                                    scale = 1, radius = 0.24, margin = 0.08,
-                                    guide = guide_psychro_protractor()) {
+geom_psychro_protractor <- function(
+    ...,
+    show = TRUE,
+    label = TRUE,
+    annotation = TRUE,
+    scale = 1,
+    radius = 0.24,
+    margin = 0.08,
+    guide = guide_psychro_protractor()
+) {
     assert_flag(show)
     assert_flag(label)
-    validate_psychro_protractor_annotation(annotation)
+    protractor__validate_annotation(annotation)
     assert_number(scale, lower = 0, .var.name = "scale")
     if (scale <= 0) {
         stop("`scale` must be a positive number.", call. = FALSE)
     }
     assert_number(radius, lower = 0.02, upper = 0.5)
     assert_numeric(
-        margin, lower = 0, upper = 0.5, any.missing = FALSE,
-        min.len = 1L, max.len = 2L, .var.name = "margin"
+        margin,
+        lower = 0,
+        upper = 0.5,
+        any.missing = FALSE,
+        min.len = 1L,
+        max.len = 2L,
+        .var.name = "margin"
     )
-    validate_psychro_protractor_guide(guide)
+    protractor__validate_guide(guide)
 
     structure(
         list(
@@ -192,21 +259,33 @@ geom_psychro_protractor <- function(..., show = TRUE, label = TRUE, annotation =
 
 #' @rdname geom_psychro_protractor
 #' @export
-guide_psychro_protractor <- function(shr_breaks = waiver(),
-                                     shr_minor_breaks = waiver(),
-                                     shr_labels = waiver(),
-                                     ratio_breaks = waiver(),
-                                     ratio_minor_breaks = waiver(),
-                                     ratio_labels = waiver(),
-                                     check_overlap = TRUE) {
-    validate_psychro_protractor_breaks(shr_breaks, "shr_breaks")
-    validate_psychro_protractor_breaks(shr_minor_breaks, "shr_minor_breaks")
-    validate_psychro_protractor_breaks(ratio_breaks, "ratio_breaks")
-    validate_psychro_protractor_breaks(ratio_minor_breaks, "ratio_minor_breaks")
-    validate_psychro_protractor_labels(shr_labels, "shr_labels")
-    validate_psychro_protractor_labels(ratio_labels, "ratio_labels")
-    validate_psychro_protractor_break_labels(shr_breaks, shr_labels, "shr_breaks", "shr_labels")
-    validate_psychro_protractor_break_labels(ratio_breaks, ratio_labels, "ratio_breaks", "ratio_labels")
+guide_psychro_protractor <- function(
+    shr_breaks = waiver(),
+    shr_minor_breaks = waiver(),
+    shr_labels = waiver(),
+    ratio_breaks = waiver(),
+    ratio_minor_breaks = waiver(),
+    ratio_labels = waiver(),
+    check_overlap = TRUE
+) {
+    protractor__validate_breaks(shr_breaks, "shr_breaks")
+    protractor__validate_breaks(shr_minor_breaks, "shr_minor_breaks")
+    protractor__validate_breaks(ratio_breaks, "ratio_breaks")
+    protractor__validate_breaks(ratio_minor_breaks, "ratio_minor_breaks")
+    protractor__validate_labels(shr_labels, "shr_labels")
+    protractor__validate_labels(ratio_labels, "ratio_labels")
+    protractor__validate_break_labels(
+        shr_breaks,
+        shr_labels,
+        "shr_breaks",
+        "shr_labels"
+    )
+    protractor__validate_break_labels(
+        ratio_breaks,
+        ratio_labels,
+        "ratio_breaks",
+        "ratio_labels"
+    )
     assert_flag(check_overlap)
 
     structure(
@@ -223,18 +302,29 @@ guide_psychro_protractor <- function(shr_breaks = waiver(),
     )
 }
 
-validate_psychro_protractor_guide <- function(guide) {
+# Validate that a protractor guide came from the public constructor.
+protractor__validate_guide <- function(guide) {
     if (inherits(guide, "PsyProtractorGuide")) {
         return(invisible(guide))
     }
-    stop("`guide` must be created by `guide_psychro_protractor()`.", call. = FALSE)
+    stop(
+        "`guide` must be created by `guide_psychro_protractor()`.",
+        call. = FALSE
+    )
 }
 
-validate_psychro_protractor_annotation <- function(annotation) {
-    if (is.logical(annotation) && length(annotation) == 1L && !is.na(annotation)) {
+# Validate the default, disabled, character, or expression annotation forms.
+protractor__validate_annotation <- function(annotation) {
+    if (
+        is.logical(annotation) && length(annotation) == 1L && !is.na(annotation)
+    ) {
         return(invisible(annotation))
     }
-    if (is.character(annotation) && length(annotation) == 2L && !anyNA(annotation)) {
+    if (
+        is.character(annotation) &&
+            length(annotation) == 2L &&
+            !anyNA(annotation)
+    ) {
         return(invisible(annotation))
     }
     if (is.expression(annotation) && length(annotation) == 2L) {
@@ -246,15 +336,17 @@ validate_psychro_protractor_annotation <- function(annotation) {
     )
 }
 
-validate_psychro_protractor_breaks <- function(breaks, arg) {
-    if (is.waive(breaks) || is.null(breaks)) {
+# Validate numeric or waived protractor break vectors.
+protractor__validate_breaks <- function(breaks, arg) {
+    if (util__is_waive(breaks) || is.null(breaks)) {
         return(invisible(breaks))
     }
     assert_numeric(breaks, any.missing = FALSE, .var.name = arg)
 }
 
-validate_psychro_protractor_labels <- function(labels, arg) {
-    if (is.waive(labels) || is.null(labels) || is.function(labels)) {
+# Validate literal, expression, function, NULL, or waived protractor labels.
+protractor__validate_labels <- function(labels, arg) {
+    if (util__is_waive(labels) || is.null(labels) || is.function(labels)) {
         return(invisible(labels))
     }
     if (is.character(labels) && !anyNA(labels)) {
@@ -264,32 +356,55 @@ validate_psychro_protractor_labels <- function(labels, arg) {
         return(invisible(labels))
     }
     stop(
-        sprintf("`%s` must be a character vector, expression vector, function, NULL, or waiver().", arg),
+        sprintf(
+            "`%s` must be a character vector, expression vector, function, NULL, or waiver().",
+            arg
+        ),
         call. = FALSE
     )
 }
 
-validate_psychro_protractor_break_labels <- function(breaks, labels, breaks_arg, labels_arg) {
-    if (is.waive(labels) || is.null(labels) || is.function(labels)) {
+# Validate that literal labels have explicit breaks of the same length.
+protractor__validate_break_labels <- function(
+    breaks,
+    labels,
+    breaks_arg,
+    labels_arg
+) {
+    if (util__is_waive(labels) || is.null(labels) || is.function(labels)) {
         return(invisible(NULL))
     }
-    if (is.waive(breaks)) {
+    if (util__is_waive(breaks)) {
         stop(
-            sprintf("`%s` requires explicit `%s` unless it is a function, NULL, or waiver().", labels_arg, breaks_arg),
+            sprintf(
+                "`%s` requires explicit `%s` unless it is a function, NULL, or waiver().",
+                labels_arg,
+                breaks_arg
+            ),
             call. = FALSE
         )
     }
     if (length(breaks) != length(labels)) {
         stop(
-            sprintf("`%s` must have the same length as `%s`.", labels_arg, breaks_arg),
+            sprintf(
+                "`%s` must have the same length as `%s`.",
+                labels_arg,
+                breaks_arg
+            ),
             call. = FALSE
         )
     }
     invisible(NULL)
 }
 
-psychro_grid_layer <- function(type, ..., show = TRUE, label = TRUE,
-                               label_loc = NULL, label_parse = FALSE) {
+psychro_grid_layer <- function(
+    type,
+    ...,
+    show = TRUE,
+    label = TRUE,
+    label_loc = NULL,
+    label_parse = FALSE
+) {
     assert_choice(type, names(default_psychro_grids()))
     assert_flag(show)
     assert_flag(label)
@@ -300,7 +415,9 @@ psychro_grid_layer <- function(type, ..., show = TRUE, label = TRUE,
 
     structure(
         list(
-            type = type, show = show, style = psychro_grid_style(...),
+            type = type,
+            show = show,
+            style = psychro_grid_style(...),
             label = psychro_grid_label(label, label_loc, label_parse, ...)
         ),
         class = "PsyGrid"
@@ -348,7 +465,9 @@ psychro_grid_label_enabled <- function(labels, type) {
 
 psychro_grid_style <- function(...) {
     params <- list(...)
-    if (!length(params)) return(list())
+    if (!length(params)) {
+        return(list())
+    }
 
     if (!is.null(params$color) && is.null(params$colour)) {
         params$colour <- params$color
@@ -367,15 +486,23 @@ psychro_grid_style <- function(...) {
     }
 
     keep <- c(
-        "colour", "linewidth", "linetype", "lineend", "linejoin",
-        "arrow", "arrow.fill", "inherit.blank"
+        "colour",
+        "linewidth",
+        "linetype",
+        "lineend",
+        "linejoin",
+        "arrow",
+        "arrow.fill",
+        "inherit.blank"
     )
     params[names(params) %in% keep]
 }
 
 psychro_grid_label_style <- function(...) {
     params <- list(...)
-    if (!length(params)) return(list())
+    if (!length(params)) {
+        return(list())
+    }
 
     if (!is.null(params$label.color) && is.null(params$label.colour)) {
         params$label.colour <- params$label.color
@@ -403,7 +530,9 @@ psychro_grid_label_style <- function(...) {
 }
 
 psychro_grid_theme <- function(type, style) {
-    if (!length(style)) return(NULL)
+    if (!length(style)) {
+        return(NULL)
+    }
 
     element <- do.call(ggplot2::element_line, style)
     stats::setNames(list(element), paste0("psychro.panel.grid.", type))

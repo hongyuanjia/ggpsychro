@@ -18,7 +18,7 @@ reference:
 - title: Psychrometric equation layers and grids
   contents:
   - stat_relhum
-  - geom_grid_relhum
+  - geom_psychro_grid_relhum
   - geom_psychro_protractor
 
 - title: Psychrometric data layers
@@ -31,12 +31,17 @@ reference:
   contents:
   - comfort_pmv
   - comfort_model_pmv
-  - comfort_standard_ashrae55_2017
+  - comfort_pmv_ashrae55
   - comfort_strategy_givoni
 
 - title: Thermal comfort chart layers
   contents:
-  - geom_comfort_overlay
+  - geom_comfort_pmv
+  - geom_comfort_set
+  - geom_comfort_heat_index
+  - geom_comfort_adaptive
+  - geom_comfort_givoni
+  - stat_comfort_state
   - scale_fill_comfort_pmv
 
 - title: Scales, labels, and transformations
@@ -51,12 +56,7 @@ reference:
   - theme
   - psychro_preset
   - element_polygon
-  - element_comfort_zone
-
-- title: Extension API
-  contents:
-  - ggpsychro-extensions
-  - ggpsychro-ggproto
+  - element_givoni_zone
 
 articles:
 - title: Start

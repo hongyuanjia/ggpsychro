@@ -3,7 +3,13 @@
 NULL
 
 empty_trans <- function() {
-    trans_new("empty", "force", "force", breaks = identity, minor_breaks = identity)
+    trans_new(
+        "empty",
+        "force",
+        "force",
+        breaks = identity,
+        minor_breaks = identity
+    )
 }
 
 is.empty_trans <- function(trans) {
@@ -29,9 +35,7 @@ is.empty_trans <- function(trans) {
 #' plot(enthalpy_trans("SI"), xlim = c(1000, 2000))
 drybulb_trans <- function(units = "SI") {
     units <- match.arg(units, c("SI", "IP"))
-    trans_new("drybulb", "force", "force",
-        domain = get_tdb_limits(units)
-    )
+    trans_new("drybulb", "force", "force", domain = psychro__tdb_limits(units))
 }
 
 #' @rdname trans
@@ -39,10 +43,11 @@ drybulb_trans <- function(units = "SI") {
 #' @export
 humratio_trans <- function(units = "SI") {
     units <- match.arg(units, c("SI", "IP"))
-    trans_new("humratio",
-        transform = function(hum) narrow_hum(hum, units),
-        inverse = function(hum) amplify_hum(hum, units),
-        domain = get_hum_limits(units),
+    trans_new(
+        "humratio",
+        transform = function(hum) unit__hum_from_chart(hum, units),
+        inverse = function(hum) unit__hum_to_chart(hum, units),
+        domain = psychro__hum_limits(units),
     )
 }
 
@@ -51,7 +56,8 @@ humratio_trans <- function(units = "SI") {
 #' @export
 relhum_trans <- function(units = "SI") {
     units <- match.arg(units, c("SI", "IP"))
-    trans_new("relhum",
+    trans_new(
+        "relhum",
         function(x) x / 100,
         function(x) x * 100,
         domain = c(0.0, 100.0),
@@ -64,8 +70,11 @@ relhum_trans <- function(units = "SI") {
 #' @export
 wetbulb_trans <- function(units = "SI") {
     units <- match.arg(units, c("SI", "IP"))
-    trans_new("wetbulb", "force", "force",
-        domain = get_tdb_limits(units),
+    trans_new(
+        "wetbulb",
+        "force",
+        "force",
+        domain = psychro__tdb_limits(units),
         format = label_wetbulb(units = units)
     )
 }
@@ -75,7 +84,10 @@ wetbulb_trans <- function(units = "SI") {
 #' @export
 vappres_trans <- function(units = "SI") {
     units <- match.arg(units, c("SI", "IP"))
-    trans_new("vappres", "force", "force",
+    trans_new(
+        "vappres",
+        "force",
+        "force",
         format = label_vappres(units = units)
     )
 }
@@ -85,7 +97,10 @@ vappres_trans <- function(units = "SI") {
 #' @export
 specvol_trans <- function(units = "SI") {
     units <- match.arg(units, c("SI", "IP"))
-    trans_new("specvol", "force", "force",
+    trans_new(
+        "specvol",
+        "force",
+        "force",
         format = label_specvol(units = units)
     )
 }
@@ -95,7 +110,10 @@ specvol_trans <- function(units = "SI") {
 #' @export
 enthalpy_trans <- function(units = "SI") {
     units <- match.arg(units, c("SI", "IP"))
-    trans_new("enthalpy", "force", "force",
+    trans_new(
+        "enthalpy",
+        "force",
+        "force",
         format = label_enthalpy(units = units)
     )
 }

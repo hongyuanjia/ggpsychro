@@ -2,7 +2,7 @@
 % Please edit documentation in R/labels.R
 \name{demo_scale}
 \alias{demo_scale}
-\title{Demonstrate scales functions with ggplot2 code}
+\title{Demonstrate psychrometric label and scale functions}
 \usage{
 demo_scale(x, ...)
 }
@@ -15,11 +15,10 @@ demo_scale(x, ...)
 A ggplot object demonstrating the supplied scale settings.
 }
 \description{
-This function generates ggplot2 code needed to use scales functions for real
-code.
+This helper builds a compact ggplot2 scale preview for label and scale
+functions.
 }
 \examples{
 demo_scale(0:10, labels = scales::label_number())
 
 }
-\keyword{internal}

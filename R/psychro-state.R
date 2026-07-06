@@ -46,12 +46,23 @@ NULL
 #'         size = 2
 #'     )
 #' @export
-geom_psychro_process <- function(mapping = NULL, data = NULL, stat = "psychro_state",
-                                 position = "identity", ..., na.rm = FALSE,
-                                 show.legend = NA, inherit.aes = TRUE) {
+geom_psychro_process <- function(
+    mapping = NULL,
+    data = NULL,
+    stat = "psychro_state",
+    position = "identity",
+    ...,
+    na.rm = FALSE,
+    show.legend = NA,
+    inherit.aes = TRUE
+) {
     psychro_layer(
-        stat = stat, data = data, mapping = mapping, geom = "path",
-        position = position, show.legend = show.legend,
+        stat = stat,
+        data = data,
+        mapping = mapping,
+        geom = "path",
+        position = position,
+        show.legend = show.legend,
         inherit.aes = inherit.aes,
         params = list(na.rm = na.rm, ...)
     )
@@ -59,12 +70,23 @@ geom_psychro_process <- function(mapping = NULL, data = NULL, stat = "psychro_st
 
 #' @rdname psychro_state
 #' @export
-stat_psychro_state <- function(mapping = NULL, data = NULL, geom = "point",
-                               position = "identity", ..., na.rm = FALSE,
-                               show.legend = NA, inherit.aes = TRUE) {
+stat_psychro_state <- function(
+    mapping = NULL,
+    data = NULL,
+    geom = "point",
+    position = "identity",
+    ...,
+    na.rm = FALSE,
+    show.legend = NA,
+    inherit.aes = TRUE
+) {
     psychro_layer(
-        stat = StatPsychroState, data = data, mapping = mapping, geom = geom,
-        position = position, show.legend = show.legend,
+        stat = StatPsychroState,
+        data = data,
+        mapping = mapping,
+        geom = geom,
+        position = position,
+        show.legend = show.legend,
         inherit.aes = inherit.aes,
         params = list(na.rm = na.rm, ...)
     )
@@ -107,9 +129,16 @@ psychro_check_finite <- function(data, vars, na.rm = FALSE) {
         return(data[keep, , drop = FALSE])
     }
 
-    bad <- vars[vapply(data[vars], function(x) any(!is.finite(x) | is.na(x)), logical(1L))]
-    stop("Missing or non-finite psychrometric values found in: ",
-        paste(bad, collapse = ", "), call. = FALSE)
+    bad <- vars[vapply(
+        data[vars],
+        function(x) any(!is.finite(x) | is.na(x)),
+        logical(1L)
+    )]
+    stop(
+        "Missing or non-finite psychrometric values found in: ",
+        paste(bad, collapse = ", "),
+        call. = FALSE
+    )
 }
 
 psychro_check_relhum_fraction <- function(relhum) {
@@ -125,21 +154,43 @@ psychro_check_relhum_percent <- function(relhum) {
 }
 
 psychro_humratio_from_property <- function(tdb, value, property, units, pres) {
-    with_units(units, switch(property,
-        humratio = narrow_hum(value, units),
-        relhum = {
-            psychro_check_relhum_fraction(value)
-            psychrolib::GetHumRatioFromRelHum(tdb, value, pres)
-        },
-        wetbulb = psychrolib::GetHumRatioFromTWetBulb(tdb, value, pres),
-        vappres = psychrolib::GetHumRatioFromVapPres(value, pres),
-        specvol = GetHumRatioFromAirVolume(tdb, value, pres),
-        enthalpy = GetHumRatioFromEnthalpyAndTDryBulb(value, tdb),
-        stop("Invalid psychrometric state property.", call. = FALSE)
-    ))
+    psychrolib__with_units(
+        units,
+        switch(
+            property,
+            humratio = unit__hum_from_chart(value, units),
+            relhum = {
+                psychro_check_relhum_percent(value)
+                psychrolib::GetHumRatioFromRelHum(tdb, value / 100, pres)
+            },
+            wetbulb = psychrolib::GetHumRatioFromTWetBulb(tdb, value, pres),
+            vappres = psychrolib::GetHumRatioFromVapPres(value, pres),
+            specvol = GetHumRatioFromAirVolume(tdb, value, pres),
+            enthalpy = GetHumRatioFromEnthalpyAndTDryBulb(value, tdb),
+            stop("Invalid psychrometric state property.", call. = FALSE)
+        )
+    )
 }
 
-psychro_output_xy <- function(data, tdb, humratio, mollier = FALSE) {
+psychro_output_xy <- function(
+    data,
+    tdb,
+    humratio,
+    mollier = FALSE,
+    psychro_scales = NULL,
+    units = NULL
+) {
+    # Computed coordinates are physical values; when scale context is available,
+    # move them back into the active chart scale before ggplot2 maps positions.
+    if (!is.null(psychro_scales) && !is.null(units)) {
+        tdb <- psychro_scale_transform(psychro_scales$pos_tdb, tdb)
+        humratio <- psychro_stat_scale_humratio(
+            humratio,
+            units,
+            psychro_scales$pos_hum
+        )
+    }
+
     if (isTRUE(mollier)) {
         data$x <- humratio
         data$y <- tdb
@@ -151,7 +202,50 @@ psychro_output_xy <- function(data, tdb, humratio, mollier = FALSE) {
     data
 }
 
-psychro_compute_state <- function(data, units, pres, mollier, na.rm = FALSE) {
+# Tile widths and heights are coordinate spans, so non-linear position scales
+# must transform the physical cell edges before the span is computed.
+psychro_output_tile_size <- function(
+    data,
+    tdb0,
+    tdb1,
+    hum0,
+    hum1,
+    mollier = FALSE,
+    psychro_scales = NULL,
+    units = NULL,
+    gap = 0
+) {
+    gap_scale <- 1 - gap
+    if (!is.null(psychro_scales) && !is.null(units)) {
+        # Transform both edges with the same scale functions used by the tile
+        # center so geom_tile() receives dimensions in the active scale space.
+        tdb0 <- psychro_scale_transform(psychro_scales$pos_tdb, tdb0)
+        tdb1 <- psychro_scale_transform(psychro_scales$pos_tdb, tdb1)
+        hum0 <- psychro_stat_scale_humratio(hum0, units, psychro_scales$pos_hum)
+        hum1 <- psychro_stat_scale_humratio(hum1, units, psychro_scales$pos_hum)
+    }
+
+    tdb_width <- abs(tdb1 - tdb0) * gap_scale
+    hum_height <- abs(hum1 - hum0) * gap_scale
+    if (isTRUE(mollier)) {
+        data$width <- hum_height
+        data$height <- tdb_width
+    } else {
+        data$width <- tdb_width
+        data$height <- hum_height
+    }
+
+    data
+}
+
+psychro_compute_state <- function(
+    data,
+    units,
+    pres,
+    mollier,
+    na.rm = FALSE,
+    psychro_scales = NULL
+) {
     if (!"tdb" %in% names(data)) {
         stop("`tdb` must be supplied.", call. = FALSE)
     }
@@ -162,8 +256,13 @@ psychro_compute_state <- function(data, units, pres, mollier, na.rm = FALSE) {
         return(data)
     }
 
+    data <- psychro_stat_inverse_columns(data, psychro_scales)
     humratio <- psychro_humratio_from_property(
-        data$tdb, data[[property]], property, units, pres
+        data$tdb,
+        data[[property]],
+        property,
+        units,
+        pres
     )
     data$humratio <- humratio
     data <- psychro_check_finite(data, "humratio", na.rm = na.rm)
@@ -172,15 +271,20 @@ psychro_compute_state <- function(data, units, pres, mollier, na.rm = FALSE) {
         return(data)
     }
 
-    psychro_output_xy(data, data$tdb, data$humratio, mollier)
+    psychro_output_xy(
+        data,
+        data$tdb,
+        data$humratio,
+        mollier,
+        psychro_scales = psychro_scales,
+        units = units
+    )
 }
 
-#' @rdname ggpsychro-extensions
-#' @format NULL
-#' @usage NULL
-#' @export
+# Internal ggproto backing stat_psychro_state(); the user-facing API is stat_psychro_state().
 StatPsychroState <- ggplot2::ggproto(
-    "StatPsychroState", ggplot2::Stat,
+    "StatPsychroState",
+    ggplot2::Stat,
 
     setup_data = function(self, data, params) {
         init_stat_data(data, params)
@@ -190,10 +294,25 @@ StatPsychroState <- ggplot2::ggproto(
 
     optional_aes = psychro_state_properties(),
 
-    extra_params = c("na.rm", "units", "pres", "mollier"),
+    extra_params = c("na.rm", "units", "pres", "mollier", "psychro_scales"),
 
-    compute_group = function(self, data, scales, units, pres, mollier = FALSE,
-                             na.rm = FALSE) {
-        psychro_compute_state(data, units, pres, mollier, na.rm)
+    compute_group = function(
+        self,
+        data,
+        scales,
+        units,
+        pres,
+        mollier = FALSE,
+        na.rm = FALSE,
+        psychro_scales = NULL
+    ) {
+        psychro_compute_state(
+            data,
+            units,
+            pres,
+            mollier,
+            na.rm,
+            psychro_scales = psychro_scales
+        )
     }
 )
