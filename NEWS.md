@@ -1,5 +1,8 @@
 # ggpsychro 0.1.0
 
+* Streamlined comfort, grid, coordinate, and stat internals; renamed the PMV
+  comfort and psychrometric grid APIs; and removed the package-local RStudio
+  project file. (#35)
 * Replaced external path-label rendering with a native textpath renderer for
   psychrometric grid labels and comfort overlay labels. (#34)
 * Addressed CRAN preflight checks by adding return-value documentation and
