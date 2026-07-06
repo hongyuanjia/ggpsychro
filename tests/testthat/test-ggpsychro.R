@@ -1646,6 +1646,13 @@ test_that("Psychrometric stats draw retained aesthetics in common plots", {
             ),
             data = line_data,
             stat = "wetbulb"
+        ) +
+        # Keep this vdiffr case focused on retained stat aesthetics instead of
+        # ggplot2's version-dependent guide ordering heuristics.
+        ggplot2::guides(
+            colour = ggplot2::guide_legend(order = 1L),
+            linetype = ggplot2::guide_legend(order = 1L),
+            linewidth = ggplot2::guide_legend(order = 2L)
         )
 
     p_mixed <- ggpsychro(d, tdb_lim = c(10, 35), hum_lim = c(0, 25)) +
