@@ -72,8 +72,8 @@
 <p>ggpsychro draws the dry-bulb grid, humidity-ratio grid, saturation
 curve, and psychrometric reference grids through
 <code><a href="../reference/coord_psychro.html">coord_psychro()</a></code>. The default reference grids are drawn
-without labels. Add <code>geom_grid_*()</code> helpers when a grid
-should be explicit and labelled.</p>
+without labels. Add <code>geom_psychro_grid_*()</code> helpers when a
+grid should be explicit and labelled.</p>
 <div class="section level2">
 <h2 id="presets">Presets<a class="anchor" aria-label="anchor" href="#presets"></a>
 </h2>
@@ -106,34 +106,34 @@ visibility and theme but no grid labels.</p>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td><code><a href="../reference/geom_grid.html">geom_grid_relhum()</a></code></td>
+<td><code><a href="../reference/geom_psychro_grid.html">geom_psychro_grid_relhum()</a></code></td>
 <td>Relative humidity</td>
 </tr>
 <tr class="even">
-<td><code><a href="../reference/geom_grid.html">geom_grid_wetbulb()</a></code></td>
+<td><code><a href="../reference/geom_psychro_grid.html">geom_psychro_grid_wetbulb()</a></code></td>
 <td>Wet-bulb temperature</td>
 </tr>
 <tr class="odd">
-<td><code><a href="../reference/geom_grid.html">geom_grid_vappres()</a></code></td>
+<td><code><a href="../reference/geom_psychro_grid.html">geom_psychro_grid_vappres()</a></code></td>
 <td>Vapor pressure</td>
 </tr>
 <tr class="even">
-<td><code><a href="../reference/geom_grid.html">geom_grid_specvol()</a></code></td>
+<td><code><a href="../reference/geom_psychro_grid.html">geom_psychro_grid_specvol()</a></code></td>
 <td>Specific volume</td>
 </tr>
 <tr class="odd">
-<td><code><a href="../reference/geom_grid.html">geom_grid_enthalpy()</a></code></td>
+<td><code><a href="../reference/geom_psychro_grid.html">geom_psychro_grid_enthalpy()</a></code></td>
 <td>Enthalpy</td>
 </tr>
 </tbody>
 </table>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">50</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">40</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="../reference/geom_grid.html">geom_grid_relhum</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="../reference/geom_grid.html">geom_grid_wetbulb</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="../reference/geom_grid.html">geom_grid_vappres</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="../reference/geom_grid.html">geom_grid_specvol</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="../reference/geom_grid.html">geom_grid_enthalpy</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span>    <span class="fu"><a href="../reference/geom_psychro_grid.html">geom_psychro_grid_relhum</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/geom_psychro_grid.html">geom_psychro_grid_wetbulb</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/geom_psychro_grid.html">geom_psychro_grid_vappres</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/geom_psychro_grid.html">geom_psychro_grid_specvol</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/geom_psychro_grid.html">geom_psychro_grid_enthalpy</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><img src="grids-and-styles_files/figure-html/all-grids-1.png" class="r-plt" alt="Psychrometric chart with relative humidity, wet-bulb, vapor pressure, specific volume, and enthalpy grids." width="100%" style="display: block; margin: auto;"></p>
 <p>These helpers do not add data layers. They update the psychrometric
 coordinate metadata so the panel background can draw or hide the
@@ -147,13 +147,13 @@ function. Use these scales to customize breaks, minor breaks, limits,
 and labels.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">50</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">40</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="../reference/geom_grid.html">geom_grid_relhum</a></span><span class="op">(</span>linewidth <span class="op">=</span> <span class="fl">0.8</span>, color <span class="op">=</span> <span class="st">"black"</span>, label.size <span class="op">=</span> <span class="fl">5</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/geom_psychro_grid.html">geom_psychro_grid_relhum</a></span><span class="op">(</span>linewidth <span class="op">=</span> <span class="fl">0.8</span>, color <span class="op">=</span> <span class="st">"black"</span>, label.size <span class="op">=</span> <span class="fl">5</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/scale.html">scale_relhum_continuous</a></span><span class="op">(</span>breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">25</span>, <span class="fl">75</span>, by <span class="op">=</span> <span class="fl">25</span><span class="op">)</span>, minor_breaks <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="../reference/geom_grid.html">geom_grid_wetbulb</a></span><span class="op">(</span>color <span class="op">=</span> <span class="st">"black"</span>, linewidth <span class="op">=</span> <span class="fl">0.6</span>, label <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/geom_psychro_grid.html">geom_psychro_grid_wetbulb</a></span><span class="op">(</span>color <span class="op">=</span> <span class="st">"black"</span>, linewidth <span class="op">=</span> <span class="fl">0.6</span>, label <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/scale.html">scale_wetbulb_continuous</a></span><span class="op">(</span>breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">30</span>, by <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>, minor_breaks <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="../reference/geom_grid.html">geom_grid_vappres</a></span><span class="op">(</span>show <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/geom_psychro_grid.html">geom_psychro_grid_vappres</a></span><span class="op">(</span>show <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/scale.html">scale_specvol_continuous</a></span><span class="op">(</span>labels <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="../reference/geom_grid.html">geom_grid_enthalpy</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span>    <span class="fu"><a href="../reference/geom_psychro_grid.html">geom_psychro_grid_enthalpy</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><img src="grids-and-styles_files/figure-html/custom-grid-1.png" class="r-plt" alt="Psychrometric chart with custom grid breaks, labels, and line styles." width="100%" style="display: block; margin: auto;"></p>
 <p>Line style arguments go directly to
 <code><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">ggplot2::element_line()</a></code>. Label style arguments use a
@@ -198,7 +198,7 @@ offsets. Tick breaks and labels are controlled by
 reference grids. Use these with regular <code><a href="../reference/theme.html">theme()</a></code> calls.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">50</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="../reference/geom_grid.html">geom_grid_relhum</a></span><span class="op">(</span>label <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/geom_psychro_grid.html">geom_psychro_grid_relhum</a></span><span class="op">(</span>label <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/theme.html">theme</a></span><span class="op">(</span></span>
 <span>        psychro.panel.grid.saturation <span class="op">=</span> <span class="fu">element_line</span><span class="op">(</span></span>
 <span>            color <span class="op">=</span> <span class="st">"black"</span>, linetype <span class="op">=</span> <span class="fl">2</span></span>

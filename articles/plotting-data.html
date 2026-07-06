@@ -112,8 +112,8 @@ values are supplied as percent values.</p>
 calculated reference lines or overlays from data.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">35</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">25</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="../reference/geom_grid.html">geom_grid_relhum</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="../reference/geom_grid.html">geom_grid_wetbulb</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/geom_psychro_grid.html">geom_psychro_grid_relhum</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/geom_psychro_grid.html">geom_psychro_grid_wetbulb</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu">geom_line</span><span class="op">(</span></span>
 <span>        <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="fl">20</span><span class="op">:</span><span class="fl">32</span>, wetbulb <span class="op">=</span> <span class="fl">18</span><span class="op">)</span>,</span>
 <span>        stat <span class="op">=</span> <span class="st">"wetbulb"</span>,</span>
@@ -192,7 +192,7 @@ for distribution plots.</p>
 <code class="sourceCode R"><span><span class="va">weather</span><span class="op">$</span><span class="va">cooling_load</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmax</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">weather</span><span class="op">$</span><span class="va">dry_bulb_temperature</span> <span class="op">-</span> <span class="fl">24</span><span class="op">)</span> <span class="op">*</span> <span class="fl">1.5</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/ggpsychro.html">ggpsychro</a></span><span class="op">(</span><span class="va">weather</span>, tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">40</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">25</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="../reference/geom_grid.html">geom_grid_relhum</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/geom_psychro_grid.html">geom_psychro_grid_relhum</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/stat_psychro_bin.html">geom_psychro_tile</a></span><span class="op">(</span></span>
 <span>        <span class="fu">aes</span><span class="op">(</span></span>
 <span>            <span class="va">dry_bulb_temperature</span>,</span>
@@ -207,7 +207,7 @@ for distribution plots.</p>
 <code>value</code> aesthetic and <code>fun</code>.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ggpsychro.html">ggpsychro</a></span><span class="op">(</span><span class="va">weather</span>, tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">40</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">25</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="../reference/geom_grid.html">geom_grid_relhum</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/geom_psychro_grid.html">geom_psychro_grid_relhum</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/stat_psychro_bin.html">geom_psychro_tile</a></span><span class="op">(</span></span>
 <span>        <span class="fu">aes</span><span class="op">(</span></span>
 <span>            <span class="va">dry_bulb_temperature</span>,</span>

@@ -1,7 +1,7 @@
-# Demonstrate scales functions with ggplot2 code
+# Demonstrate psychrometric label and scale functions
 
-This function generates ggplot2 code needed to use scales functions for
-real code.
+This helper builds a compact ggplot2 scale preview for label and scale
+functions.
 
 ## Usage
 

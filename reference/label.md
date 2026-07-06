@@ -1,4 +1,4 @@
-# Label wet-bulb temperature
+# Label psychrometric scale breaks
 
 Format numbers as main variables on the psychrometric chart.
 
@@ -6,7 +6,6 @@ Format numbers as main variables on the psychrometric chart.
 
 ``` r
 label_drybulb(
-  x,
   accuracy = NULL,
   scale = 1,
   units,
@@ -18,7 +17,6 @@ label_drybulb(
 )
 
 label_humratio(
-  x,
   accuracy = NULL,
   scale = 1,
   units,
@@ -30,7 +28,6 @@ label_humratio(
 )
 
 label_relhum(
-  x,
   accuracy = NULL,
   scale = 1,
   units,
@@ -42,7 +39,6 @@ label_relhum(
 )
 
 label_wetbulb(
-  x,
   accuracy = NULL,
   scale = 1,
   units,
@@ -54,7 +50,6 @@ label_wetbulb(
 )
 
 label_vappres(
-  x,
   accuracy = NULL,
   scale = 1,
   units,
@@ -66,7 +61,6 @@ label_vappres(
 )
 
 label_specvol(
-  x,
   accuracy = NULL,
   scale = 1,
   units,
@@ -78,91 +72,6 @@ label_specvol(
 )
 
 label_enthalpy(
-  x,
-  accuracy = NULL,
-  scale = 1,
-  units,
-  big.mark = ",",
-  decimal.mark = ".",
-  trim = TRUE,
-  parse = FALSE,
-  ...
-)
-
-drybulb_format(
-  x,
-  accuracy = NULL,
-  scale = 1,
-  units,
-  big.mark = ",",
-  decimal.mark = ".",
-  trim = TRUE,
-  parse = FALSE,
-  ...
-)
-
-humratio_format(
-  x,
-  accuracy = NULL,
-  scale = 1,
-  units,
-  big.mark = ",",
-  decimal.mark = ".",
-  trim = TRUE,
-  parse = FALSE,
-  ...
-)
-
-relhum_format(
-  x,
-  accuracy = NULL,
-  scale = 1,
-  units,
-  big.mark = ",",
-  decimal.mark = ".",
-  trim = TRUE,
-  parse = FALSE,
-  ...
-)
-
-wetbulb_format(
-  x,
-  accuracy = NULL,
-  scale = 1,
-  units,
-  big.mark = ",",
-  decimal.mark = ".",
-  trim = TRUE,
-  parse = FALSE,
-  ...
-)
-
-vappres_format(
-  x,
-  accuracy = NULL,
-  scale = 1,
-  units,
-  big.mark = ",",
-  decimal.mark = ".",
-  trim = TRUE,
-  parse = FALSE,
-  ...
-)
-
-specvol_format(
-  x,
-  accuracy = NULL,
-  scale = 1,
-  units,
-  big.mark = ",",
-  decimal.mark = ".",
-  trim = TRUE,
-  parse = FALSE,
-  ...
-)
-
-enthalpy_format(
-  x,
   accuracy = NULL,
   scale = 1,
   units,
@@ -175,10 +84,6 @@ enthalpy_format(
 ```
 
 ## Arguments
-
-- x:
-
-  A numeric vector
 
 - accuracy:
 
@@ -267,20 +172,5 @@ demo_scale(10:50, labels = label_vappres(units = "IP"))
 demo_scale(seq(1000, 2000), labels = label_enthalpy(units = "SI", parse = TRUE))
 
 demo_scale(seq(1000, 2000), labels = label_enthalpy(units = "IP", parse = TRUE))
-
-
-demo_scale(10:50, labels = drybulb_format(units = "SI", parse = TRUE))
-
-demo_scale(10:20, labels = humratio_format(scale = 0.001, units = "SI", parse = TRUE))
-
-demo_scale(10:50, labels = relhum_format(units = "SI"))
-
-demo_scale(10:50, labels = wetbulb_format(units = "SI", parse = TRUE))
-
-demo_scale(10:50, labels = specvol_format(units = "SI", parse = TRUE))
-
-demo_scale(10:50, labels = vappres_format(units = "SI"))
-
-demo_scale(seq(1000, 2000), labels = enthalpy_format(units = "SI", parse = TRUE))
 
 ```

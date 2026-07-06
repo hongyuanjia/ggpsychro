@@ -248,7 +248,7 @@ comfort_model_heat_index(solar_exposure = 0.5)
 
 # Draw a PMV overlay using custom activity and clothing assumptions.
 ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
-    geom_comfort_overlay(
+    geom_comfort_pmv(
         model = comfort_model_pmv(met = 1.4, clo = 0.5),
         n = c(45, 30)
     )
@@ -256,18 +256,16 @@ ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
 
 # Draw SET as the filled comfort metric.
 ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
-    geom_comfort_overlay(
+    geom_comfort_set(
         model = comfort_model_set(v = 0.2),
-        metric = "set",
         n = c(45, 30)
     )
 
 
 # Draw the adaptive acceptability region.
 ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
-    geom_comfort_zone(
-        model = comfort_model_adaptive(t_running = 22),
-        metric = "acceptability",
+    geom_comfort_adaptive(
+        t_running = 22,
         n = c(45, 30),
         alpha = 0.3
     )

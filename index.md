@@ -52,9 +52,11 @@ same psychrometric chart.
 
 ggpsychro(tdb_lim = c(5, 40), hum_lim = c(0, 24)) +
     psychro_preset("minimal") +
-    geom_comfort_overlay(n = c(70, 48), gap = 0) +
-    scale_fill_comfort_pmv(name = "PMV") +
-    geom_comfort_pmv_lines(levels = seq(-3, 3, by = 0.5), n = 140)
+    geom_comfort_pmv(
+        contour_levels = seq(-3, 3, by = 0.5),
+        n = c(70, 48)
+    ) +
+    scale_fill_comfort_pmv(name = "PMV")
 ```
 
 ![Psychrometric chart with a PMV comfort overlay, filled blue-white-red

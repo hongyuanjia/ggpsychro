@@ -30,41 +30,43 @@ coord_psychro(
 - hum_lim:
 
   A numeric vector of length-2 indicating the humidity ratio limits.
-  Should be in range `[0, 60]` g_H20 kg_Air-1 \[SI\] or `[0, 350]`
+  Should be in range `[0, 60]` g_H20 kg_Air-1 \[SI\] or `[0, 420]`
   gr_H20 lb_Air-1 \[IP\]. If `NULL`, trained data ranges will be used
   when available, otherwise a default display range will be used.
   Default: `NULL`.
 
 - altitude:
 
-  A single number of altitude in m \[SI\] or ft \[IP\]. Default: `0`.
+  A single number of altitude in m \[SI\] or ft \[IP\]. If `NULL`,
+  inherits the altitude from the parent
+  [`ggpsychro()`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro.md)
+  plot.
 
 - units:
 
-  A string indicating the system of units chosen. Should be either
-  `"SI"` or `"IP"`.
+  Unit system, either `"SI"` or `"IP"`. If `NULL`, inherits the unit
+  system from the parent
+  [`ggpsychro()`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro.md)
+  plot.
 
 - mollier:
 
-  If `TRUE`, a Mollier chart will be created instead of a psychrometric
-  chart. Default: `FALSE`.
+  If `TRUE`, use Mollier chart coordinates. If `NULL`, inherits the
+  chart type from the parent
+  [`ggpsychro()`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro.md)
+  plot.
 
 - expand:
 
-  If `TRUE`, the default, adds a small expansion factor to the limits to
-  ensure that data and axes don't overlap. If `FALSE`, limits are taken
-  exactly from the data or `xlim`/`ylim`. Giving a logical vector will
-  separately control the expansion for the four directions (top, left,
-  bottom and right). The `expand` argument will be recycled to length 4
-  if necessary. Alternatively, can be a named logical vector to control
-  a single direction, e.g. `expand = c(bottom = FALSE)`.
+  If `TRUE`, add a small expansion factor to the limits. Defaults to
+  `FALSE` for psychrometric charts.
 
 - default:
 
-  Is this the default coordinate system? If `FALSE` (the default), then
-  replacing this coordinate system with another one creates a message
-  alerting the user that the coordinate system is being replaced. If
-  `TRUE`, that warning is suppressed.
+  Is this the default coordinate system? Defaults to `TRUE` so replacing
+  the coordinate system created by
+  [`ggpsychro()`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro.md)
+  does not emit a ggplot2 replacement message.
 
 - clip:
 
@@ -80,6 +82,14 @@ coord_psychro(
 ## Value
 
 A ggplot2 coordinate system object for psychrometric charts.
+
+## Details
+
+`coord_psychro()` is normally used with a
+[`ggpsychro()`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro.md)
+plot. When `altitude`, `units`, or `mollier` is `NULL`, the value is
+inherited from the parent plot. Supply these arguments explicitly when
+using the coordinate system outside that path.
 
 ## Examples
 

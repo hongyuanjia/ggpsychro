@@ -4,7 +4,8 @@ ggpsychro draws the dry-bulb grid, humidity-ratio grid, saturation
 curve, and psychrometric reference grids through
 [`coord_psychro()`](https://hongyuanjia.github.io/ggpsychro/reference/coord_psychro.md).
 The default reference grids are drawn without labels. Add
-`geom_grid_*()` helpers when a grid should be explicit and labelled.
+`geom_psychro_grid_*()` helpers when a grid should be explicit and
+labelled.
 
 ## Presets
 
@@ -48,20 +49,20 @@ The reference grid helpers are:
 
 | Helper | Property |
 |----|----|
-| [`geom_grid_relhum()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_grid.md) | Relative humidity |
-| [`geom_grid_wetbulb()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_grid.md) | Wet-bulb temperature |
-| [`geom_grid_vappres()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_grid.md) | Vapor pressure |
-| [`geom_grid_specvol()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_grid.md) | Specific volume |
-| [`geom_grid_enthalpy()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_grid.md) | Enthalpy |
+| [`geom_psychro_grid_relhum()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_psychro_grid.md) | Relative humidity |
+| [`geom_psychro_grid_wetbulb()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_psychro_grid.md) | Wet-bulb temperature |
+| [`geom_psychro_grid_vappres()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_psychro_grid.md) | Vapor pressure |
+| [`geom_psychro_grid_specvol()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_psychro_grid.md) | Specific volume |
+| [`geom_psychro_grid_enthalpy()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_psychro_grid.md) | Enthalpy |
 
 ``` r
 
 ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 40)) +
-    geom_grid_relhum() +
-    geom_grid_wetbulb() +
-    geom_grid_vappres() +
-    geom_grid_specvol() +
-    geom_grid_enthalpy()
+    geom_psychro_grid_relhum() +
+    geom_psychro_grid_wetbulb() +
+    geom_psychro_grid_vappres() +
+    geom_psychro_grid_specvol() +
+    geom_psychro_grid_enthalpy()
 ```
 
 ![Psychrometric chart with relative humidity, wet-bulb, vapor pressure,
@@ -80,13 +81,13 @@ these scales to customize breaks, minor breaks, limits, and labels.
 ``` r
 
 ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 40)) +
-    geom_grid_relhum(linewidth = 0.8, color = "black", label.size = 5) +
+    geom_psychro_grid_relhum(linewidth = 0.8, color = "black", label.size = 5) +
     scale_relhum_continuous(breaks = seq(25, 75, by = 25), minor_breaks = NULL) +
-    geom_grid_wetbulb(color = "black", linewidth = 0.6, label = FALSE) +
+    geom_psychro_grid_wetbulb(color = "black", linewidth = 0.6, label = FALSE) +
     scale_wetbulb_continuous(breaks = seq(5, 30, by = 5), minor_breaks = NULL) +
-    geom_grid_vappres(show = FALSE) +
+    geom_psychro_grid_vappres(show = FALSE) +
     scale_specvol_continuous(labels = NULL) +
-    geom_grid_enthalpy()
+    geom_psychro_grid_enthalpy()
 ```
 
 ![Psychrometric chart with custom grid breaks, labels, and line
@@ -151,7 +152,7 @@ calls.
 ``` r
 
 ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
-    geom_grid_relhum(label = FALSE) +
+    geom_psychro_grid_relhum(label = FALSE) +
     theme(
         psychro.panel.grid.saturation = element_line(
             color = "black", linetype = 2

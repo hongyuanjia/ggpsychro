@@ -104,7 +104,7 @@
 
         <dt>
 
-          <code><a href="geom_grid.html">geom_grid_relhum()</a></code> <code><a href="geom_grid.html">geom_grid_wetbulb()</a></code> <code><a href="geom_grid.html">geom_grid_vappres()</a></code> <code><a href="geom_grid.html">geom_grid_specvol()</a></code> <code><a href="geom_grid.html">geom_grid_enthalpy()</a></code>
+          <code><a href="geom_psychro_grid.html">geom_psychro_grid_relhum()</a></code> <code><a href="geom_psychro_grid.html">geom_psychro_grid_wetbulb()</a></code> <code><a href="geom_psychro_grid.html">geom_psychro_grid_vappres()</a></code> <code><a href="geom_psychro_grid.html">geom_psychro_grid_specvol()</a></code> <code><a href="geom_psychro_grid.html">geom_psychro_grid_enthalpy()</a></code>
 
         </dt>
         <dd>Add psychrometric grid lines</dd>
@@ -171,7 +171,7 @@
 
         <dt>
 
-          <code><a href="comfort_standard_ashrae55_2017.html">comfort_standard_ashrae55_2017()</a></code> <code><a href="comfort_standard_ashrae55_2017.html">comfort_standard_en15251_2007()</a></code>
+          <code><a href="comfort_pmv_ashrae55.html">comfort_pmv_ashrae55()</a></code> <code><a href="comfort_pmv_ashrae55.html">comfort_pmv_en15251()</a></code>
 
         </dt>
         <dd>PMV-based comfort standards</dd>
@@ -194,10 +194,10 @@
 
       <dl><dt>
 
-          <code><a href="geom_comfort_overlay.html">geom_comfort_overlay()</a></code> <code><a href="geom_comfort_overlay.html">geom_comfort_heat_index()</a></code> <code><a href="geom_comfort_overlay.html">geom_comfort_contour()</a></code> <code><a href="geom_comfort_overlay.html">geom_comfort_zone()</a></code> <code><a href="geom_comfort_overlay.html">geom_comfort_pmv_lines()</a></code> <code><a href="geom_comfort_overlay.html">geom_comfort_standard_zone()</a></code> <code><a href="geom_comfort_overlay.html">geom_comfort_givoni()</a></code> <code><a href="geom_comfort_overlay.html">stat_comfort_state()</a></code>
+          <code><a href="geom_comfort_pmv.html">geom_comfort_set()</a></code> <code><a href="geom_comfort_pmv.html">geom_comfort_adaptive()</a></code> <code><a href="geom_comfort_pmv.html">stat_comfort_state()</a></code> <code><a href="geom_comfort_pmv.html">geom_comfort_givoni()</a></code> <code><a href="geom_comfort_pmv.html">geom_comfort_heat_index()</a></code> <code><a href="geom_comfort_pmv.html">geom_comfort_pmv()</a></code>
 
         </dt>
-        <dd>Comfort overlays for psychrometric charts</dd>
+        <dd>Comfort layers for psychrometric charts</dd>
 
         <dt>
 
@@ -224,10 +224,10 @@
 
         <dt>
 
-          <code><a href="label.html">label_drybulb()</a></code> <code><a href="label.html">label_humratio()</a></code> <code><a href="label.html">label_relhum()</a></code> <code><a href="label.html">label_wetbulb()</a></code> <code><a href="label.html">label_vappres()</a></code> <code><a href="label.html">label_specvol()</a></code> <code><a href="label.html">label_enthalpy()</a></code> <code><a href="label.html">drybulb_format()</a></code> <code><a href="label.html">humratio_format()</a></code> <code><a href="label.html">relhum_format()</a></code> <code><a href="label.html">wetbulb_format()</a></code> <code><a href="label.html">vappres_format()</a></code> <code><a href="label.html">specvol_format()</a></code> <code><a href="label.html">enthalpy_format()</a></code>
+          <code><a href="label.html">label_drybulb()</a></code> <code><a href="label.html">label_humratio()</a></code> <code><a href="label.html">label_relhum()</a></code> <code><a href="label.html">label_wetbulb()</a></code> <code><a href="label.html">label_vappres()</a></code> <code><a href="label.html">label_specvol()</a></code> <code><a href="label.html">label_enthalpy()</a></code>
 
         </dt>
-        <dd>Label wet-bulb temperature</dd>
+        <dd>Label psychrometric scale breaks</dd>
 
         <dt>
 
@@ -241,7 +241,7 @@
           <code><a href="demo_scale.html">demo_scale()</a></code>
 
         </dt>
-        <dd>Demonstrate scales functions with ggplot2 code</dd>
+        <dd>Demonstrate psychrometric label and scale functions</dd>
       </dl></div><div class="section level2">
       <h2 id="themes-presets-and-elements">Themes, presets, and elements<a class="anchor" aria-label="anchor" href="#themes-presets-and-elements"></a></h2>
 
@@ -275,33 +275,10 @@
 
         <dt>
 
-          <code><a href="element_comfort_zone.html">element_comfort_zone()</a></code>
+          <code><a href="element_givoni_zone.html">element_givoni_zone()</a></code>
 
         </dt>
         <dd>Comfort zone style element</dd>
-      </dl></div><div class="section level2">
-      <h2 id="extension-api">Extension API<a class="anchor" aria-label="anchor" href="#extension-api"></a></h2>
-
-
-
-      <dl></dl></div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="ggpsychro-extensions.html">ggpsychro-extensions</a></code> <code><a href="ggpsychro-extensions.html">StatRelhum</a></code> <code><a href="ggpsychro-extensions.html">StatWetbulb</a></code> <code><a href="ggpsychro-extensions.html">StatVappres</a></code> <code><a href="ggpsychro-extensions.html">StatSpecvol</a></code> <code><a href="ggpsychro-extensions.html">StatEnthalpy</a></code> <code><a href="ggpsychro-extensions.html">StatPsychroBin</a></code> <code><a href="ggpsychro-extensions.html">StatPsychroState</a></code> <code><a href="ggpsychro-extensions.html">StatPsychroZone</a></code>
-
-        </dt>
-        <dd>ggpsychro extensions to ggplot2</dd>
-
-        <dt>
-
-          <code><a href="ggpsychro-ggproto.html">ggpsychro-ggproto</a></code> <code><a href="ggpsychro-ggproto.html">CoordPsychro</a></code>
-
-        </dt>
-        <dd>Base ggproto classes for ggpsychro</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

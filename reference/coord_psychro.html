@@ -76,41 +76,35 @@ a default display range will be used. Default: <code>NULL</code>.</p></dd>
 <dd><p>A numeric vector of length-2 indicating the humidity ratio
 limits. Should be in range
 <code>[0, 60]</code> g_H20 kg_Air-1 [SI] or
-<code>[0, 350]</code> gr_H20 lb_Air-1 [IP].
+<code>[0, 420]</code> gr_H20 lb_Air-1 [IP].
 If <code>NULL</code>, trained data ranges will be used when available, otherwise
 a default display range will be used. Default: <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-altitude">altitude<a class="anchor" aria-label="anchor" href="#arg-altitude"></a></dt>
-<dd><p>A single number of altitude in m [SI] or ft [IP]. Default:
-<code>0</code>.</p></dd>
+<dd><p>A single number of altitude in m [SI] or ft [IP]. If
+<code>NULL</code>, inherits the altitude from the parent <code><a href="ggpsychro.html">ggpsychro()</a></code> plot.</p></dd>
 
 
 <dt id="arg-units">units<a class="anchor" aria-label="anchor" href="#arg-units"></a></dt>
-<dd><p>A string indicating the system of units chosen. Should be either
-<code>"SI"</code> or <code>"IP"</code>.</p></dd>
+<dd><p>Unit system, either <code>"SI"</code> or <code>"IP"</code>. If <code>NULL</code>, inherits the
+unit system from the parent <code><a href="ggpsychro.html">ggpsychro()</a></code> plot.</p></dd>
 
 
 <dt id="arg-mollier">mollier<a class="anchor" aria-label="anchor" href="#arg-mollier"></a></dt>
-<dd><p>If <code>TRUE</code>, a Mollier chart will be created instead of a
-psychrometric chart. Default: <code>FALSE</code>.</p></dd>
+<dd><p>If <code>TRUE</code>, use Mollier chart coordinates. If <code>NULL</code>, inherits
+the chart type from the parent <code><a href="ggpsychro.html">ggpsychro()</a></code> plot.</p></dd>
 
 
 <dt id="arg-expand">expand<a class="anchor" aria-label="anchor" href="#arg-expand"></a></dt>
-<dd><p>If <code>TRUE</code>, the default, adds a small expansion factor to
-the limits to ensure that data and axes don't overlap. If <code>FALSE</code>,
-limits are taken exactly from the data or <code>xlim</code>/<code>ylim</code>.
-Giving a logical vector will separately control the expansion for the four
-directions (top, left, bottom and right). The <code>expand</code> argument will be
-recycled to length 4 if necessary. Alternatively, can be a named logical
-vector to control a single direction, e.g. <code>expand = c(bottom = FALSE)</code>.</p></dd>
+<dd><p>If <code>TRUE</code>, add a small expansion factor to the limits. Defaults
+to <code>FALSE</code> for psychrometric charts.</p></dd>
 
 
 <dt id="arg-default">default<a class="anchor" aria-label="anchor" href="#arg-default"></a></dt>
-<dd><p>Is this the default coordinate system? If <code>FALSE</code> (the default),
-then replacing this coordinate system with another one creates a message alerting
-the user that the coordinate system is being replaced. If <code>TRUE</code>, that warning
-is suppressed.</p></dd>
+<dd><p>Is this the default coordinate system? Defaults to <code>TRUE</code> so
+replacing the coordinate system created by <code><a href="ggpsychro.html">ggpsychro()</a></code> does not emit a
+ggplot2 replacement message.</p></dd>
 
 
 <dt id="arg-clip">clip<a class="anchor" aria-label="anchor" href="#arg-clip"></a></dt>
@@ -127,6 +121,13 @@ legend, the plot title, or the plot margins.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A ggplot2 coordinate system object for psychrometric charts.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p><code>coord_psychro()</code> is normally used with a <code><a href="ggpsychro.html">ggpsychro()</a></code> plot. When
+<code>altitude</code>, <code>units</code>, or <code>mollier</code> is <code>NULL</code>, the value is inherited from the
+parent plot. Supply these arguments explicitly when using the coordinate
+system outside that path.</p>
     </div>
 
     <div class="section level2">

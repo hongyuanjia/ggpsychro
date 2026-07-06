@@ -22,11 +22,11 @@
   [`stat_specvol()`](https://hongyuanjia.github.io/ggpsychro/reference/stat.md)
   [`stat_enthalpy()`](https://hongyuanjia.github.io/ggpsychro/reference/stat.md)
   : Calculate psychrometric properties of moist air
-- [`geom_grid_relhum()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_grid.md)
-  [`geom_grid_wetbulb()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_grid.md)
-  [`geom_grid_vappres()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_grid.md)
-  [`geom_grid_specvol()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_grid.md)
-  [`geom_grid_enthalpy()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_grid.md)
+- [`geom_psychro_grid_relhum()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_psychro_grid.md)
+  [`geom_psychro_grid_wetbulb()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_psychro_grid.md)
+  [`geom_psychro_grid_vappres()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_psychro_grid.md)
+  [`geom_psychro_grid_specvol()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_psychro_grid.md)
+  [`geom_psychro_grid_enthalpy()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_psychro_grid.md)
   : Add psychrometric grid lines
 - [`geom_psychro_protractor()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_psychro_protractor.md)
   [`guide_psychro_protractor()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_psychro_protractor.md)
@@ -56,23 +56,21 @@
   [`comfort_model_adaptive()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_model_pmv.md)
   [`comfort_model_heat_index()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_model_pmv.md)
   : Comfort model objects
-- [`comfort_standard_ashrae55_2017()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_standard_ashrae55_2017.md)
-  [`comfort_standard_en15251_2007()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_standard_ashrae55_2017.md)
+- [`comfort_pmv_ashrae55()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_pmv_ashrae55.md)
+  [`comfort_pmv_en15251()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_pmv_ashrae55.md)
   : PMV-based comfort standards
 - [`comfort_strategy_givoni()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_strategy_givoni.md)
   : Givoni bioclimatic strategy
 
 ## Thermal comfort chart layers
 
-- [`geom_comfort_overlay()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
-  [`geom_comfort_heat_index()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
-  [`geom_comfort_contour()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
-  [`geom_comfort_zone()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
-  [`geom_comfort_pmv_lines()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
-  [`geom_comfort_standard_zone()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
-  [`geom_comfort_givoni()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
-  [`stat_comfort_state()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
-  : Comfort overlays for psychrometric charts
+- [`geom_comfort_set()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md)
+  [`geom_comfort_adaptive()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md)
+  [`stat_comfort_state()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md)
+  [`geom_comfort_givoni()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md)
+  [`geom_comfort_heat_index()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md)
+  [`geom_comfort_pmv()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md)
+  : Comfort layers for psychrometric charts
 - [`scale_fill_comfort_pmv()`](https://hongyuanjia.github.io/ggpsychro/reference/scale_fill_comfort_pmv.md)
   : Comfort PMV fill scale
 
@@ -93,14 +91,7 @@
   [`label_vappres()`](https://hongyuanjia.github.io/ggpsychro/reference/label.md)
   [`label_specvol()`](https://hongyuanjia.github.io/ggpsychro/reference/label.md)
   [`label_enthalpy()`](https://hongyuanjia.github.io/ggpsychro/reference/label.md)
-  [`drybulb_format()`](https://hongyuanjia.github.io/ggpsychro/reference/label.md)
-  [`humratio_format()`](https://hongyuanjia.github.io/ggpsychro/reference/label.md)
-  [`relhum_format()`](https://hongyuanjia.github.io/ggpsychro/reference/label.md)
-  [`wetbulb_format()`](https://hongyuanjia.github.io/ggpsychro/reference/label.md)
-  [`vappres_format()`](https://hongyuanjia.github.io/ggpsychro/reference/label.md)
-  [`specvol_format()`](https://hongyuanjia.github.io/ggpsychro/reference/label.md)
-  [`enthalpy_format()`](https://hongyuanjia.github.io/ggpsychro/reference/label.md)
-  : Label wet-bulb temperature
+  : Label psychrometric scale breaks
 - [`drybulb_trans()`](https://hongyuanjia.github.io/ggpsychro/reference/trans.md)
   [`humratio_trans()`](https://hongyuanjia.github.io/ggpsychro/reference/trans.md)
   [`relhum_trans()`](https://hongyuanjia.github.io/ggpsychro/reference/trans.md)
@@ -110,7 +101,7 @@
   [`enthalpy_trans()`](https://hongyuanjia.github.io/ggpsychro/reference/trans.md)
   : Create transformation objects for psychrometric chart
 - [`demo_scale()`](https://hongyuanjia.github.io/ggpsychro/reference/demo_scale.md)
-  : Demonstrate scales functions with ggplot2 code
+  : Demonstrate psychrometric label and scale functions
 
 ## Themes, presets, and elements
 
@@ -124,21 +115,5 @@
   : Apply a psychrometric chart preset
 - [`element_polygon()`](https://hongyuanjia.github.io/ggpsychro/reference/element_polygon.md)
   : Polygon theme element for psychrometric chart panels
-- [`element_comfort_zone()`](https://hongyuanjia.github.io/ggpsychro/reference/element_comfort_zone.md)
+- [`element_givoni_zone()`](https://hongyuanjia.github.io/ggpsychro/reference/element_givoni_zone.md)
   : Comfort zone style element
-
-## Extension API
-
-- [`ggpsychro-extensions`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro-extensions.md)
-  [`StatRelhum`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro-extensions.md)
-  [`StatWetbulb`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro-extensions.md)
-  [`StatVappres`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro-extensions.md)
-  [`StatSpecvol`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro-extensions.md)
-  [`StatEnthalpy`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro-extensions.md)
-  [`StatPsychroBin`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro-extensions.md)
-  [`StatPsychroState`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro-extensions.md)
-  [`StatPsychroZone`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro-extensions.md)
-  : ggpsychro extensions to ggplot2
-- [`ggpsychro-ggproto`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro-ggproto.md)
-  [`CoordPsychro`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro-ggproto.md)
-  : Base ggproto classes for ggpsychro

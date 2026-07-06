@@ -10,37 +10,43 @@ ggplot layers.
 ## PMV overlays
 
 The default comfort model is ISO 7730 PMV.
-[`geom_comfort_overlay()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
-draws filled PMV bands,
+[`geom_comfort_pmv()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md)
+draws filled PMV bands, labelled PMV contours, and optional PMV-based
+standard zones.
 [`scale_fill_comfort_pmv()`](https://hongyuanjia.github.io/ggpsychro/reference/scale_fill_comfort_pmv.md)
-applies a PMV-centered diverging palette, and
-[`geom_comfort_pmv_lines()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
-adds labelled PMV curves.
+applies a PMV-centered diverging palette.
 
 ``` r
 
 ggpsychro(tdb_lim = c(5, 40), hum_lim = c(0, 24)) +
     psychro_preset("minimal") +
-    geom_comfort_overlay(n = c(70, 48), gap = 0) +
-    scale_fill_comfort_pmv(name = "PMV") +
-    geom_comfort_pmv_lines(levels = seq(-3, 3, by = 0.5), n = 140)
+    geom_comfort_pmv(
+        contour_levels = seq(-3, 3, by = 0.5),
+        n = c(70, 48)
+    ) +
+    scale_fill_comfort_pmv(name = "PMV")
 ```
 
-![Psychrometric chart with filled PMV bands and labelled PMV curve
+![Psychrometric chart with filled PMV bands and labelled PMV contour
 lines.](comfort-overlays_files/figure-html/pmv-overlay-1.png)
 
 ## Standard comfort zones
 
-For PMV-based standards,
-[`geom_comfort_standard_zone()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
-draws the filled zone, PMV boundary curves, and labels from a standard
-helper.
+For PMV-based standards, pass a standard helper to
+[`geom_comfort_pmv()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md).
+The standard layer draws the filled zone, PMV boundary contours, and
+labels.
 
 ``` r
 
 ggpsychro(tdb_lim = c(5, 35), hum_lim = c(0, 24)) +
     psychro_preset("minimal") +
-    geom_comfort_standard_zone(comfort_standard_ashrae55_2017(), n = 140)
+    geom_comfort_pmv(
+        standard = comfort_pmv_ashrae55(),
+        bands = FALSE,
+        contours = FALSE,
+        n = 140
+    )
 ```
 
 ![Psychrometric chart with the PMV-based ASHRAE 55 2017 comfort
@@ -50,7 +56,12 @@ zone.](comfort-overlays_files/figure-html/ashrae55-zone-1.png)
 
 ggpsychro(tdb_lim = c(5, 35), hum_lim = c(0, 24)) +
     psychro_preset("minimal") +
-    geom_comfort_standard_zone(comfort_standard_en15251_2007(), n = 140)
+    geom_comfort_pmv(
+        standard = comfort_pmv_en15251(),
+        bands = FALSE,
+        contours = FALSE,
+        n = 140
+    )
 ```
 
 ![Psychrometric chart with PMV-based EN 15251 2007 comfort
@@ -62,8 +73,8 @@ Create reusable model objects with `comfort_model_*()` helpers. SET
 overlays default to the `"set"` metric, while adaptive models default to
 `"acceptability"`. For continuous metrics such as SET, use filled bands
 with labelled contours so the field remains visible without losing the
-level boundaries. `geom_comfort_contour(label = TRUE)` draws the contour
-and its inline level label as one layer, leaving a gap in the contour
+level boundaries. `geom_comfort_set(contours = TRUE, labels = TRUE)`
+draws contour labels inline and leaves a gap in each labelled contour
 where the label is placed.
 
 ``` r
@@ -72,24 +83,16 @@ set_model <- comfort_model_set()
 
 ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
     psychro_preset("minimal") +
-    geom_comfort_overlay(
+    geom_comfort_set(
         model = set_model,
-        metric = "set",
         levels = seq(14, 32, by = 2),
+        contours = TRUE,
+        breaks = seq(22, 30, by = 2),
+        labels = TRUE,
         n = c(70, 42),
         alpha = 0.32
     ) +
-    scale_fill_viridis_c("SET (deg C)", option = "C") +
-    geom_comfort_contour(
-        model = set_model,
-        metric = "set",
-        breaks = seq(22, 30, by = 2),
-        n = c(70, 42),
-        label = TRUE,
-        label_size = 3,
-        colour = "#2F2F2F",
-        linewidth = 0.7
-    )
+    scale_fill_viridis_c("SET (deg C)", option = "C")
 ```
 
 ![Psychrometric chart with filled SET bands and labelled SET contour
@@ -97,12 +100,10 @@ lines.](comfort-overlays_files/figure-html/set-overlay-1.png)
 
 ``` r
 
-adaptive_model <- comfort_model_adaptive(t_running = 20)
-
 ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
     psychro_preset("minimal") +
-    geom_comfort_zone(
-        model = adaptive_model,
+    geom_comfort_adaptive(
+        t_running = 20,
         fill = "#22c55e",
         alpha = 0.18,
         colour = "#166534",
@@ -125,7 +126,7 @@ clipped only by the current chart limits and saturation boundary.
 Heat Index overlays use
 [`comfort_model_heat_index()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_model_pmv.md)
 and
-[`geom_comfort_heat_index()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
+[`geom_comfort_heat_index()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md)
 to draw Outdoor Work Heat Index categories. The model uses a NOAA-style
 Heat Index calculation internally in Fahrenheit, while the layer follows
 the parent chart’s unit system.
@@ -146,7 +147,7 @@ Givoni overlays are strategy zones rather than a single continuous
 comfort metric. Create a strategy with
 [`comfort_strategy_givoni()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_strategy_givoni.md)
 and draw it with
-[`geom_comfort_givoni()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md).
+[`geom_comfort_givoni()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md).
 The mean outdoor temperature shifts the strategy geometry and is shown
 on the chart as a dashed marker.
 
@@ -164,7 +165,7 @@ outdoor temperature
 marker.](comfort-overlays_files/figure-html/givoni-zones-1.png)
 
 Use `zone_style` with
-[`element_comfort_zone()`](https://hongyuanjia.github.io/ggpsychro/reference/element_comfort_zone.md)
+[`element_givoni_zone()`](https://hongyuanjia.github.io/ggpsychro/reference/element_givoni_zone.md)
 to highlight individual strategy zones without changing the strategy
 geometry.
 
@@ -175,16 +176,16 @@ ggpsychro(tdb_lim = c(-10, 50), hum_lim = c(0, 35)) +
     geom_comfort_givoni(
         givoni,
         zone_style = list(
-            comfort = element_comfort_zone(
+            comfort = element_givoni_zone(
                 fill = "#66D27A", colour = "#1F5F2D", alpha = 0.35
             ),
-            natural_ventilation = element_comfort_zone(
+            natural_ventilation = element_givoni_zone(
                 fill = "#B6E3FF", colour = "#2F6FB0", alpha = 0.25
             ),
-            winter = element_comfort_zone(
+            winter = element_givoni_zone(
                 colour = "#A14D00", linetype = "dashed"
             ),
-            air_conditioning = element_comfort_zone(
+            air_conditioning = element_givoni_zone(
                 colour = "#8B1E3F", linewidth = 1.2
             )
         )
@@ -197,7 +198,7 @@ zones.](comfort-overlays_files/figure-html/givoni-zone-style-1.png)
 
 ## State metrics
 
-[`stat_comfort_state()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md)
+[`stat_comfort_state()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md)
 evaluates the model at supplied psychrometric states. The computed
 comfort fields can be used with `after_stat()`.
 
@@ -236,9 +237,11 @@ inputs.
 
 ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20), mollier = TRUE) +
     psychro_preset("minimal") +
-    geom_comfort_overlay(n = c(50, 30)) +
-    scale_fill_comfort_pmv(name = "PMV") +
-    geom_comfort_pmv_lines(levels = seq(-2, 2, by = 1), n = 100)
+    geom_comfort_pmv(
+        contour_levels = seq(-2, 2, by = 1),
+        n = c(50, 30)
+    ) +
+    scale_fill_comfort_pmv(name = "PMV")
 ```
 
 ![Mollier psychrometric chart with a PMV comfort overlay and labelled

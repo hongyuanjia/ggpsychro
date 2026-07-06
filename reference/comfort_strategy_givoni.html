@@ -45,13 +45,13 @@ conversion to humidity ratio."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Givoni bioclimatic strategy</h1>
-      <small class="dont-index">Source: <a href="https://github.com/hongyuanjia/ggpsychro/blob/master/R/comfort-api.R" class="external-link"><code>R/comfort-api.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/hongyuanjia/ggpsychro/blob/master/R/comfort-givoni.R" class="external-link"><code>R/comfort-givoni.R</code></a></small>
       <div class="d-none name"><code>comfort_strategy_givoni.Rd</code></div>
     </div>
 
     <div class="ref-description section level2">
     <p><code>comfort_strategy_givoni()</code> stores the fixed inputs used by
-<code><a href="geom_comfort_overlay.html">geom_comfort_givoni()</a></code>. The strategy geometry follows Marsh's Givoni
+<code><a href="geom_comfort_pmv.html">geom_comfort_givoni()</a></code>. The strategy geometry follows Marsh's Givoni
 Bioclimatic Chart overlay: the mean outdoor temperature shifts the base
 comfort zone, and zones are drawn in dry-bulb/relative-humidity space before
 conversion to humidity ratio.</p>
@@ -94,7 +94,7 @@ conversion to humidity ratio.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Draw the Givoni strategy overlay for that outdoor mean.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">45</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
-<span class="r-in"><span>    <span class="fu"><a href="geom_comfort_overlay.html">geom_comfort_givoni</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="geom_comfort_pmv.html">geom_comfort_givoni</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>        strategy <span class="op">=</span> <span class="fu">comfort_strategy_givoni</span><span class="op">(</span>mean_outdoor <span class="op">=</span> <span class="fl">22</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>        show_labels <span class="op">=</span> <span class="cn">FALSE</span></span></span>
 <span class="r-in"><span>    <span class="op">)</span></span></span>

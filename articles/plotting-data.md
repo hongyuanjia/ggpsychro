@@ -50,8 +50,8 @@ calculated reference lines or overlays from data.
 ``` r
 
 ggpsychro(tdb_lim = c(10, 35), hum_lim = c(0, 25)) +
-    geom_grid_relhum() +
-    geom_grid_wetbulb() +
+    geom_psychro_grid_relhum() +
+    geom_psychro_grid_wetbulb() +
     geom_line(
         aes(x = 20:32, wetbulb = 18),
         stat = "wetbulb",
@@ -123,7 +123,7 @@ distribution plots.
 weather$cooling_load <- pmax(0, weather$dry_bulb_temperature - 24) * 1.5
 
 ggpsychro(weather, tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
-    geom_grid_relhum() +
+    geom_psychro_grid_relhum() +
     geom_psychro_tile(
         aes(
             dry_bulb_temperature,
@@ -145,7 +145,7 @@ and `fun`.
 ``` r
 
 ggpsychro(weather, tdb_lim = c(0, 40), hum_lim = c(0, 25)) +
-    geom_grid_relhum() +
+    geom_psychro_grid_relhum() +
     geom_psychro_tile(
         aes(
             dry_bulb_temperature,

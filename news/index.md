@@ -2,6 +2,10 @@
 
 ## ggpsychro 0.1.0
 
+- Streamlined comfort, grid, coordinate, and stat internals; renamed the
+  PMV comfort and psychrometric grid APIs; and removed the package-local
+  RStudio project file.
+  ([\#35](https://github.com/hongyuanjia/ggpsychro/issues/35))
 - Replaced external path-label rendering with a native textpath renderer
   for psychrometric grid labels and comfort overlay labels.
   ([\#34](https://github.com/hongyuanjia/ggpsychro/issues/34))
@@ -26,8 +30,7 @@
 - Added Heat Index overlays, Givoni bioclimatic strategy zones, and
   per-zone styling controls for Givoni overlays.
   ([\#24](https://github.com/hongyuanjia/ggpsychro/issues/24))
-- Added optional contour labels to
-  [`geom_comfort_contour()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_overlay.md).
+- Added optional inline contour labels to comfort overlays.
   ([\#26](https://github.com/hongyuanjia/ggpsychro/issues/26))
 - Clarified SET and adaptive comfort overlay examples in the comfort
   overlays article.
@@ -43,7 +46,7 @@
   overall scaling, and independent mask-area margins.
   ([\#21](https://github.com/hongyuanjia/ggpsychro/issues/21))
 - Added thermal comfort calculations and comfort overlay layers for
-  PMV/PPD, SET, adaptive comfort, PMV curves, PMV-based ASHRAE 55 / EN
+  PMV/PPD, SET, adaptive comfort, PMV contours, PMV-based ASHRAE 55 / EN
   15251 comfort zones, and point-state comfort metrics.
   ([\#20](https://github.com/hongyuanjia/ggpsychro/issues/20))
 - Removed an ambiguous `specvol-rh` zone example from the reference
