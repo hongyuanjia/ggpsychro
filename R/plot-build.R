@@ -3,30 +3,30 @@
 ggplot_build.ggpsychro <- function(plot, ...) {
     # Fail before the custom build pipeline starts if ggplot2 has changed one of
     # the private build helpers that this method calls through the wrappers below.
-    ggplot2_check_build_internals()
-    plot <- plot_clone(plot)
+    ggplot2__check_build_internals()
+    plot <- build__plot_clone(plot)
     if (length(plot@layers) == 0) {
         plot <- plot + ggplot2::geom_blank()
     }
 
     layers <- plot@layers
-    use_internal_saturation <- psychro_saturation_layer_needed(layers)
+    use_internal_saturation <- build__needs_saturation_layer(layers)
     plot@coordinates$draw_saturation_fg <- !use_internal_saturation
     if (use_internal_saturation) {
-        layers <- setup_psychro_saturation_layer(layers)
+        layers <- build__setup_saturation_layer(layers)
     }
     data <- rep(list(NULL), length(layers))
-    scales <- scales_add_default(plot)
-    layers <- setup_psychro_stat_params(layers, plot$psychro, scales)
+    scales <- build__add_default_scales(plot)
+    layers <- build__setup_stat_params(layers, plot$psychro, scales)
     plot@layers <- layers
 
-    data <- ggplot2_by_layer(
+    data <- ggplot2__by_layer(
         function(l, d) l$layer_data(plot@data),
         layers,
         data,
         "computing layer data"
     )
-    data <- ggplot2_by_layer(
+    data <- ggplot2__by_layer(
         function(l, d) l$setup_layer(d, plot),
         layers,
         data,
@@ -36,19 +36,20 @@ ggplot_build.ggpsychro <- function(plot, ...) {
     layout <- create_layout(plot@facet, plot@coordinates)
     data <- layout$setup(data, plot@data, plot@plot_env)
 
-    data <- ggplot2_by_layer(
+    data <- ggplot2__by_layer(
         function(l, d) l$compute_aesthetics(d, plot),
         layers,
         data,
         "computing aesthetics"
     )
-    plot@labels <- ggplot2_setup_plot_labels(plot, layers, data)
+    plot@labels <- ggplot2__setup_plot_labels(plot, layers, data)
 
-    data <- ggplot2_ignore_data(data)
+    data <- ggplot2__ignore_data(data)
     data <- lapply(data, scales$transform_df)
 
-    # modify scale position
-    # TODO: let the user customize the position?
+    # Axis placement follows the chart convention: normal psychrometric charts
+    # put dry-bulb at the bottom and humidity at the right, while Mollier charts
+    # swap them to top and left.
     if (!plot$psychro$mollier) {
         scale_x <- scales$get_scales("x")
         scale_x$position <- "bottom"
@@ -83,15 +84,15 @@ ggplot_build.ggpsychro <- function(plot, ...) {
         scale_en()
     )
     data <- layout$map_position(data)
-    data <- ggplot2_expose_data(data)
+    data <- ggplot2__expose_data(data)
 
-    data <- ggplot2_by_layer(
+    data <- ggplot2__by_layer(
         function(l, d) l$compute_statistic(d, layout),
         layers,
         data,
         "computing stat"
     )
-    data <- ggplot2_by_layer(
+    data <- ggplot2__by_layer(
         function(l, d) l$map_statistic(d, plot),
         layers,
         data,
@@ -100,21 +101,21 @@ ggplot_build.ggpsychro <- function(plot, ...) {
 
     plot@scales$add_missing(c("x", "y"), plot@plot_env)
 
-    data <- ggplot2_by_layer(
+    data <- ggplot2__by_layer(
         function(l, d) l$compute_geom_1(d),
         layers,
         data,
         "setting up geom"
     )
 
-    data <- ggplot2_by_layer(
+    data <- ggplot2__by_layer(
         function(l, d) l$compute_position(d, layout),
         layers,
         data,
         "computing position"
     )
 
-    data <- ggplot2_ignore_data(data)
+    data <- ggplot2__ignore_data(data)
     layout$reset_scales()
     layout$train_position(
         data,
@@ -129,9 +130,9 @@ ggplot_build.ggpsychro <- function(plot, ...) {
     layout$setup_panel_params()
     data <- layout$map_position(data)
     layout$setup_panel_guides(plot@guides, plot@layers)
-    plot@theme <- ggplot2_plot_theme(plot)
+    plot@theme <- ggplot2__plot_theme(plot)
     layout$coord$psychro_theme <- plot@theme
-    layers <- setup_psychro_geom_params(layers, plot@theme)
+    layers <- build__setup_geom_params(layers, plot@theme)
     plot@layers <- layers
 
     npscales <- ggproto(
@@ -163,15 +164,15 @@ ggplot_build.ggpsychro <- function(plot, ...) {
         plot@guides <- plot@guides$get_custom()
     }
 
-    data <- ggplot2_expose_data(data)
+    data <- ggplot2__expose_data(data)
 
-    data <- ggplot2_by_layer(
+    data <- ggplot2__by_layer(
         function(l, d) l$compute_geom_2(d, theme = plot@theme),
         layers,
         data,
         "setting up geom aesthetics"
     )
-    data <- ggplot2_by_layer(
+    data <- ggplot2__by_layer(
         function(l, d) l$finish_statistics(d),
         layers,
         data,
@@ -182,7 +183,7 @@ ggplot_build.ggpsychro <- function(plot, ...) {
 
     plot@labels$alt <- ggplot2::get_alt_text(plot)
 
-    build <- ggplot2_class_ggplot_built(
+    build <- ggplot2__class_ggplot_built(
         data = data,
         layout = layout,
         plot = plot
@@ -196,7 +197,7 @@ ggplot_build.ggpsychro <- function(plot, ...) {
 
 GGPSY_GGPLOT2_BUILD_INTERNALS <- new.env(parent = emptyenv())
 
-ggplot2_build_internal_specs <- function() {
+ggplot2__build_internal_specs <- function() {
     # These are the private ggplot2 build helpers that ggpsychro calls directly.
     # The expected argument names and order are the minimum interface contract we
     # rely on; behavior-level regressions are covered by plot build tests.
@@ -211,7 +212,7 @@ ggplot2_build_internal_specs <- function() {
     )
 }
 
-ggplot2_build_internals <- function(refresh = FALSE) {
+ggplot2__build_internals <- function(refresh = FALSE) {
     # Cache successful lookups so each plot build does not repeatedly inspect the
     # ggplot2 namespace; `refresh = TRUE` keeps tests able to re-check the contract.
     if (
@@ -226,7 +227,7 @@ ggplot2_build_internals <- function(refresh = FALSE) {
     }
 
     ns <- asNamespace("ggplot2")
-    specs <- ggplot2_build_internal_specs()
+    specs <- ggplot2__build_internal_specs()
     internals <- lapply(names(specs), function(name) {
         if (!exists(name, envir = ns, inherits = FALSE)) {
             return(NULL)
@@ -235,7 +236,7 @@ ggplot2_build_internals <- function(refresh = FALSE) {
     })
     names(internals) <- names(specs)
 
-    problems <- ggplot2_build_internal_problems(internals, specs)
+    problems <- ggplot2__build_internal_problems(internals, specs)
     if (length(problems)) {
         stop(
             "ggpsychro's custom plot builder is not compatible with the ",
@@ -256,9 +257,9 @@ ggplot2_build_internals <- function(refresh = FALSE) {
     internals
 }
 
-ggplot2_build_internal_problems <- function(
+ggplot2__build_internal_problems <- function(
     internals,
-    specs = ggplot2_build_internal_specs()
+    specs = ggplot2__build_internal_specs()
 ) {
     # We intentionally compare function signatures, not whole function bodies.
     # Body equality is too brittle for harmless upstream refactors, while a changed
@@ -289,43 +290,43 @@ ggplot2_build_internal_problems <- function(
     problems
 }
 
-ggplot2_check_build_internals <- function() {
-    invisible(ggplot2_build_internals())
+ggplot2__check_build_internals <- function() {
+    invisible(ggplot2__build_internals())
 }
 
-ggplot2_internal <- function(name) {
-    ggplot2_build_internals()[[name]]
+ggplot2__internal <- function(name) {
+    ggplot2__build_internals()[[name]]
 }
 
-ggplot2_by_layer <- function(...) {
-    ggplot2_internal("by_layer")(...)
+ggplot2__by_layer <- function(...) {
+    ggplot2__internal("by_layer")(...)
 }
 
-ggplot2_ignore_data <- function(...) {
-    ggplot2_internal(".ignore_data")(...)
+ggplot2__ignore_data <- function(...) {
+    ggplot2__internal(".ignore_data")(...)
 }
 
-ggplot2_expose_data <- function(...) {
-    ggplot2_internal(".expose_data")(...)
+ggplot2__expose_data <- function(...) {
+    ggplot2__internal(".expose_data")(...)
 }
 
-ggplot2_setup_plot_labels <- function(...) {
-    ggplot2_internal("setup_plot_labels")(...)
+ggplot2__setup_plot_labels <- function(...) {
+    ggplot2__internal("setup_plot_labels")(...)
 }
 
-ggplot2_plot_theme <- function(...) {
-    ggplot2_internal("plot_theme")(...)
+ggplot2__plot_theme <- function(...) {
+    ggplot2__internal("plot_theme")(...)
 }
 
-ggplot2_class_ggplot_built <- function(...) {
-    ggplot2_internal("class_ggplot_built")(...)
+ggplot2__class_ggplot_built <- function(...) {
+    ggplot2__internal("class_ggplot_built")(...)
 }
 
-ggplot2_view_scales_from_scale <- function(...) {
-    ggplot2_internal("view_scales_from_scale")(...)
+ggplot2__view_scales_from_scale <- function(...) {
+    ggplot2__internal("view_scales_from_scale")(...)
 }
 
-scales_add_default <- function(plot) {
+build__add_default_scales <- function(plot) {
     scales <- plot@scales
     psychro <- plot$psychro
 
@@ -390,11 +391,11 @@ scales_add_default <- function(plot) {
     scales
 }
 
-setup_psychro_stat_params <- function(layers, psychro, scales = NULL) {
-    state_classes <- psychro_state_stat_classes()
-    panel_classes <- psychro_panel_stat_classes()
+build__setup_stat_params <- function(layers, psychro, scales = NULL) {
+    state_classes <- build__state_stat_classes()
+    panel_classes <- build__panel_stat_classes()
     chart_classes <- c(state_classes, panel_classes)
-    stat_classes <- psychro_stat_classes()
+    stat_classes <- build__stat_classes()
     pressure <- psychrolib__with_units(
         psychro$units,
         GetStandardAtmPressure(psychro$altitude)
@@ -449,7 +450,7 @@ setup_psychro_stat_params <- function(layers, psychro, scales = NULL) {
                 layer$stat_params$hum_lim <- psychro$hum_lim
             }
         }
-        if (psychro_layer_needs_scale_context(layer)) {
+        if (build__needs_scale_context(layer)) {
             # Scale transforms have already affected stat input data by compute
             # time; pass their inverses explicitly to psychrolib-backed stats.
             layer$stat_params$psychro_scales <- psychro_scales
@@ -459,20 +460,20 @@ setup_psychro_stat_params <- function(layers, psychro, scales = NULL) {
     })
 }
 
-setup_psychro_saturation_layer <- function(layers) {
-    if (any(vapply(layers, psychro_layer_is_saturation, logical(1L)))) {
+build__setup_saturation_layer <- function(layers) {
+    if (any(vapply(layers, build__is_saturation_layer, logical(1L)))) {
         return(layers)
     }
 
-    below <- vapply(layers, psychro_layer_below_saturation, logical(1L))
-    c(layers[below], list(psychro_saturation_layer()), layers[!below])
+    below <- vapply(layers, build__below_saturation, logical(1L))
+    c(layers[below], list(build__saturation_layer()), layers[!below])
 }
 
-psychro_saturation_layer_needed <- function(layers) {
-    any(vapply(layers, psychro_layer_above_saturation, logical(1L)))
+build__needs_saturation_layer <- function(layers) {
+    any(vapply(layers, build__above_saturation, logical(1L)))
 }
 
-psychro_saturation_layer <- function() {
+build__saturation_layer <- function() {
     ggplot2::layer(
         data = data.frame(.psychro_saturation = TRUE),
         mapping = ggplot2::aes(),
@@ -485,24 +486,24 @@ psychro_saturation_layer <- function() {
     )
 }
 
-psychro_layer_is_saturation <- function(layer) {
+build__is_saturation_layer <- function(layer) {
     inherits(layer$geom, "GeomPsychroSaturation")
 }
 
-psychro_layer_below_saturation <- function(layer) {
+build__below_saturation <- function(layer) {
     if (inherits(layer$geom, "GeomPsychroTile")) {
         return(TRUE)
     }
     is_psychro_stat <- any(vapply(
-        psychro_stat_classes(),
+        build__stat_classes(),
         inherits,
         logical(1L),
         x = layer$stat
     ))
-    is_psychro_stat && !psychro_layer_above_saturation(layer)
+    is_psychro_stat && !build__above_saturation(layer)
 }
 
-psychro_layer_above_saturation <- function(layer) {
+build__above_saturation <- function(layer) {
     is_marker_geom <- any(vapply(
         c("GeomPoint", "GeomText", "GeomLabel"),
         inherits,
@@ -514,14 +515,14 @@ psychro_layer_above_saturation <- function(layer) {
     }
 
     any(vapply(
-        psychro_marker_stat_classes(),
+        build__marker_stat_classes(),
         inherits,
         logical(1L),
         x = layer$stat
     ))
 }
 
-setup_psychro_geom_params <- function(layers, theme) {
+build__setup_geom_params <- function(layers, theme) {
     lapply(layers, function(layer) {
         if (inherits(layer$geom, "GeomPsychroSaturation")) {
             layer$geom_params$psychro.theme <- theme
@@ -531,12 +532,12 @@ setup_psychro_geom_params <- function(layers, theme) {
             layer$geom_params$psychro.theme <- theme
             layer$computed_geom_params$psychro.theme <- theme
         }
-        if (psychro_layer_needs_panel_clip(layer)) {
-            layer$geom <- psychro_clip_geom(
+        if (build__needs_panel_clip(layer)) {
+            layer$geom <- build__clip_geom(
                 layer$geom,
-                filter_anchor = psychro_layer_needs_anchor_filter(layer),
-                clip_polygon = psychro_layer_needs_polygon_clip(layer),
-                clip_path = psychro_layer_needs_path_clip(layer)
+                filter_anchor = build__needs_anchor_filter(layer),
+                clip_polygon = build__needs_polygon_clip(layer),
+                clip_path = build__needs_path_clip(layer)
             )
         }
 
@@ -544,11 +545,11 @@ setup_psychro_geom_params <- function(layers, theme) {
     })
 }
 
-psychro_state_stat_classes <- function() {
+build__state_stat_classes <- function() {
     c("StatPsychroState", "StatPsychroZone", "StatComfortState")
 }
 
-psychro_marker_stat_classes <- function() {
+build__marker_stat_classes <- function() {
     c(
         "StatRelhum",
         "StatWetbulb",
@@ -562,7 +563,7 @@ psychro_marker_stat_classes <- function() {
 
 # Stats in this set either consume transformed psychrometric inputs or generate
 # physical coordinates that must be returned to the active chart scale.
-psychro_scale_context_stat_classes <- function() {
+build__scale_context_stat_classes <- function() {
     c(
         "StatRelhum",
         "StatWetbulb",
@@ -572,22 +573,22 @@ psychro_scale_context_stat_classes <- function() {
         "StatPsychroState",
         "StatPsychroZone",
         "StatComfortState",
-        psychro_panel_stat_classes()
+        build__panel_stat_classes()
     )
 }
 
 # Keep scale-context injection targeted to psychrolib-backed layers so unrelated
 # stats do not receive private ggproto scale objects.
-psychro_layer_needs_scale_context <- function(layer) {
+build__needs_scale_context <- function(layer) {
     any(vapply(
-        psychro_scale_context_stat_classes(),
+        build__scale_context_stat_classes(),
         inherits,
         logical(1L),
         x = layer$stat
     ))
 }
 
-psychro_panel_stat_classes <- function() {
+build__panel_stat_classes <- function() {
     c(
         "StatComfortBand",
         "StatComfortGrid",
@@ -606,7 +607,7 @@ psychro_panel_stat_classes <- function() {
     )
 }
 
-psychro_stat_classes <- function() {
+build__stat_classes <- function() {
     c(
         "StatRelhum",
         "StatWetbulb",
@@ -614,12 +615,12 @@ psychro_stat_classes <- function() {
         "StatSpecvol",
         "StatEnthalpy",
         "StatPsychroBin",
-        psychro_state_stat_classes(),
-        psychro_panel_stat_classes()
+        build__state_stat_classes(),
+        build__panel_stat_classes()
     )
 }
 
-psychro_clip_exempt_stat_classes <- function() {
+build__clip_exempt_stat_classes <- function() {
     c(
         "StatComfortHeatIndexLabel",
         "StatComfortGivoniMeanOutdoor",
@@ -627,10 +628,10 @@ psychro_clip_exempt_stat_classes <- function() {
     )
 }
 
-psychro_layer_needs_panel_clip <- function(layer) {
+build__needs_panel_clip <- function(layer) {
     if (
         inherits(layer$geom, "GeomPsychroTextpath") &&
-            !psychro_layer_needs_path_clip(layer)
+            !build__needs_path_clip(layer)
     ) {
         return(FALSE)
     }
@@ -638,13 +639,13 @@ psychro_layer_needs_panel_clip <- function(layer) {
         return(FALSE)
     }
     is_psychro_stat <- any(vapply(
-        psychro_stat_classes(),
+        build__stat_classes(),
         inherits,
         logical(1L),
         x = layer$stat
     ))
     is_exempt <- any(vapply(
-        psychro_clip_exempt_stat_classes(),
+        build__clip_exempt_stat_classes(),
         inherits,
         logical(1L),
         x = layer$stat
@@ -652,7 +653,7 @@ psychro_layer_needs_panel_clip <- function(layer) {
     is_psychro_stat && !is_exempt
 }
 
-psychro_layer_needs_anchor_filter <- function(layer) {
+build__needs_anchor_filter <- function(layer) {
     any(vapply(
         c("GeomPoint", "GeomText", "GeomLabel"),
         inherits,
@@ -661,16 +662,16 @@ psychro_layer_needs_anchor_filter <- function(layer) {
     ))
 }
 
-psychro_layer_needs_polygon_clip <- function(layer) {
+build__needs_polygon_clip <- function(layer) {
     inherits(layer$geom, "GeomPolygon")
 }
 
-psychro_layer_needs_path_clip <- function(layer) {
+build__needs_path_clip <- function(layer) {
     inherits(layer$geom, "GeomPsychroTextpath") &&
         !inherits(layer$stat, "StatComfortGivoniLabel")
 }
 
-psychro_clip_geom <- function(
+build__clip_geom <- function(
     geom,
     filter_anchor = FALSE,
     clip_polygon = FALSE,
@@ -727,7 +728,7 @@ psychro_clip_geom <- function(
     )
 }
 
-plot_clone <- function(plot) {
+build__plot_clone <- function(plot) {
     p <- plot
     p@scales <- plot@scales$clone()
     # Build setup writes derived psychro state into ggproto members, so keep

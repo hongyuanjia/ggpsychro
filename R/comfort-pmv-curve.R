@@ -70,7 +70,7 @@ pmv__curve_data <- function(
     if (isTRUE(reverse)) {
         out <- pmv__reverse_groups(out)
     }
-    psychro_output_xy(
+    state__output_xy(
         out,
         out$tdb,
         out$humratio,
@@ -280,7 +280,7 @@ pmv__axis_label_data <- function(
     out <- do.call(rbind, labels)
     row.names(out) <- NULL
     out <- pmv__reverse_groups(out)
-    psychro_output_xy(
+    state__output_xy(
         out,
         out$tdb,
         out$humratio,
@@ -451,7 +451,7 @@ pmv__curve_roots_r <- function(
         xlo[positive] <- pmax(xlo[positive], dew)
     }
     xhi <- rep(tdb_lim[[2L]], length(humratio))
-    saturation_hi <- psychro_saturation_humratio(xhi, units, pres)
+    saturation_hi <- zone__saturation_humratio(xhi, units, pres)
     valid <- is.finite(xlo) &
         is.finite(xhi) &
         xlo < xhi &
@@ -555,7 +555,7 @@ pmv__curve_saturation_roots_r <- function(
     # can close against the psychrometric chart boundary instead of stopping.
     n <- max(as.integer(n), 80L)
     tdb <- seq(tdb_lim[[1L]], tdb_lim[[2L]], length.out = n)
-    hum <- psychro_saturation_humratio(tdb, units, pres)
+    hum <- zone__saturation_humratio(tdb, units, pres)
     hum_lim <- unit__hum_from_chart(hum_lim, units)
     valid <- is.finite(tdb) &
         is.finite(hum) &
@@ -591,7 +591,7 @@ pmv__curve_saturation_roots_r <- function(
                         fmid <- pmv__value_at(
                             model,
                             mid,
-                            psychro_saturation_humratio(mid, units, pres),
+                            zone__saturation_humratio(mid, units, pres),
                             units,
                             pres
                         ) -
@@ -618,7 +618,7 @@ pmv__curve_saturation_roots_r <- function(
         return(list(tdb = numeric(), humratio = numeric()))
     }
 
-    hum <- psychro_saturation_humratio(roots, units, pres)
+    hum <- zone__saturation_humratio(roots, units, pres)
     keep <- is.finite(hum) & hum >= hum_lim[[1L]] & hum <= hum_lim[[2L]]
     list(tdb = roots[keep], humratio = hum[keep])
 }

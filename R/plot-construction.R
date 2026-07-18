@@ -5,11 +5,11 @@ ggplot_add.CoordPsychro <- function(object, plot, object_name, ...) {
         return(NextMethod())
     }
 
-    plot$psychro$grids <- merge_psychro_grids(plot$psychro$grids)
+    plot$psychro$grids <- grid__merge(plot$psychro$grids)
     if (is.null(object$grids)) {
         object$grids <- plot$psychro$grids
     } else {
-        object$grids <- merge_psychro_grids(object$grids)
+        object$grids <- grid__merge(object$grids)
         plot$psychro$grids <- object$grids
     }
     if (is.null(object$grid_labels)) {
@@ -98,15 +98,15 @@ ggplot_add.CoordPsychro <- function(object, plot, object_name, ...) {
 
 #' @export
 ggplot_add.PsyGrid <- function(object, plot, object_name, ...) {
-    add_psychro_grid(object, plot)
+    plot_add__grid(object, plot)
 }
 
 #' @export
 ggplot_add.PsyComfortForeground <- function(object, plot, object_name, ...) {
-    add_psychro_comfort_foreground(object, plot)
+    plot_add__comfort_foreground(object, plot)
 }
 
-add_psychro_comfort_foreground <- function(object, plot) {
+plot_add__comfort_foreground <- function(object, plot) {
     if (!is.ggpsychro(plot)) {
         stop(
             "Comfort foreground markers can only be added ",
@@ -121,7 +121,7 @@ add_psychro_comfort_foreground <- function(object, plot) {
     plot
 }
 
-add_psychro_grid <- function(object, plot) {
+plot_add__grid <- function(object, plot) {
     if (!is.ggpsychro(plot)) {
         stop(
             "`geom_psychro_grid_*()` helpers can only be added to a ",
@@ -130,7 +130,7 @@ add_psychro_grid <- function(object, plot) {
         )
     }
 
-    plot$psychro$grids <- merge_psychro_grids(plot$psychro$grids)
+    plot$psychro$grids <- grid__merge(plot$psychro$grids)
     plot$psychro$grids[[object$type]] <- object$show
     if (is.null(plot$psychro$grid_labels)) {
         plot$psychro$grid_labels <- list()
@@ -145,7 +145,7 @@ add_psychro_grid <- function(object, plot) {
         plot$coordinates$grid_labels <- plot$psychro$grid_labels
     }
 
-    theme_args <- psychro_grid_theme(object$type, object$style)
+    theme_args <- grid__theme(object$type, object$style)
     if (length(theme_args)) {
         plot <- plot + do.call(ggplot2::theme, theme_args)
     }
@@ -155,10 +155,10 @@ add_psychro_grid <- function(object, plot) {
 
 #' @export
 ggplot_add.PsyProtractor <- function(object, plot, object_name, ...) {
-    add_psychro_protractor(object, plot)
+    plot_add__protractor(object, plot)
 }
 
-add_psychro_protractor <- function(object, plot) {
+plot_add__protractor <- function(object, plot) {
     if (!is.ggpsychro(plot)) {
         stop(
             "`geom_psychro_protractor()` can only be added to a ggpsychro plot.",
@@ -187,19 +187,19 @@ local({
             update_ggplot,
             list(S7::new_S3_class("PsyGrid"), class_ggplot)
         ) <- function(object, plot, ...) {
-            add_psychro_grid(object, plot)
+            plot_add__grid(object, plot)
         }
         S7::method(
             update_ggplot,
             list(S7::new_S3_class("PsyProtractor"), class_ggplot)
         ) <- function(object, plot, ...) {
-            add_psychro_protractor(object, plot)
+            plot_add__protractor(object, plot)
         }
         S7::method(
             update_ggplot,
             list(S7::new_S3_class("PsyComfortForeground"), class_ggplot)
         ) <- function(object, plot, ...) {
-            add_psychro_comfort_foreground(object, plot)
+            plot_add__comfort_foreground(object, plot)
         }
     }
 })

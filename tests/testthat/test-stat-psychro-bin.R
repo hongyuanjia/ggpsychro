@@ -369,7 +369,7 @@ test_that("psychrometric tile bodies are clipped to saturation", {
     built <- ggplot2::ggplot_build(plot)
     tile <- first_built_data(built)
     polygons <- psychro_tile_polygon_data(tile, built$layout$coord, n = 32)
-    saturation <- psychro_saturation_humratio(
+    saturation <- zone__saturation_humratio(
         polygons$x,
         built$layout$coord$units,
         built$layout$coord$pressure

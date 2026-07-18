@@ -76,7 +76,7 @@ ggpsychro <- function(
         altitude = altitude,
         tdb_lim = tdb_lim,
         hum_lim = hum_lim,
-        grids = default_psychro_grids(),
+        grids = grid__defaults(),
         grid_labels = list(),
         protractor = psychro__default_protractor()
     )

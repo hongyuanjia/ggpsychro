@@ -196,7 +196,7 @@ adaptive__zone <- function(
         width = NA_real_,
         height = NA_real_
     ))
-    psychro_output_xy(
+    state__output_xy(
         out,
         out$tdb,
         out$humratio,

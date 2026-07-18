@@ -377,7 +377,7 @@ heat_index__label_data <- function(
     }
     out <- do.call(rbind, labels)
     row.names(out) <- NULL
-    psychro_output_xy(
+    state__output_xy(
         out,
         out$tdb,
         out$humratio,
