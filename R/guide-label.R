@@ -41,7 +41,7 @@ guide_label__grob <- function(
 
     # Grid labels use the internal textpath renderer so CRAN examples avoid the
     # old external renderer's cold glyph-index cost.
-    psychro_textpath_grob(
+    textpath__grob(
         label = labels,
         x = data$path$x,
         y = data$path$y,

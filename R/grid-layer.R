@@ -47,7 +47,7 @@ geom_psychro_grid_relhum <- function(
     label_loc = 0.95,
     label_parse = FALSE
 ) {
-    psychro_grid_layer(
+    grid__layer(
         "relhum",
         ...,
         show = show,
@@ -66,7 +66,7 @@ geom_psychro_grid_wetbulb <- function(
     label_loc = 0.10,
     label_parse = TRUE
 ) {
-    psychro_grid_layer(
+    grid__layer(
         "wetbulb",
         ...,
         show = show,
@@ -85,7 +85,7 @@ geom_psychro_grid_vappres <- function(
     label_loc = 0.50,
     label_parse = FALSE
 ) {
-    psychro_grid_layer(
+    grid__layer(
         "vappres",
         ...,
         show = show,
@@ -104,7 +104,7 @@ geom_psychro_grid_specvol <- function(
     label_loc = 0.95,
     label_parse = TRUE
 ) {
-    psychro_grid_layer(
+    grid__layer(
         "specvol",
         ...,
         show = show,
@@ -123,7 +123,7 @@ geom_psychro_grid_enthalpy <- function(
     label_loc = 0.95,
     label_parse = TRUE
 ) {
-    psychro_grid_layer(
+    grid__layer(
         "enthalpy",
         ...,
         show = show,
@@ -250,8 +250,8 @@ geom_psychro_protractor <- function(
             radius = radius,
             margin = margin,
             guide = guide,
-            style = psychro_grid_style(...),
-            label_style = psychro_grid_label_style(...)
+            style = grid__style(...),
+            label_style = grid__label_style(...)
         ),
         class = "PsyProtractor"
     )
@@ -397,7 +397,7 @@ protractor__validate_break_labels <- function(
     invisible(NULL)
 }
 
-psychro_grid_layer <- function(
+grid__layer <- function(
     type,
     ...,
     show = TRUE,
@@ -405,7 +405,7 @@ psychro_grid_layer <- function(
     label_loc = NULL,
     label_parse = FALSE
 ) {
-    assert_choice(type, names(default_psychro_grids()))
+    assert_choice(type, names(grid__defaults()))
     assert_flag(show)
     assert_flag(label)
     if (!is.null(label_loc)) {
@@ -417,14 +417,14 @@ psychro_grid_layer <- function(
         list(
             type = type,
             show = show,
-            style = psychro_grid_style(...),
-            label = psychro_grid_label(label, label_loc, label_parse, ...)
+            style = grid__style(...),
+            label = grid__label(label, label_loc, label_parse, ...)
         ),
         class = "PsyGrid"
     )
 }
 
-default_psychro_grids <- function() {
+grid__defaults <- function() {
     list(
         relhum = TRUE,
         wetbulb = TRUE,
@@ -434,19 +434,19 @@ default_psychro_grids <- function() {
     )
 }
 
-merge_psychro_grids <- function(grids) {
+grid__merge <- function(grids) {
     if (is.null(grids)) {
         grids <- list()
     }
-    utils::modifyList(default_psychro_grids(), grids)
+    utils::modifyList(grid__defaults(), grids)
 }
 
-psychro_grid_enabled <- function(grids, type) {
-    isTRUE(merge_psychro_grids(grids)[[type]])
+grid__enabled <- function(grids, type) {
+    isTRUE(grid__merge(grids)[[type]])
 }
 
-psychro_grid_label <- function(label, label_loc, label_parse, ...) {
-    style <- psychro_grid_label_style(...)
+grid__label <- function(label, label_loc, label_parse, ...) {
+    style <- grid__label_style(...)
     show <- isTRUE(label) && !is.null(label_loc) && !is.na(label_loc)
 
     list(
@@ -458,12 +458,12 @@ psychro_grid_label <- function(label, label_loc, label_parse, ...) {
     )
 }
 
-psychro_grid_label_enabled <- function(labels, type) {
+grid__label_enabled <- function(labels, type) {
     label <- labels[[type]]
     is.list(label) && isTRUE(label$show)
 }
 
-psychro_grid_style <- function(...) {
+grid__style <- function(...) {
     params <- list(...)
     if (!length(params)) {
         return(list())
@@ -498,7 +498,7 @@ psychro_grid_style <- function(...) {
     params[names(params) %in% keep]
 }
 
-psychro_grid_label_style <- function(...) {
+grid__label_style <- function(...) {
     params <- list(...)
     if (!length(params)) {
         return(list())
@@ -529,7 +529,7 @@ psychro_grid_label_style <- function(...) {
     stats::setNames(params[keep], unname(label_style_names[keep]))
 }
 
-psychro_grid_theme <- function(type, style) {
+grid__theme <- function(type, style) {
     if (!length(style)) {
         return(NULL)
     }

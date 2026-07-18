@@ -60,7 +60,7 @@ guide__grid_psychro <- function(
         )
     }
 
-    psychro_grid_label <- function(x, var) {
+    grid__label <- function(x, var) {
         guide_label__grob(
             x,
             grid.labels[[var]],
@@ -84,7 +84,7 @@ guide__grid_psychro <- function(
         psychro_panel_clip,
         psychro_grid
     )
-    label_grobs <- guide__curved_label_grobs(grid, psychro_grid_label)
+    label_grobs <- guide__curved_label_grobs(grid, grid__label)
 
     grill <- do.call(
         grid::grobTree,

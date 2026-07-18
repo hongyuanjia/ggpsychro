@@ -51,8 +51,6 @@ coord_psychro <- function(
     default = TRUE,
     clip = "on"
 ) {
-    # TODO: add a `n` param to specify the number of points used to draw
-    # saturation line
     ggproto(
         NULL,
         CoordPsychro,
@@ -132,7 +130,7 @@ coord_psy__grid_lines <- function(
         lapply(grid_types, function(type) {
             breaks <- coord_psy__grid_breaks(panel_params, type)
             list(
-                minor = if (psychro_grid_enabled(coord$grids, type)) {
+                minor = if (grid__enabled(coord$grids, type)) {
                     coord$trans_grid_vert(
                         tdb,
                         type,
@@ -142,7 +140,7 @@ coord_psy__grid_lines <- function(
                         panel_params = panel_params
                     )
                 },
-                major = if (psychro_grid_enabled(coord$grids, type)) {
+                major = if (grid__enabled(coord$grids, type)) {
                     coord$trans_grid_vert(
                         tdb,
                         type,
@@ -230,7 +228,7 @@ CoordPsychro <- ggproto(
     "CoordPsychro",
     CoordCartesian,
     setup_params = function(self, data) {
-        self$grids <- merge_psychro_grids(self$grids)
+        self$grids <- grid__merge(self$grids)
 
         # all parameters will inherit from ggpsychro() if not specified during
         # the construction process
@@ -431,13 +429,21 @@ CoordPsychro <- ggproto(
             scale_en$train(lim_en)
         }
         c(
-            ggplot2_view_scales_from_scale(scale_x, self$limits$x, self$expand),
-            ggplot2_view_scales_from_scale(scale_y, self$limits$y, self$expand),
-            ggplot2_view_scales_from_scale(scale_rh, NULL, self$expand),
-            ggplot2_view_scales_from_scale(scale_wb, NULL, self$expand),
-            ggplot2_view_scales_from_scale(scale_vp, NULL, self$expand),
-            ggplot2_view_scales_from_scale(scale_sv, NULL, self$expand),
-            ggplot2_view_scales_from_scale(scale_en, NULL, self$expand)
+            ggplot2__view_scales_from_scale(
+                scale_x,
+                self$limits$x,
+                self$expand
+            ),
+            ggplot2__view_scales_from_scale(
+                scale_y,
+                self$limits$y,
+                self$expand
+            ),
+            ggplot2__view_scales_from_scale(scale_rh, NULL, self$expand),
+            ggplot2__view_scales_from_scale(scale_wb, NULL, self$expand),
+            ggplot2__view_scales_from_scale(scale_vp, NULL, self$expand),
+            ggplot2__view_scales_from_scale(scale_sv, NULL, self$expand),
+            ggplot2__view_scales_from_scale(scale_en, NULL, self$expand)
         )
     },
 
@@ -830,17 +836,28 @@ coord_psy__panel_polygon_scaled <- function(coord, panel_params) {
     )
 }
 
+# Return the private saturation sampling density used by coord-owned curves.
+coord_psy__saturation_n <- function() GGPSY_OPT$saturation_n
+
 # Compute the saturation curve and return it in active scale space.
 coord_psy__saturation_scaled <- function(coord, panel_params) {
     range_hum <- coord$range_hum_physical(panel_params)
 
-    # The saturation curve samples dry-bulb values from the trained scale
-    # interval; the caller still uses range_tdb() to close the panel polygon.
+    # Sample uniformly in scale space, then inverse-transform before calling
+    # psychrolib so transformed axes keep visually even saturation segments.
     scale <- panel_params[[coord$pos_tdb()]]$scale
-    limits <- scale$trans$inverse(
-        panel_params[[coord$pos_tdb()]]$continuous_range
+    n <- coord_psy__saturation_n()
+    scaled <- seq(
+        from = panel_params[[coord$pos_tdb()]]$continuous_range[[1L]],
+        to = panel_params[[coord$pos_tdb()]]$continuous_range[[2L]],
+        length.out = n
     )
-    tdb <- scale$trans$breaks(limits, 100L)
+    tdb <- scale$trans$inverse(scaled)
+    tdb <- tdb[is.finite(tdb)]
+    if (!length(tdb)) {
+        return(NULL)
+    }
+
     hum <- psychrolib__with_units(
         coord$units,
         psychrolib::GetHumRatioFromRelHum(tdb, 1.0, coord$pressure)

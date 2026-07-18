@@ -83,7 +83,7 @@ comfort_grid__matrix <- function(
     if (boundary == "saturation") {
         # Evaluate just inside saturation so psychrolib RH conversion remains
         # finite while contours still trace the visible saturation boundary.
-        saturation <- psychro_saturation_humratio(grid$tdb, units, pres)
+        saturation <- zone__saturation_humratio(grid$tdb, units, pres)
         saturation_eps <- pmax(abs(saturation), 1) * sqrt(.Machine$double.eps)
         humratio_eval <- pmin(humratio_eval, saturation - saturation_eps)
         humratio_eval <- pmax(humratio_eval, 0)
@@ -126,8 +126,8 @@ comfort_grid__data <- function(
     psychro_scales = NULL
 ) {
     m <- comfort_grid__matrix(model, metric, n, units, pres, tdb_lim, hum_lim)
-    gap <- psychro_bin_gap(gap)
-    sat <- psychro_saturation_humratio(m$tdb_edges, units, pres)
+    gap <- bin__gap(gap)
+    sat <- zone__saturation_humratio(m$tdb_edges, units, pres)
 
     nx <- length(m$tdb)
     ny <- length(m$humratio)
@@ -185,7 +185,7 @@ comfort_grid__data <- function(
         metric = rep(m$metric, sum(keep)),
         group = seq_len(sum(keep))
     ))
-    out <- psychro_output_xy(
+    out <- state__output_xy(
         out,
         out$tdb,
         out$humratio,
@@ -193,7 +193,7 @@ comfort_grid__data <- function(
         psychro_scales = psychro_scales,
         units = units
     )
-    psychro_output_tile_size(
+    state__output_tile_size(
         out,
         x0[keep],
         x1[keep],

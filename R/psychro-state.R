@@ -92,12 +92,12 @@ stat_psychro_state <- function(
     )
 }
 
-psychro_state_properties <- function() {
+state__properties <- function() {
     c("humratio", "relhum", "wetbulb", "vappres", "specvol", "enthalpy")
 }
 
-psychro_state_property <- function(data) {
-    props <- psychro_state_properties()
+state__property <- function(data) {
+    props <- state__properties()
     present <- props[props %in% names(data)]
 
     if (length(present) == 0L) {
@@ -118,7 +118,7 @@ psychro_state_property <- function(data) {
     present
 }
 
-psychro_check_finite <- function(data, vars, na.rm = FALSE) {
+state__check_finite <- function(data, vars, na.rm = FALSE) {
     keep <- stats::complete.cases(data[vars])
     keep <- keep & Reduce(`&`, lapply(data[vars], is.finite))
 
@@ -141,26 +141,26 @@ psychro_check_finite <- function(data, vars, na.rm = FALSE) {
     )
 }
 
-psychro_check_relhum_fraction <- function(relhum) {
+state__check_relhum_fraction <- function(relhum) {
     if (any(relhum < 0 | relhum > 1, na.rm = TRUE)) {
         stop("`relhum` must be in the range [0, 100].", call. = FALSE)
     }
 }
 
-psychro_check_relhum_percent <- function(relhum) {
+state__check_relhum_percent <- function(relhum) {
     if (any(relhum < 0 | relhum > 100, na.rm = TRUE)) {
         stop("`relhum` limits must be in the range [0, 100].", call. = FALSE)
     }
 }
 
-psychro_humratio_from_property <- function(tdb, value, property, units, pres) {
+state__humratio_from_property <- function(tdb, value, property, units, pres) {
     psychrolib__with_units(
         units,
         switch(
             property,
             humratio = unit__hum_from_chart(value, units),
             relhum = {
-                psychro_check_relhum_percent(value)
+                state__check_relhum_percent(value)
                 psychrolib::GetHumRatioFromRelHum(tdb, value / 100, pres)
             },
             wetbulb = psychrolib::GetHumRatioFromTWetBulb(tdb, value, pres),
@@ -172,7 +172,7 @@ psychro_humratio_from_property <- function(tdb, value, property, units, pres) {
     )
 }
 
-psychro_output_xy <- function(
+state__output_xy <- function(
     data,
     tdb,
     humratio,
@@ -204,7 +204,7 @@ psychro_output_xy <- function(
 
 # Tile widths and heights are coordinate spans, so non-linear position scales
 # must transform the physical cell edges before the span is computed.
-psychro_output_tile_size <- function(
+state__output_tile_size <- function(
     data,
     tdb0,
     tdb1,
@@ -238,7 +238,7 @@ psychro_output_tile_size <- function(
     data
 }
 
-psychro_compute_state <- function(
+state__compute <- function(
     data,
     units,
     pres,
@@ -250,14 +250,14 @@ psychro_compute_state <- function(
         stop("`tdb` must be supplied.", call. = FALSE)
     }
 
-    property <- psychro_state_property(data)
-    data <- psychro_check_finite(data, c("tdb", property), na.rm = na.rm)
+    property <- state__property(data)
+    data <- state__check_finite(data, c("tdb", property), na.rm = na.rm)
     if (!nrow(data)) {
         return(data)
     }
 
     data <- psychro_stat_inverse_columns(data, psychro_scales)
-    humratio <- psychro_humratio_from_property(
+    humratio <- state__humratio_from_property(
         data$tdb,
         data[[property]],
         property,
@@ -265,13 +265,13 @@ psychro_compute_state <- function(
         pres
     )
     data$humratio <- humratio
-    data <- psychro_check_finite(data, "humratio", na.rm = na.rm)
+    data <- state__check_finite(data, "humratio", na.rm = na.rm)
 
     if (!nrow(data)) {
         return(data)
     }
 
-    psychro_output_xy(
+    state__output_xy(
         data,
         data$tdb,
         data$humratio,
@@ -292,7 +292,7 @@ StatPsychroState <- ggplot2::ggproto(
 
     required_aes = c("tdb"),
 
-    optional_aes = psychro_state_properties(),
+    optional_aes = state__properties(),
 
     extra_params = c("na.rm", "units", "pres", "mollier", "psychro_scales"),
 
@@ -306,7 +306,7 @@ StatPsychroState <- ggplot2::ggproto(
         na.rm = FALSE,
         psychro_scales = NULL
     ) {
-        psychro_compute_state(
+        state__compute(
             data,
             units,
             pres,

@@ -178,33 +178,33 @@ StatPsychroBin <- ggproto(
         na.rm = FALSE
     ) {
         units <- unit__from_data(data)
-        gap <- psychro_bin_gap(gap)
-        data <- psychro_bin_humidity(data, units)
-        data <- psychro_bin_drop_missing(data, na.rm = na.rm)
+        gap <- bin__gap(gap)
+        data <- bin__humidity(data, units)
+        data <- bin__drop_missing(data, na.rm = na.rm)
         if (!nrow(data)) {
-            return(psychro_bin_empty())
+            return(bin__empty())
         }
 
-        bins <- psychro_bin_bins(bins)
-        binwidth <- psychro_bin_binwidth(binwidth, units)
-        boundary <- psychro_bin_boundary(boundary, units, binwidth)
+        bins <- bin__bins(bins)
+        binwidth <- bin__binwidth(binwidth, units)
+        boundary <- bin__boundary(boundary, units, binwidth)
         fun <- match.arg(fun, c("sum", "mean", "median", "min", "max"))
 
-        x_breaks <- psychro_bin_breaks(
+        x_breaks <- bin__breaks(
             data$x,
             bins[[1L]],
             binwidth[[1L]],
             boundary[[1L]]
         )
-        y_breaks <- psychro_bin_breaks(
+        y_breaks <- bin__breaks(
             data$y,
             bins[[2L]],
             binwidth[[2L]],
             boundary[[2L]]
         )
 
-        x_bin <- psychro_bin_find(data$x, x_breaks)
-        y_bin <- psychro_bin_find(data$y, y_breaks)
+        x_bin <- bin__find(data$x, x_breaks)
+        y_bin <- bin__find(data$y, y_breaks)
 
         nx <- length(x_breaks) - 1L
         ny <- length(y_breaks) - 1L
@@ -212,7 +212,7 @@ StatPsychroBin <- ggproto(
         n_bins <- nx * ny
 
         counts <- tabulate(bin_id, nbins = n_bins)
-        values <- psychro_bin_values(data, bin_id, n_bins, fun)
+        values <- bin__values(data, bin_id, n_bins, fun)
 
         grid <- expand.grid(x_bin = seq_len(nx), y_bin = seq_len(ny))
         keep <- if (drop) counts > 0L else rep(TRUE, n_bins)
@@ -241,7 +241,7 @@ StatPsychroBin <- ggproto(
 )
 
 # Convert relative-humidity input into humidity-ratio bin coordinates.
-psychro_bin_humidity <- function(data, units) {
+bin__humidity <- function(data, units) {
     if ("y" %in% names(data)) {
         return(data)
     }
@@ -259,7 +259,7 @@ psychro_bin_humidity <- function(data, units) {
 }
 
 # Drop incomplete binning rows while preserving ggplot-style warnings.
-psychro_bin_drop_missing <- function(data, na.rm = FALSE) {
+bin__drop_missing <- function(data, na.rm = FALSE) {
     vars <- c("x", "y", "value"["value" %in% names(data)])
     keep <- stats::complete.cases(data[vars])
 
@@ -277,7 +277,7 @@ psychro_bin_drop_missing <- function(data, na.rm = FALSE) {
 }
 
 # Return an empty stat output with stable computed columns.
-psychro_bin_empty <- function() {
+bin__empty <- function() {
     util__new_data_frame(list(
         x = numeric(),
         y = numeric(),
@@ -294,7 +294,7 @@ psychro_bin_empty <- function() {
 }
 
 # Validate and recycle the requested bin count.
-psychro_bin_bins <- function(bins) {
+bin__bins <- function(bins) {
     if (
         !is.numeric(bins) ||
             length(bins) < 1L ||
@@ -312,7 +312,7 @@ psychro_bin_bins <- function(bins) {
 }
 
 # Validate the visible gap between adjacent psychrometric tiles.
-psychro_bin_gap <- function(gap) {
+bin__gap <- function(gap) {
     if (
         !is.numeric(gap) ||
             length(gap) != 1L ||
@@ -327,7 +327,7 @@ psychro_bin_gap <- function(gap) {
 }
 
 # Convert user-facing bin boundary input into native chart coordinates.
-psychro_bin_boundary <- function(boundary, units, binwidth) {
+bin__boundary <- function(boundary, units, binwidth) {
     if (all(vapply(binwidth, is.null, logical(1L)))) {
         return(list(0, 0))
     }
@@ -346,7 +346,7 @@ psychro_bin_boundary <- function(boundary, units, binwidth) {
 }
 
 # Convert user-facing binwidth input into native chart coordinates.
-psychro_bin_binwidth <- function(binwidth, units) {
+bin__binwidth <- function(binwidth, units) {
     if (is.null(binwidth)) {
         return(list(NULL, NULL))
     }
@@ -369,7 +369,7 @@ psychro_bin_binwidth <- function(binwidth, units) {
 }
 
 # Build breakpoints from either a target bin count or explicit bin width.
-psychro_bin_breaks <- function(x, bins, binwidth, boundary = 0) {
+bin__breaks <- function(x, bins, binwidth, boundary = 0) {
     rng <- range(x, finite = TRUE)
 
     if (is.null(binwidth)) {
@@ -393,12 +393,12 @@ psychro_bin_breaks <- function(x, bins, binwidth, boundary = 0) {
 }
 
 # Map observations to bin indices using closed endpoint handling.
-psychro_bin_find <- function(x, breaks) {
+bin__find <- function(x, breaks) {
     findInterval(x, breaks, rightmost.closed = TRUE, all.inside = TRUE)
 }
 
 # Summarise optional value aesthetics for each computed bin.
-psychro_bin_values <- function(data, bin_id, n_bins, fun) {
+bin__values <- function(data, bin_id, n_bins, fun) {
     if (!"value" %in% names(data)) {
         return(rep(NA_real_, n_bins))
     }

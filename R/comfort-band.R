@@ -182,7 +182,7 @@ comfort_band__isoband_data <- function(
     }
     out <- do.call(rbind, out[!vapply(out, is.null, logical(1L))])
     row.names(out) <- NULL
-    psychro_output_xy(
+    state__output_xy(
         out,
         out$tdb,
         out$humratio,

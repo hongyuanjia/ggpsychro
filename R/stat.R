@@ -306,7 +306,7 @@ psychro_stat_relhum_fraction <- function(
     if (psychro_scale_has_aesthetic(psychro_scales$relhum, aesthetic)) {
         relhum <- psychro_scale_inverse(psychro_scales$relhum, relhum)
     }
-    psychro_check_relhum_percent(relhum)
+    state__check_relhum_percent(relhum)
     relhum / 100
 }
 

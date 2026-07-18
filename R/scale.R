@@ -56,7 +56,8 @@ scale_drybulb_continuous <- function(
     guide = waiver(),
     ...
 ) {
-    # TODO: use mollier determine which aes should be used?
+    # Scales stay attached to semantic psychrometric aesthetics; coord_psychro()
+    # decides whether dry-bulb is drawn on x or y for Mollier charts.
     scale__continuous_psychro(
         GGPSY_OPT$tdb_aes,
         "drybulb",
@@ -125,7 +126,8 @@ scale_relhum_continuous <- function(
     guide = waiver(),
     ...
 ) {
-    # TODO: use the same logic as scale_x_continuous, e.g. ggplot_global$relhum
+    # Grid scales intentionally keep ggplot2's standalone continuous-scale
+    # contract; ggpsychro() supplies psychrometric defaults during plot build.
     scale__continuous_psychro(
         "relhum",
         "relhum",

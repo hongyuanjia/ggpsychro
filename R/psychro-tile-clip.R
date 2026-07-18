@@ -96,8 +96,8 @@ psychro_tile_saturation_polygon <- function(
         return(row[0, , drop = FALSE])
     }
 
-    saturation_min <- psychro_saturation_humratio(row$xmin, units, pres)
-    saturation_max <- psychro_saturation_humratio(row$xmax, units, pres)
+    saturation_min <- zone__saturation_humratio(row$xmin, units, pres)
+    saturation_max <- zone__saturation_humratio(row$xmax, units, pres)
     if (is.finite(saturation_min) && row$ymax <= saturation_min + tolerance) {
         return(psychro_tile_rectangle_polygon(row, group))
     }
@@ -106,7 +106,7 @@ psychro_tile_saturation_polygon <- function(
     }
 
     x <- psychro_tile_saturation_x(row, units, pres, n = n)
-    saturation <- psychro_saturation_humratio(x, units, pres)
+    saturation <- zone__saturation_humratio(x, units, pres)
     upper <- pmin(row$ymax, saturation)
     keep <- is.finite(x) & is.finite(upper) & upper >= row$ymin - tolerance
     x <- x[keep]

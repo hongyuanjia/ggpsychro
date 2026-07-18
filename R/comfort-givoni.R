@@ -615,7 +615,7 @@ givoni__zone_data <- function(
     out <- do.call(rbind, pieces)
     row.names(out) <- NULL
     out <- givoni__clip_humratio(out, lim$hum, units)
-    psychro_output_xy(
+    state__output_xy(
         out,
         out$tdb,
         out$humratio,
@@ -877,7 +877,7 @@ givoni__label_data <- function(
             group = labels$group
         ))
         out <- givoni__clip_humratio(out, lim$hum, units)
-        return(psychro_output_xy(
+        return(state__output_xy(
             out,
             out$tdb,
             out$humratio,
@@ -904,7 +904,7 @@ givoni__label_data <- function(
         group = seq_len(nrow(labels))
     ))
     out <- givoni__clip_humratio(out, lim$hum, units)
-    psychro_output_xy(
+    state__output_xy(
         out,
         out$tdb,
         out$humratio,
@@ -984,7 +984,7 @@ givoni__mean_outdoor_data <- function(
         group = 1L,
         metric = "givoni_mean_outdoor"
     ))
-    psychro_output_xy(
+    state__output_xy(
         out,
         out$tdb,
         out$humratio,
@@ -1030,7 +1030,7 @@ givoni__mean_outdoor_label_data <- function(
         vjust = givoni__mean_outdoor_label_vjust(mollier),
         group = 1L
     ))
-    psychro_output_xy(
+    state__output_xy(
         out,
         out$tdb,
         out$humratio,

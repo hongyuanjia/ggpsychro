@@ -294,7 +294,7 @@ StatComfortState <- ggplot2::ggproto(
 
     required_aes = c("tdb"),
 
-    optional_aes = psychro_state_properties(),
+    optional_aes = state__properties(),
 
     extra_params = c(
         "na.rm",
@@ -319,7 +319,7 @@ StatComfortState <- ggplot2::ggproto(
         ctx <- comfort__stat_context(data, units, pres)
         units <- ctx$units
         pres <- ctx$pres
-        data <- psychro_compute_state(
+        data <- state__compute(
             data,
             units,
             pres,

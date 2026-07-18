@@ -26,6 +26,10 @@ GGPSY_OPT$hum_default_min <- 0.0
 # Default humidity-ratio upper bound in g_H2O kg_Air-1 for empty SI charts.
 GGPSY_OPT$hum_default_max <- 50.0
 
+# Internal saturation-curve sample count; kept private so it can be tuned later
+# without making coordinate rendering density part of the public API.
+GGPSY_OPT$saturation_n <- 360L
+
 # ggplot2's known x-position aesthetics are reused for dry-bulb scale aliases.
 GGPSY_OPT$x_aes <- utils::getFromNamespace(
     "ggplot_global",

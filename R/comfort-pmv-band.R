@@ -211,7 +211,7 @@ pmv__root_band_data <- function(
 
     out <- do.call(rbind, polys)
     row.names(out) <- NULL
-    out <- psychro_output_xy(
+    out <- state__output_xy(
         out,
         out$tdb,
         out$humratio,
@@ -399,7 +399,7 @@ pmv__root_band_humratio <- function(
         unit__hum_from_chart(hum_lim[[2L]], units),
         length.out = n
     )
-    sat <- psychro_saturation_humratio(tdb_lim, units, pres)
+    sat <- zone__saturation_humratio(tdb_lim, units, pres)
     hum <- c(hum, sat[is.finite(sat)])
     if (is.null(saturation_roots)) {
         saturation_roots <- pmv__root_band_saturation_roots(
