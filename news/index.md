@@ -2,6 +2,9 @@
 
 ## ggpsychro 0.1.0
 
+- Cleaned up internal helper naming across package modules and split
+  large comfort and chart test files into focused test suites.
+  ([\#36](https://github.com/hongyuanjia/ggpsychro/issues/36))
 - Streamlined comfort, grid, coordinate, and stat internals; renamed the
   PMV comfort and psychrometric grid APIs; and removed the package-local
   RStudio project file.
