@@ -258,8 +258,8 @@ psychrometric coordinates. When `binwidth` is used, each tile represents
 one dry-bulb and humidity-ratio cell aligned to `boundary`. The optional
 cell grid follows the chart's x/y breaks so it stays aligned with the
 visible dry-bulb and humidity-ratio grid. Choose a `binwidth` that
-evenly subdivides those breaks when a denser Marsh-style cell grid
-should still coincide with the existing x/y grid.
+evenly subdivides those breaks when a denser cell grid should still
+coincide with the existing x/y grid.
 
 ## Computed variables
 

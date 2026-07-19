@@ -195,11 +195,11 @@ offsets. Tick breaks and labels are controlled by
 <h2 id="theme-elements">Theme elements<a class="anchor" aria-label="anchor" href="#theme-elements"></a>
 </h2>
 <p>ggpsychro adds psychrometric theme elements for panel masks and
-reference grids. Use these with regular <code><a href="../reference/theme.html">theme()</a></code> calls.</p>
+reference grids. Use these with regular <code>theme()</code> calls.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">50</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/geom_psychro_grid.html">geom_psychro_grid_relhum</a></span><span class="op">(</span>label <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="../reference/theme.html">theme</a></span><span class="op">(</span></span>
+<span>    <span class="fu">theme</span><span class="op">(</span></span>
 <span>        psychro.panel.grid.saturation <span class="op">=</span> <span class="fu">element_line</span><span class="op">(</span></span>
 <span>            color <span class="op">=</span> <span class="st">"black"</span>, linetype <span class="op">=</span> <span class="fl">2</span></span>
 <span>        <span class="op">)</span>,</span>

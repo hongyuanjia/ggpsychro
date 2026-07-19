@@ -7,6 +7,18 @@ Mollier orientation from
 so comfort regions can be composed with the same `+` workflow as other
 ggplot layers.
 
+Use the layer that matches the question you want the chart to answer:
+
+| Question | Layer |
+|----|----|
+| How does PMV vary across the chart? | [`geom_comfort_pmv()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md) |
+| Where are PMV-based ASHRAE 55 or EN 15251 comfort zones? | `geom_comfort_pmv(standard = ...)` |
+| How does SET vary across the chart? | [`geom_comfort_set()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_set.md) |
+| What adaptive comfort range applies for a running outdoor temperature? | [`geom_comfort_adaptive()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_adaptive.md) |
+| Which Outdoor Work Heat Index category applies? | [`geom_comfort_heat_index()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_heat_index.md) |
+| Which Givoni-Milne strategy regions apply? | [`geom_comfort_givoni()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_givoni.md) |
+| What comfort metric applies to measured state points? | [`stat_comfort_state()`](https://hongyuanjia.github.io/ggpsychro/reference/stat_comfort_state.md) |
+
 ## PMV overlays
 
 The default comfort model is ISO 7730 PMV.
@@ -29,6 +41,30 @@ ggpsychro(tdb_lim = c(5, 40), hum_lim = c(0, 24)) +
 
 ![Psychrometric chart with filled PMV bands and labelled PMV contour
 lines.](comfort-overlays_files/figure-html/pmv-overlay-1.png)
+
+### Resolution and rendering modes
+
+Comfort layers use `n` as the rendering-resolution control. For filled
+bands, pass one value for both dry-bulb and humidity-ratio directions or
+two values as `c(tdb, humratio)`. PMV contour curves use the first value
+because they trace constant-PMV roots along one sampling direction.
+Lower values build faster and are useful during exploration; higher
+values give smoother final graphics.
+
+Use `band_render = "band"` for filled regions and `band_render = "tile"`
+for direct sampled cells. For PMV bands, `band_method = "auto"` uses
+root-traced boundaries; `band_method = "isoband"` uses the cheaper
+gridded approximation.
+
+Default resolutions are chosen per model so the common examples build
+quickly while keeping smooth visible boundaries:
+
+| Layer/model | Default `n` | Notes |
+|----|---:|----|
+| [`geom_comfort_pmv()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md) bands | `c(360, 220)` | PMV contours and standard boundaries use the first value. |
+| [`geom_comfort_set()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_set.md) | `c(80, 50)` | SET bands and contours use a sampled grid. |
+| [`geom_comfort_adaptive()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_adaptive.md) | `c(240, 160)` | Adaptive zones are sampled and clipped to the chart. |
+| [`geom_comfort_heat_index()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_heat_index.md) | `c(160, 100)` | Heat-index categories share a cached sampled grid. |
 
 ## Standard comfort zones
 
@@ -85,9 +121,9 @@ ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
     psychro_preset("minimal") +
     geom_comfort_set(
         model = set_model,
-        levels = seq(14, 32, by = 2),
+        band_levels = seq(14, 32, by = 2),
         contours = TRUE,
-        breaks = seq(22, 30, by = 2),
+        contour_levels = seq(22, 30, by = 2),
         labels = TRUE,
         n = c(70, 42),
         alpha = 0.32
@@ -126,7 +162,7 @@ clipped only by the current chart limits and saturation boundary.
 Heat Index overlays use
 [`comfort_model_heat_index()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_model_pmv.md)
 and
-[`geom_comfort_heat_index()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md)
+[`geom_comfort_heat_index()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_heat_index.md)
 to draw Outdoor Work Heat Index categories. The model uses a NOAA-style
 Heat Index calculation internally in Fahrenheit, while the layer follows
 the parent chart’s unit system.
@@ -141,15 +177,23 @@ ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
 ![Psychrometric chart with Outdoor Work Heat Index caution and danger
 categories.](comfort-overlays_files/figure-html/heat-index-overlay-1.png)
 
-## Givoni bioclimatic strategies
+## Givoni-Milne strategy overlay
 
-Givoni overlays are strategy zones rather than a single continuous
+Givoni-Milne overlays are strategy zones rather than a single continuous
 comfort metric. Create a strategy with
 [`comfort_strategy_givoni()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_strategy_givoni.md)
 and draw it with
-[`geom_comfort_givoni()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md).
-The mean outdoor temperature shifts the strategy geometry and is shown
-on the chart as a dashed marker.
+[`geom_comfort_givoni()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_givoni.md).
+The default adaptive variant shifts the comfort anchor from mean outdoor
+temperature and shows that temperature as a dashed marker. Use
+`variant = "fixed"` for the commonly cited 1979 comfort anchor of 20 to
+25.5 degrees C and 20% to 80% relative humidity, with the hot-humid
+corner clipped. For project- or climate-specific assumptions, set
+`tdb_range` and `relhum_range` on the fixed variant to use those ranges
+as the drawing anchor. Treat these regions as a pre-design screening
+aid: high-mass and night ventilation regions need daily profiles,
+nighttime conditions, and building assumptions before they can be used
+to count comfort hours.
 
 ``` r
 
@@ -160,9 +204,38 @@ ggpsychro(tdb_lim = c(-10, 50), hum_lim = c(0, 35)) +
     geom_comfort_givoni(givoni, alpha = 0.45)
 ```
 
-![Psychrometric chart with Givoni bioclimatic strategy zones and a mean
+![Psychrometric chart with Givoni-Milne strategy zones and a mean
 outdoor temperature
 marker.](comfort-overlays_files/figure-html/givoni-zones-1.png)
+
+``` r
+
+fixed_givoni <- comfort_strategy_givoni(variant = "fixed", mean_outdoor = NULL)
+
+ggpsychro(tdb_lim = c(-10, 50), hum_lim = c(0, 35)) +
+    psychro_preset("minimal") +
+    geom_comfort_givoni(fixed_givoni, alpha = 0.45)
+```
+
+![Psychrometric chart with fixed Givoni-Milne strategy
+zones.](comfort-overlays_files/figure-html/givoni-fixed-1.png)
+
+``` r
+
+custom_givoni <- comfort_strategy_givoni(
+    variant = "fixed",
+    mean_outdoor = NULL,
+    tdb_range = c(22, 27),
+    relhum_range = c(30, 70)
+)
+
+ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 35)) +
+    psychro_preset("minimal") +
+    geom_comfort_givoni(custom_givoni, alpha = 0.45)
+```
+
+![Psychrometric chart with custom Givoni-Milne comfort anchor
+ranges.](comfort-overlays_files/figure-html/givoni-custom-anchor-1.png)
 
 Use `zone_style` with
 [`element_givoni_zone()`](https://hongyuanjia.github.io/ggpsychro/reference/element_givoni_zone.md)
@@ -198,7 +271,7 @@ zones.](comfort-overlays_files/figure-html/givoni-zone-style-1.png)
 
 ## State metrics
 
-[`stat_comfort_state()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md)
+[`stat_comfort_state()`](https://hongyuanjia.github.io/ggpsychro/reference/stat_comfort_state.md)
 evaluates the model at supplied psychrometric states. The computed
 comfort fields can be used with `after_stat()`.
 

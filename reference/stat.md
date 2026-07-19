@@ -1,6 +1,6 @@
-# Calculate psychrometric properties of moist air
+# Draw constant-property psychrometric data
 
-Calculate psychrometric properties of moist air
+Draw constant-property psychrometric data
 
 ## Usage
 
@@ -193,39 +193,36 @@ A ggplot layer.
 
 ## Details
 
-- `stat_relhum` requires an extra `relhum` aesthetics for relative
-  humidity in range \[0, 100\] in %
+These stats convert common psychrometric properties to the
+humidity-ratio coordinate used by the chart. Use them when the data
+records dry-bulb temperature plus another property instead of humidity
+ratio.
 
-- `stat_wetbulb` requires an extra `wetbulb` aesthetics for wet-bulb
-  temperature in degree_F \[IP\] or degree_C \[SI\]
+Required input aesthetics:
 
-- `stat_vappres` requires an extra `vappres` aesthetics for partial
-  pressure of water vapor in moist air in Psi \[IP\] or Pa \[SI\]
+- `stat_relhum()` uses `x` and `relhum`; `relhum` is relative humidity
+  in percent from 0 to 100.
 
-- `stat_specvol` requires an extra `specvol` aesthetics for specific
-  volume of moist air in ft3 lb-1 of dry air \[IP\] or in m3 kg-1 of dry
-  air \[SI\]
+- `stat_wetbulb()` uses `x` and `wetbulb`; wet-bulb temperature follows
+  the parent chart units.
 
-- `stat_enthalpy` requires an extra `enthalpy` aesthetics for moist air
-  enthalpy in Btu lb-1 \[IP\] or J kg-1
+- `stat_vappres()` uses `x` and `vappres`; vapor pressure is Pa in SI
+  and Psi in IP.
 
-What these
-[`ggplot2::ggproto()`](https://ggplot2.tidyverse.org/reference/ggproto.html)
-objects do are to take input values, calculate the corresponding
-humidity ratio and replace the `y` aesthetic values in each group.
+- `stat_specvol()` uses `x` and `specvol`; specific volume is m^3/kg dry
+  air in SI and ft^3/lb dry air in IP.
 
-All of stats above requires two additional aesthetics:
+- `stat_enthalpy()` uses `x` and `enthalpy`; enthalpy is J/kg dry air in
+  SI and Btu/lb dry air in IP.
 
-- `units`: A single string indicating the unit system to use. Should be
-  either `"SI"` or `"IP"`, or `waiver()` which uses the value from the
-  parent plot. Default: `waiver()`
+When used with
+[`ggpsychro()`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro.md),
+`units` and pressure are inherited from the plot. If these stats are
+used directly inside ordinary ggplot2 geoms via `stat = "relhum"` or
+similar, supply both `units` and `pres` explicitly.
 
-- `pres`: A single number indicating the atmosphere pressure in Pa
-  \[SI\] or Psi \[IP\]. If `waiver()`, the pressure calculated from the
-  parent plot's altitude value will be used. Default: `waiver()`
-
-However, when these stats are used inside a ggplot `geom_*` as the
-`stat` argument, both `units` and `pres` have to be specified.
+Internally, each stat computes humidity ratio and replaces the layer `y`
+aesthetic before the psychrometric coordinate transform is applied.
 
 ## Examples
 

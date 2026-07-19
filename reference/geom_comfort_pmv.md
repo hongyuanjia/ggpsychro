@@ -1,97 +1,11 @@
-# Comfort layers for psychrometric charts
+# Draw PMV comfort layers
 
-`geom_comfort_pmv()` is the main PMV entry point and can draw filled PMV
-bands, PMV contour lines and labels, plus optional PMV-based standard
-zones. `geom_comfort_set()`, `geom_comfort_adaptive()`,
-`geom_comfort_heat_index()`, and `geom_comfort_givoni()` provide
-higher-level overlays for other comfort metrics. `stat_comfort_state()`
-evaluates comfort fields at supplied states.
+`geom_comfort_pmv()` draws filled PMV bands, PMV contour lines and
+labels, plus optional PMV-based standard zones.
 
 ## Usage
 
 ``` r
-geom_comfort_set(
-  mapping = NULL,
-  data = NULL,
-  position = "identity",
-  ...,
-  model = comfort_model_set(),
-  bands = TRUE,
-  contours = FALSE,
-  labels = FALSE,
-  levels = NULL,
-  breaks = NULL,
-  n = NULL,
-  band_render = c("band", "tile"),
-  band_method = c("auto", "root", "isoband"),
-  alpha = 0.55,
-  na.rm = FALSE,
-  show.legend = NA,
-  inherit.aes = TRUE
-)
-
-geom_comfort_adaptive(
-  mapping = NULL,
-  data = NULL,
-  position = "identity",
-  ...,
-  model = NULL,
-  t_running = NULL,
-  tr = NULL,
-  v = 0.1,
-  standard = c("ashrae55", "en16798"),
-  category = NULL,
-  n = NULL,
-  gap = 0,
-  alpha = 0.3,
-  na.rm = FALSE,
-  show.legend = NA,
-  inherit.aes = TRUE
-)
-
-stat_comfort_state(
-  mapping = NULL,
-  data = NULL,
-  geom = "point",
-  position = "identity",
-  ...,
-  model = comfort_model_pmv(),
-  na.rm = FALSE,
-  show.legend = NA,
-  inherit.aes = TRUE
-)
-
-geom_comfort_givoni(
-  strategy = comfort_strategy_givoni(),
-  mapping = NULL,
-  data = NULL,
-  position = "identity",
-  ...,
-  alpha = 0.55,
-  show_labels = TRUE,
-  show_pmv = FALSE,
-  pmv_model = comfort_model_pmv(),
-  zone_alpha = 0.2,
-  zone_style = NULL,
-  na.rm = FALSE,
-  show.legend = NA,
-  inherit.aes = TRUE
-)
-
-geom_comfort_heat_index(
-  mapping = NULL,
-  data = NULL,
-  position = "identity",
-  ...,
-  model = comfort_model_heat_index(),
-  n = c(160, 100),
-  alpha = 0.55,
-  show_labels = TRUE,
-  na.rm = FALSE,
-  show.legend = NA,
-  inherit.aes = TRUE
-)
-
 geom_comfort_pmv(
   mapping = NULL,
   data = NULL,
@@ -204,26 +118,29 @@ geom_comfort_pmv(
 
   A comfort model object.
 
+- standard:
+
+  PMV-based standard object.
+
 - bands, contours, labels:
 
-  Single logical values controlling whether high-level comfort wrappers
-  draw filled bands, contour lines, and text labels. For
-  `geom_comfort_pmv()`, `bands` controls the sampled PMV field; PMV
-  standard zones still draw when `standard` is supplied.
+  Single logical values controlling whether `geom_comfort_pmv()` draws
+  filled PMV bands, PMV contour lines, and text labels. PMV standard
+  zones still draw when `standard` is supplied.
 
-- levels:
+- contour_levels:
 
-  Number of filled contour bands, or a numeric vector of band breaks.
-  Used only for `band_render = "band"`.
+  PMV contour levels for `geom_comfort_pmv()`.
 
-- breaks:
+- band_levels:
 
-  Contour break values.
+  Number of PMV filled bands, or a numeric vector of PMV band breaks for
+  `geom_comfort_pmv()`.
 
 - n:
 
   Grid resolution in dry-bulb and humidity-ratio directions. If `NULL`,
-  a model-specific default is used.
+  PMV bands use `c(360, 220)` and PMV curves use `360`.
 
 - band_render:
 
@@ -265,97 +182,25 @@ geom_comfort_pmv(
   plot specification, e.g.
   [`annotation_borders()`](https://ggplot2.tidyverse.org/reference/annotation_borders.html).
 
-- t_running:
-
-  Running mean outdoor temperature for `geom_comfort_adaptive()` when
-  `model` is `NULL`.
-
-- tr:
-
-  Mean radiant temperature. If `NULL`, the model uses dry-bulb
-  temperature.
-
-- v:
-
-  Air speed for `geom_comfort_adaptive()` when `model` is `NULL`.
-
-- standard:
-
-  PMV-based standard object for `geom_comfort_pmv()`, or an adaptive
-  comfort standard name for `geom_comfort_adaptive()` when `model` is
-  `NULL`.
-
-- category:
-
-  Adaptive comfort category for `geom_comfort_adaptive()`.
-
-- gap:
-
-  Relative gap between generated tiles for `band_render = "tile"`.
-
-- geom:
-
-  The geometric object to use to display the data for this layer. When
-  using a `stat_*()` function to construct a layer, the `geom` argument
-  can be used to override the default coupling between stats and geoms.
-  The `geom` argument accepts the following:
-
-  - A `Geom` ggproto subclass, for example `GeomPoint`.
-
-  - A string naming the geom. To give the geom as a string, strip the
-    function name of the `geom_` prefix. For example, to use
-    `geom_point()`, give the geom as `"point"`.
-
-  - For more information and other ways to specify the geom, see the
-    [layer
-    geom](https://ggplot2.tidyverse.org/reference/layer_geoms.html)
-    documentation.
-
-- strategy:
-
-  A Givoni bioclimatic strategy object.
-
-- show_labels:
-
-  If `TRUE`, draw overlay labels.
-
-- show_pmv:
-
-  If `TRUE`, draw the PMV comfort background under the Givoni strategy
-  outlines.
-
-- pmv_model:
-
-  PMV model used when `show_pmv = TRUE`.
-
-- zone_alpha:
-
-  Alpha for the filled Givoni comfort zone. Other Givoni strategy
-  regions are drawn as outlines.
-
-- zone_style:
-
-  Optional named list of per-zone style overrides for
-  `geom_comfort_givoni()`. Names must match Givoni zone ids such as
-  `"comfort"`, `"winter"`, or `"air_conditioning"`. Values can be
-  created with
-  [`element_givoni_zone()`](https://hongyuanjia.github.io/ggpsychro/reference/element_givoni_zone.md),
-  [`ggplot2::element_polygon()`](https://ggplot2.tidyverse.org/reference/element.html),
-  or ordinary named lists with fields `fill`, `colour`/`color`,
-  `linewidth`, `linetype`, `alpha`, and `linejoin`.
-
-- contour_levels:
-
-  PMV contour levels for `geom_comfort_pmv()`.
-
-- band_levels:
-
-  Number of PMV filled bands, or a numeric vector of PMV band breaks for
-  `geom_comfort_pmv()`.
-
 ## Value
 
-A ggplot layer or a list of ggplot additions.
+A list of ggplot additions.
+
+## Details
+
+`n` trades drawing smoothness for build time. For PMV bands, supply one
+value to use the same dry-bulb and humidity-ratio resolution, or two
+values for separate directions. PMV contour curves and standard-zone
+boundaries use the first value because they trace roots along one
+sampling direction. Smaller values such as `n = c(45, 30)` are useful
+for exploratory work; larger values produce smoother publication
+graphics.
+
+`band_render = "band"` draws filled polygon bands from continuous
+boundaries. `band_render = "tile"` draws sampled grid cells directly.
+With `band_render = "band"`, `band_method = "auto"` uses PMV root
+tracing for smoother PMV boundaries; `band_method = "isoband"` uses
+gridded isobands when a cheaper sampled approximation is preferred.
 
 ## Examples
 
@@ -377,16 +222,6 @@ ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
     )
 
 
-# Draw the neutral PMV comfort zone.
-ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
-    geom_comfort_pmv(
-        standard = comfort_pmv_ashrae55(),
-        bands = FALSE,
-        contours = FALSE,
-        n = 80
-    )
-
-
 # Draw sampled PMV values as grid tiles.
 ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
     geom_comfort_pmv(band_render = "tile", contours = FALSE, n = c(45, 30))
@@ -399,28 +234,6 @@ ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
         bands = FALSE,
         contours = FALSE,
         n = 80
-    )
-
-
-# Draw heat-index categories on hot conditions.
-ggpsychro(tdb_lim = c(25, 45), hum_lim = c(0, 32)) +
-    geom_comfort_heat_index(n = c(55, 35), show_labels = FALSE)
-
-
-# Draw Givoni bioclimatic strategy zones.
-ggpsychro(tdb_lim = c(5, 45), hum_lim = c(0, 30)) +
-    geom_comfort_givoni(show_labels = TRUE)
-
-
-# Evaluate PMV at supplied state points.
-states <- data.frame(
-    tdb = c(24, 28, 31),
-    relhum = c(45, 55, 65)
-)
-ggpsychro(states, tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
-    stat_comfort_state(
-        aes(tdb = tdb, relhum = relhum, colour = after_stat(pmv)),
-        size = 3
     )
 
 ```

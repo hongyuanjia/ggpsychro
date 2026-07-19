@@ -190,6 +190,19 @@ EN 16798 use <code>"I"</code>, <code>"II"</code>, or <code>"III"</code>.</p></dd
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data frame with model outputs.</p>
     </div>
+    <div class="section level2">
+    <h2 id="output-columns">Output columns<a class="anchor" aria-label="anchor" href="#output-columns"></a></h2>
+
+
+<ul><li><p><code>comfort_pmv()</code> returns <code>pmv</code>, <code>ppd</code>, and <code>tsv</code> (thermal sensation vote).</p></li>
+<li><p><code>comfort_set()</code> returns <code>set</code>.</p></li>
+<li><p><code>comfort_adaptive()</code> returns the selected standard, acceptability flags,
+comfort temperature, and upper/lower comfort-temperature limits. ASHRAE 55
+includes 80% and 90% acceptability columns; EN 16798 includes category I,
+II, and III acceptability columns.</p></li>
+<li><p><code>comfort_heat_index()</code> returns <code>heat_index</code>, <code>category</code>, and
+<code>category_id</code>.</p></li>
+</ul></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>

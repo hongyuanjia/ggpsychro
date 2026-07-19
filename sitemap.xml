@@ -23,13 +23,17 @@
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/demo_scale.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/element_givoni_zone.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/element_polygon.html</loc></url>
+<url><loc>https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_adaptive.html</loc></url>
+<url><loc>https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_givoni.html</loc></url>
+<url><loc>https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_heat_index.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.html</loc></url>
+<url><loc>https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_set.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/geom_psychro_grid.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/geom_psychro_protractor.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro-package.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/index.html</loc></url>
-<url><loc>https://hongyuanjia.github.io/ggpsychro/reference/is.ggpsychro.html</loc></url>
+<url><loc>https://hongyuanjia.github.io/ggpsychro/reference/is_ggpsychro.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/label.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/psychro_preset.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/psychro_state.html</loc></url>
@@ -37,8 +41,9 @@
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/scale.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/scale_fill_comfort_pmv.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/stat.html</loc></url>
+<url><loc>https://hongyuanjia.github.io/ggpsychro/reference/stat_comfort_state.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/stat_psychro_bin.html</loc></url>
-<url><loc>https://hongyuanjia.github.io/ggpsychro/reference/theme.html</loc></url>
+<url><loc>https://hongyuanjia.github.io/ggpsychro/reference/theme_psychro.html</loc></url>
 <url><loc>https://hongyuanjia.github.io/ggpsychro/reference/trans.html</loc></url>
 </urlset>
 

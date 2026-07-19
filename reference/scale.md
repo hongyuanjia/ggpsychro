@@ -1,6 +1,6 @@
-# Transformation object for psychrometric chart
+# Psychrometric continuous scales
 
-Transformation object for psychrometric chart
+Psychrometric continuous scales
 
 ## Usage
 

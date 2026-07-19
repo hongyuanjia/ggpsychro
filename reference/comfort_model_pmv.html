@@ -302,7 +302,7 @@ unrounded values by default so contours and zones remain smooth.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Draw SET as the filled comfort metric.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">35</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">24</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
-<span class="r-in"><span>    <span class="fu"><a href="geom_comfort_pmv.html">geom_comfort_set</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="geom_comfort_set.html">geom_comfort_set</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>        model <span class="op">=</span> <span class="fu">comfort_model_set</span><span class="op">(</span>v <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>        n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">45</span>, <span class="fl">30</span><span class="op">)</span></span></span>
 <span class="r-in"><span>    <span class="op">)</span></span></span>
@@ -310,7 +310,7 @@ unrounded values by default so contours and zones remain smooth.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Draw the adaptive acceptability region.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">35</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">24</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
-<span class="r-in"><span>    <span class="fu"><a href="geom_comfort_pmv.html">geom_comfort_adaptive</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="geom_comfort_adaptive.html">geom_comfort_adaptive</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>        t_running <span class="op">=</span> <span class="fl">22</span>,</span></span>
 <span class="r-in"><span>        n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">45</span>, <span class="fl">30</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>        alpha <span class="op">=</span> <span class="fl">0.3</span></span></span>
@@ -319,7 +319,7 @@ unrounded values by default so contours and zones remain smooth.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Draw heat-index categories with a solar exposure adjustment.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">25</span>, <span class="fl">45</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">32</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
-<span class="r-in"><span>    <span class="fu"><a href="geom_comfort_pmv.html">geom_comfort_heat_index</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="geom_comfort_heat_index.html">geom_comfort_heat_index</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>        model <span class="op">=</span> <span class="fu">comfort_model_heat_index</span><span class="op">(</span>solar_exposure <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>        n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">55</span>, <span class="fl">35</span><span class="op">)</span></span></span>
 <span class="r-in"><span>    <span class="op">)</span></span></span>

@@ -145,9 +145,7 @@ shown.](grids-and-styles_files/figure-html/psychro-protractor-custom-1.png)
 ## Theme elements
 
 ggpsychro adds psychrometric theme elements for panel masks and
-reference grids. Use these with regular
-[`theme()`](https://hongyuanjia.github.io/ggpsychro/reference/theme.md)
-calls.
+reference grids. Use these with regular `theme()` calls.
 
 ``` r
 

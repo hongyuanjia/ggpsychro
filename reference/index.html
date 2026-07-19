@@ -54,7 +54,7 @@
           <code><a href="ggpsychro-package.html">ggpsychro-package</a></code>
 
         </dt>
-        <dd>ggpsychro: A 'ggplot2' Extension for Making Psychrometric Charts</dd>
+        <dd>ggpsychro: psychrometric charts with ggplot2</dd>
       </dl></div><div class="section level2">
       <h2 id="core-chart-construction">Core chart construction<a class="anchor" aria-label="anchor" href="#core-chart-construction"></a></h2>
 
@@ -81,10 +81,10 @@
 
         <dt>
 
-          <code><a href="is.ggpsychro.html">is.ggpsychro()</a></code>
+          <code><a href="is_ggpsychro.html">is_ggpsychro()</a></code>
 
         </dt>
-        <dd>Reports whether x is a ggplot object</dd>
+        <dd>Test for ggpsychro plots</dd>
       </dl></div><div class="section level2">
       <h2 id="psychrometric-equation-layers-and-grids">Psychrometric equation layers and grids<a class="anchor" aria-label="anchor" href="#psychrometric-equation-layers-and-grids"></a></h2>
 
@@ -100,7 +100,7 @@
           <code><a href="stat.html">stat_relhum()</a></code> <code><a href="stat.html">stat_wetbulb()</a></code> <code><a href="stat.html">stat_vappres()</a></code> <code><a href="stat.html">stat_specvol()</a></code> <code><a href="stat.html">stat_enthalpy()</a></code>
 
         </dt>
-        <dd>Calculate psychrometric properties of moist air</dd>
+        <dd>Draw constant-property psychrometric data</dd>
 
         <dt>
 
@@ -181,7 +181,7 @@
           <code><a href="comfort_strategy_givoni.html">comfort_strategy_givoni()</a></code>
 
         </dt>
-        <dd>Givoni bioclimatic strategy</dd>
+        <dd>Givoni-Milne strategy overlay</dd>
       </dl></div><div class="section level2">
       <h2 id="thermal-comfort-chart-layers">Thermal comfort chart layers<a class="anchor" aria-label="anchor" href="#thermal-comfort-chart-layers"></a></h2>
 
@@ -194,10 +194,45 @@
 
       <dl><dt>
 
-          <code><a href="geom_comfort_pmv.html">geom_comfort_set()</a></code> <code><a href="geom_comfort_pmv.html">geom_comfort_adaptive()</a></code> <code><a href="geom_comfort_pmv.html">stat_comfort_state()</a></code> <code><a href="geom_comfort_pmv.html">geom_comfort_givoni()</a></code> <code><a href="geom_comfort_pmv.html">geom_comfort_heat_index()</a></code> <code><a href="geom_comfort_pmv.html">geom_comfort_pmv()</a></code>
+          <code><a href="geom_comfort_pmv.html">geom_comfort_pmv()</a></code>
 
         </dt>
-        <dd>Comfort layers for psychrometric charts</dd>
+        <dd>Draw PMV comfort layers</dd>
+
+        <dt>
+
+          <code><a href="geom_comfort_set.html">geom_comfort_set()</a></code>
+
+        </dt>
+        <dd>Draw SET comfort layers</dd>
+
+        <dt>
+
+          <code><a href="geom_comfort_heat_index.html">geom_comfort_heat_index()</a></code>
+
+        </dt>
+        <dd>Draw heat-index comfort categories</dd>
+
+        <dt>
+
+          <code><a href="geom_comfort_adaptive.html">geom_comfort_adaptive()</a></code>
+
+        </dt>
+        <dd>Draw adaptive comfort zones</dd>
+
+        <dt>
+
+          <code><a href="geom_comfort_givoni.html">geom_comfort_givoni()</a></code>
+
+        </dt>
+        <dd>Draw Givoni-Milne strategy zones</dd>
+
+        <dt>
+
+          <code><a href="stat_comfort_state.html">stat_comfort_state()</a></code>
+
+        </dt>
+        <dd>Evaluate comfort metrics at state points</dd>
 
         <dt>
 
@@ -220,7 +255,7 @@
           <code><a href="scale.html">scale_drybulb_continuous()</a></code> <code><a href="scale.html">scale_humratio_continuous()</a></code> <code><a href="scale.html">scale_relhum_continuous()</a></code> <code><a href="scale.html">scale_wetbulb_continuous()</a></code> <code><a href="scale.html">scale_vappres_continuous()</a></code> <code><a href="scale.html">scale_specvol_continuous()</a></code> <code><a href="scale.html">scale_enthalpy_continuous()</a></code>
 
         </dt>
-        <dd>Transformation object for psychrometric chart</dd>
+        <dd>Psychrometric continuous scales</dd>
 
         <dt>
 
@@ -254,7 +289,7 @@
 
       <dl><dt>
 
-          <code><a href="theme.html">theme_grey_psychro()</a></code> <code><a href="theme.html">theme_gray_psychro()</a></code> <code><a href="theme.html">theme_psychro()</a></code> <code><a href="theme.html">theme_psychro_ashrae()</a></code> <code><a href="theme.html">theme_psychro_minimal()</a></code>
+          <code><a href="theme_psychro.html">theme_grey_psychro()</a></code> <code><a href="theme_psychro.html">theme_gray_psychro()</a></code> <code><a href="theme_psychro.html">theme_psychro()</a></code> <code><a href="theme_psychro.html">theme_psychro_ashrae()</a></code> <code><a href="theme_psychro.html">theme_psychro_minimal()</a></code>
 
         </dt>
         <dd>Custom theme for psychrometric chart.</dd>

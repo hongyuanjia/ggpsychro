@@ -1,12 +1,12 @@
 # Create a ggpsychro plot
 
-This function is the equivalent of
-[`ggplot2::ggplot()`](https://ggplot2.tidyverse.org/reference/ggplot.html)
-in ggplot2. It takes care of setting up the plot object along with
-creating the layout for the plot based on the graph and the
-specification passed in. Alternatively a layout can be prepared in
-advance using `create_layout` and passed as the data argument. See
-*Details* for a description of all available layouts.
+`ggpsychro()` creates a ggplot object configured for psychrometric
+charts. It stores chart metadata, installs
+[`coord_psychro()`](https://hongyuanjia.github.io/ggpsychro/reference/coord_psychro.md),
+applies default axis labels, and adds
+[`theme_psychro()`](https://hongyuanjia.github.io/ggpsychro/reference/theme_psychro.md)
+so psychrometric grids, states, zones, and comfort overlays can be added
+with the usual ggplot2 `+` workflow.
 
 ## Usage
 

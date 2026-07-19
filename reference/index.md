@@ -3,7 +3,7 @@
 ## Package overview
 
 - [`ggpsychro-package`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro-package.md)
-  : ggpsychro: A 'ggplot2' Extension for Making Psychrometric Charts
+  : ggpsychro: psychrometric charts with ggplot2
 
 ## Core chart construction
 
@@ -11,8 +11,8 @@
   : Create a ggpsychro plot
 - [`coord_psychro()`](https://hongyuanjia.github.io/ggpsychro/reference/coord_psychro.md)
   : Psychrometric coordinates
-- [`is.ggpsychro()`](https://hongyuanjia.github.io/ggpsychro/reference/is.ggpsychro.md)
-  : Reports whether x is a ggplot object
+- [`is_ggpsychro()`](https://hongyuanjia.github.io/ggpsychro/reference/is_ggpsychro.md)
+  : Test for ggpsychro plots
 
 ## Psychrometric equation layers and grids
 
@@ -21,7 +21,7 @@
   [`stat_vappres()`](https://hongyuanjia.github.io/ggpsychro/reference/stat.md)
   [`stat_specvol()`](https://hongyuanjia.github.io/ggpsychro/reference/stat.md)
   [`stat_enthalpy()`](https://hongyuanjia.github.io/ggpsychro/reference/stat.md)
-  : Calculate psychrometric properties of moist air
+  : Draw constant-property psychrometric data
 - [`geom_psychro_grid_relhum()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_psychro_grid.md)
   [`geom_psychro_grid_wetbulb()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_psychro_grid.md)
   [`geom_psychro_grid_vappres()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_psychro_grid.md)
@@ -60,17 +60,22 @@
   [`comfort_pmv_en15251()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_pmv_ashrae55.md)
   : PMV-based comfort standards
 - [`comfort_strategy_givoni()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_strategy_givoni.md)
-  : Givoni bioclimatic strategy
+  : Givoni-Milne strategy overlay
 
 ## Thermal comfort chart layers
 
-- [`geom_comfort_set()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md)
-  [`geom_comfort_adaptive()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md)
-  [`stat_comfort_state()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md)
-  [`geom_comfort_givoni()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md)
-  [`geom_comfort_heat_index()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md)
-  [`geom_comfort_pmv()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md)
-  : Comfort layers for psychrometric charts
+- [`geom_comfort_pmv()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md)
+  : Draw PMV comfort layers
+- [`geom_comfort_set()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_set.md)
+  : Draw SET comfort layers
+- [`geom_comfort_heat_index()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_heat_index.md)
+  : Draw heat-index comfort categories
+- [`geom_comfort_adaptive()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_adaptive.md)
+  : Draw adaptive comfort zones
+- [`geom_comfort_givoni()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_givoni.md)
+  : Draw Givoni-Milne strategy zones
+- [`stat_comfort_state()`](https://hongyuanjia.github.io/ggpsychro/reference/stat_comfort_state.md)
+  : Evaluate comfort metrics at state points
 - [`scale_fill_comfort_pmv()`](https://hongyuanjia.github.io/ggpsychro/reference/scale_fill_comfort_pmv.md)
   : Comfort PMV fill scale
 
@@ -83,7 +88,7 @@
   [`scale_vappres_continuous()`](https://hongyuanjia.github.io/ggpsychro/reference/scale.md)
   [`scale_specvol_continuous()`](https://hongyuanjia.github.io/ggpsychro/reference/scale.md)
   [`scale_enthalpy_continuous()`](https://hongyuanjia.github.io/ggpsychro/reference/scale.md)
-  : Transformation object for psychrometric chart
+  : Psychrometric continuous scales
 - [`label_drybulb()`](https://hongyuanjia.github.io/ggpsychro/reference/label.md)
   [`label_humratio()`](https://hongyuanjia.github.io/ggpsychro/reference/label.md)
   [`label_relhum()`](https://hongyuanjia.github.io/ggpsychro/reference/label.md)
@@ -105,11 +110,11 @@
 
 ## Themes, presets, and elements
 
-- [`theme_grey_psychro()`](https://hongyuanjia.github.io/ggpsychro/reference/theme.md)
-  [`theme_gray_psychro()`](https://hongyuanjia.github.io/ggpsychro/reference/theme.md)
-  [`theme_psychro()`](https://hongyuanjia.github.io/ggpsychro/reference/theme.md)
-  [`theme_psychro_ashrae()`](https://hongyuanjia.github.io/ggpsychro/reference/theme.md)
-  [`theme_psychro_minimal()`](https://hongyuanjia.github.io/ggpsychro/reference/theme.md)
+- [`theme_grey_psychro()`](https://hongyuanjia.github.io/ggpsychro/reference/theme_psychro.md)
+  [`theme_gray_psychro()`](https://hongyuanjia.github.io/ggpsychro/reference/theme_psychro.md)
+  [`theme_psychro()`](https://hongyuanjia.github.io/ggpsychro/reference/theme_psychro.md)
+  [`theme_psychro_ashrae()`](https://hongyuanjia.github.io/ggpsychro/reference/theme_psychro.md)
+  [`theme_psychro_minimal()`](https://hongyuanjia.github.io/ggpsychro/reference/theme_psychro.md)
   : Custom theme for psychrometric chart.
 - [`psychro_preset()`](https://hongyuanjia.github.io/ggpsychro/reference/psychro_preset.md)
   : Apply a psychrometric chart preset
