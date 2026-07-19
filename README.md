@@ -27,13 +27,12 @@
 
 ## Installation
 
-<!-- You can install the released version of ggpsychro from [CRAN](https://CRAN.R-project.org) with: -->
+You can install the released version of ggpsychro from
+[CRAN](https://CRAN.R-project.org) with:
 
-<!-- ``` r -->
-
-<!-- install.packages("ggpsychro") -->
-
-<!-- ``` -->
+``` r
+install.packages("ggpsychro")
+```
 
 You can install the development version from
 [GitHub](https://github.com/) with:
@@ -128,5 +127,6 @@ Copyright © 2019-2026 Hongyuan Jia
 ## Contribute
 
 Please note that the ‘ggpsychro’ project is released with a [Contributor
-Code of Conduct](.github/CODE_OF_CONDUCT.md). By contributing to this
-project, you agree to abide by its terms.
+Code of
+Conduct](https://github.com/hongyuanjia/ggpsychro/blob/master/.github/CODE_OF_CONDUCT.md).
+By contributing to this project, you agree to abide by its terms.
