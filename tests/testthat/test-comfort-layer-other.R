@@ -112,6 +112,16 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
     ))
     expect_gt(nrow(adaptive_zone), 0L)
     expect_equal(unique(adaptive_zone$alpha), 0.3)
+    # Default adaptive polygon bands should reuse the analytic zone boundary
+    # rather than a grid-interpolated binary acceptability boundary.
+    expect_equal(
+        range(adaptive_overlay$tdb, finite = TRUE),
+        range(adaptive_zone$tdb, finite = TRUE)
+    )
+    expect_equal(
+        range(adaptive_overlay$humratio, finite = TRUE),
+        range(adaptive_zone$humratio, finite = TRUE)
+    )
 
     heat_overlay <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
