@@ -10,12 +10,11 @@
 Source:
 [`DESCRIPTION`](https://github.com/hongyuanjia/ggpsychro/blob/master/DESCRIPTION)
 
-Jia H (2026). *ggpsychro: A 'ggplot2' Extension for Making Psychrometric
-Charts*. R package version 0.1.0,
-<https://hongyuanjia.github.io/ggpsychro/>.
+Jia H (2026). *ggpsychro: Create Psychrometric Charts*. R package
+version 0.1.0, <https://hongyuanjia.github.io/ggpsychro/>.
 
     @Manual{,
-      title = {ggpsychro: A 'ggplot2' Extension for Making Psychrometric Charts},
+      title = {ggpsychro: Create Psychrometric Charts},
       author = {Hongyuan Jia},
       year = {2026},
       note = {R package version 0.1.0},

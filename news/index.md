@@ -2,6 +2,9 @@
 
 ## ggpsychro 0.1.0
 
+- Addressed `checktor` CRAN-preflight findings in package metadata and
+  psychrometric axis labels.
+  ([\#38](https://github.com/hongyuanjia/ggpsychro/issues/38))
 - Refined comfort overlay APIs and documentation, added Givoni-Milne
   strategy variants with custom comfort anchors, and added CI-only
   ggplot2 compatibility checks.
