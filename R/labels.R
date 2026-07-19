@@ -1,9 +1,9 @@
 default_labs <- function(units = "SI", mollier = FALSE) {
     if (units == "SI") {
-        lab_x <- expression("Dry-bulb temperature (" * degree * C * ")")
+        lab_x <- expression("Dry-bulb temperature (" * degree * "C" * ")")
         lab_y <- expression("Humidity ratio (" * g[m] * "/" * kg[da] * ")")
     } else if (units == "IP") {
-        lab_x <- expression("Dry-bulb temperature (" * degree * F * ")")
+        lab_x <- expression("Dry-bulb temperature (" * degree * "F" * ")")
         lab_y <- expression("Humidity ratio (" * gr[m] * "/" * lb[da] * ")")
     }
 

@@ -2,7 +2,7 @@
 
 * Refined comfort overlay APIs and documentation, added Givoni-Milne strategy
   variants with custom comfort anchors, and added CI-only ggplot2 compatibility
-  checks. (#37)
+  checks, plus CRAN preflight metadata cleanup. (#37)
 * Cleaned up internal helper naming across package modules and split large
   comfort and chart test files into focused test suites. (#36)
 * Streamlined comfort, grid, coordinate, and stat internals; renamed the PMV
