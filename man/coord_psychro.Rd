@@ -2,7 +2,7 @@
 % Please edit documentation in R/coord-psychro.R
 \name{coord_psychro}
 \alias{coord_psychro}
-\title{Psychrometric coordinates}
+\title{Advanced psychrometric coordinates}
 \usage{
 coord_psychro(
   tdb_lim = NULL,
@@ -18,15 +18,15 @@ coord_psychro(
 \arguments{
 \item{tdb_lim}{A numeric vector of length-2 indicating the dry-bulb
 temperature limits. Should be in range
-\verb{[-50, 100]} degree_C [SI] or
-\verb{[-58, 212]} degree_F [IP].
+\verb{[-50, 100]} degrees C [SI] or
+\verb{[-58, 212]} degrees F [IP].
 If \code{NULL}, trained data ranges will be used when available, otherwise
 a default display range will be used. Default: \code{NULL}.}
 
 \item{hum_lim}{A numeric vector of length-2 indicating the humidity ratio
 limits. Should be in range
-\verb{[0, 60]} g_H20 kg_Air-1 [SI] or
-\verb{[0, 420]} gr_H20 lb_Air-1 [IP].
+\verb{[0, 60]} g H2O per kg dry air [SI] or
+\verb{[0, 420]} grains H2O per lb dry air [IP].
 If \code{NULL}, trained data ranges will be used when available, otherwise
 a default display range will be used. Default: \code{NULL}.}
 
@@ -59,13 +59,15 @@ legend, the plot title, or the plot margins.}
 A ggplot2 coordinate system object for psychrometric charts.
 }
 \description{
-Psychrometric coordinates
+Advanced psychrometric coordinates
 }
 \details{
-\code{coord_psychro()} is normally used with a \code{\link[=ggpsychro]{ggpsychro()}} plot. When
-\code{altitude}, \code{units}, or \code{mollier} is \code{NULL}, the value is inherited from the
-parent plot. Supply these arguments explicitly when using the coordinate
-system outside that path.
+Most plots should start with \code{\link[=ggpsychro]{ggpsychro()}}, which installs this coordinate
+system and the matching psychrometric metadata for you. Call
+\code{coord_psychro()} directly only when you are replacing or configuring the
+coordinate system on an existing ggpsychro plot. When \code{altitude}, \code{units}, or
+\code{mollier} is \code{NULL}, the value is inherited from the parent plot. Supply these
+arguments explicitly when using the coordinate system outside that path.
 }
 \examples{
 ggpsychro() +

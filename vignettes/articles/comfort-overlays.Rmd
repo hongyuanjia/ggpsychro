@@ -21,6 +21,14 @@ psychrometric panel. They inherit the chart units, pressure, limits, and
 Mollier orientation from `ggpsychro()`, so comfort regions can be composed with
 the same `+` workflow as other ggplot layers.
 
+The comfort API has three layers:
+
+| Task | API |
+|---|---|
+| Calculate comfort values for vectors or data frames | `comfort_pmv()`, `comfort_set()`, `comfort_adaptive()`, `comfort_heat_index()` |
+| Store fixed model assumptions for plotting | `comfort_model_pmv()`, `comfort_model_set()`, `comfort_model_adaptive()`, `comfort_model_heat_index()` |
+| Draw comfort fields, zones, or point metrics on a chart | `geom_comfort_pmv()`, `geom_comfort_set()`, `geom_comfort_adaptive()`, `geom_comfort_heat_index()`, `geom_comfort_givoni()`, `stat_comfort_state()` |
+
 Use the layer that matches the question you want the chart to answer:
 
 | Question | Layer |
@@ -161,36 +169,38 @@ ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
 
 Givoni-Milne overlays are strategy zones rather than a single continuous
 comfort metric. Create a strategy with `comfort_strategy_givoni()` and draw it
-with `geom_comfort_givoni()`. The default adaptive variant shifts the comfort
-anchor from mean outdoor temperature and shows that temperature as a dashed
-marker. Use `variant = "fixed"` for the commonly cited 1979 comfort anchor of
-20 to 25.5 degrees C and 20% to 80% relative humidity, with the hot-humid corner
-clipped. For project- or climate-specific assumptions, set `tdb_range` and
-`relhum_range` on the fixed variant to use those ranges as the drawing anchor.
+with `geom_comfort_givoni()`. The default fixed variant uses the commonly cited
+1979 comfort anchor of 20 to 25.5 degrees C and 20% to 80% relative humidity,
+with the hot-humid corner clipped. For project- or climate-specific assumptions,
+set `tdb_range` and `relhum_range` on the fixed variant to use those ranges as
+the drawing anchor. Use `variant = "adaptive"` and supply `mean_outdoor` to shift
+the comfort anchor from mean outdoor temperature; the adaptive layer shows that
+temperature as a dashed marker.
 Treat these regions as a pre-design screening aid: high-mass and night
 ventilation regions need daily profiles, nighttime conditions, and building
 assumptions before they can be used to count comfort hours.
 
-```{r givoni-zones, fig.alt = "Psychrometric chart with Givoni-Milne strategy zones and a mean outdoor temperature marker."}
-givoni <- comfort_strategy_givoni(mean_outdoor = 22)
+```{r givoni-zones, fig.alt = "Psychrometric chart with fixed Givoni-Milne strategy zones."}
+givoni <- comfort_strategy_givoni()
 
 ggpsychro(tdb_lim = c(-10, 50), hum_lim = c(0, 35)) +
     psychro_preset("minimal") +
     geom_comfort_givoni(givoni, alpha = 0.45)
 ```
 
-```{r givoni-fixed, fig.alt = "Psychrometric chart with fixed Givoni-Milne strategy zones."}
-fixed_givoni <- comfort_strategy_givoni(variant = "fixed", mean_outdoor = NULL)
+```{r givoni-adaptive, fig.alt = "Psychrometric chart with adaptive Givoni-Milne strategy zones and a mean outdoor temperature marker."}
+adaptive_givoni <- comfort_strategy_givoni(
+    variant = "adaptive",
+    mean_outdoor = 22
+)
 
 ggpsychro(tdb_lim = c(-10, 50), hum_lim = c(0, 35)) +
     psychro_preset("minimal") +
-    geom_comfort_givoni(fixed_givoni, alpha = 0.45)
+    geom_comfort_givoni(adaptive_givoni, alpha = 0.45)
 ```
 
 ```{r givoni-custom-anchor, fig.alt = "Psychrometric chart with custom Givoni-Milne comfort anchor ranges."}
 custom_givoni <- comfort_strategy_givoni(
-    variant = "fixed",
-    mean_outdoor = NULL,
     tdb_range = c(22, 27),
     relhum_range = c(30, 70)
 )

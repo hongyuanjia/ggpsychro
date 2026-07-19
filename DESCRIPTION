@@ -88,7 +88,6 @@ Collate:
     'plot-construction.R'
     'trans.R'
     'scale.R'
-    'theme-elements.R'
     'theme.R'
     'zzz.R'
 Config/testthat/edition: 3

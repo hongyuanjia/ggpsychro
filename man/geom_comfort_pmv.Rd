@@ -107,10 +107,9 @@ band breaks for \code{geom_comfort_pmv()}.}
 regions from continuous band boundaries; \code{"tile"} draws sampled grid cells
 directly.}
 
-\item{band_method}{Boundary construction method for \code{band_render = "band"}.
-\code{"auto"} uses root-traced boundaries for PMV and isobands for other
-metrics; \code{"root"} forces PMV root-traced boundaries; \code{"isoband"} uses
-gridded isobands.}
+\item{band_method}{Advanced PMV boundary construction method used only when
+\code{band_render = "band"}. \code{"auto"} and \code{"root"} use root-traced PMV
+boundaries; \code{"isoband"} uses gridded isobands.}
 
 \item{alpha}{Layer transparency. PMV standards keep their own defaults unless
 \code{alpha} is supplied.}
@@ -147,10 +146,9 @@ values such as \code{n = c(45, 30)} are useful for exploratory work; larger valu
 produce smoother publication graphics.
 
 \code{band_render = "band"} draws filled polygon bands from continuous boundaries.
-\code{band_render = "tile"} draws sampled grid cells directly. With
-\code{band_render = "band"}, \code{band_method = "auto"} uses PMV root tracing for
-smoother PMV boundaries; \code{band_method = "isoband"} uses gridded isobands when
-a cheaper sampled approximation is preferred.
+\code{band_render = "tile"} draws sampled grid cells directly. \code{band_method} is a
+PMV-specific advanced option for polygon bands: \code{"root"} traces PMV band
+boundaries directly, while \code{"isoband"} builds them from the sampled grid.
 }
 \examples{
 # Draw PMV comfort bands, contours, and labels.

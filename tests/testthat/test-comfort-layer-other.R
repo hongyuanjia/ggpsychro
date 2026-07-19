@@ -566,7 +566,10 @@ test_that("comfort overlays have visual regressions", {
         "comfort givoni bioclimatic zones",
         givoni_base +
             geom_comfort_givoni(
-                comfort_strategy_givoni(mean_outdoor = 22),
+                comfort_strategy_givoni(
+                    variant = "adaptive",
+                    mean_outdoor = 22
+                ),
                 alpha = 0.45
             )
     )
@@ -575,7 +578,10 @@ test_that("comfort overlays have visual regressions", {
         "comfort givoni styled zones",
         givoni_base +
             geom_comfort_givoni(
-                comfort_strategy_givoni(mean_outdoor = 22),
+                comfort_strategy_givoni(
+                    variant = "adaptive",
+                    mean_outdoor = 22
+                ),
                 zone_style = list(
                     comfort = element_givoni_zone(
                         fill = "#66D27A",

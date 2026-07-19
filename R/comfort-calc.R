@@ -11,6 +11,11 @@ NULL
 #' air-speed inputs follow `units`: SI uses degree C and m/s; IP uses degree F
 #' and ft/s.
 #'
+#' Use these `comfort_*()` functions for vectorized data-frame calculations.
+#' Use [comfort_model_pmv()] and the other `comfort_model_*()` helpers to store
+#' fixed model assumptions for chart layers, and use `geom_comfort_*()` layers to
+#' draw comfort fields or zones on a psychrometric chart.
+#'
 #' @param tdb Dry-bulb air temperature.
 #' @param tr Mean radiant temperature. Defaults to `tdb`.
 #' @param vr Relative air speed for PMV.

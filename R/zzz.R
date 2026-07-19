@@ -1,16 +1,18 @@
 .onLoad <- function(...) {
     ggplot2::register_theme_elements(
-        psychro.panel.mask = element_polygon(
+        psychro.panel.mask = ggplot2::element_polygon(
             fill = NA,
             color = NA,
-            size = 0.5,
-            linetype = 1
+            linewidth = 0.5,
+            linetype = 1,
+            linejoin = "mitre"
         ),
-        psychro.panel.background = element_polygon(
+        psychro.panel.background = ggplot2::element_polygon(
             fill = "gray92",
             color = NA,
-            size = 0.5,
-            linetype = 1
+            linewidth = 0.5,
+            linetype = 1,
+            linejoin = "mitre"
         ),
         psychro.panel.grid = ggplot2::element_line(),
         psychro.panel.grid.saturation = ggplot2::element_line(),
@@ -110,6 +112,4 @@
             )
         )
     )
-
-    register_element_polygon_merge()
 }

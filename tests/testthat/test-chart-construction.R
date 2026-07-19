@@ -83,6 +83,8 @@ test_that("Empty psychrometric charts train display ranges", {
     expect_gt(count_line_shapes(ggpsychro(mollier = TRUE)), 10L)
 })
 test_that("Psychrometric panel backgrounds keep ggplot and psychro semantics", {
+    expect_false("element_polygon" %in% getNamespaceExports("ggpsychro"))
+
     default_grobs <- collect_grobs(ggplot2::ggplotGrob(
         ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50))
     ))
@@ -105,11 +107,14 @@ test_that("Psychrometric panel backgrounds keep ggplot and psychro semantics", {
                 fill = "#F0A0A0",
                 colour = NA
             ),
-            psychro.panel.background = element_polygon(
+            psychro.panel.background = ggplot2::element_polygon(
                 fill = "#A0F0A0",
                 color = NA
             ),
-            psychro.panel.mask = element_polygon(fill = "#A0A0F0", color = NA),
+            psychro.panel.mask = ggplot2::element_polygon(
+                fill = "#A0A0F0",
+                color = NA
+            ),
             plot.margin = ggplot2::margin(6, 6, 6, 6)
         )
     grobs <- collect_grobs(ggplot2::ggplotGrob(p))

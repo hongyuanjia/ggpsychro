@@ -36,7 +36,7 @@ knitr::opts_chunk$set(
 * State points, process lines, and filled operating zones for HVAC workflows.
 * Thermal comfort and bioclimatic overlays for PMV/PPD, SET, adaptive
   comfort, labelled contours, Heat Index, PMV-based ASHRAE 55 / EN 15251
-  zones, and Givoni strategy zones.
+  zones, and Givoni-Milne strategy zones.
 
 ## Installation
 
