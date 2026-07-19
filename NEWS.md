@@ -1,5 +1,8 @@
 # ggpsychro 0.1.0
 
+* Aligned adaptive comfort filled bands with the analytic adaptive comfort zone
+  boundary so Mollier overlays do not mix grid-interpolated and analytic
+  geometry. (#40)
 * Made the Givoni-Milne strategy overlay default to the fixed 1979 comfort
   anchor, clarified comfort API documentation, and switched psychrometric
   polygon theme elements to `ggplot2::element_polygon()`. (#39)
