@@ -7,6 +7,14 @@ Mollier orientation from
 so comfort regions can be composed with the same `+` workflow as other
 ggplot layers.
 
+The comfort API has three layers:
+
+| Task | API |
+|----|----|
+| Calculate comfort values for vectors or data frames | [`comfort_pmv()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_pmv.md), [`comfort_set()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_pmv.md), [`comfort_adaptive()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_pmv.md), [`comfort_heat_index()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_pmv.md) |
+| Store fixed model assumptions for plotting | [`comfort_model_pmv()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_model_pmv.md), [`comfort_model_set()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_model_pmv.md), [`comfort_model_adaptive()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_model_pmv.md), [`comfort_model_heat_index()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_model_pmv.md) |
+| Draw comfort fields, zones, or point metrics on a chart | [`geom_comfort_pmv()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_pmv.md), [`geom_comfort_set()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_set.md), [`geom_comfort_adaptive()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_adaptive.md), [`geom_comfort_heat_index()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_heat_index.md), [`geom_comfort_givoni()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_givoni.md), [`stat_comfort_state()`](https://hongyuanjia.github.io/ggpsychro/reference/stat_comfort_state.md) |
+
 Use the layer that matches the question you want the chart to answer:
 
 | Question | Layer |
@@ -184,47 +192,48 @@ comfort metric. Create a strategy with
 [`comfort_strategy_givoni()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_strategy_givoni.md)
 and draw it with
 [`geom_comfort_givoni()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_givoni.md).
-The default adaptive variant shifts the comfort anchor from mean outdoor
-temperature and shows that temperature as a dashed marker. Use
-`variant = "fixed"` for the commonly cited 1979 comfort anchor of 20 to
-25.5 degrees C and 20% to 80% relative humidity, with the hot-humid
-corner clipped. For project- or climate-specific assumptions, set
-`tdb_range` and `relhum_range` on the fixed variant to use those ranges
-as the drawing anchor. Treat these regions as a pre-design screening
-aid: high-mass and night ventilation regions need daily profiles,
-nighttime conditions, and building assumptions before they can be used
-to count comfort hours.
+The default fixed variant uses the commonly cited 1979 comfort anchor of
+20 to 25.5 degrees C and 20% to 80% relative humidity, with the
+hot-humid corner clipped. For project- or climate-specific assumptions,
+set `tdb_range` and `relhum_range` on the fixed variant to use those
+ranges as the drawing anchor. Use `variant = "adaptive"` and supply
+`mean_outdoor` to shift the comfort anchor from mean outdoor
+temperature; the adaptive layer shows that temperature as a dashed
+marker. Treat these regions as a pre-design screening aid: high-mass and
+night ventilation regions need daily profiles, nighttime conditions, and
+building assumptions before they can be used to count comfort hours.
 
 ``` r
 
-givoni <- comfort_strategy_givoni(mean_outdoor = 22)
+givoni <- comfort_strategy_givoni()
 
 ggpsychro(tdb_lim = c(-10, 50), hum_lim = c(0, 35)) +
     psychro_preset("minimal") +
     geom_comfort_givoni(givoni, alpha = 0.45)
 ```
 
-![Psychrometric chart with Givoni-Milne strategy zones and a mean
-outdoor temperature
-marker.](comfort-overlays_files/figure-html/givoni-zones-1.png)
+![Psychrometric chart with fixed Givoni-Milne strategy
+zones.](comfort-overlays_files/figure-html/givoni-zones-1.png)
 
 ``` r
 
-fixed_givoni <- comfort_strategy_givoni(variant = "fixed", mean_outdoor = NULL)
+adaptive_givoni <- comfort_strategy_givoni(
+    variant = "adaptive",
+    mean_outdoor = 22
+)
 
 ggpsychro(tdb_lim = c(-10, 50), hum_lim = c(0, 35)) +
     psychro_preset("minimal") +
-    geom_comfort_givoni(fixed_givoni, alpha = 0.45)
+    geom_comfort_givoni(adaptive_givoni, alpha = 0.45)
 ```
 
-![Psychrometric chart with fixed Givoni-Milne strategy
-zones.](comfort-overlays_files/figure-html/givoni-fixed-1.png)
+![Psychrometric chart with adaptive Givoni-Milne strategy zones and a
+mean outdoor temperature
+marker.](comfort-overlays_files/figure-html/givoni-adaptive-1.png)
 
 ``` r
 
 custom_givoni <- comfort_strategy_givoni(
-    variant = "fixed",
-    mean_outdoor = NULL,
     tdb_range = c(22, 27),
     relhum_range = c(30, 70)
 )

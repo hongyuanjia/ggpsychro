@@ -2,20 +2,20 @@
 
 `comfort_strategy_givoni()` stores the fixed inputs used by
 [`geom_comfort_givoni()`](https://hongyuanjia.github.io/ggpsychro/reference/geom_comfort_givoni.md).
-The adaptive variant shifts the base comfort zone from a mean outdoor
-temperature. The fixed variant anchors the comfort zone to the common
-Givoni/Milne 1979 bounds: 20 to 25.5 degrees C dry-bulb temperature and
-20% to 80% relative humidity with the hot-humid corner clipped. Strategy
-zones are drawn in dry-bulb/relative-humidity space before conversion to
+By default it anchors the comfort zone to the Givoni/Milne 1979 bounds:
+20 to 25.5 degrees C dry-bulb temperature and 20% to 80% relative
+humidity with the hot-humid corner clipped. The adaptive variant shifts
+the base comfort zone from a mean outdoor temperature. Strategy zones
+are drawn in dry-bulb/relative-humidity space before conversion to
 humidity ratio.
 
 ## Usage
 
 ``` r
 comfort_strategy_givoni(
-  mean_outdoor = 19,
+  mean_outdoor = NULL,
   units = c("SI", "IP"),
-  variant = c("adaptive", "fixed"),
+  variant = c("fixed", "adaptive"),
   tdb_range = NULL,
   relhum_range = c(20, 80)
 )
@@ -25,9 +25,9 @@ comfort_strategy_givoni(
 
 - mean_outdoor:
 
-  Mean or running-mean outdoor temperature used to adapt the base
-  comfort zone when `variant = "adaptive"`. It is ignored when
-  `variant = "fixed"` and can be `NULL` for that variant.
+  Mean or running-mean outdoor temperature used when
+  `variant = "adaptive"`. It is ignored when `variant = "fixed"` and can
+  be `NULL` for that variant.
 
 - units:
 
@@ -35,8 +35,8 @@ comfort_strategy_givoni(
 
 - variant:
 
-  Givoni-Milne strategy variant. `"adaptive"` shifts the comfort anchor
-  from `mean_outdoor`; `"fixed"` uses the fixed 1979 comfort anchor.
+  Givoni-Milne strategy variant. `"fixed"` uses the fixed 1979 comfort
+  anchor; `"adaptive"` shifts the comfort anchor from `mean_outdoor`.
 
 - tdb_range:
 
@@ -64,8 +64,13 @@ outside this layer.
 
 ## References
 
-Andrew Marsh, Psychrometric Chart,
-<https://andrewmarsh.com/software/psychro-chart-web/>
+Milne M, Givoni B. Architectural design based on climate. In: Watson D,
+ed. Energy Conservation Through Building Design. McGraw-Hill;
+1979:96-113.
+
+Givoni B. Comfort, climate analysis and building design guidelines.
+Energy and Buildings. 1992;18(1):11-23.
+[doi:10.1016/0378-7788(92)90047-K](https://doi.org/10.1016/0378-7788%2892%2990047-K)
 
 Herb S, Wolk S, Reinhart C. Beyond the bioclimatic chart: An automated
 simulation-based method for the assessment of natural ventilation and
@@ -75,28 +80,8 @@ passive design potential. Building and Environment, 269, 112362.
 ## Examples
 
 ``` r
-# Create an adaptive Givoni-Milne strategy for a warm outdoor mean.
-comfort_strategy_givoni(mean_outdoor = 22)
-#> $mean_outdoor
-#> [1] 22
-#> 
-#> $units
-#> [1] "SI"
-#> 
-#> $variant
-#> [1] "adaptive"
-#> 
-#> $tdb_range
-#> NULL
-#> 
-#> $relhum_range
-#> [1] 20 80
-#> 
-#> attr(,"class")
-#> [1] "PsyComfortGivoniStrategy" "list"                    
-
-# Use the fixed Givoni/Milne 1979 comfort anchor instead.
-comfort_strategy_givoni(variant = "fixed", mean_outdoor = NULL)
+# Create the fixed Givoni/Milne 1979 strategy.
+comfort_strategy_givoni()
 #> $mean_outdoor
 #> [1] NA
 #> 
@@ -115,10 +100,28 @@ comfort_strategy_givoni(variant = "fixed", mean_outdoor = NULL)
 #> attr(,"class")
 #> [1] "PsyComfortGivoniStrategy" "list"                    
 
+# Create an adaptive Givoni-Milne strategy for a warm outdoor mean.
+comfort_strategy_givoni(variant = "adaptive", mean_outdoor = 22)
+#> $mean_outdoor
+#> [1] 22
+#> 
+#> $units
+#> [1] "SI"
+#> 
+#> $variant
+#> [1] "adaptive"
+#> 
+#> $tdb_range
+#> NULL
+#> 
+#> $relhum_range
+#> [1] 20 80
+#> 
+#> attr(,"class")
+#> [1] "PsyComfortGivoniStrategy" "list"                    
+
 # Or provide project-specific comfort anchor ranges.
 comfort_strategy_givoni(
-    variant = "fixed",
-    mean_outdoor = NULL,
     tdb_range = c(22, 27),
     relhum_range = c(30, 70)
 )
@@ -143,7 +146,10 @@ comfort_strategy_givoni(
 # Draw the Givoni strategy overlay for that outdoor mean.
 ggpsychro(tdb_lim = c(5, 45), hum_lim = c(0, 30)) +
     geom_comfort_givoni(
-        strategy = comfort_strategy_givoni(mean_outdoor = 22),
+        strategy = comfort_strategy_givoni(
+            variant = "adaptive",
+            mean_outdoor = 22
+        ),
         labels = FALSE
     )
 

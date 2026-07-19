@@ -70,10 +70,10 @@
     
     
 <p>ggpsychro draws the dry-bulb grid, humidity-ratio grid, saturation
-curve, and psychrometric reference grids through
-<code><a href="../reference/coord_psychro.html">coord_psychro()</a></code>. The default reference grids are drawn
-without labels. Add <code>geom_psychro_grid_*()</code> helpers when a
-grid should be explicit and labelled.</p>
+curve, and psychrometric reference grids through the coordinate system
+installed by <code><a href="../reference/ggpsychro.html">ggpsychro()</a></code>. The default reference grids are
+drawn without labels. Add <code>geom_psychro_grid_*()</code> helpers
+when a grid should be explicit and labelled.</p>
 <div class="section level2">
 <h2 id="presets">Presets<a class="anchor" aria-label="anchor" href="#presets"></a>
 </h2>
@@ -203,7 +203,7 @@ reference grids. Use these with regular <code>theme()</code> calls.</p>
 <span>        psychro.panel.grid.saturation <span class="op">=</span> <span class="fu">element_line</span><span class="op">(</span></span>
 <span>            color <span class="op">=</span> <span class="st">"black"</span>, linetype <span class="op">=</span> <span class="fl">2</span></span>
 <span>        <span class="op">)</span>,</span>
-<span>        psychro.panel.mask <span class="op">=</span> <span class="fu"><a href="../reference/element_polygon.html">element_polygon</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"gray90"</span>, color <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span>
+<span>        psychro.panel.mask <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_polygon</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"gray90"</span>, color <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span>
 <span>    <span class="op">)</span></span></code></pre></div>
 <p><img src="grids-and-styles_files/figure-html/theme-elements-1.png" class="r-plt" alt="Psychrometric chart with custom saturation line and gray panel mask theme elements." width="100%" style="display: block; margin: auto;"></p>
 </div>

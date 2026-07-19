@@ -15,7 +15,7 @@
   workflows.
 - Thermal comfort and bioclimatic overlays for PMV/PPD, SET, adaptive
   comfort, labelled contours, Heat Index, PMV-based ASHRAE 55 / EN 15251
-  zones, and Givoni strategy zones.
+  zones, and Givoni-Milne strategy zones.
 
 ## Installation
 
@@ -81,8 +81,7 @@ The longer examples live on the pkgdown site:
 - [Comfort
   overlays](https://hongyuanjia.github.io/ggpsychro/articles/comfort-overlays.html) -
   draw PMV, SET, adaptive comfort, labelled comfort contours, Heat
-  Index, PMV-based standard zones, and Givoni bioclimatic strategy
-  overlays.
+  Index, PMV-based standard zones, and Givoni-Milne strategy overlays.
 - [Zones and
   processes](https://hongyuanjia.github.io/ggpsychro/articles/zones-and-processes.html) -
   draw manual comfort regions, operating limits, state points, and HVAC
@@ -135,10 +134,13 @@ contributing to this project, you agree to abide by its terms.
 
 - [`ggpsychro()`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro.md)
   : Create a ggpsychro plot
-- [`coord_psychro()`](https://hongyuanjia.github.io/ggpsychro/reference/coord_psychro.md)
-  : Psychrometric coordinates
 - [`is_ggpsychro()`](https://hongyuanjia.github.io/ggpsychro/reference/is_ggpsychro.md)
   : Test for ggpsychro plots
+
+## Advanced chart coordinates
+
+- [`coord_psychro()`](https://hongyuanjia.github.io/ggpsychro/reference/coord_psychro.md)
+  : Advanced psychrometric coordinates
 
 ## Psychrometric equation layers and grids
 
@@ -244,8 +246,6 @@ contributing to this project, you agree to abide by its terms.
   : Custom theme for psychrometric chart.
 - [`psychro_preset()`](https://hongyuanjia.github.io/ggpsychro/reference/psychro_preset.md)
   : Apply a psychrometric chart preset
-- [`element_polygon()`](https://hongyuanjia.github.io/ggpsychro/reference/element_polygon.md)
-  : Polygon theme element for psychrometric chart panels
 - [`element_givoni_zone()`](https://hongyuanjia.github.io/ggpsychro/reference/element_givoni_zone.md)
   : Comfort zone style element
 

@@ -2,6 +2,11 @@
 
 ## ggpsychro 0.1.0
 
+- Made the Givoni-Milne strategy overlay default to the fixed 1979
+  comfort anchor, clarified comfort API documentation, and switched
+  psychrometric polygon theme elements to
+  [`ggplot2::element_polygon()`](https://ggplot2.tidyverse.org/reference/element.html).
+  ([\#39](https://github.com/hongyuanjia/ggpsychro/issues/39))
 - Addressed `checktor` CRAN-preflight findings in package metadata and
   psychrometric axis labels.
   ([\#38](https://github.com/hongyuanjia/ggpsychro/issues/38))

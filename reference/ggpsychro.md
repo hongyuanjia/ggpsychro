@@ -39,18 +39,18 @@ ggpsychro(
 - tdb_lim:
 
   A numeric vector of length-2 indicating the dry-bulb temperature
-  limits. Should be in range `[-50, 100]` degree_C \[SI\] or
-  `[-58, 212]` degree_F \[IP\]. If `NULL`, trained data ranges will be
+  limits. Should be in range `[-50, 100]` degrees C \[SI\] or
+  `[-58, 212]` degrees F \[IP\]. If `NULL`, trained data ranges will be
   used when available, otherwise a default display range will be used.
   Default: `NULL`.
 
 - hum_lim:
 
   A numeric vector of length-2 indicating the humidity ratio limits.
-  Should be in range `[0, 60]` g_H20 kg_Air-1 \[SI\] or `[0, 420]`
-  gr_H20 lb_Air-1 \[IP\]. If `NULL`, trained data ranges will be used
-  when available, otherwise a default display range will be used.
-  Default: `NULL`.
+  Should be in range `[0, 60]` g H2O per kg dry air \[SI\] or `[0, 420]`
+  grains H2O per lb dry air \[IP\]. If `NULL`, trained data ranges will
+  be used when available, otherwise a default display range will be
+  used. Default: `NULL`.
 
 - altitude:
 

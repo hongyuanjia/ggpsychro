@@ -119,6 +119,18 @@ comfort_model_heat_index(
 
 A comfort model object.
 
+## Details
+
+`comfort_model_*()` helpers are for chart layers and stats. For direct
+vectorized calculations, use
+[`comfort_pmv()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_pmv.md),
+[`comfort_set()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_pmv.md),
+[`comfort_adaptive()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_pmv.md),
+or
+[`comfort_heat_index()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_pmv.md).
+For drawing on a psychrometric chart, pass a model object to
+`geom_comfort_*()` layers.
+
 ## Examples
 
 ``` r

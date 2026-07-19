@@ -173,10 +173,9 @@ directly.</p></dd>
 
 
 <dt id="arg-band-method">band_method<a class="anchor" aria-label="anchor" href="#arg-band-method"></a></dt>
-<dd><p>Boundary construction method for <code>band_render = "band"</code>.
-<code>"auto"</code> uses root-traced boundaries for PMV and isobands for other
-metrics; <code>"root"</code> forces PMV root-traced boundaries; <code>"isoband"</code> uses
-gridded isobands.</p></dd>
+<dd><p>Advanced PMV boundary construction method used only when
+<code>band_render = "band"</code>. <code>"auto"</code> and <code>"root"</code> use root-traced PMV
+boundaries; <code>"isoband"</code> uses gridded isobands.</p></dd>
 
 
 <dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
@@ -219,10 +218,9 @@ first value because they trace roots along one sampling direction. Smaller
 values such as <code>n = c(45, 30)</code> are useful for exploratory work; larger values
 produce smoother publication graphics.</p>
 <p><code>band_render = "band"</code> draws filled polygon bands from continuous boundaries.
-<code>band_render = "tile"</code> draws sampled grid cells directly. With
-<code>band_render = "band"</code>, <code>band_method = "auto"</code> uses PMV root tracing for
-smoother PMV boundaries; <code>band_method = "isoband"</code> uses gridded isobands when
-a cheaper sampled approximation is preferred.</p>
+<code>band_render = "tile"</code> draws sampled grid cells directly. <code>band_method</code> is a
+PMV-specific advanced option for polygon bands: <code>"root"</code> traces PMV band
+boundaries directly, while <code>"isoband"</code> builds them from the sampled grid.</p>
     </div>
 
     <div class="section level2">

@@ -74,6 +74,44 @@ psychrometric panel. They inherit the chart units, pressure, limits, and
 Mollier orientation from <code><a href="../reference/ggpsychro.html">ggpsychro()</a></code>, so comfort regions
 can be composed with the same <code>+</code> workflow as other ggplot
 layers.</p>
+<p>The comfort API has three layers:</p>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr class="header">
+<th>Task</th>
+<th>API</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Calculate comfort values for vectors or data frames</td>
+<td>
+<code><a href="../reference/comfort_pmv.html">comfort_pmv()</a></code>, <code><a href="../reference/comfort_pmv.html">comfort_set()</a></code>,
+<code><a href="../reference/comfort_pmv.html">comfort_adaptive()</a></code>, <code><a href="../reference/comfort_pmv.html">comfort_heat_index()</a></code>
+</td>
+</tr>
+<tr class="even">
+<td>Store fixed model assumptions for plotting</td>
+<td>
+<code><a href="../reference/comfort_model_pmv.html">comfort_model_pmv()</a></code>, <code><a href="../reference/comfort_model_pmv.html">comfort_model_set()</a></code>,
+<code><a href="../reference/comfort_model_pmv.html">comfort_model_adaptive()</a></code>,
+<code><a href="../reference/comfort_model_pmv.html">comfort_model_heat_index()</a></code>
+</td>
+</tr>
+<tr class="odd">
+<td>Draw comfort fields, zones, or point metrics on a chart</td>
+<td>
+<code><a href="../reference/geom_comfort_pmv.html">geom_comfort_pmv()</a></code>, <code><a href="../reference/geom_comfort_set.html">geom_comfort_set()</a></code>,
+<code><a href="../reference/geom_comfort_adaptive.html">geom_comfort_adaptive()</a></code>,
+<code><a href="../reference/geom_comfort_heat_index.html">geom_comfort_heat_index()</a></code>,
+<code><a href="../reference/geom_comfort_givoni.html">geom_comfort_givoni()</a></code>,
+<code><a href="../reference/stat_comfort_state.html">stat_comfort_state()</a></code>
+</td>
+</tr>
+</tbody>
+</table>
 <p>Use the layer that matches the question you want the chart to
 answer:</p>
 <table class="table">
@@ -282,35 +320,36 @@ unit system.</p>
 <p>Givoni-Milne overlays are strategy zones rather than a single
 continuous comfort metric. Create a strategy with
 <code><a href="../reference/comfort_strategy_givoni.html">comfort_strategy_givoni()</a></code> and draw it with
-<code><a href="../reference/geom_comfort_givoni.html">geom_comfort_givoni()</a></code>. The default adaptive variant shifts
-the comfort anchor from mean outdoor temperature and shows that
-temperature as a dashed marker. Use <code>variant = "fixed"</code> for
-the commonly cited 1979 comfort anchor of 20 to 25.5 degrees C and 20%
-to 80% relative humidity, with the hot-humid corner clipped. For
-project- or climate-specific assumptions, set <code>tdb_range</code> and
+<code><a href="../reference/geom_comfort_givoni.html">geom_comfort_givoni()</a></code>. The default fixed variant uses the
+commonly cited 1979 comfort anchor of 20 to 25.5 degrees C and 20% to
+80% relative humidity, with the hot-humid corner clipped. For project-
+or climate-specific assumptions, set <code>tdb_range</code> and
 <code>relhum_range</code> on the fixed variant to use those ranges as
-the drawing anchor. Treat these regions as a pre-design screening aid:
-high-mass and night ventilation regions need daily profiles, nighttime
-conditions, and building assumptions before they can be used to count
-comfort hours.</p>
+the drawing anchor. Use <code>variant = "adaptive"</code> and supply
+<code>mean_outdoor</code> to shift the comfort anchor from mean outdoor
+temperature; the adaptive layer shows that temperature as a dashed
+marker. Treat these regions as a pre-design screening aid: high-mass and
+night ventilation regions need daily profiles, nighttime conditions, and
+building assumptions before they can be used to count comfort hours.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">givoni</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/comfort_strategy_givoni.html">comfort_strategy_givoni</a></span><span class="op">(</span>mean_outdoor <span class="op">=</span> <span class="fl">22</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">givoni</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/comfort_strategy_givoni.html">comfort_strategy_givoni</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">10</span>, <span class="fl">50</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">35</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/psychro_preset.html">psychro_preset</a></span><span class="op">(</span><span class="st">"minimal"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/geom_comfort_givoni.html">geom_comfort_givoni</a></span><span class="op">(</span><span class="va">givoni</span>, alpha <span class="op">=</span> <span class="fl">0.45</span><span class="op">)</span></span></code></pre></div>
-<p><img src="comfort-overlays_files/figure-html/givoni-zones-1.png" class="r-plt" alt="Psychrometric chart with Givoni-Milne strategy zones and a mean outdoor temperature marker." width="100%" style="display: block; margin: auto;"></p>
+<p><img src="comfort-overlays_files/figure-html/givoni-zones-1.png" class="r-plt" alt="Psychrometric chart with fixed Givoni-Milne strategy zones." width="100%" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fixed_givoni</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/comfort_strategy_givoni.html">comfort_strategy_givoni</a></span><span class="op">(</span>variant <span class="op">=</span> <span class="st">"fixed"</span>, mean_outdoor <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">adaptive_givoni</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/comfort_strategy_givoni.html">comfort_strategy_givoni</a></span><span class="op">(</span></span>
+<span>    variant <span class="op">=</span> <span class="st">"adaptive"</span>,</span>
+<span>    mean_outdoor <span class="op">=</span> <span class="fl">22</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">10</span>, <span class="fl">50</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">35</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/psychro_preset.html">psychro_preset</a></span><span class="op">(</span><span class="st">"minimal"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="../reference/geom_comfort_givoni.html">geom_comfort_givoni</a></span><span class="op">(</span><span class="va">fixed_givoni</span>, alpha <span class="op">=</span> <span class="fl">0.45</span><span class="op">)</span></span></code></pre></div>
-<p><img src="comfort-overlays_files/figure-html/givoni-fixed-1.png" class="r-plt" alt="Psychrometric chart with fixed Givoni-Milne strategy zones." width="100%" style="display: block; margin: auto;"></p>
+<span>    <span class="fu"><a href="../reference/geom_comfort_givoni.html">geom_comfort_givoni</a></span><span class="op">(</span><span class="va">adaptive_givoni</span>, alpha <span class="op">=</span> <span class="fl">0.45</span><span class="op">)</span></span></code></pre></div>
+<p><img src="comfort-overlays_files/figure-html/givoni-adaptive-1.png" class="r-plt" alt="Psychrometric chart with adaptive Givoni-Milne strategy zones and a mean outdoor temperature marker." width="100%" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">custom_givoni</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/comfort_strategy_givoni.html">comfort_strategy_givoni</a></span><span class="op">(</span></span>
-<span>    variant <span class="op">=</span> <span class="st">"fixed"</span>,</span>
-<span>    mean_outdoor <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>    tdb_range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">22</span>, <span class="fl">27</span><span class="op">)</span>,</span>
 <span>    relhum_range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">70</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>

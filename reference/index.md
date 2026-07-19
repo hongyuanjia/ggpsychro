@@ -9,10 +9,13 @@
 
 - [`ggpsychro()`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro.md)
   : Create a ggpsychro plot
-- [`coord_psychro()`](https://hongyuanjia.github.io/ggpsychro/reference/coord_psychro.md)
-  : Psychrometric coordinates
 - [`is_ggpsychro()`](https://hongyuanjia.github.io/ggpsychro/reference/is_ggpsychro.md)
   : Test for ggpsychro plots
+
+## Advanced chart coordinates
+
+- [`coord_psychro()`](https://hongyuanjia.github.io/ggpsychro/reference/coord_psychro.md)
+  : Advanced psychrometric coordinates
 
 ## Psychrometric equation layers and grids
 
@@ -118,7 +121,5 @@
   : Custom theme for psychrometric chart.
 - [`psychro_preset()`](https://hongyuanjia.github.io/ggpsychro/reference/psychro_preset.md)
   : Apply a psychrometric chart preset
-- [`element_polygon()`](https://hongyuanjia.github.io/ggpsychro/reference/element_polygon.md)
-  : Polygon theme element for psychrometric chart panels
 - [`element_givoni_zone()`](https://hongyuanjia.github.io/ggpsychro/reference/element_givoni_zone.md)
   : Comfort zone style element

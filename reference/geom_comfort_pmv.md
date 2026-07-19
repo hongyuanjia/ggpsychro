@@ -150,10 +150,9 @@ geom_comfort_pmv(
 
 - band_method:
 
-  Boundary construction method for `band_render = "band"`. `"auto"` uses
-  root-traced boundaries for PMV and isobands for other metrics;
-  `"root"` forces PMV root-traced boundaries; `"isoband"` uses gridded
-  isobands.
+  Advanced PMV boundary construction method used only when
+  `band_render = "band"`. `"auto"` and `"root"` use root-traced PMV
+  boundaries; `"isoband"` uses gridded isobands.
 
 - alpha:
 
@@ -198,9 +197,9 @@ graphics.
 
 `band_render = "band"` draws filled polygon bands from continuous
 boundaries. `band_render = "tile"` draws sampled grid cells directly.
-With `band_render = "band"`, `band_method = "auto"` uses PMV root
-tracing for smoother PMV boundaries; `band_method = "isoband"` uses
-gridded isobands when a cheaper sampled approximation is preferred.
+`band_method` is a PMV-specific advanced option for polygon bands:
+`"root"` traces PMV band boundaries directly, while `"isoband"` builds
+them from the sampled grid.
 
 ## Examples
 

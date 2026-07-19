@@ -1,8 +1,9 @@
 # Chart grids and styles
 
 ggpsychro draws the dry-bulb grid, humidity-ratio grid, saturation
-curve, and psychrometric reference grids through
-[`coord_psychro()`](https://hongyuanjia.github.io/ggpsychro/reference/coord_psychro.md).
+curve, and psychrometric reference grids through the coordinate system
+installed by
+[`ggpsychro()`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro.md).
 The default reference grids are drawn without labels. Add
 `geom_psychro_grid_*()` helpers when a grid should be explicit and
 labelled.
@@ -155,7 +156,7 @@ ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
         psychro.panel.grid.saturation = element_line(
             color = "black", linetype = 2
         ),
-        psychro.panel.mask = element_polygon(fill = "gray90", color = NA)
+        psychro.panel.mask = ggplot2::element_polygon(fill = "gray90", color = NA)
     )
 ```
 

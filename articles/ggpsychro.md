@@ -55,10 +55,11 @@ axis.](ggpsychro_files/figure-html/mollier-chart-1.png)
 ## Explicit coordinates
 
 [`ggpsychro()`](https://hongyuanjia.github.io/ggpsychro/reference/ggpsychro.md)
-sets up the psychrometric coordinate system for you. If you are building
-up a plot in smaller pieces,
+sets up the psychrometric coordinate system for you. Most plots do not
+need an explicit coordinate call. Use
 [`coord_psychro()`](https://hongyuanjia.github.io/ggpsychro/reference/coord_psychro.md)
-can also be added explicitly.
+when you need to replace or reconfigure the coordinate system on an
+existing ggpsychro plot.
 
 ``` r
 

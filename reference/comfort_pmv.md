@@ -139,6 +139,15 @@ comfort_heat_index(
 
 A data frame with model outputs.
 
+## Details
+
+Use these `comfort_*()` functions for vectorized data-frame
+calculations. Use
+[`comfort_model_pmv()`](https://hongyuanjia.github.io/ggpsychro/reference/comfort_model_pmv.md)
+and the other `comfort_model_*()` helpers to store fixed model
+assumptions for chart layers, and use `geom_comfort_*()` layers to draw
+comfort fields or zones on a psychrometric chart.
+
 ## Output columns
 
 - `comfort_pmv()` returns `pmv`, `ppd`, and `tsv` (thermal sensation

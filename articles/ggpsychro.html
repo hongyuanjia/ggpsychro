@@ -105,8 +105,9 @@ orientation.</p>
 <h2 id="explicit-coordinates">Explicit coordinates<a class="anchor" aria-label="anchor" href="#explicit-coordinates"></a>
 </h2>
 <p><code><a href="../reference/ggpsychro.html">ggpsychro()</a></code> sets up the psychrometric coordinate system
-for you. If you are building up a plot in smaller pieces,
-<code><a href="../reference/coord_psychro.html">coord_psychro()</a></code> can also be added explicitly.</p>
+for you. Most plots do not need an explicit coordinate call. Use
+<code><a href="../reference/coord_psychro.html">coord_psychro()</a></code> when you need to replace or reconfigure the
+coordinate system on an existing ggpsychro plot.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ggpsychro.html">ggpsychro</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/coord_psychro.html">coord_psychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">35</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">25</span><span class="op">)</span>, units <span class="op">=</span> <span class="st">"SI"</span><span class="op">)</span></span></code></pre></div>
