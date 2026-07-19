@@ -325,6 +325,20 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
         geom_comfort_set(bands = FALSE, contours = FALSE),
         "At least one of `bands` or `contours`"
     )
+    expect_error(
+        ggplot2::ggplot_build(
+            ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+                geom_comfort_pmv(n = 24.5)
+        ),
+        "`n`"
+    )
+    expect_error(
+        ggplot2::ggplot_build(
+            ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+                geom_comfort_pmv(band_levels = 3.5, contours = FALSE)
+        ),
+        "`band_levels`"
+    )
     axis_y <- vapply(
         split(pmv_lines[[2L]]$y, pmv_lines[[2L]]$group),
         min,

@@ -3,7 +3,33 @@ NULL
 
 # Givoni layer composition belongs with the Givoni strategy geometry and stats;
 # the public constructor and geometry helpers remain in comfort-givoni.R.
-#' @rdname geom_comfort_pmv
+#' Draw Givoni-Milne strategy zones
+#'
+#' `geom_comfort_givoni()` draws a Givoni-Milne strategy overlay, the optional
+#' mean outdoor-temperature marker for adaptive strategies, and optional zone
+#' labels.
+#'
+#' @inheritParams ggplot2::layer
+#' @inheritParams ggplot2::geom_polygon
+#' @param strategy A Givoni-Milne strategy object.
+#' @param alpha Layer transparency for the optional PMV background.
+#' @param labels If `TRUE`, draw strategy labels.
+#' @param show_pmv If `TRUE`, draw the PMV comfort background under the Givoni
+#'   strategy outlines.
+#' @param pmv_model PMV model used when `show_pmv = TRUE`.
+#' @param zone_alpha Alpha for the filled Givoni comfort zone. Other Givoni
+#'   strategy regions are drawn as outlines.
+#' @param zone_style Optional named list of per-zone style overrides. Names must
+#'   match Givoni zone ids such as `"comfort"`, `"winter"`, or
+#'   `"air_conditioning"`. Values can be created with [element_givoni_zone()],
+#'   [ggplot2::element_polygon()], or ordinary named lists with fields `fill`,
+#'   `colour`/`color`, `linewidth`, `linetype`, `alpha`, and `linejoin`.
+#' @return A list of ggplot additions.
+#'
+#' @examples
+#' ggpsychro(tdb_lim = c(5, 45), hum_lim = c(0, 30)) +
+#'     geom_comfort_givoni(labels = TRUE)
+#'
 #' @export
 geom_comfort_givoni <- function(
     strategy = comfort_strategy_givoni(),
@@ -12,7 +38,7 @@ geom_comfort_givoni <- function(
     position = "identity",
     ...,
     alpha = 0.55,
-    show_labels = TRUE,
+    labels = TRUE,
     show_pmv = FALSE,
     pmv_model = comfort_model_pmv(),
     zone_alpha = 0.2,
@@ -22,12 +48,14 @@ geom_comfort_givoni <- function(
     inherit.aes = TRUE
 ) {
     label <- angle <- hjust <- vjust <- NULL
+    assert_flag(labels)
     strategy <- givoni__check_strategy(strategy)
     layer_mapping <- comfort__computed_xy_mapping(mapping)
     params <- list(...)
     zone_specs <- givoni__zone_specs()
     zone_specs <- zone_specs[zone_specs$draw_zone, , drop = FALSE]
     zone_style <- givoni__check_zone_style(zone_style, zone_specs$zone)
+    show_mean_outdoor <- givoni__is_adaptive(strategy)
     layers <- list()
     if (isTRUE(show_pmv)) {
         # The optional PMV background is a normal comfort overlay, kept separate
@@ -70,32 +98,34 @@ geom_comfort_givoni <- function(
         )
     }
 
-    mean_params <- params
-    if (is.null(mean_params$colour) && is.null(mean_params$color)) {
-        mean_params$colour <- "#444444"
-    }
-    if (is.null(mean_params$linewidth)) {
-        mean_params$linewidth <- 0.8
-    }
-    layers[[length(layers) + 1L]] <- psychro_layer(
-        stat = StatComfortGivoniMeanOutdoor,
-        data = comfort__layer_data(data),
-        mapping = layer_mapping,
-        geom = "path",
-        position = position,
-        show.legend = FALSE,
-        inherit.aes = inherit.aes,
-        params = utils::modifyList(
-            mean_params,
-            list(
-                na.rm = na.rm,
-                strategy = strategy,
-                linetype = "dotted"
+    if (show_mean_outdoor) {
+        mean_params <- params
+        if (is.null(mean_params$colour) && is.null(mean_params$color)) {
+            mean_params$colour <- "#444444"
+        }
+        if (is.null(mean_params$linewidth)) {
+            mean_params$linewidth <- 0.8
+        }
+        layers[[length(layers) + 1L]] <- psychro_layer(
+            stat = StatComfortGivoniMeanOutdoor,
+            data = comfort__layer_data(data),
+            mapping = layer_mapping,
+            geom = "path",
+            position = position,
+            show.legend = FALSE,
+            inherit.aes = inherit.aes,
+            params = utils::modifyList(
+                mean_params,
+                list(
+                    na.rm = na.rm,
+                    strategy = strategy,
+                    linetype = "dotted"
+                )
             )
         )
-    )
+    }
 
-    if (isTRUE(show_labels)) {
+    if (isTRUE(labels)) {
         label_params <- params
         if (is.null(label_params$colour) && is.null(label_params$color)) {
             label_params$colour <- "#444444"
@@ -150,58 +180,62 @@ geom_comfort_givoni <- function(
                 )
             )
         )
-        mean_label_params <- params
-        if (
-            is.null(mean_label_params$colour) &&
-                is.null(mean_label_params$color)
-        ) {
-            mean_label_params$colour <- "#444444"
-        }
-        if (is.null(mean_label_params$fontface)) {
-            mean_label_params$fontface <- "bold"
-        }
-        if (is.null(mean_label_params$size)) {
-            mean_label_params$size <- 2.7
-        }
-        layers[[length(layers) + 1L]] <- psychro_layer(
-            stat = StatComfortGivoniMeanOutdoorLabel,
-            data = comfort__layer_data(data),
-            mapping = comfort__computed_xy_mapping(ggplot2::aes(
-                label = ggplot2::after_stat(label),
-                angle = ggplot2::after_stat(angle),
-                hjust = ggplot2::after_stat(hjust),
-                vjust = ggplot2::after_stat(vjust)
-            )),
-            geom = "text",
-            position = position,
-            show.legend = FALSE,
-            inherit.aes = FALSE,
-            params = utils::modifyList(
-                mean_label_params,
-                list(
-                    na.rm = na.rm,
-                    strategy = strategy
+        if (show_mean_outdoor) {
+            mean_label_params <- params
+            if (
+                is.null(mean_label_params$colour) &&
+                    is.null(mean_label_params$color)
+            ) {
+                mean_label_params$colour <- "#444444"
+            }
+            if (is.null(mean_label_params$fontface)) {
+                mean_label_params$fontface <- "bold"
+            }
+            if (is.null(mean_label_params$size)) {
+                mean_label_params$size <- 2.7
+            }
+            layers[[length(layers) + 1L]] <- psychro_layer(
+                stat = StatComfortGivoniMeanOutdoorLabel,
+                data = comfort__layer_data(data),
+                mapping = comfort__computed_xy_mapping(ggplot2::aes(
+                    label = ggplot2::after_stat(label),
+                    angle = ggplot2::after_stat(angle),
+                    hjust = ggplot2::after_stat(hjust),
+                    vjust = ggplot2::after_stat(vjust)
+                )),
+                geom = "text",
+                position = position,
+                show.legend = FALSE,
+                inherit.aes = FALSE,
+                params = utils::modifyList(
+                    mean_label_params,
+                    list(
+                        na.rm = na.rm,
+                        strategy = strategy
+                    )
                 )
             )
+        }
+    }
+    if (show_mean_outdoor) {
+        layers[[length(layers) + 1L]] <- givoni__foreground_marker(
+            strategy = strategy,
+            show_label = isTRUE(labels),
+            colour = mean_params$colour %||% mean_params$color %||% "#444444",
+            linewidth = mean_params$linewidth %||% 0.8,
+            linetype = "dotted",
+            label_size = if (exists("mean_label_params", inherits = FALSE)) {
+                mean_label_params$size %||% 2.7
+            } else {
+                2.7
+            },
+            fontface = if (exists("mean_label_params", inherits = FALSE)) {
+                mean_label_params$fontface %||% "bold"
+            } else {
+                "bold"
+            }
         )
     }
-    layers[[length(layers) + 1L]] <- givoni__foreground_marker(
-        strategy = strategy,
-        show_label = isTRUE(show_labels),
-        colour = mean_params$colour %||% mean_params$color %||% "#444444",
-        linewidth = mean_params$linewidth %||% 0.8,
-        linetype = "dotted",
-        label_size = if (exists("mean_label_params", inherits = FALSE)) {
-            mean_label_params$size %||% 2.7
-        } else {
-            2.7
-        },
-        fontface = if (exists("mean_label_params", inherits = FALSE)) {
-            mean_label_params$fontface %||% "bold"
-        } else {
-            "bold"
-        }
-    )
 
     layers
 }

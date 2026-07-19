@@ -292,13 +292,12 @@ pmv__root_band_breaks <- function(levels) {
         return(seq(-3, 3, by = 0.25))
     }
     if (length(levels) == 1L) {
-        n <- as.integer(levels[[1L]])
-        if (!is.finite(n) || n < 1L) {
-            stop(
-                "`levels` must be a positive band count or numeric breaks.",
-                call. = FALSE
-            )
-        }
+        n <- util__check_whole_count(
+            levels[[1L]],
+            "`levels`",
+            min = 1L,
+            len = 1L
+        )
         return(seq(-3, 3, length.out = n + 1L))
     }
     comfort__check_breaks(levels, "`levels`", n_min = 2L)

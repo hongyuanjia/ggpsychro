@@ -12,15 +12,16 @@ jobs:
   R-CMD-check:
     runs-on: ${{ matrix.config.os }}
 
-    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+    name: ${{ matrix.config.os }} (${{ matrix.config.r }}, ggplot2 ${{ matrix.config.ggplot2 }})
 
     strategy:
       fail-fast: false
       matrix:
         config:
-          - {os: macOS-latest,   r: 'release'}
-          - {os: windows-latest, r: 'release'}
-          - {os: ubuntu-latest,  r: 'release'}
+          - {os: macOS-latest,   r: 'release', ggplot2: 'release', extra-packages: 'any::rcmdcheck'}
+          - {os: windows-latest, r: 'release', ggplot2: 'release', extra-packages: 'any::rcmdcheck'}
+          - {os: ubuntu-latest,  r: 'release', ggplot2: 'release', extra-packages: 'any::rcmdcheck'}
+          - {os: ubuntu-latest,  r: 'release', ggplot2: 'devel',   extra-packages: 'any::rcmdcheck, github::tidyverse/ggplot2'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -39,6 +40,6 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck
+          extra-packages: ${{ matrix.config.extra-packages }}
 
       - uses: r-lib/actions/check-r-package@v2

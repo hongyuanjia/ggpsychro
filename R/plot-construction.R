@@ -1,7 +1,7 @@
 #' @importFrom ggplot2 ggplot_add
 #' @export
 ggplot_add.CoordPsychro <- function(object, plot, object_name, ...) {
-    if (!is.ggpsychro(plot)) {
+    if (!is_ggpsychro(plot)) {
         return(NextMethod())
     }
 
@@ -107,7 +107,7 @@ ggplot_add.PsyComfortForeground <- function(object, plot, object_name, ...) {
 }
 
 plot_add__comfort_foreground <- function(object, plot) {
-    if (!is.ggpsychro(plot)) {
+    if (!is_ggpsychro(plot)) {
         stop(
             "Comfort foreground markers can only be added ",
             "to a ggpsychro plot.",
@@ -122,7 +122,7 @@ plot_add__comfort_foreground <- function(object, plot) {
 }
 
 plot_add__grid <- function(object, plot) {
-    if (!is.ggpsychro(plot)) {
+    if (!is_ggpsychro(plot)) {
         stop(
             "`geom_psychro_grid_*()` helpers can only be added to a ",
             "ggpsychro plot.",
@@ -159,7 +159,7 @@ ggplot_add.PsyProtractor <- function(object, plot, object_name, ...) {
 }
 
 plot_add__protractor <- function(object, plot) {
-    if (!is.ggpsychro(plot)) {
+    if (!is_ggpsychro(plot)) {
         stop(
             "`geom_psychro_protractor()` can only be added to a ggpsychro plot.",
             call. = FALSE

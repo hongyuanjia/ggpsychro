@@ -66,6 +66,44 @@ givoni__check_strategy <- function(strategy) {
         )
     }
     strategy$units <- match.arg(strategy$units, c("SI", "IP"))
+    # Older in-memory strategy objects from load_all() sessions may not carry
+    # variant; treat them as the adaptive default used by the constructor.
+    if (is.null(strategy$variant)) {
+        strategy$variant <- "adaptive"
+    }
+    strategy$variant <- match.arg(strategy$variant, c("adaptive", "fixed"))
+    if (is.null(strategy$tdb_range)) {
+        strategy$tdb_range <- NULL
+    } else {
+        strategy$tdb_range <- givoni__check_tdb_range(strategy$tdb_range)
+    }
+    if (is.null(strategy$relhum_range)) {
+        strategy$relhum_range <- c(20, 80)
+    } else {
+        strategy$relhum_range <- givoni__check_relhum_range(
+            strategy$relhum_range
+        )
+    }
+    if (
+        identical(strategy$variant, "adaptive") &&
+            !is.null(strategy$tdb_range)
+    ) {
+        stop(
+            "`tdb_range` is only used for fixed Givoni-Milne strategies.",
+            call. = FALSE
+        )
+    }
+    if (
+        identical(strategy$variant, "adaptive") &&
+            (length(strategy$mean_outdoor) != 1L ||
+                !is.finite(strategy$mean_outdoor))
+    ) {
+        stop(
+            "`strategy` must contain a finite `mean_outdoor` for the ",
+            "adaptive Givoni-Milne variant.",
+            call. = FALSE
+        )
+    }
     strategy
 }
 

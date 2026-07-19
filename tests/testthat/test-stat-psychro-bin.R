@@ -403,6 +403,20 @@ test_that("psychrometric tile gap is validated", {
     expect_error(ggplot2::ggplot_build(p(Inf)), "`gap` must")
 })
 
+test_that("psychrometric tile bin counts are validated", {
+    d <- data.frame(dry_bulb = 20.1, humidity_ratio = 8.1)
+    p <- function(bins) {
+        ggpsychro(d, tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+            geom_psychro_tile(
+                ggplot2::aes(dry_bulb, humidity_ratio),
+                bins = bins
+            )
+    }
+
+    expect_error(ggplot2::ggplot_build(p(10.5)), "`bins`")
+    expect_error(ggplot2::ggplot_build(p(c(10, 20, 30))), "`bins`")
+})
+
 test_that("psychrometric tile boundary is validated", {
     d <- data.frame(dry_bulb = 20.1, humidity_ratio = 8.1)
     p <- function(boundary) {

@@ -6,7 +6,7 @@
 \alias{stat_vappres}
 \alias{stat_specvol}
 \alias{stat_enthalpy}
-\title{Calculate psychrometric properties of moist air}
+\title{Draw constant-property psychrometric data}
 \usage{
 stat_relhum(
   mapping = NULL,
@@ -158,38 +158,33 @@ the default plot specification, e.g. \code{\link[ggplot2:annotation_borders]{ann
 A ggplot layer.
 }
 \description{
-Calculate psychrometric properties of moist air
+Draw constant-property psychrometric data
 }
 \details{
+These stats convert common psychrometric properties to the humidity-ratio
+coordinate used by the chart. Use them when the data records dry-bulb
+temperature plus another property instead of humidity ratio.
+
+Required input aesthetics:
 \itemize{
-\item \code{stat_relhum} requires an extra \code{relhum} aesthetics for relative humidity
-in range [0, 100] in \%
-\item \code{stat_wetbulb} requires an extra \code{wetbulb} aesthetics for wet-bulb
-temperature in degree_F [IP] or degree_C [SI]
-\item \code{stat_vappres} requires an extra \code{vappres} aesthetics for partial pressure
-of water vapor in moist air in Psi [IP] or Pa [SI]
-\item \code{stat_specvol} requires an extra \code{specvol} aesthetics for specific volume
-of moist air in ft3 lb-1 of dry air [IP] or in m3 kg-1 of dry air [SI]
-\item \code{stat_enthalpy} requires an extra \code{enthalpy} aesthetics for moist air
-enthalpy in Btu lb-1 [IP] or J kg-1
+\item \code{stat_relhum()} uses \code{x} and \code{relhum}; \code{relhum} is relative humidity in
+percent from 0 to 100.
+\item \code{stat_wetbulb()} uses \code{x} and \code{wetbulb}; wet-bulb temperature follows the
+parent chart units.
+\item \code{stat_vappres()} uses \code{x} and \code{vappres}; vapor pressure is Pa in SI and Psi
+in IP.
+\item \code{stat_specvol()} uses \code{x} and \code{specvol}; specific volume is m^3/kg dry air
+in SI and ft^3/lb dry air in IP.
+\item \code{stat_enthalpy()} uses \code{x} and \code{enthalpy}; enthalpy is J/kg dry air in SI
+and Btu/lb dry air in IP.
 }
 
-What these \code{\link[ggplot2:ggproto]{ggplot2::ggproto()}} objects do are to take input values,
-calculate the corresponding humidity ratio and replace the \code{y} aesthetic
-values in each group.
+When used with \code{\link[=ggpsychro]{ggpsychro()}}, \code{units} and pressure are inherited from the
+plot. If these stats are used directly inside ordinary ggplot2 geoms via
+\code{stat = "relhum"} or similar, supply both \code{units} and \code{pres} explicitly.
 
-All of stats above requires two additional aesthetics:
-\itemize{
-\item \code{units}: A single string indicating the unit system to use. Should be
-either \code{"SI"} or \code{"IP"}, or \code{waiver()} which uses the value from the
-parent plot. Default: \code{waiver()}
-\item \code{pres}: A single number indicating the atmosphere pressure in Pa [SI] or
-Psi [IP]. If \code{waiver()}, the pressure calculated from the parent plot's
-altitude value will be used. Default: \code{waiver()}
-}
-
-However, when these stats are used inside a ggplot \verb{geom_*} as the \code{stat}
-argument, both \code{units} and \code{pres} have to be specified.
+Internally, each stat computes humidity ratio and replaces the layer \code{y}
+aesthetic before the psychrometric coordinate transform is applied.
 }
 \examples{
 states <- data.frame(

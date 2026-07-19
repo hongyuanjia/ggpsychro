@@ -89,7 +89,43 @@ comfort_layer__bands <- function(
 }
 
 # High-level SET wrapper composes filled SET bands and optional contours.
-#' @rdname geom_comfort_pmv
+#' Draw SET comfort layers
+#'
+#' `geom_comfort_set()` draws Standard Effective Temperature bands and optional
+#' contour lines on a psychrometric chart.
+#'
+#' @inheritParams ggplot2::layer
+#' @inheritParams ggplot2::geom_tile
+#' @param model A SET comfort model object.
+#' @param bands,contours,labels Single logical values controlling whether to
+#'   draw filled SET bands, SET contour lines, and contour text labels.
+#' @param band_levels Number of filled SET bands, or a numeric vector of SET
+#'   band breaks. Used only for `band_render = "band"`.
+#' @param contour_levels SET contour break values.
+#' @param n Grid resolution in dry-bulb and humidity-ratio directions. If
+#'   `NULL`, SET bands use `c(80, 50)`.
+#' @param band_render Band rendering mode. `"band"` draws filled polygon
+#'   regions from continuous band boundaries; `"tile"` draws sampled grid cells
+#'   directly.
+#' @param alpha Layer transparency.
+#' @return A list of ggplot additions.
+#'
+#' @details
+#' `n` trades drawing smoothness for build time. `band_render = "band"` draws
+#' filled SET regions from gridded isobands, while `band_render = "tile"` draws
+#' sampled grid cells directly.
+#'
+#' @examples
+#' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+#'     geom_comfort_set(n = c(45, 30))
+#'
+#' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+#'     geom_comfort_set(
+#'         contours = TRUE,
+#'         labels = TRUE,
+#'         contour_levels = seq(20, 35, 5)
+#'     )
+#'
 #' @export
 geom_comfort_set <- function(
     mapping = NULL,
@@ -100,11 +136,10 @@ geom_comfort_set <- function(
     bands = TRUE,
     contours = FALSE,
     labels = FALSE,
-    levels = NULL,
-    breaks = NULL,
+    band_levels = NULL,
+    contour_levels = NULL,
     n = NULL,
     band_render = c("band", "tile"),
-    band_method = c("auto", "root", "isoband"),
     alpha = 0.55,
     na.rm = FALSE,
     show.legend = NA,
@@ -114,7 +149,17 @@ geom_comfort_set <- function(
     assert_flag(contours)
     assert_flag(labels)
     band_render <- match.arg(band_render)
-    band_method <- match.arg(band_method)
+    if (!is.null(n)) {
+        n <- comfort_grid__n(n)
+    }
+    if (!is.null(band_levels) && length(band_levels) == 1L) {
+        band_levels <- util__check_whole_count(
+            band_levels,
+            "`band_levels`",
+            min = 1L,
+            len = 1L
+        )
+    }
     if (!isTRUE(bands) && !isTRUE(contours)) {
         stop(
             "At least one of `bands` or `contours` must draw a SET layer.",
@@ -122,6 +167,15 @@ geom_comfort_set <- function(
         )
     }
     params <- list(...)
+    # SET has only one continuous-band construction path; reject the old internal
+    # knob if callers pass it through dots so it does not remain a hidden API.
+    if ("band_method" %in% names(params)) {
+        stop(
+            "`band_method` is not supported by `geom_comfort_set()`; ",
+            "use `band_render` to choose between polygon bands and tiles.",
+            call. = FALSE
+        )
+    }
     layers <- list()
 
     if (isTRUE(bands)) {
@@ -134,10 +188,9 @@ geom_comfort_set <- function(
                     position = position,
                     model = model,
                     metric = "set",
-                    levels = levels,
+                    levels = band_levels,
                     n = n,
                     band_render = band_render,
-                    band_method = band_method,
                     alpha = alpha,
                     na.rm = na.rm,
                     show.legend = show.legend,
@@ -158,7 +211,7 @@ geom_comfort_set <- function(
                     position = position,
                     model = model,
                     metric = "set",
-                    breaks = breaks,
+                    breaks = contour_levels,
                     n = n,
                     label = labels,
                     na.rm = na.rm,
@@ -174,7 +227,36 @@ geom_comfort_set <- function(
 }
 
 # High-level adaptive wrapper draws the acceptable operative-temperature zone.
-#' @rdname geom_comfort_pmv
+#' Draw adaptive comfort zones
+#'
+#' `geom_comfort_adaptive()` draws the adaptive comfort acceptability region
+#' for ASHRAE 55 or EN 16798.
+#'
+#' @inheritParams ggplot2::layer
+#' @inheritParams ggplot2::geom_polygon
+#' @param model An adaptive comfort model object. If `NULL`, one is created
+#'   from `t_running`, `tr`, `v`, `standard`, and `category`.
+#' @param t_running Running mean outdoor temperature when `model` is `NULL`.
+#' @param tr Mean radiant temperature. If `NULL`, the model uses dry-bulb
+#'   temperature.
+#' @param v Air speed when `model` is `NULL`.
+#' @param standard Adaptive comfort standard used when `model` is `NULL`.
+#' @param category Adaptive comfort category.
+#' @param n Grid resolution in dry-bulb and humidity-ratio directions. If
+#'   `NULL`, adaptive comfort zones use `c(240, 160)`.
+#' @param gap Relative gap between generated tiles.
+#' @param alpha Layer transparency.
+#' @return A ggplot layer.
+#'
+#' @details
+#' Adaptive comfort zones are sampled on a dry-bulb and humidity-ratio grid.
+#' Increase `n` for smoother zone boundaries and decrease it for faster
+#' exploratory builds.
+#'
+#' @examples
+#' ggpsychro(tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+#'     geom_comfort_adaptive(t_running = 22, alpha = 0.3)
+#'
 #' @export
 geom_comfort_adaptive <- function(
     mapping = NULL,
@@ -195,6 +277,9 @@ geom_comfort_adaptive <- function(
     inherit.aes = TRUE
 ) {
     params <- list(...)
+    if (!is.null(n)) {
+        n <- comfort_grid__n(n)
+    }
     if (is.null(model)) {
         standard <- match.arg(standard)
         if (is.null(t_running)) {
@@ -339,7 +424,29 @@ comfort_layer__zone <- function(
         params = params
     )
 }
-#' @rdname geom_comfort_pmv
+#' Evaluate comfort metrics at state points
+#'
+#' `stat_comfort_state()` evaluates a comfort model at supplied psychrometric
+#' state points and exposes the model outputs through `after_stat()`.
+#'
+#' @inheritParams ggplot2::layer
+#' @inheritParams ggplot2::geom_point
+#' @param geom Geom used to draw evaluated state points.
+#' @param model A comfort model object.
+#' @return A ggplot layer.
+#'
+#' @examples
+#' states <- data.frame(
+#'     tdb = c(24, 28, 31),
+#'     relhum = c(45, 55, 65)
+#' )
+#'
+#' ggpsychro(states, tdb_lim = c(15, 35), hum_lim = c(0, 24)) +
+#'     stat_comfort_state(
+#'         aes(tdb = tdb, relhum = relhum, colour = after_stat(pmv)),
+#'         size = 3
+#'     )
+#'
 #' @export
 stat_comfort_state <- function(
     mapping = NULL,

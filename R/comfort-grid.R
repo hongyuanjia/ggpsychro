@@ -6,19 +6,8 @@ NULL
 
 # Validate two-dimensional grid resolution for sampled comfort fields.
 comfort_grid__n <- function(n) {
-    if (
-        !is.numeric(n) ||
-            length(n) < 1L ||
-            length(n) > 2L ||
-            any(!is.finite(n)) ||
-            any(n < 2)
-    ) {
-        stop(
-            "`n` must be one or two finite numbers greater than 1.",
-            call. = FALSE
-        )
-    }
-    as.integer(rep(n, length.out = 2L))
+    n <- util__check_whole_count(n, "`n`", min = 2L, max_len = 2L)
+    rep(n, length.out = 2L)
 }
 
 # Select model-specific default grid resolution when users omit n.

@@ -92,7 +92,7 @@ The longer examples live on the pkgdown site:
   plot points, bins, and overlays from weather or measured state data.
 * [Comfort overlays](https://hongyuanjia.github.io/ggpsychro/articles/comfort-overlays.html) -
   draw PMV, SET, adaptive comfort, labelled comfort contours, Heat Index,
-  PMV-based standard zones, and Givoni bioclimatic strategy overlays.
+  PMV-based standard zones, and Givoni-Milne strategy overlays.
 * [Zones and processes](https://hongyuanjia.github.io/ggpsychro/articles/zones-and-processes.html) -
   draw manual comfort regions, operating limits, state points, and HVAC process
   lines.

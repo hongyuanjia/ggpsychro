@@ -3,9 +3,10 @@
 \docType{package}
 \name{ggpsychro-package}
 \alias{ggpsychro-package}
-\title{ggpsychro: A 'ggplot2' Extension for Making Psychrometric Charts}
+\title{ggpsychro: psychrometric charts with ggplot2}
 \description{
-Provides 'ggplot2' coordinates, layers, scales, themes, and presets for creating psychrometric charts. The package supports SI and IP units, psychrometric grids, state points, process lines, zones, and thermal comfort overlays for heating, ventilation, air conditioning, and building performance workflows.
+\code{ggpsychro} extends ggplot2 with psychrometric coordinates, grids, data
+layers, zones, process lines, and thermal-comfort overlays.
 }
 \seealso{
 Useful links:

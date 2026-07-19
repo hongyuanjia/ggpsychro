@@ -29,11 +29,11 @@ default_labs <- function(units = "SI", mollier = FALSE) {
 #' demo_scale(10:50, labels = label_drybulb(units = "SI", parse = TRUE))
 #' demo_scale(10:50, labels = label_drybulb(units = "IP", parse = TRUE))
 #'
-#' demo_scale(10:20, labels = label_humratio(scale = 0.001, units = "SI", parse = TRUE))
-#' demo_scale(10:20, labels = label_humratio(scale = 0.007, units = "IP", parse = TRUE))
+#' demo_scale(10:20, labels = label_humratio(units = "SI", parse = TRUE))
+#' demo_scale(70:140, labels = label_humratio(units = "IP", parse = TRUE))
 #'
-#' demo_scale(10:50, labels = label_relhum(units = "SI"))
-#' demo_scale(10:50, labels = label_relhum(units = "IP"))
+#' demo_scale(seq(0.1, 0.5, by = 0.1), labels = label_relhum(units = "SI"))
+#' demo_scale(seq(0.1, 0.5, by = 0.1), labels = label_relhum(units = "IP"))
 #'
 #' demo_scale(10:50, labels = label_wetbulb(units = "SI", parse = TRUE))
 #' demo_scale(10:50, labels = label_wetbulb(units = "IP", parse = TRUE))

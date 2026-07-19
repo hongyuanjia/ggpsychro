@@ -24,13 +24,13 @@ A comfort zone style element.
 \description{
 \code{element_givoni_zone()} creates a small style object for comfort strategy
 zones. It is used by \code{geom_comfort_givoni()} through the \code{zone_style}
-argument to override Marsh-style defaults for individual zones.
+argument to override the default Givoni-Milne zone styles.
 }
 \examples{
 # Fill and outline the comfort zone with custom colours.
 ggpsychro(tdb_lim = c(5, 45), hum_lim = c(0, 30)) +
     geom_comfort_givoni(
-        show_labels = FALSE,
+        labels = FALSE,
         zone_style = list(
             comfort = element_givoni_zone(
                 fill = "#6FCF97",
@@ -43,7 +43,7 @@ ggpsychro(tdb_lim = c(5, 45), hum_lim = c(0, 30)) +
 # Emphasize the air-conditioning region with a light fill.
 ggpsychro(tdb_lim = c(5, 45), hum_lim = c(0, 30)) +
     geom_comfort_givoni(
-        show_labels = FALSE,
+        labels = FALSE,
         zone_style = list(
             air_conditioning = element_givoni_zone(
                 fill = "#7BC8F6",
@@ -57,7 +57,7 @@ ggpsychro(tdb_lim = c(5, 45), hum_lim = c(0, 30)) +
 # Restyle a line-only region without filling it.
 ggpsychro(tdb_lim = c(5, 45), hum_lim = c(0, 30)) +
     geom_comfort_givoni(
-        show_labels = FALSE,
+        labels = FALSE,
         zone_style = list(
             winter = element_givoni_zone(
                 colour = "#C44536",

@@ -3,7 +3,29 @@ NULL
 
 # Heat-index layer composition keeps category fills, boundary lines, and
 # coordinate foreground labels in one domain-specific module.
-#' @rdname geom_comfort_pmv
+#' Draw heat-index comfort categories
+#'
+#' `geom_comfort_heat_index()` draws Outdoor Work Heat Index categories,
+#' boundary lines, and optional category labels.
+#'
+#' @inheritParams ggplot2::layer
+#' @inheritParams ggplot2::geom_polygon
+#' @param model A heat-index comfort model object.
+#' @param n Grid resolution in dry-bulb and humidity-ratio directions.
+#'   Defaults to `c(160, 100)`.
+#' @param alpha Layer transparency.
+#' @param labels If `TRUE`, draw category labels.
+#' @return A list of ggplot additions.
+#'
+#' @details
+#' Heat-index categories are sampled on a dry-bulb and humidity-ratio grid.
+#' Increase `n` for smoother category boundaries and decrease it for faster
+#' exploratory builds.
+#'
+#' @examples
+#' ggpsychro(tdb_lim = c(25, 45), hum_lim = c(0, 32)) +
+#'     geom_comfort_heat_index(n = c(55, 35), labels = FALSE)
+#'
 #' @export
 geom_comfort_heat_index <- function(
     mapping = NULL,
@@ -13,12 +35,14 @@ geom_comfort_heat_index <- function(
     model = comfort_model_heat_index(),
     n = c(160, 100),
     alpha = 0.55,
-    show_labels = TRUE,
+    labels = TRUE,
     na.rm = FALSE,
     show.legend = NA,
     inherit.aes = TRUE
 ) {
     label <- angle <- NULL
+    assert_flag(labels)
+    n <- comfort_grid__n(n)
     layer_mapping <- comfort__computed_xy_mapping(mapping)
     params <- list(...)
     zone_specs <- heat_index__zone_specs()
@@ -79,7 +103,7 @@ geom_comfort_heat_index <- function(
         )
     )
 
-    if (isTRUE(show_labels)) {
+    if (isTRUE(labels)) {
         text_params <- params
         if (is.null(text_params$colour) && is.null(text_params$color)) {
             text_params$colour <- "#444444"
