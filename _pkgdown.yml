@@ -13,25 +13,44 @@ reference:
   contents:
   - ggpsychro
   - coord_psychro
-  - is.ggpsychro
+  - is_ggpsychro
 
 - title: Psychrometric equation layers and grids
   contents:
   - stat_relhum
+  - stat_wetbulb
+  - stat_vappres
+  - stat_specvol
+  - stat_enthalpy
   - geom_psychro_grid_relhum
+  - geom_psychro_grid_wetbulb
+  - geom_psychro_grid_vappres
+  - geom_psychro_grid_specvol
+  - geom_psychro_grid_enthalpy
   - geom_psychro_protractor
+  - guide_psychro_protractor
 
 - title: Psychrometric data layers
   contents:
+  - stat_psychro_state
   - geom_psychro_process
+  - stat_psychro_zone
   - geom_psychro_zone
+  - geom_psychro_tile
   - stat_psychro_bin
 
 - title: Thermal comfort calculations and models
   contents:
   - comfort_pmv
+  - comfort_set
+  - comfort_adaptive
+  - comfort_heat_index
   - comfort_model_pmv
+  - comfort_model_set
+  - comfort_model_adaptive
+  - comfort_model_heat_index
   - comfort_pmv_ashrae55
+  - comfort_pmv_en15251
   - comfort_strategy_givoni
 
 - title: Thermal comfort chart layers
@@ -47,13 +66,35 @@ reference:
 - title: Scales, labels, and transformations
   contents:
   - scale_drybulb_continuous
+  - scale_humratio_continuous
+  - scale_relhum_continuous
+  - scale_wetbulb_continuous
+  - scale_vappres_continuous
+  - scale_specvol_continuous
+  - scale_enthalpy_continuous
   - label_drybulb
+  - label_humratio
+  - label_relhum
+  - label_wetbulb
+  - label_vappres
+  - label_specvol
+  - label_enthalpy
   - drybulb_trans
+  - humratio_trans
+  - relhum_trans
+  - wetbulb_trans
+  - vappres_trans
+  - specvol_trans
+  - enthalpy_trans
   - demo_scale
 
 - title: Themes, presets, and elements
   contents:
-  - theme
+  - theme_psychro
+  - theme_psychro_minimal
+  - theme_psychro_ashrae
+  - theme_grey_psychro
+  - theme_gray_psychro
   - psychro_preset
   - element_polygon
   - element_givoni_zone

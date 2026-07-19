@@ -27,6 +27,16 @@ NULL
 #'
 #' @return A data frame with model outputs.
 #'
+#' @section Output columns:
+#' * `comfort_pmv()` returns `pmv`, `ppd`, and `tsv` (thermal sensation vote).
+#' * `comfort_set()` returns `set`.
+#' * `comfort_adaptive()` returns the selected standard, acceptability flags,
+#'   comfort temperature, and upper/lower comfort-temperature limits. ASHRAE 55
+#'   includes 80% and 90% acceptability columns; EN 16798 includes category I,
+#'   II, and III acceptability columns.
+#' * `comfort_heat_index()` returns `heat_index`, `category`, and
+#'   `category_id`.
+#'
 #' @examples
 #' comfort_pmv(25, rh = 50, met = 1.4, clo = 0.5)
 #' comfort_set(25, rh = 50)

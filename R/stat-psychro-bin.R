@@ -48,8 +48,8 @@ NULL
 #' each tile represents one dry-bulb and humidity-ratio cell aligned to
 #' `boundary`. The optional cell grid follows the chart's x/y breaks so it stays
 #' aligned with the visible dry-bulb and humidity-ratio grid. Choose a
-#' `binwidth` that evenly subdivides those breaks when a denser Marsh-style cell
-#' grid should still coincide with the existing x/y grid.
+#' `binwidth` that evenly subdivides those breaks when a denser cell grid should
+#' still coincide with the existing x/y grid.
 #'
 #' @section Computed variables:
 #' * `count`: number of observations in each tile.
@@ -214,9 +214,18 @@ StatPsychroBin <- ggproto(
         counts <- tabulate(bin_id, nbins = n_bins)
         values <- bin__values(data, bin_id, n_bins, fun)
 
-        grid <- expand.grid(x_bin = seq_len(nx), y_bin = seq_len(ny))
-        keep <- if (drop) counts > 0L else rep(TRUE, n_bins)
-        grid <- grid[keep, , drop = FALSE]
+        if (isTRUE(drop)) {
+            # Sparse weather or simulation datasets can request dense bin grids;
+            # build only observed cells instead of allocating every empty bin.
+            keep <- which(counts > 0L)
+            grid <- util__new_data_frame(list(
+                x_bin = (keep - 1L) %% nx + 1L,
+                y_bin = (keep - 1L) %/% nx + 1L
+            ))
+        } else {
+            keep <- seq_len(n_bins)
+            grid <- expand.grid(x_bin = seq_len(nx), y_bin = seq_len(ny))
+        }
 
         x_width <- diff(x_breaks)
         y_width <- diff(y_breaks)
@@ -295,20 +304,8 @@ bin__empty <- function() {
 
 # Validate and recycle the requested bin count.
 bin__bins <- function(bins) {
-    if (
-        !is.numeric(bins) ||
-            length(bins) < 1L ||
-            length(bins) > 2L ||
-            any(!is.finite(bins)) ||
-            any(bins < 1)
-    ) {
-        stop(
-            "`bins` must be one or two positive finite numbers.",
-            call. = FALSE
-        )
-    }
-
-    as.integer(rep(bins, length.out = 2L))
+    bins <- util__check_whole_count(bins, "`bins`", min = 1L, max_len = 2L)
+    rep(bins, length.out = 2L)
 }
 
 # Validate the visible gap between adjacent psychrometric tiles.

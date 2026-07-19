@@ -8,7 +8,7 @@
 \alias{scale_vappres_continuous}
 \alias{scale_specvol_continuous}
 \alias{scale_enthalpy_continuous}
-\title{Transformation object for psychrometric chart}
+\title{Psychrometric continuous scales}
 \usage{
 scale_drybulb_continuous(
   name = waiver(),
@@ -190,7 +190,7 @@ keeps the psychrometric scale in chart display units.}
 A ggplot2 continuous scale object.
 }
 \description{
-Transformation object for psychrometric chart
+Psychrometric continuous scales
 }
 \examples{
 # Configure dry-bulb and humidity-ratio axes.

@@ -1,7 +1,7 @@
 #' @include trans.R
 NULL
 
-#' Transformation object for psychrometric chart
+#' Psychrometric continuous scales
 #'
 #' @inheritParams ggplot2::continuous_scale
 #' @inheritParams ggplot2::scale_x_continuous

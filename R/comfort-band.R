@@ -101,12 +101,10 @@ comfort_band__breaks <- function(metric, z, levels = NULL, units = "SI") {
         return(breaks)
     }
 
-    n <- if (is.null(levels)) 64L else as.integer(levels[[1L]])
-    if (!is.finite(n) || n < 1L) {
-        stop(
-            "`levels` must be a positive count or a numeric break vector.",
-            call. = FALSE
-        )
+    n <- if (is.null(levels)) {
+        64L
+    } else {
+        util__check_whole_count(levels[[1L]], "`levels`", min = 1L, len = 1L)
     }
 
     z_range <- range(z, finite = TRUE)

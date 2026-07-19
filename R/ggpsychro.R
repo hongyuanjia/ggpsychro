@@ -1,11 +1,9 @@
 #' Create a ggpsychro plot
 #'
-#' This function is the equivalent of [ggplot2::ggplot()] in ggplot2.
-#' It takes care of setting up the plot object along with creating the layout
-#' for the plot based on the graph and the specification passed in.
-#' Alternatively a layout can be prepared in advance using
-#' `create_layout` and passed as the data argument. See *Details* for
-#' a description of all available layouts.
+#' `ggpsychro()` creates a ggplot object configured for psychrometric charts.
+#' It stores chart metadata, installs [coord_psychro()], applies default axis
+#' labels, and adds [theme_psychro()] so psychrometric grids, states, zones, and
+#' comfort overlays can be added with the usual ggplot2 `+` workflow.
 #'
 #' @param data Default dataset to use for plot. If not already a data.frame,
 #'        will be converted to one by [ggplot2::fortify()]. If not specified,
@@ -103,16 +101,16 @@ ggpsychro <- function(
     p + theme_psychro()
 }
 
-#' Reports whether x is a ggplot object
+#' Test for ggpsychro plots
+#'
 #' @param x An object to test
 #' @return A single logical value.
 #'
 #' @examples
-#' is.ggpsychro(ggpsychro())
-#' is.ggpsychro(ggplot2::ggplot())
+#' is_ggpsychro(ggpsychro())
+#' is_ggpsychro(ggplot2::ggplot())
 #'
-#' @keywords internal
 #' @export
-is.ggpsychro <- function(x) {
+is_ggpsychro <- function(x) {
     inherits(x, "ggpsychro")
 }

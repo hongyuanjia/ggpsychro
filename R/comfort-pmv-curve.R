@@ -5,13 +5,7 @@ NULL
 
 # Validate the scalar sampling count used by PMV root-traced curves.
 pmv__curve_n <- function(n) {
-    if (!is.numeric(n) || length(n) != 1L || !is.finite(n) || n < 8) {
-        stop(
-            "`n` must be a single finite number greater than or equal to 8.",
-            call. = FALSE
-        )
-    }
-    as.integer(n)
+    util__check_whole_count(n, "`n`", min = 8L, len = 1L)
 }
 
 # Convert PMV curve roots into plot-ready line or label data.

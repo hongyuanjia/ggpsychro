@@ -33,6 +33,47 @@ util__new_data_frame <- function(x = list(), n = NULL) {
     x
 }
 
+# Validate count-like numeric inputs without silently truncating fractions.
+util__check_whole_count <- function(
+    x,
+    name,
+    min = 1L,
+    len = NULL,
+    max_len = NULL
+) {
+    length_ok <- if (!is.null(len)) {
+        length(x) == len
+    } else if (!is.null(max_len)) {
+        length(x) >= 1L && length(x) <= max_len
+    } else {
+        length(x) >= 1L
+    }
+
+    if (
+        !is.numeric(x) ||
+            !length_ok ||
+            any(!is.finite(x)) ||
+            any(is.na(x)) ||
+            any(x < min) ||
+            any(x != floor(x))
+    ) {
+        msg <- if (!is.null(len) && len == 1L) {
+            sprintf("%s must be a single whole number >= %s.", name, min)
+        } else if (!is.null(max_len)) {
+            sprintf(
+                "%s must be one or two whole numbers >= %s.",
+                name,
+                min
+            )
+        } else {
+            sprintf("%s must contain whole numbers >= %s.", name, min)
+        }
+        stop(msg, call. = FALSE)
+    }
+
+    as.integer(x)
+}
+
 # Return psychrolib's mutable option store for temporary unit and tolerance edits.
 psychrolib__options <- function() {
     get("PSYCHRO_OPT", envir = asNamespace("psychrolib"), inherits = FALSE)

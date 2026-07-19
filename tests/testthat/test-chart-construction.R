@@ -21,7 +21,7 @@ test_that("Psychrometric chart creation", {
     expect_s3_class(p$coordinates, "CoordPsychro")
     expect_type(p$labels$x, "expression")
     expect_type(p$labels$y, "expression")
-    expect_true(is.ggpsychro(p))
+    expect_true(is_ggpsychro(p))
 
     vdiffr::expect_doppelganger(
         "empty chart",

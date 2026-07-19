@@ -80,7 +80,7 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
             geom_comfort_set(
                 contours = TRUE,
-                breaks = c(22, 24, 26),
+                contour_levels = c(22, 24, 26),
                 labels = TRUE,
                 n = c(24, 16)
             )
@@ -136,6 +136,31 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
             unique(heat_index[[6L]]$label)
     ))
     expect_equal(unique(heat_index[[6L]]$alpha), 0)
+
+    heat_index_no_labels <- built_data_layers(ggplot2::ggplot_build(
+        ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
+            geom_comfort_heat_index(
+                n = c(32, 24),
+                alpha = 0.4,
+                labels = FALSE
+            )
+    ))
+    expect_equal(length(heat_index_no_labels), 5L)
+    heat_index_no_label_grobs <- collect_grobs(ggplot2::ggplotGrob(
+        ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
+            geom_comfort_heat_index(
+                n = c(32, 24),
+                alpha = 0.4,
+                labels = FALSE
+            )
+    ))
+    expect_false(any(vapply(
+        heat_index_no_label_grobs,
+        function(grob) {
+            identical(grob$name, "psychro-heat-index-labels")
+        },
+        logical(1L)
+    )))
 
     heat_index_grobs <- collect_grobs(ggplot2::ggplotGrob(
         ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
@@ -244,6 +269,17 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
         ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
             comfort_layer__contour(label = TRUE, label_size = -1),
         "label_size"
+    )
+    expect_error(
+        ggplot2::ggplot_build(
+            ggpsychro(tdb_lim = c(15, 30), hum_lim = c(0, 20)) +
+                geom_comfort_set(band_levels = 3.5, contours = FALSE)
+        ),
+        "`band_levels`"
+    )
+    expect_error(
+        geom_comfort_set(band_method = "isoband"),
+        "`band_method` is not supported"
     )
 
     heat_contour <- first_built_data(ggplot2::ggplot_build(
@@ -458,7 +494,7 @@ test_that("comfort overlays build in Mollier coordinates", {
             )
     )
 })
-test_that("Marsh-style comfort overlays have visual regressions", {
+test_that("comfort overlays have visual regressions", {
     testthat::skip_on_os(c("linux", "windows"))
 
     base <- ggpsychro(tdb_lim = c(5, 35), hum_lim = c(0, 24)) +

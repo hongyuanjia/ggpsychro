@@ -28,14 +28,14 @@
 #' ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
 #'     theme_psychro_minimal()
 #'
-#' @name theme
+#' @name theme_psychro
 #' @export
 theme_grey_psychro <- ggplot2::theme_grey
-#' @name theme
+#' @name theme_psychro
 #' @export
 theme_gray_psychro <- theme_grey_psychro
 
-#' @name theme
+#' @name theme_psychro
 #' @export
 theme_psychro <- function(
     base_size = 11,
@@ -123,7 +123,7 @@ theme_psychro <- function(
         )
 }
 
-#' @name theme
+#' @name theme_psychro
 #' @export
 theme_psychro_ashrae <- function(
     base_size = 11,
@@ -260,7 +260,7 @@ theme_psychro_ashrae <- function(
         )
 }
 
-#' @name theme
+#' @name theme_psychro
 #' @export
 theme_psychro_minimal <- function(
     base_size = 11,

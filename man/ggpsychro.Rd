@@ -49,12 +49,10 @@ psychrometric chart. Default: \code{FALSE}.}
 An object of class \code{gg} onto which layers, scales, etc. can be added.
 }
 \description{
-This function is the equivalent of \code{\link[ggplot2:ggplot]{ggplot2::ggplot()}} in ggplot2.
-It takes care of setting up the plot object along with creating the layout
-for the plot based on the graph and the specification passed in.
-Alternatively a layout can be prepared in advance using
-\code{create_layout} and passed as the data argument. See \emph{Details} for
-a description of all available layouts.
+\code{ggpsychro()} creates a ggplot object configured for psychrometric charts.
+It stores chart metadata, installs \code{\link[=coord_psychro]{coord_psychro()}}, applies default axis
+labels, and adds \code{\link[=theme_psychro]{theme_psychro()}} so psychrometric grids, states, zones, and
+comfort overlays can be added with the usual ggplot2 \code{+} workflow.
 }
 \examples{
 ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 50))

@@ -106,6 +106,20 @@ runtime. Relative humidity is always supplied in percent. Temperature and
 air-speed inputs follow \code{units}: SI uses degree C and m/s; IP uses degree F
 and ft/s.
 }
+\section{Output columns}{
+
+\itemize{
+\item \code{comfort_pmv()} returns \code{pmv}, \code{ppd}, and \code{tsv} (thermal sensation vote).
+\item \code{comfort_set()} returns \code{set}.
+\item \code{comfort_adaptive()} returns the selected standard, acceptability flags,
+comfort temperature, and upper/lower comfort-temperature limits. ASHRAE 55
+includes 80\% and 90\% acceptability columns; EN 16798 includes category I,
+II, and III acceptability columns.
+\item \code{comfort_heat_index()} returns \code{heat_index}, \code{category}, and
+\code{category_id}.
+}
+}
+
 \examples{
 comfort_pmv(25, rh = 50, met = 1.4, clo = 0.5)
 comfort_set(25, rh = 50)
