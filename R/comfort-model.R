@@ -9,6 +9,11 @@ NULL
 #' Model objects capture the fixed inputs used by comfort layers. They can be
 #' reused across overlays, contours, zones, and point states.
 #'
+#' `comfort_model_*()` helpers are for chart layers and stats. For direct
+#' vectorized calculations, use [comfort_pmv()], [comfort_set()],
+#' [comfort_adaptive()], or [comfort_heat_index()]. For drawing on a
+#' psychrometric chart, pass a model object to `geom_comfort_*()` layers.
+#'
 #' @inheritParams comfort_pmv
 #' @param model PMV model/version label. Currently `"7730-2005"` is implemented.
 #' @param round_output If `TRUE`, round model outputs. Comfort plot layers use

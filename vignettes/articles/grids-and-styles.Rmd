@@ -17,9 +17,9 @@ knitr::opts_chunk$set(
 ```
 
 ggpsychro draws the dry-bulb grid, humidity-ratio grid, saturation curve, and
-psychrometric reference grids through `coord_psychro()`. The default reference
-grids are drawn without labels. Add `geom_psychro_grid_*()` helpers when a grid
-should be explicit and labelled.
+psychrometric reference grids through the coordinate system installed by
+`ggpsychro()`. The default reference grids are drawn without labels. Add
+`geom_psychro_grid_*()` helpers when a grid should be explicit and labelled.
 
 ## Presets
 
@@ -132,6 +132,6 @@ ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30)) +
         psychro.panel.grid.saturation = element_line(
             color = "black", linetype = 2
         ),
-        psychro.panel.mask = element_polygon(fill = "gray90", color = NA)
+        psychro.panel.mask = ggplot2::element_polygon(fill = "gray90", color = NA)
     )
 ```

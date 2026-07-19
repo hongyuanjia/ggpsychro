@@ -106,6 +106,12 @@ runtime. Relative humidity is always supplied in percent. Temperature and
 air-speed inputs follow \code{units}: SI uses degree C and m/s; IP uses degree F
 and ft/s.
 }
+\details{
+Use these \verb{comfort_*()} functions for vectorized data-frame calculations.
+Use \code{\link[=comfort_model_pmv]{comfort_model_pmv()}} and the other \verb{comfort_model_*()} helpers to store
+fixed model assumptions for chart layers, and use \verb{geom_comfort_*()} layers to
+draw comfort fields or zones on a psychrometric chart.
+}
 \section{Output columns}{
 
 \itemize{

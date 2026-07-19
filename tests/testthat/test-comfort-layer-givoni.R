@@ -6,14 +6,21 @@ test_that("Givoni strategy zones build and stay below saturation", {
         psychrolib::GetStandardAtmPressure(0)
     )
     expect_s3_class(comfort_strategy_givoni(), "PsyComfortGivoniStrategy")
-    expect_equal(comfort_strategy_givoni()$variant, "adaptive")
-    expect_error(comfort_strategy_givoni(mean_outdoor = NA), "mean_outdoor")
+    expect_equal(comfort_strategy_givoni()$variant, "fixed")
     expect_error(
-        comfort_strategy_givoni(mean_outdoor = NULL),
+        comfort_strategy_givoni(variant = "adaptive", mean_outdoor = NA),
+        "mean_outdoor"
+    )
+    expect_error(
+        comfort_strategy_givoni(variant = "adaptive", mean_outdoor = NULL),
         "`mean_outdoor` must be supplied"
     )
     expect_error(
-        comfort_strategy_givoni(tdb_range = c(20, 26)),
+        comfort_strategy_givoni(
+            variant = "adaptive",
+            mean_outdoor = 20,
+            tdb_range = c(20, 26)
+        ),
         "`tdb_range` is only used"
     )
     expect_error(
@@ -23,7 +30,7 @@ test_that("Givoni strategy zones build and stay below saturation", {
     expect_s3_class(element_givoni_zone(), "PsyComfortZoneElement")
 
     cool <- givoni__zone_data(
-        comfort_strategy_givoni(mean_outdoor = 15),
+        comfort_strategy_givoni(variant = "adaptive", mean_outdoor = 15),
         "comfort",
         "SI",
         pressure,
@@ -32,7 +39,7 @@ test_that("Givoni strategy zones build and stay below saturation", {
         c(0, 35)
     )
     warm <- givoni__zone_data(
-        comfort_strategy_givoni(mean_outdoor = 25),
+        comfort_strategy_givoni(variant = "adaptive", mean_outdoor = 25),
         "comfort",
         "SI",
         pressure,
@@ -42,8 +49,10 @@ test_that("Givoni strategy zones build and stay below saturation", {
     )
     expect_gt(mean(warm$tdb), mean(cool$tdb))
 
+    adaptive <- comfort_strategy_givoni(variant = "adaptive", mean_outdoor = 19)
+
     zones <- givoni__zone_data(
-        comfort_strategy_givoni(),
+        adaptive,
         NULL,
         "SI",
         pressure,
@@ -63,7 +72,7 @@ test_that("Givoni strategy zones build and stay below saturation", {
 
     built <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 35)) +
-            geom_comfort_givoni(alpha = 0.35)
+            geom_comfort_givoni(adaptive, alpha = 0.35)
     )$data
     expect_equal(length(built), 14L)
     comfort_layer <- which(vapply(
@@ -99,12 +108,12 @@ test_that("Givoni strategy zones build and stay below saturation", {
 
     unlabelled <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 35)) +
-            geom_comfort_givoni(alpha = 0.35, labels = FALSE)
+            geom_comfort_givoni(adaptive, alpha = 0.35, labels = FALSE)
     )$data
     expect_equal(length(unlabelled), length(built) - 3L)
 
     path_labels <- givoni__label_data(
-        comfort_strategy_givoni(),
+        adaptive,
         "path",
         "SI",
         pressure,
@@ -134,7 +143,7 @@ test_that("Givoni strategy zones build and stay below saturation", {
     }
 
     point_labels <- givoni__label_data(
-        comfort_strategy_givoni(),
+        adaptive,
         "point",
         "SI",
         pressure,
@@ -160,7 +169,7 @@ test_that("Givoni strategy zones build and stay below saturation", {
     expect_gt(unique(air_label$tdb), 45)
 
     mean_line <- givoni__mean_outdoor_data(
-        comfort_strategy_givoni(mean_outdoor = 17.5),
+        comfort_strategy_givoni(variant = "adaptive", mean_outdoor = 17.5),
         "SI",
         pressure,
         FALSE,
@@ -168,7 +177,7 @@ test_that("Givoni strategy zones build and stay below saturation", {
         c(0, 35)
     )
     mean_label <- givoni__mean_outdoor_label_data(
-        comfort_strategy_givoni(mean_outdoor = 17.5),
+        comfort_strategy_givoni(variant = "adaptive", mean_outdoor = 17.5),
         "SI",
         pressure,
         FALSE,
@@ -183,7 +192,7 @@ test_that("Givoni strategy zones build and stay below saturation", {
 
     with_pmv <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 35)) +
-            geom_comfort_givoni(alpha = 0.35, show_pmv = TRUE)
+            geom_comfort_givoni(adaptive, alpha = 0.35, show_pmv = TRUE)
     )$data
     expect_gt(length(with_pmv), length(built))
 })

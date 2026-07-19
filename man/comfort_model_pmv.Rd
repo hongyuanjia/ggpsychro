@@ -89,6 +89,12 @@ A comfort model object.
 Model objects capture the fixed inputs used by comfort layers. They can be
 reused across overlays, contours, zones, and point states.
 }
+\details{
+\verb{comfort_model_*()} helpers are for chart layers and stats. For direct
+vectorized calculations, use \code{\link[=comfort_pmv]{comfort_pmv()}}, \code{\link[=comfort_set]{comfort_set()}},
+\code{\link[=comfort_adaptive]{comfort_adaptive()}}, or \code{\link[=comfort_heat_index]{comfort_heat_index()}}. For drawing on a
+psychrometric chart, pass a model object to \verb{geom_comfort_*()} layers.
+}
 \examples{
 # Create a PMV model object.
 comfort_model_pmv(met = 1.4, clo = 0.5)

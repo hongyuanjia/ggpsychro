@@ -523,7 +523,11 @@ test_that("PMV comfort lines and PMV-based standard zones build", {
 
     ip_givoni <- ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(40, 115), hum_lim = c(0, 220), units = "IP") +
-            geom_comfort_givoni(comfort_strategy_givoni(66.2, units = "IP"))
+            geom_comfort_givoni(comfort_strategy_givoni(
+                variant = "adaptive",
+                mean_outdoor = 66.2,
+                units = "IP"
+            ))
     )
     expect_gte(length(ip_givoni$data), 13L)
 })
