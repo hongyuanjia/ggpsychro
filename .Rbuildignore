@@ -9,4 +9,5 @@
 ^docs$
 ^pkgdown$
 ^vignettes$
+^app$
 ^CRAN-SUBMISSION$

@@ -24,15 +24,15 @@ specified, must be supplied in each layer added to the plot.}
 
 \item{tdb_lim}{A numeric vector of length-2 indicating the dry-bulb
 temperature limits. Should be in range
-\verb{[-50, 100]} degree_C [SI] or
-\verb{[-58, 212]} degree_F [IP].
+\verb{[-50, 100]} degrees C [SI] or
+\verb{[-58, 212]} degrees F [IP].
 If \code{NULL}, trained data ranges will be used when available, otherwise
 a default display range will be used. Default: \code{NULL}.}
 
 \item{hum_lim}{A numeric vector of length-2 indicating the humidity ratio
 limits. Should be in range
-\verb{[0, 60]} g_H20 kg_Air-1 [SI] or
-\verb{[0, 420]} gr_H20 lb_Air-1 [IP].
+\verb{[0, 60]} g H2O per kg dry air [SI] or
+\verb{[0, 420]} grains H2O per lb dry air [IP].
 If \code{NULL}, trained data ranges will be used when available, otherwise
 a default display range will be used. Default: \code{NULL}.}
 

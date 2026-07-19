@@ -50,9 +50,9 @@ ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 30), mollier = TRUE)
 
 ## Explicit coordinates
 
-`ggpsychro()` sets up the psychrometric coordinate system for you. If you are
-building up a plot in smaller pieces, `coord_psychro()` can also be added
-explicitly.
+`ggpsychro()` sets up the psychrometric coordinate system for you. Most plots do
+not need an explicit coordinate call. Use `coord_psychro()` when you need to
+replace or reconfigure the coordinate system on an existing ggpsychro plot.
 
 ```{r coord-psychro, fig.alt = "Psychrometric chart created by adding coord_psychro explicitly."}
 ggpsychro() +

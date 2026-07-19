@@ -34,7 +34,8 @@ panel__mask_grob <- function(theme, x, y) {
             fill = element$fill,
             col = element$colour %||% element$color,
             lwd = (element$linewidth %||% element$size %||% 0) * ggplot2::.pt,
-            lty = element$linetype %||% 1
+            lty = element$linetype %||% 1,
+            linejoin = element$linejoin %||% "mitre"
         ),
         name = "psychro-panel-mask"
     )
@@ -46,7 +47,7 @@ panel__background_grob <- function(theme, x, y) {
     if (is.null(element) || inherits(element, "element_blank")) {
         return(grid::nullGrob())
     }
-    if (inherits(element, "element_polygon")) {
+    if (inherits(element, "ggplot2::element_polygon")) {
         return(ggplot2::element_render(
             theme,
             "psychro.panel.background",
@@ -63,7 +64,8 @@ panel__background_grob <- function(theme, x, y) {
             fill = element$fill,
             col = element$colour %||% element$color,
             lwd = (element$linewidth %||% element$size %||% 0) * ggplot2::.pt,
-            lty = element$linetype %||% 1
+            lty = element$linetype %||% 1,
+            linejoin = element$linejoin %||% "mitre"
         ),
         name = "psychro-panel-background"
     )

@@ -12,8 +12,11 @@ reference:
 - title: Core chart construction
   contents:
   - ggpsychro
-  - coord_psychro
   - is_ggpsychro
+
+- title: Advanced chart coordinates
+  contents:
+  - coord_psychro
 
 - title: Psychrometric equation layers and grids
   contents:
@@ -96,7 +99,6 @@ reference:
   - theme_grey_psychro
   - theme_gray_psychro
   - psychro_preset
-  - element_polygon
   - element_givoni_zone
 
 articles:

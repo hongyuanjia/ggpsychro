@@ -61,7 +61,7 @@ theme_psychro <- function(
             axis.line.y = ggplot2::element_line(
                 color = grDevices::rgb(0.2, 0.2, 0.2, 1.0)
             ),
-            psychro.panel.background = element_polygon(
+            psychro.panel.background = ggplot2::element_polygon(
                 fill = "white",
                 color = NA
             ),
@@ -161,7 +161,7 @@ theme_psychro_ashrae <- function(
             ),
             axis.text = ggplot2::element_text(color = "black"),
             axis.title = ggplot2::element_text(color = "black"),
-            psychro.panel.background = element_polygon(
+            psychro.panel.background = ggplot2::element_polygon(
                 fill = "white",
                 color = NA
             ),
@@ -309,7 +309,7 @@ theme_psychro_minimal <- function(
                 color = grDevices::rgb(0, 0.125, 0.376),
                 angle = 90
             ),
-            psychro.panel.background = element_polygon(
+            psychro.panel.background = ggplot2::element_polygon(
                 fill = "white",
                 color = NA
             ),

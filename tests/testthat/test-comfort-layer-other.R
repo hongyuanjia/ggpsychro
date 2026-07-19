@@ -112,6 +112,16 @@ test_that("comfort overlay and contour build on psychrometric panel grids", {
     ))
     expect_gt(nrow(adaptive_zone), 0L)
     expect_equal(unique(adaptive_zone$alpha), 0.3)
+    # Default adaptive polygon bands should reuse the analytic zone boundary
+    # rather than a grid-interpolated binary acceptability boundary.
+    expect_equal(
+        range(adaptive_overlay$tdb, finite = TRUE),
+        range(adaptive_zone$tdb, finite = TRUE)
+    )
+    expect_equal(
+        range(adaptive_overlay$humratio, finite = TRUE),
+        range(adaptive_zone$humratio, finite = TRUE)
+    )
 
     heat_overlay <- first_built_data(ggplot2::ggplot_build(
         ggpsychro(tdb_lim = c(20, 45), hum_lim = c(0, 35)) +
@@ -566,7 +576,10 @@ test_that("comfort overlays have visual regressions", {
         "comfort givoni bioclimatic zones",
         givoni_base +
             geom_comfort_givoni(
-                comfort_strategy_givoni(mean_outdoor = 22),
+                comfort_strategy_givoni(
+                    variant = "adaptive",
+                    mean_outdoor = 22
+                ),
                 alpha = 0.45
             )
     )
@@ -575,7 +588,10 @@ test_that("comfort overlays have visual regressions", {
         "comfort givoni styled zones",
         givoni_base +
             geom_comfort_givoni(
-                comfort_strategy_givoni(mean_outdoor = 22),
+                comfort_strategy_givoni(
+                    variant = "adaptive",
+                    mean_outdoor = 22
+                ),
                 zone_style = list(
                     comfort = element_givoni_zone(
                         fill = "#66D27A",

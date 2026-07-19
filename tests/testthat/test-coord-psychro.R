@@ -97,7 +97,10 @@ test_that("Saturation is drawn between psychro boundaries and markers", {
 
     givoni <- panel_grob(
         ggpsychro(tdb_lim = c(0, 50), hum_lim = c(0, 35)) +
-            geom_comfort_givoni()
+            geom_comfort_givoni(comfort_strategy_givoni(
+                variant = "adaptive",
+                mean_outdoor = 19
+            ))
     )
     givoni_fg <- givoni$children[[length(givoni$children)]]
     expect_gt(

@@ -23,7 +23,7 @@
   workflows.
 - Thermal comfort and bioclimatic overlays for PMV/PPD, SET, adaptive
   comfort, labelled contours, Heat Index, PMV-based ASHRAE 55 / EN 15251
-  zones, and Givoni strategy zones.
+  zones, and Givoni-Milne strategy zones.
 
 ## Installation
 
@@ -90,8 +90,7 @@ The longer examples live on the pkgdown site:
 - [Comfort
   overlays](https://hongyuanjia.github.io/ggpsychro/articles/comfort-overlays.html) -
   draw PMV, SET, adaptive comfort, labelled comfort contours, Heat
-  Index, PMV-based standard zones, and Givoni bioclimatic strategy
-  overlays.
+  Index, PMV-based standard zones, and Givoni-Milne strategy overlays.
 - [Zones and
   processes](https://hongyuanjia.github.io/ggpsychro/articles/zones-and-processes.html) -
   draw manual comfort regions, operating limits, state points, and HVAC

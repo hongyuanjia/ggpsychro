@@ -1,7 +1,7 @@
 #' @include comfort-givoni.R
 NULL
 
-#' Psychrometric coordinates
+#' Advanced psychrometric coordinates
 #'
 #' @inheritParams ggplot2::coord_cartesian
 #' @inheritParams ggpsychro
@@ -18,10 +18,12 @@ NULL
 #'   ggplot2 replacement message.
 #' @return A ggplot2 coordinate system object for psychrometric charts.
 #' @details
-#' `coord_psychro()` is normally used with a [ggpsychro()] plot. When
-#' `altitude`, `units`, or `mollier` is `NULL`, the value is inherited from the
-#' parent plot. Supply these arguments explicitly when using the coordinate
-#' system outside that path.
+#' Most plots should start with [ggpsychro()], which installs this coordinate
+#' system and the matching psychrometric metadata for you. Call
+#' `coord_psychro()` directly only when you are replacing or configuring the
+#' coordinate system on an existing ggpsychro plot. When `altitude`, `units`, or
+#' `mollier` is `NULL`, the value is inherited from the parent plot. Supply these
+#' arguments explicitly when using the coordinate system outside that path.
 #' @examples
 #' ggpsychro() +
 #'     coord_psychro(tdb_lim = c(10, 35), hum_lim = c(0, 25))
