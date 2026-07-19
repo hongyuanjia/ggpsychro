@@ -1,4 +1,4 @@
-#' @include comfort-grid.R
+#' @include comfort-adaptive.R comfort-grid.R
 NULL
 
 # Comfort band helpers convert sampled fields and isoband output into
@@ -17,6 +17,25 @@ comfort_band__data <- function(
     hum_lim,
     psychro_scales = NULL
 ) {
+    metric <- comfort_dispatch__model_metric(model, metric)
+    if (
+        comfort__model_type(model) == "adaptive" &&
+            identical(metric, "acceptability") &&
+            is.null(levels)
+    ) {
+        # Adaptive acceptability has exact operative-temperature limits. Reuse
+        # the zone polygon so filled adaptive bands and zone outlines share one
+        # boundary instead of mixing grid-interpolated and analytic geometry.
+        return(adaptive__zone(
+            model,
+            units,
+            mollier,
+            tdb_lim,
+            hum_lim,
+            psychro_scales = psychro_scales
+        ))
+    }
+
     # Filled bands are generated on node grids so isoband can preserve polygon
     # topology across adjacent cells.
     m <- comfort_grid__matrix(
