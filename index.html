@@ -11,8 +11,8 @@
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Create Psychrometric Charts">
-<meta name="description" content="Provides ggplot2 coordinates, layers, scales, themes, and presets for creating psychrometric charts. The package supports metric and inch-pound unit systems, psychrometric grids, state points, process lines, zones, and thermal comfort overlays for heating, ventilation, air conditioning, and building performance workflows.">
-<meta property="og:description" content="Provides ggplot2 coordinates, layers, scales, themes, and presets for creating psychrometric charts. The package supports metric and inch-pound unit systems, psychrometric grids, state points, process lines, zones, and thermal comfort overlays for heating, ventilation, air conditioning, and building performance workflows.">
+<meta name="description" content="Provides ggplot2 coordinates, layers, scales, themes, and presets for creating psychrometric charts. The package supports metric and inch-pound unit systems, psychrometric grids, state points, process lines, zones, and thermal comfort overlays for heating, ventilation, air conditioning, and building performance workflows. Psychrometric property calculations are based on PsychroLib (Meyer and Thevenard, 2019) &lt;doi:10.21105/joss.01137&gt; where appropriate.">
+<meta property="og:description" content="Provides ggplot2 coordinates, layers, scales, themes, and presets for creating psychrometric charts. The package supports metric and inch-pound unit systems, psychrometric grids, state points, process lines, zones, and thermal comfort overlays for heating, ventilation, air conditioning, and building performance workflows. Psychrometric property calculations are based on PsychroLib (Meyer and Thevenard, 2019) &lt;doi:10.21105/joss.01137&gt; where appropriate.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -79,12 +79,11 @@
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<!-- You can install the released version of ggpsychro from [CRAN](https://CRAN.R-project.org) with: -->
-<!-- ``` r -->
-<!-- install.packages("ggpsychro") -->
-<!-- ``` -->
-<p>You can install the development version from <a href="https://github.com/" class="external-link">GitHub</a> with:</p>
+<p>You can install the released version of ggpsychro from <a href="https://CRAN.R-project.org" class="external-link">CRAN</a> with:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"ggpsychro"</span><span class="op">)</span></span></code></pre></div>
+<p>You can install the development version from <a href="https://github.com/" class="external-link">GitHub</a> with:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"hongyuanjia/ggpsychro"</span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -92,12 +91,12 @@
 <h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h2>
 <p>The creation of a psychrometric chart starts with <code><a href="reference/ggpsychro.html">ggpsychro()</a></code>. The result is a ggplot object, so grids, stats, geoms, scales, and themes can be added with the same <code>+</code> workflow used by ggplot2.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">50</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="reference/psychro_preset.html">psychro_preset</a></span><span class="op">(</span><span class="st">"minimal"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-ggpsychro-1.png" alt="Minimal psychrometric chart with dry-bulb temperature, humidity ratio, and reference grids." width="60%" style="display: block; margin: auto;"></p>
 <p>Comfort overlays can be added as regular layers. The PMV overlay combines root-traced filled bands, PMV isolines, and text labels on the same psychrometric chart.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/ggpsychro.html">ggpsychro</a></span><span class="op">(</span>tdb_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">40</span><span class="op">)</span>, hum_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">24</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="reference/psychro_preset.html">psychro_preset</a></span><span class="op">(</span><span class="st">"minimal"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="reference/geom_comfort_pmv.html">geom_comfort_pmv</a></span><span class="op">(</span></span>
@@ -149,7 +148,7 @@
 <div class="section level2">
 <h2 id="contribute">Contribute<a class="anchor" aria-label="anchor" href="#contribute"></a>
 </h2>
-<p>Please note that the ‘ggpsychro’ project is released with a <a href="CODE_OF_CONDUCT.html">Contributor Code of Conduct</a>. By contributing to this project, you agree to abide by its terms.</p>
+<p>Please note that the ‘ggpsychro’ project is released with a <a href="https://github.com/hongyuanjia/ggpsychro/blob/master/.github/CODE_OF_CONDUCT.md" class="external-link">Contributor Code of Conduct</a>. By contributing to this project, you agree to abide by its terms.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
