@@ -1,5 +1,7 @@
 # Changelog
 
+## ggpsychro (development version)
+
 ## ggpsychro 0.1.0
 
 - Aligned adaptive comfort filled bands with the analytic adaptive
